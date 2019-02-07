@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 1.25.0
-Release: 1.0.1%dist
+Release: 1.0.3%dist
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -19,6 +19,7 @@ Requires: python2-bitarray
 
 # XCP-ng patches
 Patch1000: sm-1.25.0-add-nfs-4.1-support.backport.patch
+Patch1001: sm-1.25.0-partial-ext4-and-xfs-support.XCP-ng.patch
 
 %description
 This package contains storage backends used in XCP
@@ -355,6 +356,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Thu Feb 07 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 1.25.0-1.0.2
+- Add partial ext4 and xfs support
+- https://github.com/xcp-ng/xcp/issues/130
+
 * Thu Feb 07 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 1.25.0-1.0.1
 - Add NFS 4.1 support
 - https://github.com/xcp-ng/xcp/issues/130

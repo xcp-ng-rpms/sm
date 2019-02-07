@@ -1,0 +1,64 @@
+From 137e8ba95f0e537e7a245cb49659c2c04078babb Mon Sep 17 00:00:00 2001
+From: Martin Juhl <m@rtinjuhl.dk>
+Date: Tue, 29 Jan 2019 13:21:17 +0000
+Subject: [PATCH] NFS 4.1 Support
+
+Signed-off-by: Martin Juhl <m@rtinjuhl.dk>
+---
+ drivers/nfs.py    | 7 +++++--
+ tests/test_nfs.py | 4 ++--
+ 2 files changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/nfs.py b/drivers/nfs.py
+index 06dbf260..6d0c5376 100644
+--- a/drivers/nfs.py
++++ b/drivers/nfs.py
+@@ -48,7 +48,7 @@
+ DEFAULT_NFSVERSION = '3'
+ 
+ NFS_VERSION = [
+-    'nfsversion', 'for type=nfs, NFS protocol version - 3, 4']
++    'nfsversion', 'for type=nfs, NFS protocol version - 3, 4, 4.1']
+ 
+ NFS_SERVICE_WAIT = 30
+ NFS_SERVICE_RETRY = 6
+@@ -111,7 +111,7 @@ def validate_nfsversion(nfsversion):
+     if not nfsversion:
+         nfsversion = DEFAULT_NFSVERSION
+     else:
+-        if nfsversion not in ['3', '4']:
++        if nfsversion not in ['3', '4', '4.1']:
+             raise NfsException("Invalid nfsversion.")
+     return nfsversion
+ 
+@@ -143,6 +143,9 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+     mountcommand = 'mount.nfs'
+     if nfsversion == '4':
+         mountcommand = 'mount.nfs4'
++        
++    if nfsversion == '4.1':
++        mountcommand = 'mount.nfs4'
+ 
+     options = "soft,proto=%s,vers=%s" % (
+         transport,
+diff --git a/tests/test_nfs.py b/tests/test_nfs.py
+index 17c1be50..248acb98 100644
+--- a/tests/test_nfs.py
++++ b/tests/test_nfs.py
+@@ -119,7 +119,7 @@ def test_validate_nfsversion_invalid(self):
+                               thenfsversion)
+ 
+     def test_validate_nfsversion_invalid(self):
+-        for thenfsversion in ['2', '4.1']:
++        for thenfsversion in ['2']:
+             self.assertRaises(nfs.NfsException, nfs.validate_nfsversion,
+                               thenfsversion)
+ 
+@@ -128,6 +128,6 @@ def test_validate_nfsversion_default(self):
+             self.assertEquals(nfs.validate_nfsversion(thenfsversion), '3')
+ 
+     def test_validate_nfsversion_valid(self):
+-        for thenfsversion in ['3', '4']:
++        for thenfsversion in ['3', '4', '4.1']:
+             self.assertEquals(nfs.validate_nfsversion(thenfsversion),
+                               thenfsversion)

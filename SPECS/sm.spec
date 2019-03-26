@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 1.25.0
-Release: 1.0.3%dist
+Release: 1.0.4%dist
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm

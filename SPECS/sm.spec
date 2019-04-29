@@ -2,12 +2,17 @@
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 1.25.0
-Release: 1.0.4%dist
+Version: 2.2.3
+Release: 1.0.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: https://code.citrite.net/rest/archive/latest/projects/XSU/repos/%{name}/archive?at=v%{version}&format=tar.gz&prefix=%{name}-%{version}#/%{name}-%{version}.tar.gz
+
+Source0: https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz
+
+
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz) = 8a49006fea4c6d607cee10a344f979da6d377330
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: gcc
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
@@ -15,12 +20,12 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: xenserver-multipath
-Requires: xenserver-lvm2
+Requires: xenserver-lvm2 >= 2.02.177
 Requires: python2-bitarray
+Conflicts: kernel < 4.19.19-5.0.0
 
 # XCP-ng patches
-Patch1000: sm-1.25.0-add-nfs-4.1-support.backport.patch
-Patch1001: sm-1.25.0-partial-ext4-and-xfs-support.XCP-ng.patch
+Patch1000: sm-1.25.0-partial-ext4-and-xfs-support.XCP-ng.patch
 
 %description
 This package contains storage backends used in XCP
@@ -44,9 +49,12 @@ service sm-multipath start
 %systemd_post make-dummy-sr.service
 %systemd_post mpcount.service
 %systemd_post snapwatchd.service
-%systemd_post updatempppathd.service
 %systemd_post xs-sm.service
+%systemd_post usb-scan.socket
+%systemd_post mpathcount.socket
 /bin/systemctl enable xs-sm.service >/dev/null 2>&1 || :
+/bin/systemctl enable usb-scan.socket >/dev/null 2>&1 || :
+/bin/systemctl enable mpathcount.socket >/dev/null 2>&1 || :
 
 [ -f /etc/lvm/lvm.conf.orig ] || cp /etc/lvm/lvm.conf /etc/lvm/lvm.conf.orig || exit $?
 [ -d /etc/lvm/master ] || mkdir /etc/lvm/master || exit $?
@@ -73,8 +81,9 @@ update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.
 %systemd_preun make-dummy-sr.service
 %systemd_preun mpcount.service
 %systemd_preun snapwatchd.service
-%systemd_preun updatempppathd.service
 %systemd_preun xs-sm.service
+%systemd_preun usb-scan.socket
+%systemd_preun mpathcount.socket
 #only remove in case of erase (but not at upgrade)
 if [ $1 -eq 0 ] ; then
     [ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath
@@ -86,7 +95,6 @@ exit 0
 %systemd_postun make-dummy-sr.service
 %systemd_postun mpcount.service
 %systemd_postun_with_restart snapwatchd.service
-%systemd_postun updatempppathd.service
 %systemd_postun xs-sm.service
 if [ $1 -eq 0 ]; then
     [ ! -d /etc/lvm/master ] || rm -Rf /etc/lvm/master || exit $?
@@ -109,7 +117,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 %defattr(-,root,root,-)
 /etc/rc.d/init.d/mpathroot
 /etc/udev/scripts/xs-mpath-scsidev.sh
-/etc/udev/scripts/udevmpath.sh
 /etc/xapi.d/plugins/coalesce-leaf
 /etc/xapi.d/plugins/lvhd-thin
 /etc/xapi.d/plugins/nfs-on-slave
@@ -131,6 +138,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/local-device-change
 /opt/xensource/libexec/make-dummy-sr
 /opt/xensource/libexec/usb_change
+/opt/xensource/libexec/kickpipe
 /opt/xensource/sm/DummySR
 /opt/xensource/sm/DummySR.py
 /opt/xensource/sm/DummySR.pyc
@@ -273,9 +281,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/mpathutil.py
 /opt/xensource/sm/mpathutil.pyc
 /opt/xensource/sm/mpathutil.pyo
-/opt/xensource/sm/mpp_luncheck.py
-/opt/xensource/sm/mpp_luncheck.pyc
-/opt/xensource/sm/mpp_luncheck.pyo
 /opt/xensource/sm/mpp_mpathutil.py
 /opt/xensource/sm/mpp_mpathutil.pyc
 /opt/xensource/sm/mpp_mpathutil.pyo
@@ -308,9 +313,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/udevSR.py
 /opt/xensource/sm/udevSR.pyc
 /opt/xensource/sm/udevSR.pyo
-/opt/xensource/sm/updatempppathd.py
-/opt/xensource/sm/updatempppathd.pyc
-/opt/xensource/sm/updatempppathd.pyo
 /opt/xensource/sm/util.py
 /opt/xensource/sm/util.pyc
 /opt/xensource/sm/util.pyo
@@ -339,31 +341,115 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/cbtutil.py
 /opt/xensource/sm/cbtutil.pyc
 /opt/xensource/sm/cbtutil.pyo
+%dir /opt/xensource/sm/plugins
+/opt/xensource/sm/plugins/__init__.py*
 /sbin/mpathutil
 /etc/rc.d/init.d/sm-multipath
 %{_unitdir}/make-dummy-sr.service
-%{_unitdir}/mpcount.service
 %{_unitdir}/snapwatchd.service
-%{_unitdir}/updatempppathd.service
 %{_unitdir}/xs-sm.service
+%{_unitdir}/usb-scan.service
+%{_unitdir}/usb-scan.socket
+%{_unitdir}/mpathcount.service
+%{_unitdir}/mpathcount.socket
 %config /etc/udev/rules.d/40-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
 %config /etc/udev/rules.d/58-xapi.rules
 %config /etc/multipath.xenserver/multipath.conf
 %config /etc/udev/rules.d/69-dm-lvm-metad.rules
-%config /etc/modprobe.d/cifs.conf
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
-* Thu Feb 07 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 1.25.0-1.0.2
-- Add partial ext4 and xfs support
+* Mon Apr 07 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.2.3-1.1
+- Reapply "Add partial ext4 and xfs support" to new version
 - https://github.com/xcp-ng/xcp/issues/130
 
-* Thu Feb 07 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 1.25.0-1.0.1
-- Add NFS 4.1 support
-- https://github.com/xcp-ng/xcp/issues/130
+* Wed Apr 10 2019 Mark Syms <mark.syms@citrix.com> - 2.2.3-1
+- CA-314717 Explicit stdout and stderr for scan services
+
+* Thu Mar 28 2019 Mark Syms <mark.syms@citrix.com> - 2.2.2-1
+- CA-311551: do not trigger mpath count for nbd devices
+- CA-313960: ensure that mpathcount trigger correctly
+
+* Fri Mar 15 2019 Mark Syms <mark.syms@citrix.com> - 2.2.1-1
+- CA-312608: Set scheduler to noop for tdX devices
+
+* Fri Feb 15 2019 Mark Syms <mark.syms@citrix.com> - 2.2.0-1
+- Update MAINTAINERS file
+- CA-247723: wait for udevadm settle in LVM create
+
+* Wed Feb 06 2019 Mark Syms <mark.syms@citrix.com> - 2.0.0-1
+- Update NFS unit tests to make intent clearer
+- Properly strip output of scsi_id
+- NFS 4.1 Support
+- CA-262506: Remove sec=ntlm from SMBSR mount option
+- cifs.conf: Remove cifs.conf
+- CP-30167: handle changed blkback kthread notification
+
+* Wed Jan 23 2019 Mark Syms <mark.syms@citrix.com> - 1.37.0-1
+- CA-285844: update mpathcount so that it can remove multipath information as well as add it
+- CA-293816: convert OSError to CommandException
+- CA-293816: make _clonecleanup safer
+- CA-293816: stop and rollback earlier in case of errors
+
+* Tue Jan 08 2019 Mark Syms <mark.syms@citrix.com> - 1.36.0-1
+- Update MAX_VHD_SIZE to 2088960MiB (2040GiB).
+
+* Wed Nov 28 2018 Mark Syms <mark.syms@citrix.com> - 1.35.0-1
+- CA-303252 Generalise the pipe kicker
+- CA-303252 Make the multipath count a kickable socket service
+- CA-302773: move import of plugins until we need it.
+
+* Mon Nov 26 2018 Tim Smith <tim.smith@citrix.com> - 1.34.0-2.0
+- CA-303252 update mpathcount to use the kickpipe trigger
+
+* Wed Nov 21 2018 Mark Syms <mark.syms@citrix.com> - 1.34.0-1
+- Revert "CP-27709: suppress error if blkdiscard fails on full provisioned lun"
+
+* Fri Nov 16 2018 Mark Syms <mark.syms@citrix.com> - 1.33.0-1
+- CP-27709: suppress error if blkdiscard fails on full provisioned lun
+- CP-29603: load plugins for key discovery
+- CP-29688:encryption key lookup plugin
+- CP-29688: Install the test plugin
+- CP-29689: Integrate encryption key lookup into Storage Manager
+- CP-29755: Implement VDI.create for encrypted VDIs
+- If key_hash is present in sm_config then assign to variable
+- CP-29778: detect encrypted VHDs during SR scan
+- keymanagerutil: generate completely random keys & store them in base64
+- Added alphanumeric key generator and removed key field from json
+- CA-302505: Add key_hash to sm_config of snapshots if it exists
+- CA-302770: Added key_hash key to sm_config_keep
+- CP-29955: pass VDI UUID too to key lookup plugin
+- CP-29955: Log failures in key lookup plugins
+
+* Fri Nov 09 2018 Mark Syms <mark.syms@citrix.com> - 1.32.0-1
+- CA-286144: add usb-scan systemd units
+- CA-302514 increase default NFS timeouts
+
+* Thu Nov  1 2018 Mark Syms <mark.syms@citrix.com> - 1.31.0-1.0
+- CA-297628: Tweak mpath_dmp.py for using device-mapper-multipath-0.4.9
+- Add versioned dependency for LVM2
+
+* Tue Oct 30 2018 Liang Dai <liang.dai1@citrix.com> - 1.30.0-1
+- CA-294319: CLI command sr-create failed: Error code: SR_BACKEND_FAILURE_77
+
+* Mon Oct 15 2018 Mark Syms <mark.syms@citrix.com> - 1.29.0-1
+- Remove obsolete 39-multipath.rules file from install rules
+- CA-296534: if we give up on snapshot-coalesce, don't fall through to live coalesce
+
+* Tue Oct 09 2018 Mark Syms <mark.syms@citrix.com> - 1.28.0-1
+- CP-28924: Declare thin provisioning capability for file based SRs
+
+* Mon Oct 01 2018 Mark Syms <mark.syms@citrix.com> - 1.27.0-1
+- CA-292588 Add debug to header checking
+- CA-297698 improve assert message
+
+* Fri Sep 07 2018 Mark Syms <mark.syms@citrix.com> - 1.26.0-1
+- CA-247723: Use fuser to report on who has the device open
+- CA-295775 Fix handling of multipath events
+- CA-295775 Escape from systemd-udevd's control group
 
 * Tue Aug 14 2018 Mark Syms <mark.syms@citrix.com> - 1.25.0-1
 - CA-294975: ensure chap settings are removed from discovery db when not used
@@ -501,6 +587,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz) = 8a49006fea4c6d607cee10a344f979da6d377330
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -520,6 +607,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz) = 8a49006fea4c6d607cee10a344f979da6d377330
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -530,3 +618,14 @@ The package contains the build time test results for the SM package
 /.coverage
 /coverage.xml
 /htmlcov
+
+%package test-plugins
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz) = 8a49006fea4c6d607cee10a344f979da6d377330
+Group:    System/Hypervisor
+Summary:  System test fake key lookup plugin
+
+%description test-plugins
+The pckage contains a fake key lookup plugin for system tests
+
+%files test-plugins
+/opt/xensource/sm/plugins/keymanagerutil.py*

@@ -362,7 +362,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
-* Mon Apr 07 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.2.3-1.1
+* Mon May 06 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.2.3-1.1
 - Reapply "Add partial ext4 and xfs support" to new version
 - https://github.com/xcp-ng/xcp/issues/130
 

@@ -1,0 +1,11 @@
+diff --git a/systemd/xs-sm.service b/systemd/xs-sm.service
+index 99cb313..609c6ef 100644
+--- a/systemd/xs-sm.service
++++ b/systemd/xs-sm.service
+@@ -1,5 +1,5 @@
+ [Unit]
+-Description=XenServer Storage Manager (SM)
++Description=XCP-ng Storage Manager (SM)
+ Before=xapi.service
+ Conflicts=shutdown.target
+ RefuseManualStop=yes

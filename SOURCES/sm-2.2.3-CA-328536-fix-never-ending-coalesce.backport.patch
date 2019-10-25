@@ -1,0 +1,113 @@
+From d2aff735f1e160887b417f72689d3eb15fe844e7 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@citrix.com>
+Date: Wed, 9 Oct 2019 17:21:56 +0100
+Subject: [PATCH] CA-328536: If we give up on leaf-coalesce make sure we do so
+ until process exits
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+
+---
+Patch Slightly reworked by Samuel Verschelde
+ - fix typo that was fixed in next commit upstream 
+
+diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
+index ca4e3bc2..bfd97727 100755
+--- a/drivers/XE_SR_ERRORCODES.xml
++++ b/drivers/XE_SR_ERRORCODES.xml
+@@ -94,16 +94,16 @@
+                 <description>Invalid local path</description>
+                 <value>226</value>
+         </code>
+-        <code>
+-                <name>ISOInvalidSMBversion</name>
+-                <description>Given SMB version is not allowed. Choose either 1.0 or 3.0</description>
+-                <value>227</value>
+-        </code>
+-        <code>
+-                <name>ISOInvalidXeMountOptions</name>
+-                <description>Require "-o" along with xe-mount-isosr</description>
+-                <value>228</value>
+-        </code>
++        <code>
++                <name>ISOInvalidSMBversion</name>
++                <description>Given SMB version is not allowed. Choose either 1.0 or 3.0</description>
++                <value>227</value>
++        </code>
++        <code>
++                <name>ISOInvalidXeMountOptions</name>
++                <description>Require "-o" along with xe-mount-isosr</description>
++                <value>228</value>
++        </code>
+ 
+         <!-- generic invalid arguments -->
+         <code>
+@@ -752,6 +752,11 @@
+                 <description>An active FIST point was reached that causes the process to exit abnormally</description>
+                 <value>203</value>
+         </code>
++        <code>
++                <name>LeafGCSkip</name>
++                <description>Gave up on leaf coalesce after leaf grew bigger than before snapshot taken</description>
++                <value>204</value>
++        </code>
+ 
+         <code>
+                 <name>XMLParse</name>
+@@ -859,12 +864,12 @@
+             <description>Failed to calculate changed blocks for given VDIs.</description>
+             <value>460</value>
+         </code>
+-
++
+         <code>
+             <name>GenericException</name>
+             <description>SM has thrown a generic python exception</description>
+             <value>1200</value>
+         </code>
+ 
+-
++
+ </SM-errorcodes>
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index c6787d99..b89154de 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -41,6 +41,7 @@
+ import fjournaler
+ import lock
+ import blktap2
++import xs_errors
+ from refcounter import RefCounter
+ from ipc import IPCFlag
+ from lvmanager import LVActivator
+@@ -1587,14 +1588,13 @@ def coalesceLeaf(self, vdi, dryRun):
+                 vdi = self.getVDI(uuid)
+                 if vdi:
+                     vdi.delConfig(vdi.DB_LEAFCLSC)
++        except AbortException:
++            self.cleanup()
++            raise
+         except (util.SMException, XenAPI.Failure), e:
+-            if isinstance(e, AbortException):
+-                self.cleanup()
+-                raise
+-            else:
+-                self._failedCoalesceTargets.append(vdi)
+-                Util.logException("leaf-coalesce")
+-                Util.log("Leaf-coalesce failed, skipping")
++            self._failedCoalesceTargets.append(vdi)
++            Util.logException("leaf-coalesce")
++            Util.log("Leaf-coalesce failed on %s, skipping" % vdi)
+         self.cleanup()
+ 
+     def garbageCollect(self, dryRun = False):
+@@ -1786,7 +1786,7 @@ def _coalesceLeaf(self, vdi):
+                          "current %s. Abandoning attempts" %
+                          (prevSizeVHD, vdi.getSizeVHD()))
+                 vdi.setConfig(vdi.DB_LEAFCLSC, vdi.LEAFCLSC_OFFLINE)
+-                return False
++                raise xs_errors.XenError('LeafGCSkip', opterr='VDI=%s' % vdi)
+         return self._liveLeafCoalesce(vdi)
+ 
+     def _snapshotCoalesce(self, vdi):
+

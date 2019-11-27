@@ -29,6 +29,7 @@ Patch1000: sm-1.25.0-partial-ext4-and-xfs-support.XCP-ng.patch
 Patch1001: sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
 Patch1002: sm-2.2.3-CA-327382__reap_child_processes.backport.patch
 Patch1003: sm-2.2.3-CA-328536-fix-never-ending-coalesce.backport.patch
+Patch1004: sm-2.2.3-add-TrueNAS-multipath-config.XCP-ng.patch
 
 %description
 This package contains storage backends used in XCP
@@ -365,6 +366,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* soon
+- Add multipath config for TrueNAS
+- https://github.com/xcp-ng/xcp/issues/297
+
 * Fri Oct 25 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.2.3-1.0.3
 - Backport upstream patches to fix coalesce issues
 - Fixes "army of zombies" and never ending coalesce

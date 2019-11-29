@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.2.3
-Release: 1.0.3%{?dist}
+Release: 1.0.4%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -30,6 +30,7 @@ Patch1001: sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
 Patch1002: sm-2.2.3-CA-327382__reap_child_processes.backport.patch
 Patch1003: sm-2.2.3-CA-328536-fix-never-ending-coalesce.backport.patch
 Patch1004: sm-2.2.3-add-TrueNAS-multipath-config.XCP-ng.patch
+Patch1005: sm-2.2.3-avoid-mpath-logging-flood.backport.patch
 
 %description
 This package contains storage backends used in XCP
@@ -369,6 +370,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 * soon
 - Add multipath config for TrueNAS
 - https://github.com/xcp-ng/xcp/issues/297
+
+* Fri Nov 29 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.2.3-1.0.4
+- Avoid mpath logging flood
 
 * Fri Oct 25 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.2.3-1.0.3
 - Backport upstream patches to fix coalesce issues

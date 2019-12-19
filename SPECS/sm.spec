@@ -2,16 +2,16 @@
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.2.3
-Release: 1.0
+Version: 2.16.1
+Release: 1
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 
-Source0: https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz
+Source0: https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz
 
 
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz) = 8a49006fea4c6d607cee10a344f979da6d377330
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz) = 60ce3d67978f209c97cc11b10955e7875701b085
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
@@ -19,8 +19,11 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: xenserver-multipath
-Requires: xenserver-lvm2 >= 2.02.177
+Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Requires: python2-bitarray
+Requires(post): xs-presets >= 1.0
+Requires(preun): xs-presets >= 1.0
+Requires(postun): xs-presets >= 1.0
 Conflicts: kernel < 4.19.19-5.0.0
 
 %description
@@ -38,31 +41,18 @@ DESTDIR=$RPM_BUILD_ROOT make install
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%pre
+# Remove sm-multipath on install or upgrade, to ensure it goes
+[ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
+
 %post
-[ ! -x /sbin/chkconfig ] || chkconfig --add mpathroot
-[ ! -x /sbin/chkconfig ] || chkconfig --add sm-multipath
-service sm-multipath start
 %systemd_post make-dummy-sr.service
 %systemd_post mpcount.service
-%systemd_post snapwatchd.service
+%systemd_post sm-mpath-root.service
 %systemd_post xs-sm.service
 %systemd_post usb-scan.socket
 %systemd_post mpathcount.socket
-/bin/systemctl enable xs-sm.service >/dev/null 2>&1 || :
-/bin/systemctl enable usb-scan.socket >/dev/null 2>&1 || :
-/bin/systemctl enable mpathcount.socket >/dev/null 2>&1 || :
 
-[ -f /etc/lvm/lvm.conf.orig ] || cp /etc/lvm/lvm.conf /etc/lvm/lvm.conf.orig || exit $?
-[ -d /etc/lvm/master ] || mkdir /etc/lvm/master || exit $?
-mv -f /etc/lvm/lvm.conf /etc/lvm/master/lvm.conf || exit $?
-sed -i 's/metadata_read_only =.*/metadata_read_only = 0/' /etc/lvm/master/lvm.conf || exit $?
-sed -i 's/archive = .*/archive = 0/' /etc/lvm/master/lvm.conf || exit $?
-sed -i 's/udev_sync = 1/udev_sync = 0/' /etc/lvm/master/lvm.conf || exit $?
-sed -i 's/udev_rules = 1/udev_rules = 0/' /etc/lvm/master/lvm.conf || exit $?
-sed -i 's/obtain_device_list_from_udev = 1/obtain_device_list_from_udev = 0/' /etc/lvm/master/lvm.conf || exit $?
-sed -i 's/write_cache_state = 1/write_cache_state = 0/' /etc/lvm/master/lvm.conf || exit $?
-cp /etc/lvm/master/lvm.conf /etc/lvm/lvm.conf || exit $?
-sed -i 's/metadata_read_only =.*/metadata_read_only = 1/' /etc/lvm/lvm.conf || exit $?
 rm -f /etc/lvm/cache/.cache
 touch /etc/lvm/cache/.cache
 
@@ -76,13 +66,14 @@ update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.
 %preun
 %systemd_preun make-dummy-sr.service
 %systemd_preun mpcount.service
-%systemd_preun snapwatchd.service
+%systemd_preun sm-mpath-root.service
 %systemd_preun xs-sm.service
 %systemd_preun usb-scan.socket
 %systemd_preun mpathcount.socket
-#only remove in case of erase (but not at upgrade)
+# Remove sm-multipath on upgrade or uninstall, to ensure it goes
+[ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
+# only remove in case of erase (but not at upgrade)
 if [ $1 -eq 0 ] ; then
-    [ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath
     update-alternatives --remove multipath.conf /etc/multipath.xenserver/multipath.conf
 fi
 exit 0
@@ -90,7 +81,7 @@ exit 0
 %postun
 %systemd_postun make-dummy-sr.service
 %systemd_postun mpcount.service
-%systemd_postun_with_restart snapwatchd.service
+%systemd_postun sm-mpath-root.service
 %systemd_postun xs-sm.service
 if [ $1 -eq 0 ]; then
     [ ! -d /etc/lvm/master ] || rm -Rf /etc/lvm/master || exit $?
@@ -98,10 +89,6 @@ if [ $1 -eq 0 ]; then
 elif [ $1 -eq 1 ]; then
     true;
 fi
-
-%posttrans
-[ ! -x /sbin/chkconfig ] || chkconfig --add sm-multipath
-
 
 %check
 tests/run_python_unittests.sh
@@ -111,7 +98,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
-/etc/rc.d/init.d/mpathroot
 /etc/udev/scripts/xs-mpath-scsidev.sh
 /etc/xapi.d/plugins/coalesce-leaf
 /etc/xapi.d/plugins/lvhd-thin
@@ -119,7 +105,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /etc/xapi.d/plugins/on-slave
 /etc/xapi.d/plugins/tapdisk-pause
 /etc/xapi.d/plugins/testing-hooks
-/etc/xapi.d/plugins/vss_control
 /etc/xapi.d/plugins/intellicache-clean
 /etc/xapi.d/plugins/trim
 /etc/xensource/master.d/02-vhdcleanup
@@ -295,13 +280,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/scsi_host_rescan.py
 /opt/xensource/sm/scsi_host_rescan.pyc
 /opt/xensource/sm/scsi_host_rescan.pyo
-/opt/xensource/sm/snapwatchd/snapwatchd
-/opt/xensource/sm/snapwatchd/xslib.py
-/opt/xensource/sm/snapwatchd/xslib.pyc
-/opt/xensource/sm/snapwatchd/xslib.pyo
-/opt/xensource/sm/snapwatchd/snapdebug.py
-/opt/xensource/sm/snapwatchd/snapdebug.pyc
-/opt/xensource/sm/snapwatchd/snapdebug.pyo
 /opt/xensource/sm/sysdevice.py
 /opt/xensource/sm/sysdevice.pyc
 /opt/xensource/sm/sysdevice.pyo
@@ -312,6 +290,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/util.py
 /opt/xensource/sm/util.pyc
 /opt/xensource/sm/util.pyo
+/opt/xensource/sm/cifutils.py
+/opt/xensource/sm/cifutils.pyc
+/opt/xensource/sm/cifutils.pyo
 /opt/xensource/sm/verifyVHDsOnSR.py
 /opt/xensource/sm/verifyVHDsOnSR.pyc
 /opt/xensource/sm/verifyVHDsOnSR.pyo
@@ -321,7 +302,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/trim_util.py
 /opt/xensource/sm/trim_util.pyc
 /opt/xensource/sm/trim_util.pyo
-/opt/xensource/sm/vss_control
 /opt/xensource/sm/xs_errors.py
 /opt/xensource/sm/xs_errors.pyc
 /opt/xensource/sm/xs_errors.pyo
@@ -337,13 +317,14 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/cbtutil.py
 /opt/xensource/sm/cbtutil.pyc
 /opt/xensource/sm/cbtutil.pyo
+/opt/xensource/sm/multipath-root-setup
 %dir /opt/xensource/sm/plugins
 /opt/xensource/sm/plugins/__init__.py*
 /sbin/mpathutil
 /etc/rc.d/init.d/sm-multipath
 %{_unitdir}/make-dummy-sr.service
-%{_unitdir}/snapwatchd.service
 %{_unitdir}/xs-sm.service
+%{_unitdir}/sm-mpath-root.service
 %{_unitdir}/usb-scan.service
 %{_unitdir}/usb-scan.socket
 %{_unitdir}/mpathcount.service
@@ -358,14 +339,60 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
-* Wed Apr 10 2019 Mark Syms <mark.syms@citrix.com> - 2.2.3-1
+* Wed Nov  6 2019 Mark Syms <mark.syms@citrix.com> - 2.16.1-1
+- CA-329845 - Remove usage of credentials file for CIF
+- CA-329841 - Sanitise chaps incoming usage
+
+* Tue Oct 29 2019 Mark Syms <mark.syms@citrix.com> - 2.16.0-1
+- LUNperVDI supports multipathed LUN
+
+* Fri Oct 11 2019 Mark Syms <mark.syms@citrix.com> - 2.15.0-1
+- CA-328536: If we give up on leaf-coalesce make sure we do so until process exits
+
+* Wed Sep 25 2019 Mark Syms <mark.syms@citrix.com> - 2.14.0-1
+- CP-32203: report VHD sizes when abandoning leaf coalesce
+- CA-327382: reap child processes
+
+* Mon Sep 02 2019 Mark Syms <mark.syms@citrix.com> - 2.13.0-1
+- CP-32027: remove snapwatchd
+
+* Wed Aug 07 2019 Mark Syms <mark.syms@citrix.com> - 2.12.0-1
+- CA-324815: lock the SR in GC before deleting orphans.
+
+* Tue Aug 06 2019 Mark Syms <mark.syms@citrix.com> - 2.11.0-1
+- CA-323702: fcntl locks are per process, so need to reference count.
+
+* Mon Jul 22 2019 Mark Syms <mark.syms@citrix.com> - 2.10.0-1
+- CA-315318: optimise mpathcount, we only need to call once per SCSI ID
+- CA-315318: refine udev trigger conditions for mpath count
+
+* Tue Jul 09 2019 Mark Syms <mark.syms@citrix.com> - 2.9.0-1
+- CA-323050: check that at least one iSCSI session established
+- CA-323394: Stop tapdisk process inheriting fds from sm process
+- CP-23299: add test for HFX-651
+
+* Mon Jun 03 2019 Mark Syms <mark.syms@citrix.com> - 2.8.0-1
+- Avoid exceptions from LV existance checks
+- CA-314822: use scanLocked in should_prempt to avoid SR contents changing during scan
+
+* Wed May 08 2019 Mark Syms <mark.syms@citrix.com> - 2.7.0-1
+- CA-316157: Check if any garbage collection needs to be done before going quiet
+- CA-309979 Fix Storage Manager initialisation
+- CA-315152: gc_force needs to take gc_active lock not running
+
+* Tue Apr 16 2019 Mark Syms <mark.syms@citrix.com> - 2.6.0-1
 - CA-314717 Explicit stdout and stderr for scan services
 
-* Thu Mar 28 2019 Mark Syms <mark.syms@citrix.com> - 2.2.2-1
-- CA-311551: do not trigger mpath count for nbd devices
+* Tue Apr 09 2019 Mark Syms <mark.syms@citrix.com> - 2.5.0-1
+- CA-312605: Allow config of pause in _gcLoop.
+
+* Mon Apr 01 2019 Mark Syms <mark.syms@citrix.com> - 2.4.0-1
 - CA-313960: ensure that mpathcount trigger correctly
 
-* Fri Mar 15 2019 Mark Syms <mark.syms@citrix.com> - 2.2.1-1
+* Fri Mar 22 2019 Mark Syms <mark.syms@citrix.com> - 2.3.0-1
+- CA-311551: do not trigger mpath count for nbd devices
+- CA-298641: be more benign on removing host tag
+- CA-273708: improve VHD scan for file-based SR
 - CA-312608: Set scheduler to noop for tdX devices
 
 * Fri Feb 15 2019 Mark Syms <mark.syms@citrix.com> - 2.2.0-1
@@ -579,7 +606,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz) = 8a49006fea4c6d607cee10a344f979da6d377330
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz) = 60ce3d67978f209c97cc11b10955e7875701b085
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -599,7 +626,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz) = 8a49006fea4c6d607cee10a344f979da6d377330
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz) = 60ce3d67978f209c97cc11b10955e7875701b085
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -612,7 +639,7 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.2.3&format=tar.gz&prefix=sm-2.2.3#/sm-2.2.3.tar.gz) = 8a49006fea4c6d607cee10a344f979da6d377330
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz) = 60ce3d67978f209c97cc11b10955e7875701b085
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.16.1
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -37,6 +37,10 @@ Patch1001: sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
 Patch1002: sm-2.2.3-add-TrueNAS-multipath-config.XCP-ng.patch
 # From sm > 2.19.0 (2.20.0 probably)
 Patch1003: sm-2.2.3-avoid-mpath-logging-flood.backport.patch
+# Backport new coalesce logic
+Patch1004: sm-2.16.1-Dynamic-limits-to-leaf-coalesce.backport.patch
+Patch1005: sm-2.16.1-Fix-type-mismatch-when-processing-speed-file.backport.patch
+Patch1006: sm-2.16.1-Lock-speedfile-atomic-write-prevent-corruption-during-abort.backport.patch
 
 %description
 This package contains storage backends used in XCP
@@ -351,6 +355,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Fri Feb 21 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.16.1-1.2
+- New leaf coalesce logic with dynamic limits
+- Patches backported from master
+
 * Thu Dec 19 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.16.1-1.1
 - Rebase on CH 8.1
 - Remove backported coalesce patches

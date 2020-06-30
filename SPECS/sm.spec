@@ -2,16 +2,16 @@
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.16.1
+Version: 2.29.0
 Release: 1
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 
-Source0: https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz
+Source0: https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz
 
 
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz) = 60ce3d67978f209c97cc11b10955e7875701b085
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz) = dd36c6546aa9f7064f6d33614f7551e5eee409f0
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
@@ -21,9 +21,9 @@ Requires(postun): systemd
 Requires: xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Requires: python2-bitarray
-Requires(post): xs-presets >= 1.0
-Requires(preun): xs-presets >= 1.0
-Requires(postun): xs-presets >= 1.0
+Requires(post): xs-presets >= 1.3
+Requires(preun): xs-presets >= 1.3
+Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
 
 %description
@@ -50,8 +50,15 @@ rm -rf $RPM_BUILD_ROOT
 %systemd_post mpcount.service
 %systemd_post sm-mpath-root.service
 %systemd_post xs-sm.service
+%systemd_post storage-init.service
 %systemd_post usb-scan.socket
 %systemd_post mpathcount.socket
+
+# On upgrade, migrate from the old statefile to the new statefile so that
+# storage is not reinitialized.
+if [ $1 -gt 1 ] ; then
+    grep -q ^success /etc/firstboot.d/state/10-prepare-storage 2>/dev/null && touch /var/lib/misc/ran-storage-init || :
+fi
 
 rm -f /etc/lvm/cache/.cache
 touch /etc/lvm/cache/.cache
@@ -68,6 +75,7 @@ update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.
 %systemd_preun mpcount.service
 %systemd_preun sm-mpath-root.service
 %systemd_preun xs-sm.service
+%systemd_preun storage-init.service
 %systemd_preun usb-scan.socket
 %systemd_preun mpathcount.socket
 # Remove sm-multipath on upgrade or uninstall, to ensure it goes
@@ -83,6 +91,7 @@ exit 0
 %systemd_postun mpcount.service
 %systemd_postun sm-mpath-root.service
 %systemd_postun xs-sm.service
+%systemd_postun storage-init.service
 if [ $1 -eq 0 ]; then
     [ ! -d /etc/lvm/master ] || rm -Rf /etc/lvm/master || exit $?
     cp -f /etc/lvm/lvm.conf.orig /etc/lvm/lvm.conf || exit $?
@@ -120,6 +129,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/make-dummy-sr
 /opt/xensource/libexec/usb_change
 /opt/xensource/libexec/kickpipe
+/opt/xensource/libexec/set-iscsi-initiator
+/opt/xensource/libexec/storage-init
 /opt/xensource/sm/DummySR
 /opt/xensource/sm/DummySR.py
 /opt/xensource/sm/DummySR.pyc
@@ -329,7 +340,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/usb-scan.socket
 %{_unitdir}/mpathcount.service
 %{_unitdir}/mpathcount.socket
-%config /etc/udev/rules.d/40-multipath.rules
+%{_unitdir}/storage-init.service
+%config /etc/udev/rules.d/65-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
 %config /etc/udev/rules.d/58-xapi.rules
 %config /etc/multipath.xenserver/multipath.conf
@@ -339,7 +351,59 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
-* Wed Nov  6 2019 Mark Syms <mark.syms@citrix.com> - 2.16.1-1
+* Fri May 29 2020 Mark Syms <mark.syms@citrix.com> - 2.29.0-1
+- CA-339329 firstboot scripts shouldn't sync DB when upgrading
+
+* Wed May 20 2020 Mark Syms <mark.syms@citrix.com> - 2.28.0-1
+- CA-338619: log the hostname when asking slaves
+- CA-332978: Ensure that multipath reconnects after failure
+- CA-332978: Only force reload multipath on start
+
+* Tue Apr 21 2020 Mark Syms <mark.syms@citrix.com> - 2.27.0-1
+- CA-337772: remove dead code handling qcow files.
+- CP-33292: add read caching capability flags
+
+* Tue Apr 07 2020 Mark Syms <mark.syms@citrix.com> - 2.26.0-1
+- CA-337352: just idempotently unlink NBD symlinks on deactivate
+
+* Wed Mar 25 2020 Mark Syms <mark.syms@citrix.com> - 2.25.0-1
+- CA-331454: Handle interrupted SMGC during hotfix application
+
+* Fri Mar 13 2020 Mark Syms <mark.syms@citrix.com> - 2.24.0-1
+- CA-335092: after an update we use the new SM but the NBD link won't be there
+
+* Wed Mar 11 2020 marksy <mark.syms@citrix.com> - 2.23.0-1
+- CA-335771: call tap-ctl close with a timeout
+
+* Mon Mar 09 2020 Mark Syms <mark.syms@citrix.com> - 2.22.0-1
+- Filter out USB storage from HBA device, since USB storage is already managed by udev SM
+- CA-335351: ensure async tasks are cleaned up
+- CP-31856 - Return nbd socket as parameter to XAPI
+- CA-335178: If we don't need tap we dont have NBD
+- CA-335178: Fix unitialized variable
+- CA-335721: Add missing case blktap2 for cached devices.
+
+* Wed Jan  8 2020 Mark Syms <mark.syms@citrix.com> - 2.21.0-1
+- CA-333441: add script to update iSCSI IQN and restart daemons
+
+* Mon Jan 06 2020 Mark Syms <mark.syms@citrix.com> - 2.20.0-1
+- CP-31089: Move storage firstboot scripts out of xenserver-firstboot
+- CA-332890: trigger mpath count when multipath dm device added/removed
+- CA-331453: Ensure all v1 GC processes are killed upon master promotion.
+- CA-332806: Lock speedfile and use atomic write to prevent corruption during abort.
+- Fix xe-mount-iso-sr command name in error message
+
+* Thu Dec 12 2019 Mark Syms <mark.syms@citrix.com> - 2.19.0-1
+- CA-332806 - Fix type mismatch when processing speed file
+- CA-332801: use slightly longer timeout for testing connectivity
+
+* Tue Dec 10 2019 Mark Syms <mark.syms@citrix.com> - 2.18.0-1
+- CP-32433: refine the conditions under which mpath count will trigger
+- CP-32433: kick the multipath and usb scanners at start
+- CA-324971: lock LVM commands to avoid concurrency clashes
+- CP-32204: Dynamic limits to leaf coalesce using storage speed estimate.
+
+* Wed Nov  6 2019 Mark Syms <mark.syms@citrix.com> - 2.17.0-1
 - CA-329845 - Remove usage of credentials file for CIF
 - CA-329841 - Sanitise chaps incoming usage
 
@@ -606,7 +670,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz) = 60ce3d67978f209c97cc11b10955e7875701b085
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz) = dd36c6546aa9f7064f6d33614f7551e5eee409f0
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -626,7 +690,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz) = 60ce3d67978f209c97cc11b10955e7875701b085
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz) = dd36c6546aa9f7064f6d33614f7551e5eee409f0
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -639,7 +703,7 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.16.1&format=tar.gz&prefix=sm-2.16.1#/sm-2.16.1.tar.gz) = 60ce3d67978f209c97cc11b10955e7875701b085
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz) = dd36c6546aa9f7064f6d33614f7551e5eee409f0
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

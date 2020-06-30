@@ -1,0 +1,16 @@
+Index: sm-2.29.0/multipath/multipath.conf
+===================================================================
+--- sm-2.29.0/multipath/multipath.conf
++++ sm-2.29.0/multipath/multipath.conf	2020-06-30 17:59:56.429760178 +0200
+@@ -92,4 +92,11 @@
+ 		prio		        alua
+ 		uid_attribute		ID_SERIAL
+ 	}
++	device {
++		vendor			"TrueNAS"
++		product			"iSCSI Disk"
++		hardware_handler	"1 alua"
++		path_grouping_policy	group_by_prio
++		prio			alua
++	}
+ }

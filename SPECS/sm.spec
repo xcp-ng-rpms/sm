@@ -28,19 +28,9 @@ Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
 
 # XCP-ng patches
-# Cleanup support for our 'ext4' and 'xfs' drivers.
-# As of XCP-ng 8.1, the 'ext' SR also defaults to EXT4
-# so we have two competing EXT4 SRs.
-# It would be good to transition 'ext4' SRs to 'ext' now.
-Patch1000: sm-1.25.0-partial-ext4-and-xfs-support.XCP-ng.patch
-Patch1001: sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
-Patch1002: sm-2.2.3-add-TrueNAS-multipath-config.XCP-ng.patch
-# From sm > 2.19.0 (2.20.0 probably)
-Patch1003: sm-2.2.3-avoid-mpath-logging-flood.backport.patch
-# Backport new coalesce logic
-Patch1004: sm-2.16.1-Dynamic-limits-to-leaf-coalesce.backport.patch
-Patch1005: sm-2.16.1-Fix-type-mismatch-when-processing-speed-file.backport.patch
-Patch1006: sm-2.16.1-Lock-speedfile-atomic-write-prevent-corruption-during-abort.backport.patch
+Patch1000: sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
+Patch1001: sm-2.29.0-add-TrueNAS-multipath-config.XCP-ng.patch
+Patch1002: sm-2.29.0-partial-xfs-support.XCP-ng.patch
 
 %description
 This package contains storage backends used in XCP
@@ -367,9 +357,13 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
-* Thu Dec 19 2019 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.16.1-1.1
+* Tue Jun 30 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.1
 - Rebase on CH 8.2
-- TODO: review patches before build
+- Remove backported patches
+- Keep sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
+- Rediff sm-2.29.0-add-TrueNAS-multipath-config.XCP-ng.patch
+- Remove support for the experimental `ext4` SR type
+- Rename patch to sm-2.29.0-partial-xfs-support.XCP-ng.patch
 
 * Fri May 29 2020 Mark Syms <mark.syms@citrix.com> - 2.29.0-1
 - CA-339329 firstboot scripts shouldn't sync DB when upgrading

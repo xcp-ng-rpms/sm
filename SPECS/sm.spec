@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.29.0
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -30,7 +30,7 @@ Conflicts: kernel < 4.19.19-5.0.0
 # XCP-ng patches
 Patch1000: sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
 Patch1001: sm-2.29.0-add-TrueNAS-multipath-config.XCP-ng.patch
-Patch1002: sm-2.29.0-partial-xfs-support.XCP-ng.patch
+Patch1002: sm-2.29.0-fix-cleanup-for-additional-drivers.XCP-ng.patch
 
 %description
 This package contains storage backends used in XCP
@@ -357,6 +357,14 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Tue Jul 07 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.2
+- Re-add cleanup support for ext4 driver (not removing it from 8.2)
+- Add cleanup support for gluster and cephfs drivers
+- Rename sm-2.29.0-partial-xfs-support.XCP-ng.patch...
+- ... to sm-2.29.0-fix-cleanup-for-additional-drivers.XCP-ng.patch
+- That patch is temporary, until sm is fixed to let drivers define...
+- ... their type themselves.
+
 * Tue Jun 30 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.1
 - Rebase on CH 8.2
 - Remove backported patches

@@ -1,3 +1,6 @@
+This ugly patch is required until sm is improved to let additional SR drivers
+define their type themselves, rather than relying on such a hardcoded list.
+
 Index: sm-1.25.0/drivers/cleanup.py
 ===================================================================
 --- sm-1.25.0/drivers/cleanup.py
@@ -7,7 +10,7 @@ Index: sm-1.25.0/drivers/cleanup.py
          # temporary while LVHD is symlinked as LVM
          type = SR.TYPE_LVHD
 -    if type in ["ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb"]:
-+    if type in ["ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "xfs"]:
++    if type in ["ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "xfs", "ext4", "gluster", "cephfs"]:
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
          raise util.SMException("Unsupported SR type: %s" % type)

@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.29.0
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -27,10 +27,17 @@ Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
 
+Obsoletes: sm-additional-drivers
+
 # XCP-ng patches
-Patch1000: sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
-Patch1001: sm-2.29.0-add-TrueNAS-multipath-config.XCP-ng.patch
-Patch1002: sm-2.29.0-fix-cleanup-for-additional-drivers.XCP-ng.patch
+# Generated from our sm repository
+# git format-patch v2.29.0..2.29.0-8.2
+Patch1001: 0001-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
+Patch1002: 0002-feat-drivers-always-check-if-dependencies-are-ok-for.patch
+Patch1003: 0003-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1004: 0004-feat-drivers-add-LinstorSR-driver.patch
+Patch1005: 0005-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1006: 0006-Add-TrueNAS-multipath-config.patch
 
 %description
 This package contains storage backends used in XCP
@@ -355,8 +362,45 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
+# XCP-ng
+/etc/xapi.d/plugins/linstor-manager
+/opt/xensource/sm/CephFSSR
+/opt/xensource/sm/CephFSSR.py
+/opt/xensource/sm/CephFSSR.pyc
+/opt/xensource/sm/CephFSSR.pyo
+/opt/xensource/sm/GlusterFSSR
+/opt/xensource/sm/GlusterFSSR.py
+/opt/xensource/sm/GlusterFSSR.pyc
+/opt/xensource/sm/GlusterFSSR.pyo
+/opt/xensource/sm/LinstorSR
+/opt/xensource/sm/LinstorSR.py
+/opt/xensource/sm/LinstorSR.pyc
+/opt/xensource/sm/LinstorSR.pyo
+/opt/xensource/sm/XFSSR
+/opt/xensource/sm/XFSSR.py
+/opt/xensource/sm/XFSSR.pyc
+/opt/xensource/sm/XFSSR.pyo
+/opt/xensource/sm/ZFSSR
+/opt/xensource/sm/ZFSSR.py
+/opt/xensource/sm/ZFSSR.pyc
+/opt/xensource/sm/ZFSSR.pyo
+/opt/xensource/sm/linstorjournaler.py
+/opt/xensource/sm/linstorjournaler.pyc
+/opt/xensource/sm/linstorjournaler.pyo
+/opt/xensource/sm/linstorvhdutil.py
+/opt/xensource/sm/linstorvhdutil.pyc
+/opt/xensource/sm/linstorvhdutil.pyo
+/opt/xensource/sm/linstorvolumemanager.py
+/opt/xensource/sm/linstorvolumemanager.pyc
+/opt/xensource/sm/linstorvolumemanager.pyo
 
 %changelog
+* Thu Aug 13 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.3
+- Add experimental XFS, CephFS, Gluster and ZFS drivers
+- Add experimental Linstor driver and related required code changes
+- Patches now produced from our maintenance branch of the sm git repo
+- Obsolete sm-additional-drivers
+
 * Tue Jul 07 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.2
 - Re-add cleanup support for ext4 driver (not removing it from 8.2)
 - Add cleanup support for gluster and cephfs drivers

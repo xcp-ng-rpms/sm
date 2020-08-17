@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.29.0
-Release: 1.3%{?dist}
+Release: 1.4%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -35,7 +35,7 @@ Obsoletes: sm-additional-drivers
 Patch1001: 0001-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
 Patch1002: 0002-feat-drivers-always-check-if-dependencies-are-ok-for.patch
 Patch1003: 0003-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1004: 0004-feat-drivers-add-LinstorSR-driver.patch
+#Patch1004: 0004-feat-drivers-add-LinstorSR-driver.patch
 Patch1005: 0005-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1006: 0006-Add-TrueNAS-multipath-config.patch
 
@@ -363,7 +363,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 # XCP-ng
-/etc/xapi.d/plugins/linstor-manager
+#/etc/xapi.d/plugins/linstor-manager
 /opt/xensource/sm/CephFSSR
 /opt/xensource/sm/CephFSSR.py
 /opt/xensource/sm/CephFSSR.pyc
@@ -372,10 +372,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/GlusterFSSR.py
 /opt/xensource/sm/GlusterFSSR.pyc
 /opt/xensource/sm/GlusterFSSR.pyo
-/opt/xensource/sm/LinstorSR
-/opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/LinstorSR.pyc
-/opt/xensource/sm/LinstorSR.pyo
+#/opt/xensource/sm/LinstorSR
+#/opt/xensource/sm/LinstorSR.py
+#/opt/xensource/sm/LinstorSR.pyc
+#/opt/xensource/sm/LinstorSR.pyo
 /opt/xensource/sm/XFSSR
 /opt/xensource/sm/XFSSR.py
 /opt/xensource/sm/XFSSR.pyc
@@ -384,17 +384,20 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ZFSSR.py
 /opt/xensource/sm/ZFSSR.pyc
 /opt/xensource/sm/ZFSSR.pyo
-/opt/xensource/sm/linstorjournaler.py
-/opt/xensource/sm/linstorjournaler.pyc
-/opt/xensource/sm/linstorjournaler.pyo
-/opt/xensource/sm/linstorvhdutil.py
-/opt/xensource/sm/linstorvhdutil.pyc
-/opt/xensource/sm/linstorvhdutil.pyo
-/opt/xensource/sm/linstorvolumemanager.py
-/opt/xensource/sm/linstorvolumemanager.pyc
-/opt/xensource/sm/linstorvolumemanager.pyo
+#/opt/xensource/sm/linstorjournaler.py
+#/opt/xensource/sm/linstorjournaler.pyc
+#/opt/xensource/sm/linstorjournaler.pyo
+#/opt/xensource/sm/linstorvhdutil.py
+#/opt/xensource/sm/linstorvhdutil.pyc
+#/opt/xensource/sm/linstorvhdutil.pyo
+#/opt/xensource/sm/linstorvolumemanager.py
+#/opt/xensource/sm/linstorvolumemanager.pyc
+#/opt/xensource/sm/linstorvolumemanager.pyo
 
 %changelog
+* Mon Aug 17 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.4
+- Temporarily disable linstor patch
+
 * Thu Aug 13 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.3
 - Add experimental XFS, CephFS, Gluster and ZFS drivers
 - Add experimental Linstor driver and related required code changes

@@ -1,15 +1,15 @@
-From 86c868338b692cb6bdbcd6fa7280da19c48cc09e Mon Sep 17 00:00:00 2001
+From 98a0376a042eb9976302ce48a65ef23f12a7deff Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 1/6] feat(drivers): add CephFS, GlusterFS and XFS drivers
+Subject: [PATCH 3/6] feat(drivers): add CephFS, GlusterFS and XFS drivers
 
 ---
  Makefile               |   3 +
- drivers/CephFSSR.py    | 286 +++++++++++++++++++++++++++++++++++++++++++++++++
- drivers/GlusterFSSR.py | 276 +++++++++++++++++++++++++++++++++++++++++++++++
- drivers/XFSSR.py       | 235 ++++++++++++++++++++++++++++++++++++++++
+ drivers/CephFSSR.py    | 296 +++++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/GlusterFSSR.py | 287 +++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/XFSSR.py       | 246 ++++++++++++++++++++++++++++++++++++++++
  drivers/cleanup.py     |   5 +-
- 5 files changed, 804 insertions(+), 1 deletion(-)
+ 5 files changed, 836 insertions(+), 1 deletion(-)
  create mode 100644 drivers/CephFSSR.py
  create mode 100644 drivers/GlusterFSSR.py
  create mode 100644 drivers/XFSSR.py
@@ -30,10 +30,10 @@ index f752a9e..8f06e91 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
 new file mode 100644
-index 0000000..58ea68f
+index 0000000..d797490
 --- /dev/null
 +++ b/drivers/CephFSSR.py
-@@ -0,0 +1,286 @@
+@@ -0,0 +1,296 @@
 +#!/usr/bin/env python
 +#
 +# Original work copyright (C) Citrix systems
@@ -125,6 +125,12 @@ index 0000000..58ea68f
 +    handles = staticmethod(handles)
 +
 +    def load(self, sr_uuid):
++        if not self._is_ceph_available():
++            raise xs_errors.XenError(
++                'SRUnavailable',
++                opterr='ceph is not installed'
++            )
++
 +        self.ops_exclusive = FileSR.OPS_EXCLUSIVE
 +        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
 +        self.sr_vditype = SR.DEFAULT_TAP
@@ -282,6 +288,10 @@ index 0000000..58ea68f
 +    def vdi(self, uuid, loadLocked=False):
 +        return CephFSFileVDI(self, uuid)
 +
++    @staticmethod
++    def _is_ceph_available():
++        import distutils.spawn
++        return distutils.spawn.find_executable('ceph')
 +
 +class CephFSFileVDI(FileSR.FileVDI):
 +    def attach(self, sr_uuid, vdi_uuid):
@@ -322,10 +332,10 @@ index 0000000..58ea68f
 +    SR.registerSR(CephFSSR)
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
 new file mode 100644
-index 0000000..b0eec75
+index 0000000..a2f7484
 --- /dev/null
 +++ b/drivers/GlusterFSSR.py
-@@ -0,0 +1,276 @@
+@@ -0,0 +1,287 @@
 +#!/usr/bin/env python
 +#
 +# Original work copyright (C) Citrix systems
@@ -412,6 +422,12 @@ index 0000000..b0eec75
 +    handles = staticmethod(handles)
 +
 +    def load(self, sr_uuid):
++        if not self._is_glusterfs_available():
++            raise xs_errors.XenError(
++                'SRUnavailable',
++                opterr='glusterfs is not installed'
++            )
++
 +        self.ops_exclusive = FileSR.OPS_EXCLUSIVE
 +        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
 +        self.sr_vditype = SR.DEFAULT_TAP
@@ -564,6 +580,11 @@ index 0000000..b0eec75
 +    def vdi(self, uuid, loadLocked=False):
 +        return GlusterFSFileVDI(self, uuid)
 +
++    @staticmethod
++    def _is_glusterfs_available():
++        import distutils.spawn
++        return distutils.spawn.find_executable('glusterfs')
++
 +
 +class GlusterFSFileVDI(FileSR.FileVDI):
 +    def attach(self, sr_uuid, vdi_uuid):
@@ -604,10 +625,10 @@ index 0000000..b0eec75
 +    SR.registerSR(GlusterFSSR)
 diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
 new file mode 100644
-index 0000000..44d2dc2
+index 0000000..15dbe44
 --- /dev/null
 +++ b/drivers/XFSSR.py
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,246 @@
 +#!/usr/bin/env python
 +#
 +# Original work copyright (C) Citrix systems
@@ -668,6 +689,12 @@ index 0000000..44d2dc2
 +    handles = staticmethod(handles)
 +
 +    def load(self, sr_uuid):
++        if not self._is_xfs_available():
++            raise xs_errors.XenError(
++                'SRUnavailable',
++                opterr='xfsprogs is not installed'
++            )
++
 +        self.ops_exclusive = FileSR.OPS_EXCLUSIVE
 +        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
 +        self.sr_vditype = SR.DEFAULT_TAP
@@ -827,6 +854,11 @@ index 0000000..44d2dc2
 +
 +    def vdi(self, uuid, loadLocked=False):
 +        return XFSFileVDI(self, uuid)
++
++    @staticmethod
++    def _is_xfs_available():
++        import distutils.spawn
++        return distutils.spawn.find_executable('mkfs.xfs')
 +
 +
 +class XFSFileVDI(FileSR.FileVDI):

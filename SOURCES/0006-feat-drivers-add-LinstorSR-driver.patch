@@ -1,7 +1,7 @@
-From df6497cb00b800cbb7e39cc0c2107f626f2fdd54 Mon Sep 17 00:00:00 2001
+From e9f625dfd72ca73c40a324d8392744e3b861b5b9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 4/6] feat(drivers): add LinstorSR driver
+Subject: [PATCH 6/6] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -46,19 +46,22 @@ coalesce is executed we have these steps:
 "B" -> "A"
 Without symlink update the previous "A" path is reused instead of
 "B" path. Note: "A", "B" and "OLD_A" are UUIDs.
+
+- Since linstor python modules are not present on every XCP-ng host,
+module imports are protected by try.. except... blocks.
 ---
  Makefile                        |    5 +
- drivers/LinstorSR.py            | 1941 +++++++++++++++++++++++++++++++++++++++
+ drivers/LinstorSR.py            | 1952 +++++++++++++++++++++++++++++++++++++++
  drivers/XE_SR_ERRORCODES.xml    |   42 +
- drivers/cleanup.py              |  315 ++++++-
+ drivers/cleanup.py              |  325 ++++++-
  drivers/linstor-manager         |  233 +++++
  drivers/linstorjournaler.py     |  146 +++
  drivers/linstorvhdutil.py       |  170 ++++
  drivers/linstorvolumemanager.py | 1524 ++++++++++++++++++++++++++++++
- drivers/tapdisk-pause           |   61 +-
+ drivers/tapdisk-pause           |   70 +-
  drivers/util.py                 |   14 +-
  tests/mocks/linstor/__init__.py |    0
- 11 files changed, 4425 insertions(+), 26 deletions(-)
+ 11 files changed, 4455 insertions(+), 26 deletions(-)
  create mode 100755 drivers/LinstorSR.py
  create mode 100755 drivers/linstor-manager
  create mode 100755 drivers/linstorjournaler.py
@@ -67,7 +70,7 @@ Without symlink update the previous "A" path is reused instead of
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index 4619e82..bd0b415 100755
+index fa594ad..1d7a152 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -8,6 +8,7 @@ SM_DRIVERS += udev
@@ -78,7 +81,7 @@ index 4619e82..bd0b415 100755
  SM_DRIVERS += LVHD
  SM_DRIVERS += LVHDoISCSI
  SM_DRIVERS += LVHDoHBA
-@@ -34,6 +35,9 @@ SM_LIBS += verifyVHDsOnSR
+@@ -35,6 +36,9 @@ SM_LIBS += verifyVHDsOnSR
  SM_LIBS += scsiutil
  SM_LIBS += scsi_host_rescan
  SM_LIBS += vhdutil
@@ -88,7 +91,7 @@ index 4619e82..bd0b415 100755
  SM_LIBS += lvhdutil
  SM_LIBS += cifutils
  SM_LIBS += xs_errors
-@@ -193,6 +197,7 @@ install: precheck
+@@ -194,6 +198,7 @@ install: precheck
  	cd $(SM_STAGING)$(SM_DEST) && rm -f OCFSoHBASR
  	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
  	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
@@ -98,10 +101,10 @@ index 4619e82..bd0b415 100755
  	install -m 755 drivers/testing-hooks $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
 new file mode 100755
-index 0000000..6f99a59
+index 0000000..6d4f57c
 --- /dev/null
 +++ b/drivers/LinstorSR.py
-@@ -0,0 +1,1941 @@
+@@ -0,0 +1,1952 @@
 +#!/usr/bin/env python
 +#
 +# Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
@@ -119,10 +122,16 @@ index 0000000..6f99a59
 +# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 +
 +from constants import CBTLOG_TAG
-+from linstorjournaler import LinstorJournaler
-+from linstorvhdutil import LinstorVhdUtil
-+from linstorvolumemanager \
-+    import LinstorVolumeManager, LinstorVolumeManagerError
++
++try:
++    from linstorjournaler import LinstorJournaler
++    from linstorvhdutil import LinstorVhdUtil
++    from linstorvolumemanager \
++        import LinstorVolumeManager, LinstorVolumeManagerError
++    LINSTOR_AVAILABLE = True
++except ImportError:
++    LINSTOR_AVAILABLE = False
++
 +from lock import Lock
 +import blktap2
 +import cleanup
@@ -356,6 +365,11 @@ index 0000000..6f99a59
 +        return type == LinstorSR.DRIVER_TYPE
 +
 +    def load(self, sr_uuid):
++        if not LINSTOR_AVAILABLE:
++            raise util.SMException(
++                'Can\'t load LinstorSR: LINSTOR libraries are missing'
++            )
++
 +        # Check parameters.
 +        if 'hosts' not in self.dconf or not self.dconf['hosts']:
 +            raise xs_errors.XenError('LinstorConfigHostsMissing')
@@ -2095,24 +2109,29 @@ index 4014a2f..d647da5 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 461b979..0e8309c 100755
+index 0d06128..8eaf5cc 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -47,7 +47,12 @@ import xs_errors
+@@ -47,7 +47,17 @@ import xs_errors
  from refcounter import RefCounter
  from ipc import IPCFlag
  from lvmanager import LVActivator
 -from srmetadata import LVMMetadataHandler
 +from srmetadata import LVMMetadataHandler, VDI_TYPE_TAG
 +
-+from linstorjournaler import LinstorJournaler
-+from linstorvhdutil import LinstorVhdUtil
-+from linstorvolumemanager \
-+    import LinstorVolumeManager, LinstorVolumeManagerError
++try:
++    from linstorjournaler import LinstorJournaler
++    from linstorvhdutil import LinstorVhdUtil
++    from linstorvolumemanager \
++        import LinstorVolumeManager, LinstorVolumeManagerError
++    LINSTOR_AVAILABLE = True
++except ImportError:
++    LINSTOR_AVAILABLE = False
++
  
  # Disable automatic leaf-coalescing. Online leaf-coalesce is currently not 
  # possible due to lvhd_stop_using_() not working correctly. However, we leave 
-@@ -643,7 +648,19 @@ class VDI:
+@@ -643,7 +653,19 @@ class VDI:
              if child not in childList:
                  thisPrunable = False
  
@@ -2133,7 +2152,7 @@ index 461b979..0e8309c 100755
              vdiList.append(self)
          return vdiList
  
-@@ -1347,6 +1364,70 @@ class LVHDVDI(VDI):
+@@ -1347,6 +1369,70 @@ class LVHDVDI(VDI):
                  lvhdutil.calcSizeLV(self.getSizeVHD())
  
  
@@ -2204,7 +2223,7 @@ index 461b979..0e8309c 100755
  
  ################################################################################
  #
-@@ -1403,7 +1484,8 @@ class SR:
+@@ -1403,7 +1489,8 @@ class SR:
  
      TYPE_FILE = "file"
      TYPE_LVHD = "lvhd"
@@ -2214,7 +2233,7 @@ index 461b979..0e8309c 100755
  
      LOCK_RETRY_INTERVAL = 3
      LOCK_RETRY_ATTEMPTS = 20
-@@ -1424,6 +1506,8 @@ class SR:
+@@ -1424,6 +1511,8 @@ class SR:
              return FileSR(uuid, xapi, createLock, force)
          elif type == SR.TYPE_LVHD:
              return LVHDSR(uuid, xapi, createLock, force)
@@ -2223,7 +2242,7 @@ index 461b979..0e8309c 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2726,6 +2810,227 @@ class LVHDSR(SR):
+@@ -2726,6 +2815,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2231,6 +2250,11 @@ index 461b979..0e8309c 100755
 +    TYPE = SR.TYPE_LINSTOR
 +
 +    def __init__(self, uuid, xapi, createLock, force):
++        if not LINSTOR_AVAILABLE:
++            raise util.SMException(
++                'Can\'t load cleanup LinstorSR: LINSTOR libraries are missing'
++            )
++
 +        SR.__init__(self, uuid, xapi, createLock, force)
 +        self._master_uri = 'linstor://localhost'
 +        self.path = LinstorVolumeManager.DEV_ROOT_PATH
@@ -2451,8 +2475,8 @@ index 461b979..0e8309c 100755
  ################################################################################
  #
  #  Helpers
-@@ -2766,7 +3071,9 @@ def normalizeType(type):
-         "xfs", "zfs"
+@@ -2766,7 +3081,9 @@ def normalizeType(type):
+         "xfs", "zfs", "ext4"
      ]:
          type = SR.TYPE_FILE
 -    if not type in SR.TYPES:
@@ -4560,19 +4584,23 @@ index 0000000..280cef9
 +                    return True
 +        return False
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 5936869..a42c66a 100755
+index 5936869..ed6abed 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
-@@ -29,6 +29,8 @@ import lvhdutil
+@@ -29,6 +29,12 @@ import lvhdutil
  import vhdutil
  import lvmcache
  
-+from linstorvolumemanager import LinstorVolumeManager
++try:
++    from linstorvolumemanager import LinstorVolumeManager
++    LINSTOR_AVAILABLE = True
++except ImportError:
++    LINSTOR_AVAILABLE = False
 +
  TAPDEV_BACKPATH_PFX = "/dev/sm/backend"
  TAPDEV_PHYPATH_PFX = "/dev/sm/phy"
  
-@@ -73,24 +75,6 @@ def _mkphylink(sr_uuid, vdi_uuid, path):
+@@ -73,24 +79,6 @@ def _mkphylink(sr_uuid, vdi_uuid, path):
      util.pread2(cmd)
      return path
  
@@ -4597,12 +4625,17 @@ index 5936869..a42c66a 100755
  def tapPause(session, args):
      tap = Tapdisk(session, args)
      return tap.Pause()
-@@ -148,7 +132,46 @@ class Tapdisk:
+@@ -148,7 +136,51 @@ class Tapdisk:
                      self.realpath = p
                      if ty == "LV": self.vdi_type = "aio"
                      else: self.vdi_type = "vhd"
 -        
 +        elif realpath.startswith('/dev/drbd/by-res/xcp-volume-'):
++            if not LINSTOR_AVAILABLE:
++                raise util.SMException(
++                    'Can\'t refresh tapdisk: LINSTOR libraries are missing'
++                )
++
 +            # We must always recreate the symlink to ensure we have
 +            # the right info. Why? Because if the volume UUID is changed in
 +            # LINSTOR the symlink is not directly updated. When live leaf

@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.29.0
-Release: 1.5%{?dist}
+Release: 1.6%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -83,6 +83,10 @@ if [ -e /etc/multipath.conf -a ! -h /etc/multipath.conf ]; then
 fi
 update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.xenserver/multipath.conf 90
 
+# XCP-ng: enable linstor-monitor by default.
+# However it won't start without linstor-controller.service
+systemctl enable linstor-monitor.service
+
 %preun
 %systemd_preun make-dummy-sr.service
 %systemd_preun mpcount.service
@@ -99,6 +103,9 @@ if [ $1 -eq 0 ] ; then
 fi
 exit 0
 
+# XCP-ng
+%systemd_preun linstor-monitor.service
+
 %postun
 %systemd_postun make-dummy-sr.service
 %systemd_postun mpcount.service
@@ -111,6 +118,9 @@ if [ $1 -eq 0 ]; then
 elif [ $1 -eq 1 ]; then
     true;
 fi
+
+# XCP-ng
+%systemd_postun linstor-monitor.service
 
 %check
 tests/run_python_unittests.sh
@@ -397,8 +407,13 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/linstorvolumemanager.pyc
 /opt/xensource/sm/linstorvolumemanager.pyo
+/opt/xensource/libexec/linstor-monitord
+%{_unitdir}/linstor-monitor.service
 
 %changelog
+* Wed Aug 19 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.6
+- Add linstor-monitor daemon to detect master changes
+
 * Mon Aug 17 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.5
 - Re-enable linstor patch
 - Re-add support for ext4 driver since sm-additional-drivers is gone

@@ -3,7 +3,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.29.0
-Release: 1.6%{?dist}
+Release: 1.7%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -411,6 +411,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Wed Aug 26 2020 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.29.0-1.7
+- Update linstor patch (fix VDI.compose)
+
 * Wed Aug 19 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.6
 - Add linstor-monitor daemon to detect master changes
 

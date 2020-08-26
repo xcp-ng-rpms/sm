@@ -1,4 +1,4 @@
-From dffad548b26ffcf1f3eecee64152fe2d124c1721 Mon Sep 17 00:00:00 2001
+From d741393079eda843bc99d5f4dcf21035e08459a0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH 6/6] feat(drivers): add LinstorSR driver
@@ -53,20 +53,21 @@ module imports are protected by try.. except... blocks.
 - Provide a linstor-monitor daemon to check master changes
 ---
  Makefile                        |    9 +
- drivers/LinstorSR.py            | 1952 +++++++++++++++++++++++++++++++++++++++
+ drivers/LinstorSR.py            | 1962 +++++++++++++++++++++++++++++++
  drivers/XE_SR_ERRORCODES.xml    |   42 +
- drivers/cleanup.py              |  325 ++++++-
- drivers/linstor-manager         |  233 +++++
+ drivers/cleanup.py              |  325 ++++-
+ drivers/linstor-manager         |  233 ++++
  drivers/linstorjournaler.py     |  146 +++
- drivers/linstorvhdutil.py       |  170 ++++
- drivers/linstorvolumemanager.py | 1524 ++++++++++++++++++++++++++++++
+ drivers/linstorvhdutil.py       |  170 +++
+ drivers/linstorvolumemanager.py | 1524 ++++++++++++++++++++++++
  drivers/tapdisk-pause           |   70 +-
  drivers/util.py                 |   14 +-
+ drivers/vhdutil.py              |    2 +-
  linstor/Makefile                |   22 +
- linstor/linstor-monitord.c      |  402 ++++++++
+ linstor/linstor-monitord.c      |  402 +++++++
  systemd/linstor-monitor.service |   13 +
  tests/mocks/linstor/__init__.py |    0
- 14 files changed, 4896 insertions(+), 26 deletions(-)
+ 15 files changed, 4907 insertions(+), 27 deletions(-)
  create mode 100755 drivers/LinstorSR.py
  create mode 100755 drivers/linstor-manager
  create mode 100755 drivers/linstorjournaler.py
@@ -134,10 +135,10 @@ index fa594ad..83a9e0b 100755
  	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
 new file mode 100755
-index 0000000..6d4f57c
+index 0000000..6027cda
 --- /dev/null
 +++ b/drivers/LinstorSR.py
-@@ -0,0 +1,1952 @@
+@@ -0,0 +1,1962 @@
 +#!/usr/bin/env python
 +#
 +# Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
@@ -1568,11 +1569,21 @@ index 0000000..6d4f57c
 +        parent_uuid = vdi1
 +        parent_path = self._linstor.get_device_path(parent_uuid)
 +
-+        vhdutil.setParent(self.path, parent_path, False)
-+        vhdutil.setHidden(parent_path)
-+        self.sr.session.xenapi.VDI.set_managed(
-+            self.sr.srcmd.params['args'][0], False
-+        )
++        # We must pause tapdisk to correctly change the parent. Otherwise we
++        # have a readonly error.
++        # See: https://github.com/xapi-project/xen-api/blob/b3169a16d36dae0654881b336801910811a399d9/ocaml/xapi/storage_migrate.ml#L928-L929
++        # and: https://github.com/xapi-project/xen-api/blob/b3169a16d36dae0654881b336801910811a399d9/ocaml/xapi/storage_migrate.ml#L775
++
++        if not blktap2.VDI.tap_pause(self.session, self.sr.uuid, self.uuid):
++            raise util.SMException('Failed to pause VDI {}'.format(self.uuid))
++        try:
++            vhdutil.setParent(self.path, parent_path, False)
++            vhdutil.setHidden(parent_path)
++            self.sr.session.xenapi.VDI.set_managed(
++                self.sr.srcmd.params['args'][0], False
++            )
++        finally:
++            blktap2.VDI.tap_unpause(self.session, self.sr.uuid, self.uuid)
 +
 +        if not blktap2.VDI.tap_refresh(self.session, self.sr.uuid, self.uuid):
 +            raise util.SMException(
@@ -4737,6 +4748,19 @@ index 337add2..cdf6102 100755
  
  # XXX: this function doesn't do what it claims to do
  def get_localhost_uuid(session):
+diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
+index 422834e..f0c6329 100755
+--- a/drivers/vhdutil.py
++++ b/drivers/vhdutil.py
+@@ -99,7 +99,7 @@ def fullSizeVHD(virtual_size):
+ 
+ def ioretry(cmd):
+     return util.ioretry(lambda: util.pread2(cmd),
+-            errlist = [errno.EIO, errno.EAGAIN])
++            errlist = [errno.EIO, errno.EAGAIN, errno.EROFS])
+ 
+ def getVHDInfo(path, extractUuidFunction, includeParent = True):
+     """Get the VHD info. The parent info may optionally be omitted: vhd-util
 diff --git a/linstor/Makefile b/linstor/Makefile
 new file mode 100644
 index 0000000..c329ca3
@@ -5196,5 +5220,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.13.7
+2.25.1
 

@@ -1,13 +1,13 @@
-From 85121aa11ca943a42aa3d284859c6b383215ccfa Mon Sep 17 00:00:00 2001
+From 8e576220cfc45888bf6b2f3d656dab78816c0438 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
-Subject: [PATCH 4/6] feat(drivers): add ZFS driver to avoid losing VDI
- metadata (xcp-ng/xcp#401)
+Subject: [PATCH 4/6] feat(drivers): add ZFS driver to avoid losing VDI metadata
+ (xcp-ng/xcp#401)
 
 ---
  Makefile                     |   1 +
- drivers/XE_SR_ERRORCODES.xml |  10 ++++
- drivers/ZFSSR.py             | 137 +++++++++++++++++++++++++++++++++++++++++++
+ drivers/XE_SR_ERRORCODES.xml |  10 +++
+ drivers/ZFSSR.py             | 137 +++++++++++++++++++++++++++++++++++
  drivers/cleanup.py           |   2 +-
  4 files changed, 149 insertions(+), 1 deletion(-)
  create mode 100644 drivers/ZFSSR.py
@@ -46,7 +46,7 @@ index 16a7ff7..4014a2f 100755
  </SM-errorcodes>
 diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
 new file mode 100644
-index 0000000..3b9e0fe
+index 0000000..1b2f398
 --- /dev/null
 +++ b/drivers/ZFSSR.py
 @@ -0,0 +1,137 @@
@@ -94,7 +94,7 @@ index 0000000..3b9e0fe
 +]
 +
 +CONFIGURATION = [
-+    ['device', 'local ZFS device path (required) (e.g. /dev/sda3)']
++    ['location', 'local ZFS directory path (required)']
 +]
 +
 +DRIVER_INFO = {
@@ -201,5 +201,5 @@ index e0e411a..461b979 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.13.7
+2.28.0
 

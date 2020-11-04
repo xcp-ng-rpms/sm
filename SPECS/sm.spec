@@ -30,7 +30,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.29.0..2.29.0-8.2
+# git format-patch v2.29.1..2.29.1-8.2
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-Add-TrueNAS-multipath-config.patch
 Patch1003: 0003-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch

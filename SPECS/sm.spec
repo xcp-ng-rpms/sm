@@ -1,17 +1,16 @@
 # -*- rpm-spec -*-
-
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.29.0
-Release: 1.7%{?dist}
+Version: 2.29.1
+Release: 1.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 
-Source0: https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz
+Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz
 
 
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz) = dd36c6546aa9f7064f6d33614f7551e5eee409f0
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz) = ab124446ce2b54b2bc1f51003c0dbf5f3cea9ae1
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: gcc
@@ -411,6 +410,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Wed Nov 04 2020 Samuel Verschelde <tim.smith@citrix.com> - 2.29.1-1.1
+- Sync with hotfix XS82E006
+- CA-343115: ensure device symlinks are created correctly even when path count not required
+
 * Fri Sep 18 2020 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.29.0-1.7
 - Update ZFS patch (use location instead of device in configuration)
 
@@ -766,7 +769,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz) = dd36c6546aa9f7064f6d33614f7551e5eee409f0
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz) = ab124446ce2b54b2bc1f51003c0dbf5f3cea9ae1
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -786,7 +789,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz) = dd36c6546aa9f7064f6d33614f7551e5eee409f0
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz) = ab124446ce2b54b2bc1f51003c0dbf5f3cea9ae1
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -799,7 +802,7 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XSU/repos/sm/archive?at=v2.29.0&format=tar.gz&prefix=sm-2.29.0#/sm-2.29.0.tar.gz) = dd36c6546aa9f7064f6d33614f7551e5eee409f0
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz) = ab124446ce2b54b2bc1f51003c0dbf5f3cea9ae1
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

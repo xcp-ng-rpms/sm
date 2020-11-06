@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.29.1
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -30,13 +30,16 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.29.1..2.29.1-8.2
+# git format-patch v2.29.1-xcpng..2.29.1-8.2
+# Note: the v2.29.1-xcpng tag was manually created by us on our fork because
+# the upstream sm doesn't provide maintenance updates anymore
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-Add-TrueNAS-multipath-config.patch
 Patch1003: 0003-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
 Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
 Patch1005: 0005-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
 Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
+Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
 
 %description
 This package contains storage backends used in XCP
@@ -410,7 +413,12 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
-* Wed Nov 04 2020 Samuel Verschelde <tim.smith@citrix.com> - 2.29.1-1.1
+* Fri Nov 06 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.1-1.2
+- Sync patches with our latest 2.29.1-8.2 branch before XCP-ng 8.2 final release
+- 0006-feat-drivers-add-LinstorSR-driver.patch updated
+- 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch added
+
+* Wed Nov 04 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.1-1.1
 - Sync with hotfix XS82E006
 - CA-343115: ensure device symlinks are created correctly even when path count not required
 

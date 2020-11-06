@@ -1,7 +1,7 @@
-From dffad548b26ffcf1f3eecee64152fe2d124c1721 Mon Sep 17 00:00:00 2001
+From a8f86897162ce4babbcb8a1aaa254e208f02c643 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 6/6] feat(drivers): add LinstorSR driver
+Subject: [PATCH 6/7] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -53,20 +53,20 @@ module imports are protected by try.. except... blocks.
 - Provide a linstor-monitor daemon to check master changes
 ---
  Makefile                        |    9 +
- drivers/LinstorSR.py            | 1952 +++++++++++++++++++++++++++++++++++++++
- drivers/XE_SR_ERRORCODES.xml    |   42 +
- drivers/cleanup.py              |  325 ++++++-
- drivers/linstor-manager         |  233 +++++
- drivers/linstorjournaler.py     |  146 +++
- drivers/linstorvhdutil.py       |  170 ++++
- drivers/linstorvolumemanager.py | 1524 ++++++++++++++++++++++++++++++
+ drivers/LinstorSR.py            | 2100 +++++++++++++++++++++++++++++++
+ drivers/XE_SR_ERRORCODES.xml    |   36 +
+ drivers/cleanup.py              |  366 +++++-
+ drivers/linstor-manager         |  272 ++++
+ drivers/linstorjournaler.py     |  155 +++
+ drivers/linstorvhdutil.py       |  186 +++
+ drivers/linstorvolumemanager.py | 1713 +++++++++++++++++++++++++
  drivers/tapdisk-pause           |   70 +-
- drivers/util.py                 |   14 +-
+ drivers/util.py                 |   46 +-
  linstor/Makefile                |   22 +
- linstor/linstor-monitord.c      |  402 ++++++++
+ linstor/linstor-monitord.c      |  402 ++++++
  systemd/linstor-monitor.service |   13 +
  tests/mocks/linstor/__init__.py |    0
- 14 files changed, 4896 insertions(+), 26 deletions(-)
+ 14 files changed, 5361 insertions(+), 29 deletions(-)
  create mode 100755 drivers/LinstorSR.py
  create mode 100755 drivers/linstor-manager
  create mode 100755 drivers/linstorjournaler.py
@@ -134,10 +134,10 @@ index fa594ad..83a9e0b 100755
  	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
 new file mode 100755
-index 0000000..6d4f57c
+index 0000000..8be1836
 --- /dev/null
 +++ b/drivers/LinstorSR.py
-@@ -0,0 +1,1952 @@
+@@ -0,0 +1,2100 @@
 +#!/usr/bin/env python
 +#
 +# Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
@@ -169,6 +169,7 @@ index 0000000..6d4f57c
 +import blktap2
 +import cleanup
 +import errno
++import functools
 +import scsiutil
 +import SR
 +import SRCommand
@@ -430,8 +431,8 @@ index 0000000..6d4f57c
 +
 +        # Note: We don't have access to the session field if the
 +        # 'vdi_attach_from_config' command is executed.
-+        has_session = self.sr_ref and self.session is not None
-+        if has_session:
++        self._has_session = self.sr_ref and self.session is not None
++        if self._has_session:
 +            self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
 +        else:
 +            self.sm_config = self.srcmd.params.get('sr_sm_config') or {}
@@ -449,87 +450,167 @@ index 0000000..6d4f57c
 +        self._hosts = self.dconf['hosts'].split(',')
 +        self._redundancy = int(self.dconf['redundancy'] or 1)
 +        self._linstor = None  # Ensure that LINSTOR attribute exists.
++        self._journaler = None
 +
 +        self._is_master = False
 +        if 'SRmaster' in self.dconf and self.dconf['SRmaster'] == 'true':
 +            self._is_master = True
 +        self._group_name = self.dconf['group-name']
 +
-+        if not has_session:
-+            return
++        self._master_uri = None
++        self._vdi_shared_locked = False
 +
-+        self._master_uri = 'linstor://{}'.format(
-+            util.get_master_rec(self.session)['address']
-+        )
++        self._initialized = False
 +
-+        self._journaler = LinstorJournaler(
-+            self._master_uri, self._group_name, logger=util.SMlog
-+        )
++    def _locked_load(method):
++        @functools.wraps(method)
++        def wrap(self, *args, **kwargs):
++            if self._initialized:
++                return method(self, *args, **kwargs)
++            self._initialized = True
 +
-+        # Ensure ports are opened and LINSTOR controller/satellite
-+        # are activated.
-+        if self.srcmd.cmd == 'sr_create':
-+            # TODO: Disable if necessary
-+            self._enable_linstor_on_all_hosts(status=True)
++            if not self._has_session:
++                if self.srcmd.cmd == 'vdi_attach_from_config':
++                    # We must have a valid LINSTOR instance here without using
++                    # the XAPI.
++                    self._master_uri = 'linstor://{}'.format(
++                        util.get_master_address()
++                    )
++                    self._journaler = LinstorJournaler(
++                        self._master_uri, self._group_name, logger=util.SMlog
++                    )
 +
-+        try:
-+            # Try to open SR if exists.
-+            self._linstor = LinstorVolumeManager(
-+                self._master_uri,
-+                self._group_name,
-+                repair=self._is_master,
-+                logger=util.SMlog
++                    try:
++                        self._linstor = LinstorVolumeManager(
++                            self._master_uri,
++                            self._group_name,
++                            logger=util.SMlog
++                        )
++                        return
++                    except Exception as e:
++                        util.SMlog(
++                            'Ignore exception. Failed to build LINSTOR '
++                            'instance without session: {}'.format(e)
++                        )
++                return
++
++            self._master_uri = 'linstor://{}'.format(
++                util.get_master_rec(self.session)['address']
 +            )
-+            self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
-+        except Exception as e:
-+            if self.srcmd.cmd == 'sr_create':
-+                pass  # Ignore exception in this specific case.
-+            else:
-+                raise xs_errors.XenError('SRUnavailable', opterr=str(e))
 +
-+        if self._linstor:
-+            try:
-+                hosts = self._linstor.disconnected_hosts
-+            except Exception as e:
-+                raise xs_errors.XenError('SRUnavailable', opterr=str(e))
-+
-+            if hosts:
-+                raise xs_errors.XenError(
-+                    'LinstorDisconnectedHost', opterr=str(hosts)
-+                )
-+
-+            try:
-+                # If the command is a SR command on the master, we must load
-+                # all VDIs and clean journal transactions.
-+                # We must load the VDIs in the snapshot case too.
-+                if self._is_master and self.cmd not in [
-+                    'vdi_attach', 'vdi_detach',
-+                    'vdi_activate', 'vdi_deactivate'
++            if not self._is_master:
++                if self.cmd in [
++                    'sr_create', 'sr_delete', 'sr_update', 'sr_probe',
++                    'sr_scan', 'vdi_create', 'vdi_delete', 'vdi_resize',
++                    'vdi_snapshot', 'vdi_clone'
 +                ]:
-+                    self._load_vdis()
-+                    self._undo_all_journal_transactions()
-+                    self._linstor.remove_resourceless_volumes()
++                    util.SMlog('{} blocked for non-master'.format(self.cmd))
++                    raise xs_errors.XenError('LinstorMaster')
 +
-+                self._synchronize_metadata()
-+            except Exception as e:
-+                util.SMlog(
-+                    'Ignoring exception in LinstorSR.load: {}'.format(e)
++                # Because the LINSTOR KV objects cache all values, we must lock
++                # the VDI before the LinstorJournaler/LinstorVolumeManager
++                # instantiation and before any action on the master to avoid a
++                # bad read. The lock is also necessary to avoid strange
++                # behaviors if the GC is executed during an action on a slave.
++                if self.cmd.startswith('vdi_'):
++                    self._shared_lock_vdi(self.srcmd.params['vdi_uuid'])
++                    self._vdi_shared_locked = True
++
++            self._journaler = LinstorJournaler(
++                self._master_uri, self._group_name, logger=util.SMlog
++            )
++
++            # Ensure ports are opened and LINSTOR controller/satellite
++            # are activated.
++            if self.srcmd.cmd == 'sr_create':
++                # TODO: Disable if necessary
++                self._enable_linstor_on_all_hosts(status=True)
++
++            try:
++                # Try to open SR if exists.
++                self._linstor = LinstorVolumeManager(
++                    self._master_uri,
++                    self._group_name,
++                    repair=self._is_master,
++                    logger=util.SMlog
 +                )
-+                util.SMlog(traceback.format_exc())
++                self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
++            except Exception as e:
++                if self.srcmd.cmd == 'sr_create' or \
++                        self.srcmd.cmd == 'sr_detach':
++                    # Ignore exception in this specific case: sr_create.
++                    # At this moment the LinstorVolumeManager cannot be
++                    # instantiated. Concerning the sr_detach command, we must
++                    # ignore LINSTOR exceptions (if the volume group doesn't
++                    # exist for example after a bad user action).
++                    pass
++                else:
++                    raise xs_errors.XenError('SRUnavailable', opterr=str(e))
 +
++            if self._linstor:
++                try:
++                    hosts = self._linstor.disconnected_hosts
++                except Exception as e:
++                    raise xs_errors.XenError('SRUnavailable', opterr=str(e))
++
++                if hosts:
++                    util.SMlog('Failed to join node(s): {}'.format(hosts))
++
++                try:
++                    # If the command is a SR command on the master, we must
++                    # load all VDIs and clean journal transactions.
++                    # We must load the VDIs in the snapshot case too.
++                    if self._is_master and self.cmd not in [
++                        'vdi_attach', 'vdi_detach',
++                        'vdi_activate', 'vdi_deactivate',
++                        'vdi_epoch_begin', 'vdi_epoch_end',
++                        'vdi_update', 'vdi_destroy'
++                    ]:
++                        self._load_vdis()
++                        self._undo_all_journal_transactions()
++                        self._linstor.remove_resourceless_volumes()
++
++                    self._synchronize_metadata()
++                except Exception as e:
++                    util.SMlog(
++                        'Ignoring exception in LinstorSR.load: {}'.format(e)
++                    )
++                    util.SMlog(traceback.format_exc())
++
++            return method(self, *args, **kwargs)
++
++        return wrap
++
++    @_locked_load
++    def cleanup(self):
++        if self._vdi_shared_locked:
++            self._shared_lock_vdi(self.srcmd.params['vdi_uuid'], locked=False)
++
++    @_locked_load
 +    def create(self, uuid, size):
-+        # `size` param is not used. ;)
-+
 +        util.SMlog('LinstorSR.create for {}'.format(self.uuid))
-+        if not self._is_master:
-+            util.SMlog('sr_create blocked for non-master')
-+            raise xs_errors.XenError('LinstorMaster')
 +
 +        if self._redundancy > len(self._hosts):
 +            raise xs_errors.XenError(
 +                'LinstorSRCreate',
 +                opterr='Redundancy greater than host count'
 +            )
++
++        xenapi = self.session.xenapi
++        srs = xenapi.SR.get_all_records_where(
++            'field "type" = "{}"'.format(self.DRIVER_TYPE)
++        )
++        srs = dict(filter(lambda e: e[1]['uuid'] != self.uuid, srs.items()))
++
++        for sr in srs.values():
++            for pbd in sr['PBDs']:
++                device_config = xenapi.PBD.get_device_config(pbd)
++                group_name = device_config.get('group-name')
++                if group_name and group_name == self._group_name:
++                    raise xs_errors.XenError(
++                        'LinstorSRCreate',
++                        opterr='group name must be unique'
++                    )
 +
 +        # Create SR.
 +        # Throw if the SR already exists.
@@ -547,12 +628,9 @@ index 0000000..6d4f57c
 +            util.SMlog('Failed to create LINSTOR SR: {}'.format(e))
 +            raise xs_errors.XenError('LinstorSRCreate', opterr=str(e))
 +
++    @_locked_load
 +    def delete(self, uuid):
 +        util.SMlog('LinstorSR.delete for {}'.format(self.uuid))
-+        if not self._is_master:
-+            util.SMlog('sr_delete blocked for non-master')
-+            raise xs_errors.XenError('LinstorMaster')
-+
 +        cleanup.gc_force(self.session, self.uuid)
 +
 +        if self.vdis:
@@ -574,7 +652,10 @@ index 0000000..6d4f57c
 +                opterr=str(e)
 +            )
 +
++    @_locked_load
 +    def update(self, uuid):
++        util.SMlog('LinstorSR.update for {}'.format(self.uuid))
++
 +        # Well, how can we update a SR if it doesn't exist? :thinking:
 +        if not self._linstor:
 +            raise xs_errors.XenError(
@@ -595,6 +676,7 @@ index 0000000..6d4f57c
 +            )
 +        }
 +
++    @_locked_load
 +    def attach(self, uuid):
 +        util.SMlog('LinstorSR.attach for {}'.format(self.uuid))
 +
@@ -604,19 +686,19 @@ index 0000000..6d4f57c
 +                opterr='no such group: {}'.format(self._group_name)
 +            )
 +
++    @_locked_load
 +    def detach(self, uuid):
 +        util.SMlog('LinstorSR.detach for {}'.format(self.uuid))
 +        cleanup.abort(self.uuid)
 +
++    @_locked_load
 +    def probe(self):
-+        pass  # TODO
++        util.SMlog('LinstorSR.probe for {}'.format(self.uuid))
++        # TODO
 +
++    @_locked_load
 +    def scan(self, uuid):
 +        util.SMlog('LinstorSR.scan for {}'.format(self.uuid))
-+        if not self._is_master:
-+            util.SMlog('sr_scan blocked for non-master')
-+            raise xs_errors.XenError('LinstorMaster')
-+
 +        if not self._linstor:
 +            raise xs_errors.XenError(
 +                'SRUnavailable',
@@ -635,18 +717,55 @@ index 0000000..6d4f57c
 +        self._kick_gc()
 +        return ret
 +
++    @_locked_load
 +    def vdi(self, uuid):
 +        return LinstorVDI(self, uuid)
++
++    _locked_load = staticmethod(_locked_load)
++
++    # --------------------------------------------------------------------------
++    # Lock.
++    # --------------------------------------------------------------------------
++
++    def _shared_lock_vdi(self, vdi_uuid, locked=True):
++        pools = self.session.xenapi.pool.get_all()
++        master = self.session.xenapi.pool.get_master(pools[0])
++
++        method = 'lockVdi'
++        args = {
++            'groupName': self._group_name,
++            'srUuid': self.uuid,
++            'vdiUuid': vdi_uuid,
++            'locked': str(locked)
++        }
++
++        ret = self.session.xenapi.host.call_plugin(
++            master, self.MANAGER_PLUGIN, method, args
++        )
++        util.SMlog(
++            'call-plugin ({} with {}) returned: {}'
++            .format(method, args, ret)
++        )
++        if ret == 'False':
++            raise xs_errors.XenError(
++                'VDIUnavailable',
++                opterr='Plugin {} failed'.format(self.MANAGER_PLUGIN)
++            )
 +
 +    # --------------------------------------------------------------------------
 +    # Network.
 +    # --------------------------------------------------------------------------
 +
 +    def _enable_linstor(self, host, status):
++        method = 'enable'
++        args = {'enabled': str(bool(status))}
++
 +        ret = self.session.xenapi.host.call_plugin(
-+            host, self.MANAGER_PLUGIN, 'enable', {'enabled': str(bool(status))}
++            host, self.MANAGER_PLUGIN, method, args
 +        )
-+        util.SMlog('call-plugin returned: {}'.format(ret))
++        util.SMlog(
++            'call-plugin ({} with {}) returned: {}'.format(method, args, ret)
++        )
 +        if ret == 'False':
 +            raise xs_errors.XenError(
 +                'SRUnavailable',
@@ -1051,7 +1170,7 @@ index 0000000..6d4f57c
 +            .format(vdi_uuid, clone_info)
 +        )
 +
-+        base_uuid, snap_uuid = clone_info.split(':')
++        base_uuid, snap_uuid = clone_info.split('_')
 +
 +        # Use LINSTOR data because new VDIs may not be in the XAPI.
 +        volume_names = self._linstor.volumes_with_name
@@ -1119,14 +1238,37 @@ index 0000000..6d4f57c
 +
 +        # Remove the child nodes.
 +        if snap_uuid and snap_uuid in volume_names:
++            util.SMlog('Destroying snap {}...'.format(snap_uuid))
 +            snap_metadata = self._linstor.get_volume_metadata(snap_uuid)
 +
 +            if snap_metadata.get(VDI_TYPE_TAG) != vhdutil.VDI_TYPE_VHD:
 +                raise util.SMException('Clone {} not VHD'.format(snap_uuid))
-+            self._linstor.destroy_volume(snap_uuid)
++
++            try:
++                self._linstor.destroy_volume(snap_uuid)
++            except Exception as e:
++                util.SMlog(
++                    'Cannot destroy snap {} during undo clone: {}'
++                    .format(snap_uuid, e)
++                )
 +
 +        if vdi_uuid in volume_names:
-+            self._linstor.destroy_volume(vdi_uuid)
++            try:
++                util.SMlog('Destroying {}...'.format(vdi_uuid))
++                self._linstor.destroy_volume(vdi_uuid)
++            except Exception as e:
++                util.SMlog(
++                    'Cannot destroy VDI {} during undo clone: {}'
++                    .format(vdi_uuid, e)
++                )
++                # We can get an exception like this:
++                # "Shutdown of the DRBD resource 'XXX failed", so the
++                # volume info remains... The problem is we can't rename
++                # properly the base VDI below this line, so we must change the
++                # UUID of this bad VDI before.
++                self._linstor.update_volume_uuid(
++                    vdi_uuid, 'DELETED_' + vdi_uuid, force=True
++                )
 +
 +        # Rename!
 +        self._linstor.update_volume_uuid(base_uuid, vdi_uuid)
@@ -1217,6 +1359,10 @@ index 0000000..6d4f57c
 +        self.hidden = False
 +
 +        def raise_bad_load(e):
++            util.SMlog(
++                'Got exception in LinstorVDI.load: {}'.format(e)
++            )
++            util.SMlog(traceback.format_exc())
 +            raise xs_errors.XenError(
 +                'VDIUnavailable',
 +                opterr='Could not load {} because: {}'.format(self.uuid, e)
@@ -1282,8 +1428,6 @@ index 0000000..6d4f57c
 +
 +        # 1. Check if we are on the master and if the VDI doesn't exist.
 +        util.SMlog('LinstorVDI.create for {}'.format(self.uuid))
-+        if not self.sr._is_master:
-+            raise xs_errors.XenError('LinstorMaster')
 +        if self._exists:
 +            raise xs_errors.XenError('VDIExists')
 +
@@ -1370,7 +1514,6 @@ index 0000000..6d4f57c
 +
 +    def delete(self, sr_uuid, vdi_uuid, data_only=False):
 +        util.SMlog('LinstorVDI.delete for {}'.format(self.uuid))
-+
 +        if self.attached:
 +            raise xs_errors.XenError('VDIInUse')
 +
@@ -1396,7 +1539,7 @@ index 0000000..6d4f57c
 +        except Exception as e:
 +            util.SMlog(
 +                'Failed to remove the volume (maybe is leaf coalescing) '
-+                'for {} err:{}'.format(self.uuid, e)
++                'for {} err: {}'.format(self.uuid, e)
 +            )
 +            raise xs_errors.XenError('VDIDelete', opterr=str(e))
 +
@@ -1410,7 +1553,6 @@ index 0000000..6d4f57c
 +
 +    def attach(self, sr_uuid, vdi_uuid):
 +        util.SMlog('LinstorVDI.attach for {}'.format(self.uuid))
-+
 +        if (
 +            self.sr.srcmd.cmd != 'vdi_attach_from_config' or
 +            self.sr.srcmd.params['vdi_uuid'] != self.uuid
@@ -1501,10 +1643,6 @@ index 0000000..6d4f57c
 +
 +    def resize(self, sr_uuid, vdi_uuid, size):
 +        util.SMlog('LinstorVDI.resize for {}'.format(self.uuid))
-+        if not self.sr._is_master:
-+            util.SMlog('vdi_resize blocked for non-master')
-+            raise xs_errors.XenError('LinstorMaster')
-+
 +        if self.hidden:
 +            raise xs_errors.XenError('VDIUnavailable', opterr='hidden VDI')
 +
@@ -1568,11 +1706,21 @@ index 0000000..6d4f57c
 +        parent_uuid = vdi1
 +        parent_path = self._linstor.get_device_path(parent_uuid)
 +
-+        vhdutil.setParent(self.path, parent_path, False)
-+        vhdutil.setHidden(parent_path)
-+        self.sr.session.xenapi.VDI.set_managed(
-+            self.sr.srcmd.params['args'][0], False
-+        )
++        # We must pause tapdisk to correctly change the parent. Otherwise we
++        # have a readonly error.
++        # See: https://github.com/xapi-project/xen-api/blob/b3169a16d36dae0654881b336801910811a399d9/ocaml/xapi/storage_migrate.ml#L928-L929
++        # and: https://github.com/xapi-project/xen-api/blob/b3169a16d36dae0654881b336801910811a399d9/ocaml/xapi/storage_migrate.ml#L775
++
++        if not blktap2.VDI.tap_pause(self.session, self.sr.uuid, self.uuid):
++            raise util.SMException('Failed to pause VDI {}'.format(self.uuid))
++        try:
++            vhdutil.setParent(self.path, parent_path, False)
++            vhdutil.setHidden(parent_path)
++            self.sr.session.xenapi.VDI.set_managed(
++                self.sr.srcmd.params['args'][0], False
++            )
++        finally:
++            blktap2.VDI.tap_unpause(self.session, self.sr.uuid, self.uuid)
 +
 +        if not blktap2.VDI.tap_refresh(self.session, self.sr.uuid, self.uuid):
 +            raise util.SMException(
@@ -1734,14 +1882,17 @@ index 0000000..6d4f57c
 +            # We assume the first pool is always the one currently in use.
 +            pools = self.session.xenapi.pool.get_all()
 +            master = self.session.xenapi.pool.get_master(pools[0])
++            args = {
++                'groupName': self.sr._group_name,
++                'srUuid': self.sr.uuid,
++                'vdiUuid': self.uuid
++            }
 +            ret = self.session.xenapi.host.call_plugin(
-+                    master, self.sr.MANAGER_PLUGIN, fn, {
-+                        'groupName': self.sr._group_name,
-+                        'srUuid': self.sr.uuid,
-+                        'vdiUuid': self.uuid
-+                    }
++                    master, self.sr.MANAGER_PLUGIN, fn, args
 +            )
-+            util.SMlog('call-plugin returned: {}'.format(ret))
++            util.SMlog(
++                'call-plugin ({} with {}) returned: {}'.format(fn, args, ret)
++            )
 +            if ret == 'False':
 +                raise xs_errors.XenError(
 +                    'VDIUnavailable',
@@ -1907,9 +2058,6 @@ index 0000000..6d4f57c
 +            'LinstorVDI._snapshot for {} (type {})'
 +            .format(self.uuid, snap_type)
 +        )
-+        if not self.sr._is_master:
-+            util.SMlog('vdi_snapshot blocked for non-master')
-+            raise xs_errors.XenError('LinstorMaster')
 +
 +        # 1. Checks...
 +        if self.hidden:
@@ -1938,7 +2086,7 @@ index 0000000..6d4f57c
 +        if snap_type == VDI.SNAPSHOT_DOUBLE:
 +            snap_uuid = util.gen_uuid()
 +
-+        clone_info = '{}:{}'.format(base_uuid, snap_uuid)
++        clone_info = '{}_{}'.format(base_uuid, snap_uuid)
 +
 +        active_uuid = self.uuid
 +        self.sr._journaler.create(
@@ -2000,8 +2148,8 @@ index 0000000..6d4f57c
 +                        'Destroy unused base volume: {} (path={})'
 +                        .format(self.uuid, self.path)
 +                    )
-+                    self._linstor.destroy_volume(self.uuid)
 +                    introduce_parent = False
++                    self._linstor.destroy_volume(self.uuid)
 +            except Exception as e:
 +                util.SMlog('Ignoring exception: {}'.format(e))
 +                pass
@@ -2091,10 +2239,10 @@ index 0000000..6d4f57c
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 4014a2f..d647da5 100755
+index 4014a2f..aa07315 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -887,4 +887,46 @@
+@@ -887,4 +887,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -2124,25 +2272,19 @@ index 4014a2f..d647da5 100755
 +        </code>
 +
 +        <code>
-+            <name>LinstorDisconnectedHost</name>
-+            <description>Failed to join node(s)</description>
-+            <value>5006</value>
-+        </code>
-+
-+        <code>
 +            <name>LinstorSRCreate</name>
 +            <description>LINSTOR SR creation error</description>
-+            <value>5007</value>
++            <value>5006</value>
 +        </code>
 +        
 +        <code>
 +            <name>LinstorSRDelete</name>
 +            <description>LINSTOR SR delete error</description>
-+            <value>5008</value>
++            <value>5007</value>
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 0d06128..8eaf5cc 100755
+index 0d06128..f03ee76 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -47,7 +47,17 @@ import xs_errors
@@ -2185,7 +2327,7 @@ index 0d06128..8eaf5cc 100755
              vdiList.append(self)
          return vdiList
  
-@@ -1347,6 +1369,70 @@ class LVHDVDI(VDI):
+@@ -1347,6 +1369,111 @@ class LVHDVDI(VDI):
                  lvhdutil.calcSizeLV(self.getSizeVHD())
  
  
@@ -2193,6 +2335,8 @@ index 0d06128..8eaf5cc 100755
 +    """Object representing a VDI in a LINSTOR SR"""
 +
 +    MAX_SIZE = 2 * 1024 * 1024 * 1024 * 1024  # Max VHD size.
++
++    VOLUME_LOCK_TIMEOUT = 30
 +
 +    def load(self, info=None):
 +        self.parentUuid = info.parentUuid
@@ -2243,6 +2387,42 @@ index 0d06128..8eaf5cc 100755
 +            self.sr.unlock()
 +        VDI.delete(self)
 +
++    def pauseVDIs(self, vdiList):
++        self.sr._linstor.ensure_volume_list_is_not_locked(
++            vdiList, timeout=self.VOLUME_LOCK_TIMEOUT
++        )
++        return super(VDI).pauseVDIs(vdiList)
++
++    def _liveLeafCoalesce(self, vdi):
++        self.sr._linstor.ensure_volume_is_not_locked(
++            vdi.uuid, timeout=self.VOLUME_LOCK_TIMEOUT
++        )
++        return super(VDI)._liveLeafCoalesce(vdi)
++
++    def _relinkSkip(self):
++        abortFlag = IPCFlag(self.sr.uuid)
++        for child in self.children:
++            if abortFlag.test(FLAG_TYPE_ABORT):
++                raise AbortException('Aborting due to signal')
++            Util.log(
++                '  Relinking {} from {} to {}'.format(
++                    child, self, self.parent
++                )
++            )
++
++            session = child.sr.xapi.session
++            sr_uuid = child.sr.uuid
++            vdi_uuid = child.uuid
++            try:
++                self.sr._linstor.ensure_volume_is_not_locked(
++                    vdi_uuid, timeout=self.VOLUME_LOCK_TIMEOUT
++                )
++                blktap2.VDI.tap_pause(session, sr_uuid, vdi_uuid)
++                child._setParent(self.parent)
++            finally:
++                blktap2.VDI.tap_unpause(session, sr_uuid, vdi_uuid)
++        self.children = []
++
 +    def _setHidden(self, hidden=True):
 +        HIDDEN_TAG = 'hidden'
 +
@@ -2253,10 +2433,13 @@ index 0d06128..8eaf5cc 100755
 +            self.hidden = hidden
 +        else:
 +            VDI._setHidden(self, hidden)
++
++    def _queryVHDBlocks(self):
++        return self.sr._vhdutil.get_block_bitmap(self.uuid)
  
  ################################################################################
  #
-@@ -1403,7 +1489,8 @@ class SR:
+@@ -1403,7 +1530,8 @@ class SR:
  
      TYPE_FILE = "file"
      TYPE_LVHD = "lvhd"
@@ -2266,7 +2449,7 @@ index 0d06128..8eaf5cc 100755
  
      LOCK_RETRY_INTERVAL = 3
      LOCK_RETRY_ATTEMPTS = 20
-@@ -1424,6 +1511,8 @@ class SR:
+@@ -1424,6 +1552,8 @@ class SR:
              return FileSR(uuid, xapi, createLock, force)
          elif type == SR.TYPE_LVHD:
              return LVHDSR(uuid, xapi, createLock, force)
@@ -2275,7 +2458,7 @@ index 0d06128..8eaf5cc 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2726,6 +2815,232 @@ class LVHDSR(SR):
+@@ -2726,6 +2856,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2508,7 +2691,7 @@ index 0d06128..8eaf5cc 100755
  ################################################################################
  #
  #  Helpers
-@@ -2766,7 +3081,9 @@ def normalizeType(type):
+@@ -2766,7 +3122,9 @@ def normalizeType(type):
          "xfs", "zfs", "ext4"
      ]:
          type = SR.TYPE_FILE
@@ -2521,10 +2704,10 @@ index 0d06128..8eaf5cc 100755
  
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
 new file mode 100755
-index 0000000..0ee1cd8
+index 0000000..f7ce180
 --- /dev/null
 +++ b/drivers/linstor-manager
-@@ -0,0 +1,233 @@
+@@ -0,0 +1,272 @@
 +#!/usr/bin/env python
 +#
 +# Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
@@ -2541,6 +2724,7 @@ index 0000000..0ee1cd8
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 +
++import base64
 +import distutils.util
 +import subprocess
 +import sys
@@ -2549,6 +2733,7 @@ index 0000000..0ee1cd8
 +sys.path.append('/opt/xensource/sm/')
 +from linstorjournaler import LinstorJournaler
 +from linstorvolumemanager import LinstorVolumeManager
++from lock import Lock
 +import json
 +import LinstorSR
 +import util
@@ -2744,6 +2929,41 @@ index 0000000..0ee1cd8
 +        raise
 +
 +
++def get_block_bitmap(session, args):
++    try:
++        device_path = args['devicePath']
++        return base64.b64encode(vhdutil.getBlockBitmap(device_path)) or ''
++    except Exception as e:
++        util.SMlog('linstor-manager:get_block_bitmap error: {}'.format(e))
++        raise
++
++
++def lock_vdi(session, args):
++    lock = None
++    try:
++        sr_uuid = args['srUuid']
++        vdi_uuid = args['vdiUuid']
++        group_name = args['groupName']
++        locked = distutils.util.strtobool(args['locked'])
++
++        lock = Lock(vhdutil.LOCK_TYPE_SR, sr_uuid)
++
++        linstor = LinstorVolumeManager(
++            get_linstor_uri(session),
++            group_name,
++            logger=util.SMlog
++        )
++        linstor.lock_volume(vdi_uuid, locked)
++
++        return str(True)
++    except Exception as e:
++        util.SMlog('linstor-manager:lock_vdi error: {}'.format(e))
++    finally:
++        if lock:
++            lock.release()
++    return str(False)
++
++
 +if __name__ == '__main__':
 +    XenAPIPlugin.dispatch({
 +        'enable': enable,
@@ -2756,14 +2976,16 @@ index 0000000..0ee1cd8
 +        'getSizeVirt': get_size_virt,
 +        'getSizePhys': get_size_phys,
 +        'getDepth': get_depth,
-+        'getKeyHash': get_key_hash
++        'getKeyHash': get_key_hash,
++        'getBlockBitmap': get_block_bitmap,
++        'lockVdi': lock_vdi
 +    })
 diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
 new file mode 100755
-index 0000000..2ba6a28
+index 0000000..7495330
 --- /dev/null
 +++ b/drivers/linstorjournaler.py
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,155 @@
 +#!/usr/bin/env python
 +#
 +# Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
@@ -2785,6 +3007,7 @@ index 0000000..2ba6a28
 +from linstorvolumemanager import LinstorVolumeManager
 +import linstor
 +import re
++import util
 +
 +
 +class LinstorJournalerError(Exception):
@@ -2817,10 +3040,18 @@ index 0000000..2ba6a28
 +        self._namespace = '{}journal/'.format(
 +            LinstorVolumeManager._build_sr_namespace()
 +        )
-+        self._journal = linstor.KV(
-+            LinstorVolumeManager._build_group_name(group_name),
-+            uri=uri,
-+            namespace=self._namespace
++
++        def connect():
++            self._journal = linstor.KV(
++                LinstorVolumeManager._build_group_name(group_name),
++                uri=uri,
++                namespace=self._namespace
++            )
++
++        util.retry(
++            connect,
++            maxretry=60,
++            exceptions=[linstor.errors.LinstorNetworkError]
 +        )
 +        self._logger = logger
 +
@@ -2912,10 +3143,10 @@ index 0000000..2ba6a28
 +        return '{}/{}'.format(type, identifier)
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
 new file mode 100644
-index 0000000..a428d37
+index 0000000..f31c752
 --- /dev/null
 +++ b/drivers/linstorvhdutil.py
-@@ -0,0 +1,170 @@
+@@ -0,0 +1,186 @@
 +#!/usr/bin/env python
 +#
 +# Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
@@ -2932,8 +3163,11 @@ index 0000000..a428d37
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 +
++import base64
 +import distutils.util
++import errno
 +import json
++import socket
 +import util
 +import vhdutil
 +import xs_errors
@@ -2953,15 +3187,25 @@ index 0000000..a428d37
 +
 +            # A. Try a call using directly the DRBD device to avoid
 +            # remote request.
++
++            # Try to read locally if the device is not in use or if the device
++            # is up to date and not diskless.
++            (node_names, in_use) = \
++                self._linstor.find_up_to_date_diskfull_nodes(vdi_uuid)
++
 +            try:
-+                return local_method(device_path, *args[2:], **kwargs)
-+            except Exception:
-+                # TODO: Check errno?
-+                pass
++                if not in_use or socket.gethostname() in node_names:
++                    return local_method(device_path, *args[2:], **kwargs)
++            except util.CommandException as e:
++                # EMEDIUMTYPE constant (124) is not available in python2.
++                if e.code != errno.EROFS and e.code != 124:
++                    raise
 +
 +            # B. Execute the plugin on master or slave.
 +            def exec_remote_method():
-+                host_ref = self._get_readonly_host(vdi_uuid, device_path)
++                host_ref = self._get_readonly_host(
++                    vdi_uuid, device_path, node_names
++                )
 +                args = {
 +                    'devicePath': device_path,
 +                    'groupName': self._linstor.group_name
@@ -2973,13 +3217,13 @@ index 0000000..a428d37
 +                        host_ref, MANAGER_PLUGIN, remote_method, args
 +                    )
 +                except Exception as e:
-+                    util.SMlog('call-plugin ({}) exception: {}'.format(
-+                        remote_method, e
++                    util.SMlog('call-plugin ({} with {}) exception: {}'.format(
++                        remote_method, args, e
 +                    ))
 +                    raise
 +
-+                util.SMlog('call-plugin ({}) returned: {}'.format(
-+                    remote_method, response
++                util.SMlog('call-plugin ({} with {}) returned: {}'.format(
++                    remote_method, args, response
 +                ))
 +                if response == 'False':
 +                    raise xs_errors.XenError(
@@ -3049,6 +3293,10 @@ index 0000000..a428d37
 +    def get_key_hash(self, vdi_uuid, **kwargs):
 +        return kwargs['response'] or None
 +
++    @linstorhostcall(vhdutil.getBlockBitmap, 'getBlockBitmap')
++    def get_block_bitmap(self, vdi_uuid, **kwargs):
++        return base64.b64decode(kwargs['response'])
++
 +    # --------------------------------------------------------------------------
 +    # Helpers.
 +    # --------------------------------------------------------------------------
@@ -3059,7 +3307,7 @@ index 0000000..a428d37
 +            device_path.rstrip('\n')
 +        )
 +
-+    def _get_readonly_host(self, vdi_uuid, device_path):
++    def _get_readonly_host(self, vdi_uuid, device_path, node_names):
 +        """
 +        When vhd-util is called to fetch VDI info we must find a
 +        diskfull DRBD disk to read the data. It's the goal of this function.
@@ -3068,7 +3316,6 @@ index 0000000..a428d37
 +        that reads/writes to disk with DRBD devices).
 +        """
 +
-+        node_names = self._linstor.find_up_to_date_diskfull_nodes(vdi_uuid)
 +        if not node_names:
 +            raise xs_errors.XenError(
 +                'VDIUnavailable',
@@ -3088,10 +3335,10 @@ index 0000000..a428d37
 +        )
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
 new file mode 100755
-index 0000000..280cef9
+index 0000000..d400421
 --- /dev/null
 +++ b/drivers/linstorvolumemanager.py
-@@ -0,0 +1,1524 @@
+@@ -0,0 +1,1713 @@
 +#!/usr/bin/env python
 +#
 +# Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
@@ -3115,6 +3362,7 @@ index 0000000..280cef9
 +import os.path
 +import re
 +import socket
++import time
 +import util
 +
 +
@@ -3165,6 +3413,13 @@ index 0000000..280cef9
 +    PROP_METADATA = 'metadata'
 +    PROP_NOT_EXISTS = 'not-exists'
 +    PROP_VOLUME_NAME = 'volume-name'
++    PROP_IS_READONLY_TIMESTAMP = 'readonly-timestamp'
++
++    # A volume can only be locked for a limited duration.
++    # The goal is to give enough time to slaves to execute some actions on
++    # a device before an UUID update or a coalesce for example.
++    # Expiration is expressed in seconds.
++    LOCKED_EXPIRATION_DELAY = 1 * 60
 +
 +    # Used when volume uuid is being updated.
 +    PROP_UPDATING_UUID_SRC = 'updating-uuid-src'
@@ -3505,6 +3760,7 @@ index 0000000..280cef9
 +        """
 +
 +        self._ensure_volume_exists(volume_uuid)
++        self.ensure_volume_is_not_locked(volume_uuid)
 +
 +        # Mark volume as destroyed.
 +        volume_properties = self._get_volume_properties(volume_uuid)
@@ -3512,6 +3768,101 @@ index 0000000..280cef9
 +
 +        self._volumes.remove(volume_uuid)
 +        self._destroy_volume(volume_uuid, volume_properties)
++
++    def lock_volume(self, volume_uuid, locked=True):
++        """
++        Prevent modifications of the volume properties during
++        "self.LOCKED_EXPIRATION_DELAY" seconds. The SR must be locked
++        when used. This method is useful to attach/detach correctly a volume on
++        a slave. Without it the GC can rename a volume, in this case the old
++        volume path can be used by a slave...
++        :param str volume_uuid: The volume uuid to protect/unprotect.
++        :param bool locked: Lock/unlock the volume.
++        """
++
++        self._ensure_volume_exists(volume_uuid)
++
++        self._logger(
++            '{} volume {} as locked'.format(
++                'Mark' if locked else 'Unmark',
++                volume_uuid
++            )
++        )
++
++        volume_properties = self._get_volume_properties(volume_uuid)
++        if locked:
++            volume_properties[
++                self.PROP_IS_READONLY_TIMESTAMP
++            ] = str(time.time())
++        elif self.PROP_IS_READONLY_TIMESTAMP in volume_properties:
++            volume_properties.pop(self.PROP_IS_READONLY_TIMESTAMP)
++
++    def ensure_volume_is_not_locked(self, volume_uuid, timeout=None):
++        """
++        Ensure a volume is not locked. Wait if necessary.
++        :param str volume_uuid: The volume uuid to check.
++        :param int timeout: If the volume is always locked after the expiration
++        of the timeout, an exception is thrown.
++        """
++        return self.ensure_volume_list_is_not_locked([volume_uuid], timeout)
++
++    def ensure_volume_list_is_not_locked(self, volume_uuids, timeout=None):
++        checked = set()
++        for volume_uuid in volume_uuids:
++            if volume_uuid in self._volumes:
++                checked.add(volume_uuid)
++
++        if not checked:
++            return
++
++        waiting = False
++
++        start = time.time()
++        while True:
++            # Can't delete in for loop, use a copy of the list.
++            remaining = checked.copy()
++            for volume_uuid in checked:
++                volume_properties = self._get_volume_properties(volume_uuid)
++                timestamp = volume_properties.get(
++                    self.PROP_IS_READONLY_TIMESTAMP
++                )
++                if timestamp is None:
++                    remaining.remove(volume_uuid)
++                    continue
++
++                now = time.time()
++                if now - float(timestamp) > self.LOCKED_EXPIRATION_DELAY:
++                    self._logger(
++                        'Remove readonly timestamp on {}'.format(volume_uuid)
++                    )
++                    volume_properties.pop(self.PROP_IS_READONLY_TIMESTAMP)
++                    remaining.remove(volume_uuid)
++                    continue
++
++                if not waiting:
++                    self._logger(
++                        'Volume {} is locked, waiting...'.format(volume_uuid)
++                    )
++                    waiting = True
++                break
++
++            if not remaining:
++                break
++            checked = remaining
++
++            if timeout is not None and now - start > timeout:
++                raise LinstorVolumeManagerError(
++                    'volume `{}` is locked and timeout has been reached'
++                    .format(volume_uuid),
++                    LinstorVolumeManagerError.ERR_VOLUME_NOT_EXISTS
++                )
++
++            # We must wait to use the volume. After that we can modify it
++            # ONLY if the SR is locked to avoid bad reads on the slaves.
++            time.sleep(1)
++
++        if waiting:
++            self._logger('No volume locked now!')
 +
 +    def introduce_volume(self, volume_uuid):
 +        pass  # TODO: Implement me.
@@ -3524,6 +3875,7 @@ index 0000000..280cef9
 +        """
 +
 +        volume_name = self.get_volume_name(volume_uuid)
++        self.ensure_volume_is_not_locked(volume_uuid)
 +        new_size = self.round_up_volume_size(new_size)
 +
 +        result = self._linstor.volume_dfn_modify(
@@ -3641,14 +3993,26 @@ index 0000000..280cef9
 +            .format(device_path)
 +        )
 +
-+    def update_volume_uuid(self, volume_uuid, new_volume_uuid):
++    def update_volume_uuid(self, volume_uuid, new_volume_uuid, force=False):
 +        """
 +        Change the uuid of a volume.
 +        :param str volume_uuid: The volume to modify.
 +        :param str new_volume_uuid: The new volume uuid to use.
++        :param bool force: If true we doesn't check if volume_uuid is in the
++        volume list. I.e. the volume can be marked as deleted but the volume
++        can still be in the LINSTOR KV store if the deletion has failed.
++        In specific cases like "undo" after a failed clone we must rename a bad
++        deleted VDI.
 +        """
 +
-+        self._ensure_volume_exists(volume_uuid)
++        self._logger(
++            'Trying to update volume UUID {} to {}...'
++            .format(volume_uuid, new_volume_uuid)
++        )
++        if not force:
++            self._ensure_volume_exists(volume_uuid)
++        self.ensure_volume_is_not_locked(volume_uuid)
++
 +        if new_volume_uuid in self._volumes:
 +            raise LinstorVolumeManagerError(
 +                'Volume `{}` already exists'.format(new_volume_uuid),
@@ -3662,20 +4026,23 @@ index 0000000..280cef9
 +                .format(volume_uuid)
 +            )
 +
++        new_volume_properties = self._get_volume_properties(
++            new_volume_uuid
++        )
++        if list(new_volume_properties.items()):
++            raise LinstorVolumeManagerError(
++                'Cannot update volume uuid {} to {}: '
++                .format(volume_uuid, new_volume_uuid) +
++                'this last one is not empty'
++            )
++
++        assert volume_properties.namespace != \
++            new_volume_properties.namespace
++
 +        try:
 +            # 1. Mark new volume properties with PROP_UPDATING_UUID_SRC.
 +            # If we crash after that, the new properties can be removed
 +            # properly.
-+            new_volume_properties = self._get_volume_properties(
-+                new_volume_uuid
-+            )
-+            if list(new_volume_properties.items()):
-+                raise LinstorVolumeManagerError(
-+                    'Cannot update volume uuid {} to {}: '
-+                    .format(volume_uuid, new_volume_uuid) +
-+                    'this last one is not empty'
-+                )
-+
 +            new_volume_properties[self.PROP_NOT_EXISTS] = self.STATE_NOT_EXISTS
 +            new_volume_properties[self.PROP_UPDATING_UUID_SRC] = volume_uuid
 +
@@ -3713,6 +4080,14 @@ index 0000000..280cef9
 +        self._volumes.remove(volume_uuid)
 +        self._volumes.add(new_volume_uuid)
 +
++        self._logger(
++            'UUID update succeeded of {} to {}! (properties={})'
++            .format(
++                volume_uuid, new_volume_uuid,
++                self._get_filtered_properties(new_volume_properties)
++            )
++        )
++
 +    def update_volume_name(self, volume_uuid, volume_name):
 +        """
 +        Change the volume name of a volume.
@@ -3721,6 +4096,7 @@ index 0000000..280cef9
 +        """
 +
 +        self._ensure_volume_exists(volume_uuid)
++        self.ensure_volume_is_not_locked(volume_uuid)
 +        if not volume_name.startswith(self.PREFIX_VOLUME):
 +            raise LinstorVolumeManagerError(
 +                'Volume name `{}` must be start with `{}`'
@@ -3780,6 +4156,7 @@ index 0000000..280cef9
 +        """
 +
 +        self._ensure_volume_exists(volume_uuid)
++        self.ensure_volume_is_not_locked(volume_uuid)
 +
 +        assert isinstance(metadata, dict)
 +        volume_properties = self._get_volume_properties(volume_uuid)
@@ -3793,6 +4170,7 @@ index 0000000..280cef9
 +        """
 +
 +        self._ensure_volume_exists(volume_uuid)
++        self.ensure_volume_is_not_locked(volume_uuid)
 +
 +        assert isinstance(metadata, dict)
 +        volume_properties = self._get_volume_properties(volume_uuid)
@@ -3824,6 +4202,7 @@ index 0000000..280cef9
 +        """
 +
 +        volume_name = self.get_volume_name(volume_uuid)
++        self.ensure_volume_is_not_locked(volume_uuid)
 +
 +        # 1. Find ideal nodes + size to use.
 +        ideal_node_names, size = self._get_volume_node_names_and_size(
@@ -3879,39 +4258,52 @@ index 0000000..280cef9
 +                diskless=True
 +            ))
 +
-+        # 5. Clone!
-+        volume_properties = self._create_volume_with_properties(
-+            clone_uuid, clone_volume_name, size, place_resources=False
-+        )
-+
-+        try:
-+            result = self._linstor.resource_create(resources)
-+            error_str = self._get_error_str(result)
-+            if error_str:
-+                raise LinstorVolumeManagerError(
-+                    'Could not create cloned volume `{}` of `{}` from SR `{}`:'
-+                    ' {}'.format(
-+                        clone_uuid, volume_uuid, self._group_name, error_str
-+                    )
++        # 5. Create resources!
++        def clean(properties):
++            try:
++                self._destroy_volume(clone_uuid, properties)
++            except Exception as e:
++                self._logger(
++                    'Unable to destroy volume {} after shallow clone fail: {}'
++                    .format(clone_uuid, e)
 +                )
 +
++        def create():
++            try:
++                volume_properties = self._create_volume_with_properties(
++                    clone_uuid, clone_volume_name, size,
++                    place_resources=False
++                )
++
++                result = self._linstor.resource_create(resources)
++                error_str = self._get_error_str(result)
++                if error_str:
++                    raise LinstorVolumeManagerError(
++                        'Could not create cloned volume `{}` of `{}` from '
++                        'SR `{}`: {}'.format(
++                            clone_uuid, volume_uuid, self._group_name,
++                            error_str
++                        )
++                    )
++                return volume_properties
++            except Exception:
++                clean(volume_properties)
++                raise
++
++        # Retry because we can get errors like this:
++        # "Resource disappeared while waiting for it to be ready" or
++        # "Resource did not became ready on node 'XXX' within reasonable time, check Satellite for errors."
++        # in the LINSTOR server.
++        volume_properties = util.retry(create, maxretry=5)
++
++        try:
 +            device_path = self._find_device_path(clone_uuid, clone_volume_name)
 +            if persistent:
 +                volume_properties[self.PROP_NOT_EXISTS] = self.STATE_EXISTS
 +            self._volumes.add(clone_uuid)
 +            return device_path
 +        except Exception as e:
-+            self._logger(
-+                'Failed to shallow clone volume {}: {}'
-+                .format(self._group_name, e)
-+            )
-+            try:
-+                self._destroy_volume(clone_uuid, volume_properties)
-+            except Exception as e:
-+                self._logger(
-+                    'Unable to destroy volume {} after shallow clone fail: {}'
-+                    .format(clone_uuid, e)
-+                )
++            clean(volume_properties)
 +            raise
 +
 +    def remove_resourceless_volumes(self):
@@ -3956,11 +4348,12 @@ index 0000000..280cef9
 +        The disk must be up to data to be used.
 +        :param str volume_uuid: The volume to use.
 +        :return: The available nodes.
-+        :rtype: set(str)
++        :rtype: tuple(set(str), bool)
 +        """
 +
 +        volume_name = self.get_volume_name(volume_uuid)
 +
++        in_use = False
 +        node_names = set()
 +        resource_list = self._linstor.resource_list_raise(
 +            filter_by_resources=[volume_name]
@@ -3969,8 +4362,10 @@ index 0000000..280cef9
 +            volume_state = resource_state.volume_states[0]
 +            if volume_state.disk_state == 'UpToDate':
 +                node_names.add(resource_state.node_name)
++            if resource_state.in_use:
++                in_use = True
 +
-+        return node_names
++        return (node_names, in_use)
 +
 +    @classmethod
 +    def create_sr(
@@ -4003,6 +4398,14 @@ index 0000000..280cef9
 +            raise LinstorVolumeManagerError(
 +                'Unable to create SR `{}`. It already exists on node(s): {}'
 +                .format(group_name, existing_node_names)
++            )
++
++        if lin.resource_group_list_raise(
++            [group_name]
++        ).resource_groups:
++            raise LinstorVolumeManagerError(
++                'Unable to create SR `{}`: The group name already exists'
++                .format(group_name)
 +            )
 +
 +        if thin_provisioning:
@@ -4461,6 +4864,14 @@ index 0000000..280cef9
 +
 +            src_uuid = properties.get(self.PROP_UPDATING_UUID_SRC)
 +            if src_uuid:
++                self._logger(
++                    'Ignoring volume during manager initialization with prop '
++                    ' PROP_UPDATING_UUID_SRC: {} (properties={})'
++                    .format(
++                        volume_uuid,
++                        self._get_filtered_properties(properties)
++                    )
++                )
 +                continue
 +
 +            # Insert volume in list if the volume exists. Or if the volume
@@ -4476,10 +4887,24 @@ index 0000000..280cef9
 +                continue
 +
 +            if not repair:
++                self._logger(
++                    'Ignoring bad volume during manager initialization: {} '
++                    '(properties={})'.format(
++                        volume_uuid,
++                        self._get_filtered_properties(properties)
++                    )
++                )
 +                continue
 +
 +            # Remove bad volume.
 +            try:
++                self._logger(
++                    'Removing bad volume during manager initialization: {} '
++                    '(properties={})'.format(
++                        volume_uuid,
++                        self._get_filtered_properties(properties)
++                    )
++                )
 +                volume_name = properties.get(self.PROP_VOLUME_NAME)
 +
 +                # Little optimization, don't call `self._destroy_volume`,
@@ -4495,21 +4920,21 @@ index 0000000..280cef9
 +                    'Cannot clean volume {}: {}'.format(volume_uuid, e)
 +                )
 +
-+            for dest_uuid, src_uuid in updating_uuid_volumes.items():
-+                dest_properties = self._get_volume_properties(dest_uuid)
-+                if int(dest_properties.get(self.PROP_NOT_EXISTS) or
-+                        self.STATE_EXISTS):
-+                    dest_properties.clear()
-+                    continue
++        for dest_uuid, src_uuid in updating_uuid_volumes.items():
++            dest_properties = self._get_volume_properties(dest_uuid)
++            if int(dest_properties.get(self.PROP_NOT_EXISTS) or
++                    self.STATE_EXISTS):
++                dest_properties.clear()
++                continue
 +
-+                src_properties = self._get_volume_properties(src_uuid)
-+                src_properties.clear()
++            src_properties = self._get_volume_properties(src_uuid)
++            src_properties.clear()
 +
-+                dest_properties.pop(self.PROP_UPDATING_UUID_SRC)
++            dest_properties.pop(self.PROP_UPDATING_UUID_SRC)
 +
-+                if src_uuid in self._volumes:
-+                    self._volumes.remove(src_uuid)
-+                self._volumes.add(dest_uuid)
++            if src_uuid in self._volumes:
++                self._volumes.remove(src_uuid)
++            self._volumes.add(dest_uuid)
 +
 +    def _get_sr_properties(self):
 +        return linstor.KV(
@@ -4570,9 +4995,16 @@ index 0000000..280cef9
 +
 +    @classmethod
 +    def _create_linstor_instance(cls, uri):
-+        instance = linstor.Linstor(uri, keep_alive=True)
-+        instance.connect()
-+        return instance
++        def connect():
++            instance = linstor.Linstor(uri, keep_alive=True)
++            instance.connect()
++            return instance
++
++        return util.retry(
++            connect,
++            maxretry=60,
++            exceptions=[linstor.errors.LinstorNetworkError]
++        )
 +
 +    @classmethod
 +    def _destroy_storage_pool(cls, lin, group_name, node_name):
@@ -4601,6 +5033,10 @@ index 0000000..280cef9
 +        # If thin provisioning is used we have a path like this:
 +        # `VG/LV`. "/" is not accepted by LINSTOR.
 +        return '{}{}'.format(cls.PREFIX_SR, base_name.replace('/', '_'))
++
++    @staticmethod
++    def _get_filtered_properties(properties):
++        return dict(properties.items())
 +
 +    @staticmethod
 +    def _filter_errors(result):
@@ -4712,10 +5148,10 @@ index 5936869..ed6abed 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 337add2..cdf6102 100755
+index 337add2..0fedb73 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -651,10 +651,18 @@ def get_this_host():
+@@ -651,10 +651,36 @@ def get_this_host():
      f.close()
      return uuid
  
@@ -4734,9 +5170,52 @@ index 337add2..cdf6102 100755
 +
 +def is_master(session):
 +    return get_this_host_ref(session) == get_master_ref(session)
++
++
++def get_master_address():
++    address = None
++    try:
++        fd = open('/etc/xensource/pool.conf', 'r')
++        try:
++            items = fd.readline().split(':')
++            if items[0].strip() == 'master':
++                address = 'localhost'
++            else:
++                address = items[1].strip()
++        finally:
++            fd.close()
++    except Exception:
++        pass
++    return address
++
  
  # XXX: this function doesn't do what it claims to do
  def get_localhost_uuid(session):
+@@ -1377,13 +1403,21 @@ def findRunningProcessOrOpenFile(name, process = True):
+     else:
+         return (retVal, processandpids)
+ 
+-def retry(f, maxretry=20, period=3):
++def retry(f, maxretry=20, period=3, exceptions=[Exception]):
+     retries = 0
+     while True:
+         try:            
+             return f()
+-        except Exception, e:
+-            SMlog("Got exception: %s. Retry number: %s" % (str(e),retries))
++        except Exception as e:
++            for exception in exceptions:
++                if isinstance(e, exception):
++                    SMlog('Got exception: {}. Retry number: {}'.format(
++                        str(e), retries
++                    ))
++                    break
++            else:
++                SMlog('Got bad exception: {}. Raising...'.format(e))
++                raise e
+ 
+         retries += 1
+         if retries >= maxretry:
 diff --git a/linstor/Makefile b/linstor/Makefile
 new file mode 100644
 index 0000000..c329ca3
@@ -5196,5 +5675,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.13.7
+2.28.0
 

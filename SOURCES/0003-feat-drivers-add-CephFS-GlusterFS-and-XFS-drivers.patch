@@ -1,13 +1,13 @@
 From 98a0376a042eb9976302ce48a65ef23f12a7deff Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 3/6] feat(drivers): add CephFS, GlusterFS and XFS drivers
+Subject: [PATCH 3/7] feat(drivers): add CephFS, GlusterFS and XFS drivers
 
 ---
  Makefile               |   3 +
- drivers/CephFSSR.py    | 296 +++++++++++++++++++++++++++++++++++++++++++++++++
- drivers/GlusterFSSR.py | 287 +++++++++++++++++++++++++++++++++++++++++++++++
- drivers/XFSSR.py       | 246 ++++++++++++++++++++++++++++++++++++++++
+ drivers/CephFSSR.py    | 296 +++++++++++++++++++++++++++++++++++++++++
+ drivers/GlusterFSSR.py | 287 +++++++++++++++++++++++++++++++++++++++
+ drivers/XFSSR.py       | 246 ++++++++++++++++++++++++++++++++++
  drivers/cleanup.py     |   5 +-
  5 files changed, 836 insertions(+), 1 deletion(-)
  create mode 100644 drivers/CephFSSR.py
@@ -892,5 +892,5 @@ index 9d863f2..e0e411a 100755
      if not type in SR.TYPES:
          raise util.SMException("Unsupported SR type: %s" % type)
 -- 
-2.13.7
+2.28.0
 

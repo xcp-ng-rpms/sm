@@ -414,9 +414,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
-* Thu Feb 25 2021 Benjamin Reis <benjamin.reis> - 2.29.1-1.3
+* Thu Feb 25 2021 Benjamin Reis <benjamin.reis@vates.fr> - 2.29.1-1.3
 - Add: 0008-If-no-NFS-ACLs-provided-assume-everyone.patch
-- Fix crash when attempting to access non existent ACL (happened one QNAP devices)
+- Fix crash when attempting to access non existent ACL (happened on QNAP devices)
 
 * Fri Nov 06 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.1-1.2
 - Sync patches with our latest 2.29.1-8.2 branch before XCP-ng 8.2 final release

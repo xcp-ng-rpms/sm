@@ -1,0 +1,75 @@
+From a6b5af89e8edbb5e88aff350e5e746b40f9cdec8 Mon Sep 17 00:00:00 2001
+From: BenjiReis <benjamin.reis@vates.fr>
+Date: Thu, 25 Feb 2021 09:54:52 +0100
+Subject: [PATCH 8/8] If no NFS ACLs provided, assume everyone:
+
+Some QNAP devices do not provide ACL when fetching NFS mounts.
+In this case the assumed ACL should be: "*".
+
+This commit fixes the crash when attempting to access the non existing ACL.
+Relevant issues:
+- https://github.com/xapi-project/sm/issues/511
+- https://github.com/xcp-ng/xcp/issues/113
+---
+ drivers/nfs.py    |  6 +++++-
+ tests/test_nfs.py | 30 ++++++++++++++++++++++++++++++
+ 2 files changed, 35 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/nfs.py b/drivers/nfs.py
+index 6d0c537..75691fe 100644
+--- a/drivers/nfs.py
++++ b/drivers/nfs.py
+@@ -202,7 +202,11 @@ def scan_exports(target):
+         textnode = dom.createTextNode(target)
+         subentry.appendChild(textnode)
+ 
+-        (path, access) = val.split()
++        # Access is not always provided by showmount return
++        # If none is provided we need to assume "*"
++        array = val.split()
++        path = array[0]
++        access = array[1] if len(array) >= 2 else "*"
+         subentry = dom.createElement("Path")
+         entry.appendChild(subentry)
+         textnode = dom.createTextNode(path)
+diff --git a/tests/test_nfs.py b/tests/test_nfs.py
+index 248acb9..96eeba9 100644
+--- a/tests/test_nfs.py
++++ b/tests/test_nfs.py
+@@ -131,3 +131,33 @@ class Test_nfs(unittest.TestCase):
+         for thenfsversion in ['3', '4', '4.1']:
+             self.assertEquals(nfs.validate_nfsversion(thenfsversion),
+                               thenfsversion)
++
++    # Can't use autospec due to http://bugs.python.org/issue17826
++    @mock.patch('util.pread2')
++    def test_scan_exports(self, pread2):
++        pread2.side_effect = ["/srv/nfs\n/srv/nfs2 *\n/srv/nfs3 127.0.0.1/24"]
++        res = nfs.scan_exports('aServer')
++
++        expected = """<?xml version="1.0" ?>
++<nfs-exports>
++\t<Export>
++\t\t<Target>aServer</Target>
++\t\t<Path>/srv/nfs</Path>
++\t\t<Accesslist>*</Accesslist>
++\t</Export>
++\t<Export>
++\t\t<Target>aServer</Target>
++\t\t<Path>/srv/nfs2</Path>
++\t\t<Accesslist>*</Accesslist>
++\t</Export>
++\t<Export>
++\t\t<Target>aServer</Target>
++\t\t<Path>/srv/nfs3</Path>
++\t\t<Accesslist>127.0.0.1/24</Accesslist>
++\t</Export>
++</nfs-exports>
++"""
++
++        self.assertEqual(res.toprettyxml(), expected)
++        self.assertEqual(len(pread2.mock_calls), 1)
++        pread2.assert_called_with(['/usr/sbin/showmount', '--no-headers', '-e', 'aServer'])
+-- 
+2.26.2
+

@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.3
-Release: 1.4%{?dist}
+Release: 1.5%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -53,6 +53,21 @@ Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
 Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
 Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
 Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
+Patch1011: 0011-fix-LinstorSR-repair-volumes-only-if-an-exclusive-co.patch
+Patch1012: 0012-feat-LinstorSR-Improve-LINSTOR-performance.patch
+Patch1013: 0013-feat-LinstorSR-robustify-scan-to-avoid-losing-VDIs-i.patch
+Patch1014: 0014-feat-LinstorSR-display-a-correctly-readable-size-for.patch
+Patch1015: 0015-feat-linstor-monitord-scan-all-LINSTOR-SRs-every-12-.patch
+Patch1016: 0016-fix-LinstorSR-call-correctly-method-in-_locked_load-.patch
+Patch1017: 0017-feat-LinstorSR-integrate-minidrbdcluster-daemon.patch
+Patch1018: 0018-feat-LinstorSR-ensure-heartbeat-and-redo_log-VDIs-ar.patch
+Patch1019: 0019-feat-LinstorSR-protect-sr-commands-to-avoid-forgetti.patch
+Patch1020: 0020-fix-LinstorJournaler-ensure-uri-is-not-None-during-l.patch
+Patch1021: 0021-feat-LinstorSR-add-an-option-to-disable-auto-quorum-.patch
+Patch1022: 0022-fix-LinstorVolumeManager-add-a-workaround-to-create-.patch
+Patch1023: 0023-feat-LinstorSR-add-optional-ips-parameter.patch
+Patch1024: 0024-feat-LinstorSR-add-a-helper-log_drbd_erofs-to-trace-.patch
+Patch1025: 0025-fix-LinstorSR-try-to-restart-the-services-again-if-t.patch
 
 %description
 This package contains storage backends used in XCP
@@ -145,6 +160,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
+/etc/minidrbdcluster.ini
+/etc/systemd/system/linstor-satellite.service.d/override.conf
+/etc/systemd/system/var-lib-linstor.mount
 /etc/udev/scripts/xs-mpath-scsidev.sh
 /etc/xapi.d/plugins/coalesce-leaf
 /etc/xapi.d/plugins/lvhd-thin
@@ -165,6 +183,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/dcopy
 /opt/xensource/libexec/local-device-change
 /opt/xensource/libexec/make-dummy-sr
+/opt/xensource/libexec/minidrbdcluster
 /opt/xensource/libexec/usb_change
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
@@ -372,6 +391,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /sbin/mpathutil
 /etc/rc.d/init.d/sm-multipath
 %{_unitdir}/make-dummy-sr.service
+%{_unitdir}/minidrbdcluster.service
 %{_unitdir}/xs-sm.service
 %{_unitdir}/sm-mpath-root.service
 %{_unitdir}/usb-scan.service
@@ -430,6 +450,23 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Jun 17 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.5
+- Add 0011-fix-LinstorSR-repair-volumes-only-if-an-exclusive-co.patch
+- Add 0012-feat-LinstorSR-Improve-LINSTOR-performance.patch
+- Add 0013-feat-LinstorSR-robustify-scan-to-avoid-losing-VDIs-i.patch
+- Add 0014-feat-LinstorSR-display-a-correctly-readable-size-for.patch
+- Add 0015-feat-linstor-monitord-scan-all-LINSTOR-SRs-every-12-.patch
+- Add 0016-fix-LinstorSR-call-correctly-method-in-_locked_load-.patch
+- Add 0017-feat-LinstorSR-integrate-minidrbdcluster-daemon.patch
+- Add 0018-feat-LinstorSR-ensure-heartbeat-and-redo_log-VDIs-ar.patch
+- Add 0019-feat-LinstorSR-protect-sr-commands-to-avoid-forgetti.patch
+- Add 0020-fix-LinstorJournaler-ensure-uri-is-not-None-during-l.patch
+- Add 0021-feat-LinstorSR-add-an-option-to-disable-auto-quorum-.patch
+- Add 0022-fix-LinstorVolumeManager-add-a-workaround-to-create-.patch
+- Add 0023-feat-LinstorSR-add-optional-ips-parameter.patch
+- Add 0024-feat-LinstorSR-add-a-helper-log_drbd_erofs-to-trace-.patch
+- Add 0025-fix-LinstorSR-try-to-restart-the-services-again-if-t.patch
+
 * Thu May 27 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.4
 - Remove 0009-Fix-regression-added-by-XSI-915.patch
 - Add 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588 to use upstream fix instead

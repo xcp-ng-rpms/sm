@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.29.1
-Release: 1.3%{?dist}
+Release: 1.4%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -41,6 +41,7 @@ Patch1005: 0005-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
 Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
 Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
 Patch1008: 0008-If-no-NFS-ACLs-provided-assume-everyone.patch
+Patch1009: 0009-Backport-CA-350871-Add-lock-context-manager-for-LVM-.patch
 
 %description
 This package contains storage backends used in XCP
@@ -414,6 +415,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Apr 01 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.29.1-1.4
+- Add: 0009-Backport-CA-350871-Add-lock-context-manager-for-LVM-.patch
+- CA-350871: Add lock context manager for LVM operations to allow for higher level control
+
 * Thu Feb 25 2021 Benjamin Reis <benjamin.reis@vates.fr> - 2.29.1-1.3
 - Add: 0008-If-no-NFS-ACLs-provided-assume-everyone.patch
 - Fix crash when attempting to access non existent ACL (happened on QNAP devices)

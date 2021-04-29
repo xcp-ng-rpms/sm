@@ -33,11 +33,16 @@ Obsoletes: sm-additional-drivers
 # And update the comment below to explain how we created those from the XS82E023 hotfix
 # ***
 
-# XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.29.1-xcpng..2.29.1-8.2
-# Note: the v2.29.1-xcpng tag was manually created by us on our fork because
+# git format-patch v2.30.3-xcpng..2.30.3-8.2
+# Note: the v2.30.3-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
+# To create this tag in the sources, you must create a 2.30.3-8.2 branch from the last upstream commit
+# of the previous 2.29.1-8.2 branch, then cherry pick each upstream commit referenced in the changelog
+# of the upstream spec file. To ensure you have all changes, you can use:
+# `diff -urq <sources> <upstream sources>`.
+# After that we can create the tag: `git tag -a v2.30.3-xcpng -m "v2.30.3-xcpng"`,
+# push the commits and tag.
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-Add-TrueNAS-multipath-config.patch
 Patch1003: 0003-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
@@ -46,6 +51,7 @@ Patch1005: 0005-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
 Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
 Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
 Patch1008: 0008-If-no-NFS-ACLs-provided-assume-everyone.patch
+Patch1009: 0009-Fix-regression-added-by-XSI-915.patch
 
 %description
 This package contains storage backends used in XCP
@@ -419,8 +425,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
-* Thu Apr 29 2021 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.30.3-1.1
-- WIP changelog entry
+* Thu Apr 29 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.1
 - Sync with hotfix XS82E023
 - CA-349759: don't call srUpdate within a lock
 - CA-352165: Check that 'device' exists in the dconf before using it
@@ -432,7 +437,8 @@ cp -r htmlcov %{buildroot}/htmlcov
   higher level controlDon't take locks for readonly operations
 - CA-350871: Log if LVHD snapshot pauses VM for more than 60secs
 - CA-350437: simplify 02vhd-cleanup to only handle LVM refcounts
-- TODO: update XCP-ng patches
+- Sync patches with our latest 2.30.3-8.2 branch
+- 0009-Fix-regression-added-by-XSI-915.patch added
 
 * Thu Feb 25 2021 Benjamin Reis <benjamin.reis@vates.fr> - 2.29.1-1.3
 - Add: 0008-If-no-NFS-ACLs-provided-assume-everyone.patch

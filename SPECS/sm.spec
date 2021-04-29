@@ -1,16 +1,16 @@
 # -*- rpm-spec -*-
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.29.1
+Version: 2.30.3
 Release: 1
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz
+Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.3&format=tar.gz&prefix=sm-2.30.3#/sm-2.30.3.tar.gz
 
 
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz) = ab124446ce2b54b2bc1f51003c0dbf5f3cea9ae1
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.3&format=tar.gz&prefix=sm-2.30.3#/sm-2.30.3.tar.gz) = 9e7b4e9e7a68aac0496c7a23a8a63730278ee323
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
@@ -350,6 +350,18 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Fri Mar 26 2021 Ben Sims <ben.sims@citrix.com> - 2.30.3-1
+- CA-349759: don't call srUpdate within a lock
+- CA-352165: Check that 'device' exists in the dconf before using it
+- XSI-915: Improve performance of LVHDoHBA
+- CP-35625: Extract calls to unlink to helper and log
+- CP-35625: use link instead of rename to improve crash consistency
+- CP-35625: Extract calls to rename into helper and log.
+- CA-350871: Add lock context manager for LVM operations to allow for
+  higher level controlDon't take locks for readonly operations
+- CA-350871: Log if LVHD snapshot pauses VM for more than 60secs
+- CA-350437: simplify 02vhd-cleanup to only handle LVM refcounts
+
 * Wed Sep 30 2020 Tim Smith <tim.smith@citrix.com> - 2.29.1-1
 - CA-343115: ensure device symlinks are created correctly even when path count
   not required
@@ -673,7 +685,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz) = ab124446ce2b54b2bc1f51003c0dbf5f3cea9ae1
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.3&format=tar.gz&prefix=sm-2.30.3#/sm-2.30.3.tar.gz) = 9e7b4e9e7a68aac0496c7a23a8a63730278ee323
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -693,7 +705,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz) = ab124446ce2b54b2bc1f51003c0dbf5f3cea9ae1
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.3&format=tar.gz&prefix=sm-2.30.3#/sm-2.30.3.tar.gz) = 9e7b4e9e7a68aac0496c7a23a8a63730278ee323
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -706,7 +718,7 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.29.1&format=tar.gz&prefix=sm-2.29.1#/sm-2.29.1.tar.gz) = ab124446ce2b54b2bc1f51003c0dbf5f3cea9ae1
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.3&format=tar.gz&prefix=sm-2.30.3#/sm-2.30.3.tar.gz) = 9e7b4e9e7a68aac0496c7a23a8a63730278ee323
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

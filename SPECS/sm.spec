@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.6
-Release: 1.1%{?dist}
+Release: 1.1.0.ipv6.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -50,6 +50,7 @@ Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
 Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
 Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
 Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
+Patch1011: 0011-Support-IPv6-in-NFS.patch
 
 %description
 This package contains storage backends used in XCP
@@ -427,6 +428,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Feb 17 2022 Benjamin Reis <benjamin.reis@vates.fr> - 2.30.6-1.1.0.ipv6.1
+- 0011-Support-IPv6-in-NFS.patch added
+
 * Tue Jan 04 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.6-1.1
 - Sync with CH 8.2.1
 - Sync patches with our latest 2.30.6-8.2 branch

@@ -1,0 +1,178 @@
+From 61ace4ea81c18407961889604f811756938585a6 Mon Sep 17 00:00:00 2001
+From: BenjiReis <benjamin.reis@vates.fr>
+Date: Thu, 11 Feb 2021 15:03:38 +0100
+Subject: [PATCH] Support IPv6 in NFS
+
+Signed-off-by: BenjiReis <benjamin.reis@vates.fr>
+
+diff --git i/drivers/NFSSR.py w/drivers/NFSSR.py
+index b2a6880..c9bd719 100755
+--- i/drivers/NFSSR.py
++++ w/drivers/NFSSR.py
+@@ -90,8 +90,7 @@ class NFSSR(FileSR.FileSR):
+ 
+         # Handle optional dconf attributes
+         self.transport = DEFAULT_TRANSPORT
+-        if self.dconf.has_key('useUDP') and self.dconf['useUDP'] == 'true':
+-            self.transport = "udp"
++        self.set_transport()
+         self.nfsversion = nfs.validate_nfsversion(self.dconf.get('nfsversion'))
+         if 'options' in self.dconf:
+             self.options = self.dconf['options']
+@@ -260,6 +259,14 @@ class NFSSR(FileSR.FileSR):
+         dom = nfs.scan_exports(target)
+         print >>sys.stderr,dom.toprettyxml()
+ 
++    def set_transport(self):
++        self.transport = DEFAULT_TRANSPORT
++        use_ipv6 = util.get_ip_address_family(self.remoteserver) == 6
++        if use_ipv6:
++            self.transport = 'tcp6'
++        if 'useUDP' in self.dconf and self.dconf['useUDP'] == 'true':
++            self.transport = 'udp6' if use_ipv6 else 'udp'
++
+ class NFSFileVDI(FileSR.FileVDI):
+     def attach(self, sr_uuid, vdi_uuid):
+         if not hasattr(self,'xenstore_data'):
+diff --git i/drivers/nfs.py w/drivers/nfs.py
+index 6d0c537..732dee3 100644
+--- i/drivers/nfs.py
++++ w/drivers/nfs.py
+@@ -160,6 +160,8 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+         options += ",%s" % useroptions
+ 
+     try:
++        if transport in ['tcp6', 'udp6']:
++            remoteserver = '[' + remoteserver + ']'
+         util.ioretry(lambda:
+                      util.pread([mountcommand, "%s:%s"
+                                  % (remoteserver, remotepath),
+@@ -260,12 +262,13 @@ def get_supported_nfs_versions(server):
+     valid_versions = set(['3', '4'])
+     cv = set()
+     try:
+-        ns = util.pread2([RPCINFO_BIN, "-p", "%s" % server])
++        ns = util.pread2([RPCINFO_BIN, "-s", "%s" % server])
+         ns = ns.split("\n")
+         for i in range(len(ns)):
+             if ns[i].find("nfs") > 0:
+-                cvi = ns[i].split()[1]
+-                cv.add(cvi)
++                cvi = ns[i].split()[1].split(",")
++                for j in range(len(cvi)):
++                    cv.add(cvi[j])
+         return list(cv & valid_versions)
+     except:
+         util.SMlog("Unable to obtain list of valid nfs versions")
+diff --git i/drivers/util.py w/drivers/util.py
+index 0fedb73..0294992 100755
+--- i/drivers/util.py
++++ w/drivers/util.py
+@@ -927,6 +927,17 @@ def remove_mpathcount_field(session, host_ref, sr_ref, SCSIid):
+     except:
+         pass
+ 
++def get_ip_address_family(address):
++    try:
++        socket.inet_aton(address)
++        return 4
++    except socket.error:
++        try:
++            socket.inet_pton(socket.AF_INET6, address)
++            return 6
++        except:
++            return -1
++
+ def _testHost(hostname, port, errstring):
+     SMlog("_testHost: Testing host/port: %s,%d" % (hostname,port))
+     try:
+diff --git a/tests/test_NFSSR.py b/tests/test_NFSSR.py
+index efea89a8..7ae31c64 100644
+--- a/tests/test_NFSSR.py
++++ b/tests/test_NFSSR.py
+@@ -89,3 +89,8 @@ def test_attach(self, validate_nfsversion, check_server_tcp, _testhost,
+                                            timeout=100,
+                                            nfsversion='aNfsversionChanged',
+                                            retrans=3)
++
++    @mock.patch('NFSSR.Lock', autospec=True)
++    def test_load_ipv6(self, mock_lock):
++        nfssr = self.create_nfssr(server='::1')
++        self.assertEqual(nfssr.transport, 'tcp6')
+diff --git a/tests/test_nfs.py b/tests/test_nfs.py
+index 1cab803c..b561e8ee 100644
+--- a/tests/test_nfs.py
++++ b/tests/test_nfs.py
+@@ -12,13 +12,13 @@ class Test_nfs(unittest.TestCase):
+     def test_check_server_tcp(self, pread):
+         nfs.check_server_tcp('aServer')
+ 
+-        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-p', 'aServer'], quiet=False)
++        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-s', 'aServer'], quiet=False)
+ 
+     @mock.patch('util.pread', autospec=True)
+     def test_check_server_tcp_nfsversion(self, pread):
+         nfs.check_server_tcp('aServer', 'aNfsversion')
+ 
+-        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-p', 'aServer'], quiet=False)
++        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-s', 'aServer'], quiet=False)
+ 
+     @mock.patch('time.sleep', autospec=True)
+     # Can't use autospec due to http://bugs.python.org/issue17826
+@@ -74,9 +74,21 @@ def test_check_server_service_first_call_exception(self, pread, sleep):
+         self.assertTrue(service_found)
+         self.assertEqual(len(pread.mock_calls), 2)
+ 
+-    def get_soft_mount_pread(self, binary, vers):
+-        return ([binary, 'remoteserver:remotepath', 'mountpoint', '-o',
+-                 'soft,proto=transport,vers=%s,acdirmin=0,acdirmax=0' % vers])
++    # Can't use autospec due to http://bugs.python.org/issue17826
++    @mock.patch('util.pread2')
++    def test_get_supported_nfs_versions(self, pread2):
++        pread2.side_effect = ["    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
++        versions = nfs.get_supported_nfs_versions('aServer')
++
++        self.assertEqual(versions, ['3', '4'])
++        self.assertEqual(len(pread2.mock_calls), 1)
++        pread2.assert_called_with(['/usr/sbin/rpcinfo', '-s', 'aServer'])
++
++    def get_soft_mount_pread(self, binary, vers, ipv6=False):
++        remote = '[remoteserver]' if ipv6 else 'remoteserver'
++        transport = 'tcp6' if ipv6 else 'transport'
++        return ([binary, '%s:remotepath' % remote, 'mountpoint', '-o',
++                 'soft,proto=%s,vers=%s,acdirmin=0,acdirmax=0' % (transport, vers)])
+ 
+     @mock.patch('util.makedirs', autospec=True)
+     @mock.patch('nfs.check_server_service', autospec=True)
+@@ -89,6 +101,17 @@ def test_soft_mount(self, pread, check_server_service, makedirs):
+         pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
+                                                                 '3'))
+ 
++    @mock.patch('util.makedirs', autospec=True)
++    @mock.patch('nfs.check_server_service', autospec=True)
++    @mock.patch('util.pread', autospec=True)
++    def test_soft_mount_ipv6(self, pread, check_server_service, makedirs):
++        nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'tcp6',
++                       timeout=None)
++
++        check_server_service.assert_called_once_with('remoteserver')
++        pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
++                                                                '3', True))
++
+     @mock.patch('util.makedirs', autospec=True)
+     @mock.patch('nfs.check_server_service', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+index f2ff13f2..da0fcff5 100644
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -92,3 +92,9 @@ def test_atomicFileWrite_exception(self, mock_log, mock_mtemp, mock_remove,
+             mock_log.assert_called_with(expectedMsg)
+             mock_remove.assert_called_with("/var/run/random_temp.txt")
+             self.assertEqual(opener_mock.return_value.close.call_count, 1)
++
++    def test_get_ip_address_family(self):
++        self.assertEqual(util.get_ip_address_family('127.0.0.1'), 4)
++        self.assertEqual(util.get_ip_address_family('::1'), 6)
++        self.assertEqual(util.get_ip_address_family('not an ip address'), -1)
++        self.assertEqual(util.get_ip_address_family('127.0.0.256'), -1)

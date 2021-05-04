@@ -1,0 +1,53 @@
+From 4ff40ad4acb7709de4a365e4a9a4c0d32f209797 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 29 Apr 2021 13:55:41 +0200
+Subject: [PATCH 9/9] Fix regression added by XSI-915:
+
+If device is missing during LVM/EXT SR creation we have this error:
+```
+Error code: SR_BACKEND_FAILURE_1200
+Error parameters: , 'LVHDSR' object has no attribute 'root',
+```
+
+With this fix we retrieve a more explicit message:
+```
+Error code: SR_BACKEND_FAILURE_90
+Error parameters: , The request is missing the device parameter,
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/EXTSR.py  | 3 +++
+ drivers/LVHDSR.py | 2 ++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
+index 9160075..aca0289 100755
+--- a/drivers/EXTSR.py
++++ b/drivers/EXTSR.py
+@@ -57,6 +57,9 @@ class EXTSR(FileSR.FileSR):
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+         self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
++        if 'device' not in self.dconf or not self.dconf['device']:
++            raise xs_errors.XenError('ConfigDeviceMissing')
++
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+         self.vgname = EXT_PREFIX + sr_uuid
+         self.remotepath = os.path.join("/dev",self.vgname,sr_uuid)
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index 3abb404..2acdce2 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -148,6 +148,8 @@ class LVHDSR(SR.SR):
+ 
+     def load(self, sr_uuid):
+         self.ops_exclusive = OPS_EXCLUSIVE
++        if 'device' not in self.dconf or not self.dconf['device']:
++            raise xs_errors.XenError('ConfigDeviceMissing')
+ 
+         self.isMaster = False
+         if self.dconf.has_key('SRmaster') and self.dconf['SRmaster'] == 'true':
+-- 
+2.30.1
+

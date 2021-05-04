@@ -1,7 +1,7 @@
-From a8f86897162ce4babbcb8a1aaa254e208f02c643 Mon Sep 17 00:00:00 2001
+From e2336ec149ccbc8d1beb8fc9c864d7a4519b5817 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 6/7] feat(drivers): add LinstorSR driver
+Subject: [PATCH 6/9] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -2284,7 +2284,7 @@ index 4014a2f..aa07315 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 0d06128..f03ee76 100755
+index 9211b31..eba5d8a 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -47,7 +47,17 @@ import xs_errors
@@ -5148,7 +5148,7 @@ index 5936869..ed6abed 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 337add2..0fedb73 100755
+index b08f245..3058e39 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -651,10 +651,36 @@ def get_this_host():
@@ -5191,7 +5191,7 @@ index 337add2..0fedb73 100755
  
  # XXX: this function doesn't do what it claims to do
  def get_localhost_uuid(session):
-@@ -1377,13 +1403,21 @@ def findRunningProcessOrOpenFile(name, process = True):
+@@ -1378,13 +1404,21 @@ def findRunningProcessOrOpenFile(name, process = True):
      else:
          return (retVal, processandpids)
  
@@ -5675,5 +5675,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.28.0
+2.30.1
 

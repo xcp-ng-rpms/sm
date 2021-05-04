@@ -1,7 +1,7 @@
-From a6b5af89e8edbb5e88aff350e5e746b40f9cdec8 Mon Sep 17 00:00:00 2001
+From be85af4d3860e5f0cd746805321e423a2c9c2731 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Thu, 25 Feb 2021 09:54:52 +0100
-Subject: [PATCH 8/8] If no NFS ACLs provided, assume everyone:
+Subject: [PATCH 8/9] If no NFS ACLs provided, assume everyone:
 
 Some QNAP devices do not provide ACL when fetching NFS mounts.
 In this case the assumed ACL should be: "*".
@@ -71,5 +71,5 @@ index 248acb9..96eeba9 100644
 +        self.assertEqual(len(pread2.mock_calls), 1)
 +        pread2.assert_called_with(['/usr/sbin/showmount', '--no-headers', '-e', 'aServer'])
 -- 
-2.26.2
+2.30.1
 

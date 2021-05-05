@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.29.1
-Release: 1.2%{?dist}
+Release: 1.2.0.ipv6.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -40,6 +40,7 @@ Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
 Patch1005: 0005-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
 Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
 Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1008: 0008-Support-IPv6-in-NFS.patch
 
 %description
 This package contains storage backends used in XCP
@@ -413,6 +414,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Fri Apr 30 2021 Benjamin Reis <benjamin.reis@vates.fr> - 2.29.1-1.2.0.ipv6.1
+- 0008-Support-IPv6-in-NFS.patch added
+
 * Fri Nov 06 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.1-1.2
 - Sync patches with our latest 2.29.1-8.2 branch before XCP-ng 8.2 final release
 - 0006-feat-drivers-add-LinstorSR-driver.patch updated

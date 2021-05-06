@@ -1,7 +1,7 @@
 From 4ff40ad4acb7709de4a365e4a9a4c0d32f209797 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 29 Apr 2021 13:55:41 +0200
-Subject: [PATCH 9/9] Fix regression added by XSI-915:
+Subject: [PATCH 09/10] Fix regression added by XSI-915:
 
 If device is missing during LVM/EXT SR creation we have this error:
 ```

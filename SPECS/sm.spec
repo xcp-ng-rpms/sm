@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.3
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -52,6 +52,7 @@ Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
 Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
 Patch1008: 0008-If-no-NFS-ACLs-provided-assume-everyone.patch
 Patch1009: 0009-Fix-regression-added-by-XSI-915.patch
+Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
 
 %description
 This package contains storage backends used in XCP
@@ -404,6 +405,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/LinstorSR.py
 /opt/xensource/sm/LinstorSR.pyc
 /opt/xensource/sm/LinstorSR.pyo
+/opt/xensource/sm/MooseFSSR
+/opt/xensource/sm/MooseFSSR.py
+/opt/xensource/sm/MooseFSSR.pyc
+/opt/xensource/sm/MooseFSSR.pyo
 /opt/xensource/sm/XFSSR
 /opt/xensource/sm/XFSSR.py
 /opt/xensource/sm/XFSSR.pyc
@@ -425,6 +430,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu May 06 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.2
+- Add experimental MooseFS driver
+
 * Thu Apr 29 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.1
 - Sync with hotfix XS82E023
 - CA-349759: don't call srUpdate within a lock

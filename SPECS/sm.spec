@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.3
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -430,6 +430,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue May 18 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.3
+- Update 0009-Fix-regression-added-by-XSI-915.patch (fix regression in the patch itself)
+
 * Thu May 06 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.2
 - Add experimental MooseFS driver
 

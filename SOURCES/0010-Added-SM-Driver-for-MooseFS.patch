@@ -1,4 +1,4 @@
-From bade393f612e3759e4a346bd255ead2412ffd7ab Mon Sep 17 00:00:00 2001
+From b14d78771769ce5d4f03831fbc2158be621bc4e0 Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
 Subject: [PATCH 10/10] Added SM Driver for MooseFS

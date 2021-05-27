@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.3
-Release: 1.3%{?dist}
+Release: 1.4%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -43,15 +43,15 @@ Obsoletes: sm-additional-drivers
 # `diff -urq <sources> <upstream sources>`.
 # After that we can create the tag: `git tag -a v2.30.3-xcpng -m "v2.30.3-xcpng"`,
 # push the commits and tag.
-Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1002: 0002-Add-TrueNAS-multipath-config.patch
-Patch1003: 0003-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
-Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1005: 0005-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
-Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
-Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1008: 0008-If-no-NFS-ACLs-provided-assume-everyone.patch
-Patch1009: 0009-Fix-regression-added-by-XSI-915.patch
+Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
+Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1003: 0003-Add-TrueNAS-multipath-config.patch
+Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
+Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
+Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
+Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
 Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
 
 %description
@@ -430,6 +430,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu May 27 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.4
+- Remove 0009-Fix-regression-added-by-XSI-915.patch
+- Add 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588 to use upstream fix instead
+
 * Tue May 18 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.3
 - Update 0009-Fix-regression-added-by-XSI-915.patch (fix regression in the patch itself)
 

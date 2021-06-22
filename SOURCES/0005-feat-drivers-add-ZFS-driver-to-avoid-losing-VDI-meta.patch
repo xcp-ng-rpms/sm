@@ -1,4 +1,4 @@
-From 08f6680d83c9322ea0a9337911226bc681c50a45 Mon Sep 17 00:00:00 2001
+From f7beb99de3c3219b3d4ca9dd9f1ef8b1a22513eb Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
 Subject: [PATCH 05/10] feat(drivers): add ZFS driver to avoid losing VDI
@@ -201,5 +201,5 @@ index f2789b9..e28649b 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.30.1
+2.32.0
 

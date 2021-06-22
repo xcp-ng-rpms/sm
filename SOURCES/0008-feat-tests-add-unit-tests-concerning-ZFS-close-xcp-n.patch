@@ -1,4 +1,4 @@
-From e2fdee634fe6cdff45758855b27a1570e8142f96 Mon Sep 17 00:00:00 2001
+From c9314df349b17501f02da24f55df5c44d1ec3e40 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 27 Oct 2020 15:04:36 +0100
 Subject: [PATCH 08/10] feat(tests): add unit tests concerning ZFS (close
@@ -208,5 +208,5 @@ index 0000000..c477fa3
 +            failed = True
 +        self.assertTrue(failed)
 -- 
-2.30.1
+2.32.0
 

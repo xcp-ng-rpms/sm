@@ -1,4 +1,4 @@
-From 9b0d4c4a0a5d74c508de6a63eed5d3fd777e85a4 Mon Sep 17 00:00:00 2001
+From 1a534345aaf9b40fbb84e3d0c0e30e6e03da6075 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Thu, 25 Feb 2021 09:54:52 +0100
 Subject: [PATCH 09/10] If no NFS ACLs provided, assume everyone:
@@ -71,5 +71,5 @@ index 248acb9..96eeba9 100644
 +        self.assertEqual(len(pread2.mock_calls), 1)
 +        pread2.assert_called_with(['/usr/sbin/showmount', '--no-headers', '-e', 'aServer'])
 -- 
-2.30.1
+2.32.0
 

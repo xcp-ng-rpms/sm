@@ -1,4 +1,4 @@
-From 5903a35c7583f8f87d0c7a6f82296dd14dadad0d Mon Sep 17 00:00:00 2001
+From 495a25c63789be78892dc45c494b8e7aab08d277 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
 Subject: [PATCH 06/10] Re-add the ext4 driver for users who need to transition
@@ -291,5 +291,5 @@ index e28649b..9211b31 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.30.1
+2.32.0
 

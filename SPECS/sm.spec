@@ -39,7 +39,16 @@ Obsoletes: sm-additional-drivers
 # `diff -urq <sources> <upstream sources>`.
 # After that we can create the tag: `git tag -a v2.30.4-xcpng -m "v2.30.4-xcpng"`,
 # push the commits and tag.
-TODO
+Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
+Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1003: 0003-Add-TrueNAS-multipath-config.patch
+Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
+Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
+Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
+Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
+Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
 
 %description
 This package contains storage backends used in XCP
@@ -417,9 +426,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
-* Tue Jun 22 2021 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.30.4-1.1
+* Tue Jun 22 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.4-1.1
 - Sync with hotfix XS82E028
-- Update XCP-ng patches
+- Sync patches with our latest 2.30.4-8.2 branch
 - *** Upstream changelog ***
 - * Wed May 19 2021 Mark Syms <mark.syms@citrix.com> - 2.30.4-1
 - - CA-354228: Reinstate load calls in _pathrefresh

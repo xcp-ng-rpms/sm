@@ -1,16 +1,16 @@
 # -*- rpm-spec -*-
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.30.4
+Version: 2.30.6
 Release: 1
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz
+Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz
 
 
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz) = bf35241826d829082c9444d8cdbe41c41692a4d8
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
@@ -350,6 +350,15 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Fri Oct 22 2021 Mark Syms <mark.syms@citrix.com> - 2.30.6-1
+- CA-359453: use rename not link if links not supported
+- CP-38316: update path checker for Equalogic at vendors request
+
+* Thu Oct  7 2021 Mark Syms <mark.syms@citrix.com> - 2.30.5-1
+- CA-355401: make post attach scan best effort and report errors
+- CA-355289: ensure xapi is initialised before starting GC
+- CA-356645: use "self.session is None" not "self.session == None"
+
 * Wed May 19 2021 Mark Syms <mark.syms@citrix.com> - 2.30.4-1
 - CA-354228: Reinstate load calls in _pathrefresh
 
@@ -688,7 +697,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz) = bf35241826d829082c9444d8cdbe41c41692a4d8
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -708,7 +717,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz) = bf35241826d829082c9444d8cdbe41c41692a4d8
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -721,7 +730,7 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz) = bf35241826d829082c9444d8cdbe41c41692a4d8
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

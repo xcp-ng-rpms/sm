@@ -1,4 +1,4 @@
-From dba146564a4a01e0507ecb01a9281da53c7cb5a4 Mon Sep 17 00:00:00 2001
+From ff8b873c284f993db91498588e88ed4550cf7ac2 Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
 Subject: [PATCH 10/10] Added SM Driver for MooseFS
@@ -305,7 +305,7 @@ index 0000000..be5112c
 +else:
 +    SR.registerSR(MooseFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index eba5d8a..25dea3c 100755
+index 6b6ec6c..cb5ceb9 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3119,7 +3119,7 @@ def normalizeType(type):
@@ -388,5 +388,5 @@ index 0000000..3349a44
 +        mfssr.detach('asr_uuid')
 +        self.assertTrue(mfssr.attached)
 -- 
-2.32.0
+2.33.0
 

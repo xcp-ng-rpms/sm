@@ -1,16 +1,16 @@
 # -*- rpm-spec -*-
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.30.4
+Version: 2.30.6
 Release: 1.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz
+Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz
 
 
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz) = bf35241826d829082c9444d8cdbe41c41692a4d8
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: gcc
@@ -28,16 +28,17 @@ Conflicts: kernel < 4.19.19-5.0.0
 
 Obsoletes: sm-additional-drivers
 
+# XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.4-xcpng..2.30.4-8.2
-# Note: the v2.30.4-xcpng tag was manually created by us on our fork because
+# git format-patch v2.30.6-xcpng..2.30.6-8.2
+# Note: the v2.30.6-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
-# To create this tag in the sources, you must create a 2.30.4-8.2 branch from the
+# To create this tag in the sources, you must create a 2.30.6-8.2 branch from the
 # previous -xcpng tag then cherry pick each upstream commit referenced in the changelog
 # of the upstream spec file.
 # To ensure you have all changes, you can use:
 # `diff -urq <sources> <upstream sources>`.
-# After that we can create the tag: `git tag -a v2.30.4-xcpng -m "v2.30.4-xcpng"`,
+# After that we can create the tag: `git tag -a v2.30.6-xcpng -m "v2.30.6-xcpng"`,
 # push the commits and tag.
 Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
 Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
@@ -426,6 +427,18 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue Jan 04 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.6-1.1
+- Sync with CH 8.2.1
+- Sync patches with our latest 2.30.6-8.2 branch
+- *** Upstream changelog ***
+- * Fri Oct 22 2021 Mark Syms <mark.syms@citrix.com> - 2.30.6-1
+- - CA-359453: use rename not link if links not supported
+- - CP-38316: update path checker for Equalogic at vendors request
+- * Thu Oct  7 2021 Mark Syms <mark.syms@citrix.com> - 2.30.5-1
+- - CA-355401: make post attach scan best effort and report errors
+- - CA-355289: ensure xapi is initialised before starting GC
+- - CA-356645: use "self.session is None" not "self.session == None"
+
 * Tue Jun 22 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.4-1.1
 - Sync with hotfix XS82E028
 - Sync patches with our latest 2.30.4-8.2 branch
@@ -826,7 +839,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz) = bf35241826d829082c9444d8cdbe41c41692a4d8
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -846,7 +859,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz) = bf35241826d829082c9444d8cdbe41c41692a4d8
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -859,7 +872,7 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.4&format=tar.gz&prefix=sm-2.30.4#/sm-2.30.4.tar.gz) = bf35241826d829082c9444d8cdbe41c41692a4d8
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

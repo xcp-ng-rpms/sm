@@ -1,4 +1,4 @@
-From 495a25c63789be78892dc45c494b8e7aab08d277 Mon Sep 17 00:00:00 2001
+From 11da1ca6f153430c2c952b93d62a07ce393f8797 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
 Subject: [PATCH 06/10] Re-add the ext4 driver for users who need to transition
@@ -278,7 +278,7 @@ index 0000000..cb44049
 +    SR.registerSR(EXT4SR)
 \ No newline at end of file
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e28649b..9211b31 100755
+index de2a32d..9821520 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2763,7 +2763,7 @@ def normalizeType(type):
@@ -291,5 +291,5 @@ index e28649b..9211b31 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.32.0
+2.33.0
 

@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.6
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -50,6 +50,7 @@ Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
 Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
 Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
 Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
+Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
 
 %description
 This package contains storage backends used in XCP
@@ -427,6 +428,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu May 05 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.6-1.2
+- Add 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+- Keep folder mounted when ISO SR is used with legacy_mode=True
+
 * Tue Jan 04 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.6-1.1
 - Sync with CH 8.2.1
 - Sync patches with our latest 2.30.6-8.2 branch

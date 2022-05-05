@@ -1,0 +1,107 @@
+From bef372c2b63ff927cded8aa12c7815775beaa847 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 2 Dec 2021 09:28:37 +0100
+Subject: [PATCH 11/11] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
+ is used
+
+`umount` should not be called when `legacy_mode` is enabled, otherwise a mounted dir
+used during SR creation is unmounted at the end of the `create` call (and also
+when a PBD is unplugged) in `detach` block.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/ISOSR.py    |  7 +++---
+ tests/test_ISOSR.py | 59 +++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 62 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
+index 5b12683..3508548 100755
+--- a/drivers/ISOSR.py
++++ b/drivers/ISOSR.py
+@@ -455,10 +455,9 @@ class ISOSR(SR.SR):
+ 
+     def detach(self, sr_uuid):
+         """Std. detach"""
+-        # This handles legacy mode too, so no need to check
+-        if not self._checkmount():
+-            return 
+- 
++        if 'legacy_mode' in self.dconf or not self._checkmount():
++            return
++
+         try:
+             util.pread(["umount", self.mountpoint]);
+         except util.CommandException, inst:
+diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
+index 914b961..a5b3290 100644
+--- a/tests/test_ISOSR.py
++++ b/tests/test_ISOSR.py
+@@ -19,6 +19,65 @@ class FakeISOSR(ISOSR.ISOSR):
+         self.dconf = srcmd.dconf
+         self.srcmd = srcmd
+ 
++class TestISOSR_overLocal(unittest.TestCase):
++    def create_isosr(self, location='/local_sr', sr_uuid='asr_uuid'):
++        srcmd = mock.Mock()
++        srcmd.dconf = {
++            'location': location,
++            'type': 'iso',
++            'legacy_mode': True
++        }
++        srcmd.params = {
++            'command': 'some_command'
++        }
++        isosr = FakeISOSR(srcmd, None)
++        isosr.load(sr_uuid)
++        return isosr
++
++    @mock.patch('util.pread')
++    def test_load(self, pread):
++        self.create_isosr()
++        # Check `mount/umount` is never called.
++        self.assertFalse(pread.called)
++
++    @mock.patch('os.path.exists', autospec=True)
++    @mock.patch('util.pread')
++    def test_attach_and_detach_local(self, pread, exists):
++        isosr = self.create_isosr()
++        isosr.attach(None)
++        self.assertFalse(pread.called)
++        isosr.detach(None)
++        self.assertFalse(pread.called)
++
++    @mock.patch('os.path.exists', autospec=True)
++    @mock.patch('util.pread')
++    @mock.patch('ISOSR.ISOSR._checkmount')
++    def test_attach_and_detach_local_with_mounted_path(
++        self, _checkmount, pread, exists
++    ):
++        _checkmount.return_value = True
++
++        isosr = self.create_isosr()
++        isosr.attach(None)
++        self.assertFalse(pread.called)
++        isosr.detach(None)
++        self.assertFalse(pread.called)
++
++    @testlib.with_context
++    @mock.patch('os.path.exists')
++    @mock.patch('util.pread')
++    def test_attach_local_with_bad_path(self, context, pread, exists):
++        context.setup_error_codes()
++
++        # Local path doesn't exist, but error list yes.
++        exists.side_effect = [False, True]
++
++        isosr = self.create_isosr()
++        with self.assertRaises(SR.SROSError) as ose:
++            isosr.attach(None)
++        self.assertEquals(ose.exception.errno, 226)
++        self.assertFalse(pread.called)
++
+ 
+ class TestISOSR_overNFS(unittest.TestCase):
+ 
+-- 
+2.36.0
+

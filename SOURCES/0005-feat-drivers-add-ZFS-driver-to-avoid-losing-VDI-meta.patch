@@ -1,7 +1,7 @@
 From 2392fe56875f1f15fb220d94de214fdc55917aa8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
-Subject: [PATCH 05/10] feat(drivers): add ZFS driver to avoid losing VDI
+Subject: [PATCH 05/11] feat(drivers): add ZFS driver to avoid losing VDI
  metadata (xcp-ng/xcp#401)
 
 ---
@@ -201,5 +201,5 @@ index 361c65e..de2a32d 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.33.0
+2.36.0
 

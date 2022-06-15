@@ -1,16 +1,16 @@
 # -*- rpm-spec -*-
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.30.6
-Release: 1.2%{?dist}
+Version: 2.30.7
+Release: 1.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz
+Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz
 
 
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: gcc
@@ -30,27 +30,17 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.6-xcpng..2.30.6-8.2
-# Note: the v2.30.6-xcpng tag was manually created by us on our fork because
+# git format-patch v2.30.7-xcpng..2.30.7-8.2
+# Note: the v2.30.7-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
-# To create this tag in the sources, you must create a 2.30.6-8.2 branch from the
+# To create this tag in the sources, you must create a 2.30.7-8.2 branch from the
 # previous -xcpng tag then cherry pick each upstream commit referenced in the changelog
 # of the upstream spec file.
 # To ensure you have all changes, you can use:
 # `diff -urq <sources> <upstream sources>`.
-# After that we can create the tag: `git tag -a v2.30.6-xcpng -m "v2.30.6-xcpng"`,
+# After that we can create the tag: `git tag -a v2.30.7-xcpng -m "v2.30.7-xcpng"`,
 # push the commits and tag.
-Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
-Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1003: 0003-Add-TrueNAS-multipath-config.patch
-Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
-Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
-Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
-Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
-Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
-Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+TODO
 
 %description
 This package contains storage backends used in XCP
@@ -428,6 +418,13 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Wed Jun 15 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.1
+- Sync with hotfix XS82ECU1009
+- Update XCP-ng patches
+- *** Upstream changelog ***
+- * Fri Apr 29 2022 Mark Syms <mark.syms@citrix.com> - 2.30.7-1
+- - CA-352880: when deleting an HBA SR remove the kernel devices
+
 * Thu May 05 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.6-1.2
 - Add 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
 - Keep folder mounted when ISO SR is used with legacy_mode=True
@@ -844,7 +841,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -864,7 +861,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -877,7 +874,7 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

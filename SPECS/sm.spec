@@ -51,6 +51,7 @@ Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
 Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
 Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
 Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
 
 %description
 This package contains storage backends used in XCP
@@ -431,6 +432,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 * Wed Jun 15 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.1
 - Sync with hotfix XS82ECU1009
 - Sync patches with our latest 2.30.7-8.2 branch
+- Add 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+- Use subdirectory for each SR on the MooseFS server
 - *** Upstream changelog ***
 - * Fri Apr 29 2022 Mark Syms <mark.syms@citrix.com> - 2.30.7-1
 - - CA-352880: when deleting an HBA SR remove the kernel devices

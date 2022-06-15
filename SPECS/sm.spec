@@ -1,16 +1,16 @@
 # -*- rpm-spec -*-
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.30.6
+Version: 2.30.7
 Release: 1
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz
+Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz
 
 
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
@@ -350,6 +350,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Fri Apr 29 2022 Mark Syms <mark.syms@citrix.com> - 2.30.7-1
+- CA-352880: when deleting an HBA SR remove the kernel devices
+
 * Fri Oct 22 2021 Mark Syms <mark.syms@citrix.com> - 2.30.6-1
 - CA-359453: use rename not link if links not supported
 - CP-38316: update path checker for Equalogic at vendors request
@@ -697,7 +700,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -717,7 +720,7 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -730,7 +733,7 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.6&format=tar.gz&prefix=sm-2.30.6#/sm-2.30.6.tar.gz) = c96e300c3f61aec787a8a5e0271e000e0d6cd6ee
+Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

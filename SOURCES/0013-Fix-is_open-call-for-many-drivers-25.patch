@@ -1,0 +1,74 @@
+From 3c9b581b5929c918aacd41f74bd1efe3ae7a218d Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@gmail.com>
+Date: Thu, 23 Jun 2022 10:36:36 +0200
+Subject: [PATCH 13/54] Fix is_open call for many drivers (#25)
+
+Ensure all shared drivers are imported in `_is_open` definition to register
+them in the driver list. Otherwise this function always fails with a SRUnknownType exception.
+
+Also, we must add a fake mandatory parameter to make MooseFS happy: `masterhost`.
+Like existing fake params, we don't check the SR type and we always write it.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/on_slave.py    | 12 ++++++++++--
+ tests/test_on_slave.py | 13 ++++++++++++-
+ 2 files changed, 22 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index 0d60d96..722f4dd 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -72,7 +72,15 @@ def multi(session, args):
+ 
+ def _is_open(session, args):
+     """Check if VDI <args["vdiUuid"]> is open by a tapdisk on this host"""
+-    import SRCommand, SR, NFSSR, EXTSR, LVHDSR, blktap2
++    import SRCommand
++    import SR
++    import CephFSSR
++    import EXTSR
++    import GlusterFSSR
++    import MooseFSSR
++    import NFSSR
++    import ZFSSR
++    import blktap2
+ 
+     util.SMlog("on-slave.is_open: %s" % args)
+     vdiUuid = args["vdiUuid"]
+@@ -86,7 +94,7 @@ def _is_open(session, args):
+         srType = "lvhd"
+     cmd = SRCommand.SRCommand(None)
+     cmd.driver_info = {"capabilities": None}
+-    cmd.dconf = {"server": None, "device": "/HACK"}
++    cmd.dconf = {"server": None, "device": "/HACK", "masterhost": None}
+     cmd.params = {"command": None}
+ 
+     driver = SR.driver(srType)
+diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
+index 54ebcd3..b74904e 100644
+--- a/tests/test_on_slave.py
++++ b/tests/test_on_slave.py
+@@ -13,7 +13,18 @@ import on_slave
+ 
+ class Test_on_slave_is_open(unittest.TestCase):
+ 
+-    MOCK_IMPORTS = ['SRCommand', 'SR', 'NFSSR', 'EXTSR', 'LVHDSR', 'blktap2']
++    MOCK_IMPORTS = [
++        'SRCommand',
++        'SR',
++        'CephFSSR',
++        'EXTSR',
++        'GlusterFSSR',
++        'MooseFSSR',
++        'NFSSR',
++        'EXTSR',
++        'LVHDSR',
++        'blktap2'
++    ]
+ 
+     def fake_import(self, name, *args):
+         print 'Asked to import {}'.format(name)
+-- 
+2.36.0
+

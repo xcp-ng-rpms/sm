@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.7
-Release: 1.1%{?dist}
+Release: 1.1.0.linstor.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -21,6 +21,7 @@ Requires(postun): systemd
 Requires: xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Requires: python2-bitarray
+Requires: python2-configparser
 Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
@@ -52,6 +53,48 @@ Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
 Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
 Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
 Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
+Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+Patch1015: 0015-Fix-timeout_call-alarm-must-be-reset-in-case-of-succ.patch
+Patch1016: 0016-timeout_call-returns-the-result-of-user-function-now.patch
+Patch1017: 0017-fix-LinstorSR-repair-volumes-only-if-an-exclusive-co.patch
+Patch1018: 0018-feat-LinstorSR-Improve-LINSTOR-performance.patch
+Patch1019: 0019-feat-LinstorSR-robustify-scan-to-avoid-losing-VDIs-i.patch
+Patch1020: 0020-feat-LinstorSR-display-a-correctly-readable-size-for.patch
+Patch1021: 0021-feat-linstor-monitord-scan-all-LINSTOR-SRs-every-12-.patch
+Patch1022: 0022-fix-LinstorSR-call-correctly-method-in-_locked_load-.patch
+Patch1023: 0023-feat-LinstorSR-integrate-minidrbdcluster-daemon.patch
+Patch1024: 0024-feat-LinstorSR-ensure-heartbeat-and-redo_log-VDIs-ar.patch
+Patch1025: 0025-feat-LinstorSR-protect-sr-commands-to-avoid-forgetti.patch
+Patch1026: 0026-fix-LinstorJournaler-ensure-uri-is-not-None-during-l.patch
+Patch1027: 0027-feat-LinstorSR-add-an-option-to-disable-auto-quorum-.patch
+Patch1028: 0028-fix-LinstorVolumeManager-add-a-workaround-to-create-.patch
+Patch1029: 0029-feat-LinstorSR-add-optional-ips-parameter.patch
+Patch1030: 0030-feat-LinstorSR-add-a-helper-log_drbd_erofs-to-trace-.patch
+Patch1031: 0031-fix-LinstorSR-try-to-restart-the-services-again-if-t.patch
+Patch1032: 0032-fix-LinstorSR-robustify-linstor-manager-to-never-inc.patch
+Patch1033: 0033-fix-LinstorSR-prevent-starting-controller-during-fai.patch
+Patch1034: 0034-feat-LinstorVolumeManager-increase-peer-slots-limit-.patch
+Patch1035: 0035-feat-LinstorVolumeManager-add-a-fallback-to-find-con.patch
+Patch1036: 0036-fix-var-lib-linstor.mount-ensure-we-always-mount-dat.patch
+Patch1037: 0037-feat-LinstorVolumeManager-add-a-fallback-to-find-nod.patch
+Patch1038: 0038-feat-LinstorSR-explain-on-which-host-plugins-command.patch
+Patch1039: 0039-fix-LinstorSR-create-diskless-path-if-necessary-duri.patch
+Patch1040: 0040-feat-LinstorSR-use-HTTP-NBD-instead-of-DRBD-directly.patch
+Patch1041: 0041-fix-LinstorSR-find-controller-when-XAPI-unreachable-.patch
+Patch1042: 0042-fix-LinstorSR-use-IPs-instead-of-hostnames-in-NBD-se.patch
+Patch1043: 0043-fix-LinstorVolumeManager-ensure-we-always-use-IPs-in.patch
+Patch1044: 0044-feat-linstor-manager-add-methods-to-add-remove-host-.patch
+Patch1045: 0045-feat-LinstorVolumeManager-support-SR-creation-with-d.patch
+Patch1046: 0046-feat-LinstorSR-add-a-config-var-to-disable-HTTP-NBD-.patch
+Patch1047: 0047-feat-LinstorSr-ensure-LVM-group-is-activated-during-.patch
+Patch1048: 0048-feat-linstor-manager-add-method-to-create-LinstorSR-.patch
+Patch1049: 0049-fix-LinstorSR-always-set-vdi_path-in-generate_config.patch
+Patch1050: 0050-fix-minidrbdcluster-supports-new-properties-like-for.patch
+Patch1051: 0051-fix-LinstorSR-enabled-disable-minidrbcluster-with-fi.patch
+Patch1052: 0052-fix-linstor-manager-change-linstor-satellite-start-b.patch
+Patch1053: 0053-Fix-is_open-call-for-LinstorSR.patch
+Patch1054: 0054-fix-linstorvhdutil-fix-boolean-params-of-check-call.patch
 
 %description
 This package contains storage backends used in XCP
@@ -144,6 +187,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
+/etc/minidrbdcluster.ini
+/etc/systemd/system/linstor-satellite.service.d/override.conf
+/etc/systemd/system/var-lib-linstor.service
 /etc/udev/scripts/xs-mpath-scsidev.sh
 /etc/xapi.d/plugins/coalesce-leaf
 /etc/xapi.d/plugins/lvhd-thin
@@ -164,6 +210,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/dcopy
 /opt/xensource/libexec/local-device-change
 /opt/xensource/libexec/make-dummy-sr
+/opt/xensource/libexec/minidrbdcluster
 /opt/xensource/libexec/usb_change
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
@@ -371,6 +418,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /sbin/mpathutil
 /etc/rc.d/init.d/sm-multipath
 %{_unitdir}/make-dummy-sr.service
+%{_unitdir}/minidrbdcluster.service
 %{_unitdir}/xs-sm.service
 %{_unitdir}/sm-mpath-root.service
 %{_unitdir}/usb-scan.service
@@ -425,10 +473,55 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/linstorvolumemanager.pyc
 /opt/xensource/sm/linstorvolumemanager.pyo
+/opt/xensource/libexec/fork-log-daemon
 /opt/xensource/libexec/linstor-monitord
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Jun 23 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.1.0.linstor.1
+- Add 0013-Fix-is_open-call-for-many-drivers-25.patch
+- Add 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+- Add 0015-Fix-timeout_call-alarm-must-be-reset-in-case-of-succ.patch
+- Add 0016-timeout_call-returns-the-result-of-user-function-now.patch
+- Add 0017-fix-LinstorSR-repair-volumes-only-if-an-exclusive-co.patch
+- Add 0018-feat-LinstorSR-Improve-LINSTOR-performance.patch
+- Add 0019-feat-LinstorSR-robustify-scan-to-avoid-losing-VDIs-i.patch
+- Add 0020-feat-LinstorSR-display-a-correctly-readable-size-for.patch
+- Add 0021-feat-linstor-monitord-scan-all-LINSTOR-SRs-every-12-.patch
+- Add 0022-fix-LinstorSR-call-correctly-method-in-_locked_load-.patch
+- Add 0023-feat-LinstorSR-integrate-minidrbdcluster-daemon.patch
+- Add 0024-feat-LinstorSR-ensure-heartbeat-and-redo_log-VDIs-ar.patch
+- Add 0025-feat-LinstorSR-protect-sr-commands-to-avoid-forgetti.patch
+- Add 0026-fix-LinstorJournaler-ensure-uri-is-not-None-during-l.patch
+- Add 0027-feat-LinstorSR-add-an-option-to-disable-auto-quorum-.patch
+- Add 0028-fix-LinstorVolumeManager-add-a-workaround-to-create-.patch
+- Add 0029-feat-LinstorSR-add-optional-ips-parameter.patch
+- Add 0030-feat-LinstorSR-add-a-helper-log_drbd_erofs-to-trace-.patch
+- Add 0031-fix-LinstorSR-try-to-restart-the-services-again-if-t.patch
+- Add 0032-fix-LinstorSR-robustify-linstor-manager-to-never-inc.patch
+- Add 0033-fix-LinstorSR-prevent-starting-controller-during-fai.patch
+- Add 0034-feat-LinstorVolumeManager-increase-peer-slots-limit-.patch
+- Add 0035-feat-LinstorVolumeManager-add-a-fallback-to-find-con.patch
+- Add 0036-fix-var-lib-linstor.mount-ensure-we-always-mount-dat.patch
+- Add 0037-feat-LinstorVolumeManager-add-a-fallback-to-find-nod.patch
+- Add 0038-feat-LinstorSR-explain-on-which-host-plugins-command.patch
+- Add 0039-fix-LinstorSR-create-diskless-path-if-necessary-duri.patch
+- Add 0040-feat-LinstorSR-use-HTTP-NBD-instead-of-DRBD-directly.patch
+- Add 0041-fix-LinstorSR-find-controller-when-XAPI-unreachable-.patch
+- Add 0042-fix-LinstorSR-use-IPs-instead-of-hostnames-in-NBD-se.patch
+- Add 0043-fix-LinstorVolumeManager-ensure-we-always-use-IPs-in.patch
+- Add 0044-feat-linstor-manager-add-methods-to-add-remove-host-.patch
+- Add 0045-feat-LinstorVolumeManager-support-SR-creation-with-d.patch
+- Add 0046-feat-LinstorSR-add-a-config-var-to-disable-HTTP-NBD-.patch
+- Add 0047-feat-LinstorSr-ensure-LVM-group-is-activated-during-.patch
+- Add 0048-feat-linstor-manager-add-method-to-create-LinstorSR-.patch
+- Add 0049-fix-LinstorSR-always-set-vdi_path-in-generate_config.patch
+- Add 0050-fix-minidrbdcluster-supports-new-properties-like-for.patch
+- Add 0051-fix-LinstorSR-enabled-disable-minidrbcluster-with-fi.patch
+- Add 0052-fix-linstor-manager-change-linstor-satellite-start-b.patch
+- Add 0053-Fix-is_open-call-for-LinstorSR.patch
+- Add 0054-fix-linstorvhdutil-fix-boolean-params-of-check-call.patch
+
 * Wed Jun 15 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.1
 - Sync with hotfix XS82ECU1009
 - Sync patches with our latest 2.30.7-8.2 branch

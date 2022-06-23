@@ -1,0 +1,110 @@
+From c5d83d06965fe467b200226f44d73bda9675dd84 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 21 Oct 2021 11:13:07 +0200
+Subject: [PATCH 36/54] fix(var-lib-linstor.mount): ensure we always mount
+ database with RW flags
+
+Sometimes systemd fallback to read only FS if the volume can't be mounted, we must
+forbid that. It's probably a DRBD error.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ Makefile                                   |  2 +-
+ drivers/linstor-manager                    |  4 ++--
+ etc/minidrbdcluster.ini                    |  2 +-
+ etc/systemd/system/var-lib-linstor.mount   |  6 ------
+ etc/systemd/system/var-lib-linstor.service | 21 +++++++++++++++++++++
+ 5 files changed, 25 insertions(+), 10 deletions(-)
+ delete mode 100644 etc/systemd/system/var-lib-linstor.mount
+ create mode 100644 etc/systemd/system/var-lib-linstor.service
+
+diff --git a/Makefile b/Makefile
+index ebc0c2b..3c68486 100755
+--- a/Makefile
++++ b/Makefile
+@@ -175,7 +175,7 @@ install: precheck
+ 	  $(SM_STAGING)/$(LOGROTATE_DIR)
+ 	install -m 644 etc/systemd/system/linstor-satellite.service.d/override.conf \
+ 	  $(SM_STAGING)/$(SYSTEMD_CONF_DIR)/linstor-satellite.service.d/
+-	install -m 644 etc/systemd/system/var-lib-linstor.mount \
++	install -m 644 etc/systemd/system/var-lib-linstor.service \
+ 	  $(SM_STAGING)/$(SYSTEMD_CONF_DIR)
+ 	install -m 644 etc/minidrbdcluster.ini \
+ 	  $(SM_STAGING)/$(MINI_DRBD_CLUSTER_CONF_DIR)
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index afc4bfe..af8d2b9 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -187,7 +187,7 @@ def destroy(session, args):
+ 
+         # When destroy is called, there are no running minidrbdcluster daemons.
+         # So the controllers are stopped too, we must start an instance.
+-        restart_service('var-lib-linstor.mount')
++        restart_service('var-lib-linstor.service')
+         restart_service('linstor-controller')
+ 
+         linstor = LinstorVolumeManager(
+@@ -199,7 +199,7 @@ def destroy(session, args):
+         return str(True)
+     except Exception as e:
+         stop_service('linstor-controller')
+-        stop_service('var-lib-linstor.mount')
++        stop_service('var-lib-linstor.service')
+         util.SMlog('linstor-manager:destroy error: {}'.format(e))
+     return str(False)
+ 
+diff --git a/etc/minidrbdcluster.ini b/etc/minidrbdcluster.ini
+index 0126e86..9e52342 100644
+--- a/etc/minidrbdcluster.ini
++++ b/etc/minidrbdcluster.ini
+@@ -5,7 +5,7 @@
+ # section name the systemd-units to activate on one of the nodes.
+ 
+ [xcp-persistent-database]
+-systemd-units=var-lib-linstor.mount,linstor-controller.service
++systemd-units=var-lib-linstor.service,linstor-controller.service
+ 
+ [xcp-persistent-ha-statefile]
+ systemd-units=
+diff --git a/etc/systemd/system/var-lib-linstor.mount b/etc/systemd/system/var-lib-linstor.mount
+deleted file mode 100644
+index a05a7f7..0000000
+--- a/etc/systemd/system/var-lib-linstor.mount
++++ /dev/null
+@@ -1,6 +0,0 @@
+-[Unit]
+-Description=Filesystem for the LINSTOR controller
+-
+-[Mount]
+-What=/dev/drbd/by-res/xcp-persistent-database/0
+-Where=/var/lib/linstor
+diff --git a/etc/systemd/system/var-lib-linstor.service b/etc/systemd/system/var-lib-linstor.service
+new file mode 100644
+index 0000000..d230d04
+--- /dev/null
++++ b/etc/systemd/system/var-lib-linstor.service
+@@ -0,0 +1,21 @@
++# Regarding the current version of systemd (v.219) used in XCP-ng, we can't use
++# the ReadWriteOnly option (to apply the -w flag, it's not the same than -o rw).
++# This file is a workaround to avoid RO. It must be replaced with the code below
++# in a mount unit. Compatible with version >= 246.
++#
++# [Unit]
++# Description=Filesystem for the LINSTOR controller
++#
++# [Mount]
++# What=/dev/drbd/by-res/xcp-persistent-database/0
++# Where=/var/lib/linstor
++# ReadWriteOnly=true
++
++[Unit]
++Description=Mount filesystem for the LINSTOR controller
++
++[Service]
++Type=oneshot
++ExecStart=/bin/mount -w /dev/drbd/by-res/xcp-persistent-database/0 /var/lib/linstor
++ExecStop=/bin/umount /var/lib/linstor
++RemainAfterExit=true
+-- 
+2.36.0
+

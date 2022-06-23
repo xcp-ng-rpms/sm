@@ -1,7 +1,7 @@
 From be342b7bd7c685a92c5383da0343ec0e89f054d4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 27 Oct 2020 15:04:36 +0100
-Subject: [PATCH 08/12] feat(tests): add unit tests concerning ZFS (close
+Subject: [PATCH 08/54] feat(tests): add unit tests concerning ZFS (close
  xcp-ng/xcp#425)
 
 - Check if "create" doesn't succeed without zfs packages

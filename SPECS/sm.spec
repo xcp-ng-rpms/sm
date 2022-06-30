@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.7
-Release: 1.1%{?dist}
+Release: 1.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -52,6 +52,8 @@ Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
 Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
 Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
 Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
+Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
 
 %description
 This package contains storage backends used in XCP
@@ -429,6 +431,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Jun 30 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.2
+- Add 0013-Fix-is_open-call-for-many-drivers-25.patch
+- Add 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+
 * Wed Jun 15 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.1
 - Sync with hotfix XS82ECU1009
 - Sync patches with our latest 2.30.7-8.2 branch

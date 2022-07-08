@@ -2,7 +2,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.7
-Release: 1.2%{?dist}
+Release: 1.3%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -431,6 +431,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Fri Jul 08 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.3
+- Fix regression caused by is_open patch (LVHDSR + XCP-ng drivers)
+
 * Thu Jun 30 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.2
 - Add 0013-Fix-is_open-call-for-many-drivers-25.patch
 - Add 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch

@@ -1,4 +1,4 @@
-From cda03ac13b427d544f959e0972613a942948dd36 Mon Sep 17 00:00:00 2001
+From cd0258449b870f8ec36e901454e2f2b8ebaeca57 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:37:07 +0200
 Subject: [PATCH 14/14] Remove SR_CACHING capability for many SR types (#24)
@@ -30,7 +30,7 @@ index d797490..09c928b 100644
                  "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
                  "VDI_GENERATE_CONFIG",
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index a2f7484..6b8ac01 100644
+index 323718d..61a7d40 100644
 --- a/drivers/GlusterFSSR.py
 +++ b/drivers/GlusterFSSR.py
 @@ -35,7 +35,7 @@ import vhdutil

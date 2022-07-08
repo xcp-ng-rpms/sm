@@ -1,4 +1,4 @@
-From 3c9b581b5929c918aacd41f74bd1efe3ae7a218d Mon Sep 17 00:00:00 2001
+From a6803a63533f8dd94c79d4add3885e8c5596d3ec Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
 Subject: [PATCH 13/14] Fix is_open call for many drivers (#25)
@@ -6,20 +6,68 @@ Subject: [PATCH 13/14] Fix is_open call for many drivers (#25)
 Ensure all shared drivers are imported in `_is_open` definition to register
 them in the driver list. Otherwise this function always fails with a SRUnknownType exception.
 
-Also, we must add a fake mandatory parameter to make MooseFS happy: `masterhost`.
-Like existing fake params, we don't check the SR type and we always write it.
+Also, we must add two fake mandatory parameters to make MooseFS happy: `masterhost` and `rootpath`.
+Same for CephFS with: `serverpath`. (NFS driver is directly patched to ensure there is no usage of
+the `serverpath` param because its value is equal to None.)
+
+`location` param is required to use ZFS, to be more precise, in the parent class: `FileSR`.
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
- drivers/on_slave.py    | 12 ++++++++++--
- tests/test_on_slave.py | 13 ++++++++++++-
- 2 files changed, 22 insertions(+), 3 deletions(-)
+ drivers/GlusterFSSR.py |  3 ++-
+ drivers/NFSSR.py       | 12 ++++++++----
+ drivers/on_slave.py    | 22 ++++++++++++++++++++--
+ 3 files changed, 30 insertions(+), 7 deletions(-)
 
+diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
+index a2f7484..323718d 100644
+--- a/drivers/GlusterFSSR.py
++++ b/drivers/GlusterFSSR.py
+@@ -96,7 +96,8 @@ class GlusterFSSR(FileSR.FileSR):
+         self.driver_config = DRIVER_CONFIG
+         if 'server' not in self.dconf:
+             raise xs_errors.XenError('ConfigServerMissing')
+-        self.remoteserver = self.dconf['server']
++        # Can be None => on-slave plugin hack (is_open function).
++        self.remoteserver = self.dconf['server'] or ''
+         if self.sr_ref and self.session is not None:
+             self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
+         else:
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index dcfe7ff..409404c 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -83,9 +83,12 @@ class NFSSR(FileSR.SharedFileSR):
+             self.sm_config = self.srcmd.params.get('sr_sm_config') or {}
+             self.other_config = self.srcmd.params.get('sr_other_config') or {}
+         self.nosubdir = self.sm_config.get('nosubdir') == "true"
+-        if self.dconf.has_key('serverpath'):
+-            self.remotepath = os.path.join(self.dconf['serverpath'],
+-                    not self.nosubdir and sr_uuid or "").encode('utf-8')
++        serverpath = self.dconf.get('serverpath')
++        if serverpath is not None:
++            self.remotepath = os.path.join(
++                serverpath,
++                not self.nosubdir and sr_uuid or ""
++            ).encode('utf-8')
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+ 
+         # Handle optional dconf attributes
+@@ -100,7 +103,8 @@ class NFSSR(FileSR.SharedFileSR):
+ 
+ 
+     def validate_remotepath(self, scan):
+-        if not self.dconf.has_key('serverpath'):
++        serverpath = self.dconf.get('serverpath')
++        if serverpath is None:
+             if scan:
+                 try:
+                     self.scan_exports(self.dconf['server'])
 diff --git a/drivers/on_slave.py b/drivers/on_slave.py
-index 0d60d96..722f4dd 100755
+index 0d60d96..534e6c9 100755
 --- a/drivers/on_slave.py
 +++ b/drivers/on_slave.py
-@@ -72,7 +72,15 @@ def multi(session, args):
+@@ -72,7 +72,17 @@ def multi(session, args):
  
  def _is_open(session, args):
      """Check if VDI <args["vdiUuid"]> is open by a tapdisk on this host"""
@@ -29,46 +77,32 @@ index 0d60d96..722f4dd 100755
 +    import CephFSSR
 +    import EXTSR
 +    import GlusterFSSR
++    import LVHDSR
 +    import MooseFSSR
 +    import NFSSR
++    import XFSSR
 +    import ZFSSR
 +    import blktap2
  
      util.SMlog("on-slave.is_open: %s" % args)
      vdiUuid = args["vdiUuid"]
-@@ -86,7 +94,7 @@ def _is_open(session, args):
+@@ -86,7 +96,15 @@ def _is_open(session, args):
          srType = "lvhd"
      cmd = SRCommand.SRCommand(None)
      cmd.driver_info = {"capabilities": None}
 -    cmd.dconf = {"server": None, "device": "/HACK"}
-+    cmd.dconf = {"server": None, "device": "/HACK", "masterhost": None}
++    cmd.dconf = {
++        "server": None,
++        "device": "/HACK",
++        # Hack for custom XCP-ng drivers.
++        "masterhost": None,  # MooseFS
++        "rootpath": None,    # MooseFS
++        "serverpath": None,  # CephFS
++        "location": "/HACK"  # ZFS
++    }
      cmd.params = {"command": None}
  
      driver = SR.driver(srType)
-diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
-index 54ebcd3..b74904e 100644
---- a/tests/test_on_slave.py
-+++ b/tests/test_on_slave.py
-@@ -13,7 +13,18 @@ import on_slave
- 
- class Test_on_slave_is_open(unittest.TestCase):
- 
--    MOCK_IMPORTS = ['SRCommand', 'SR', 'NFSSR', 'EXTSR', 'LVHDSR', 'blktap2']
-+    MOCK_IMPORTS = [
-+        'SRCommand',
-+        'SR',
-+        'CephFSSR',
-+        'EXTSR',
-+        'GlusterFSSR',
-+        'MooseFSSR',
-+        'NFSSR',
-+        'EXTSR',
-+        'LVHDSR',
-+        'blktap2'
-+    ]
- 
-     def fake_import(self, name, *args):
-         print 'Asked to import {}'.format(name)
 -- 
 2.37.0
 

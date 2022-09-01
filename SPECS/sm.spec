@@ -1,25 +1,33 @@
+%global package_speccommit 4a63a08555d635e43f53b17baf3e01b1de6ac873
+%global package_srccommit v2.46.11
 # -*- rpm-spec -*-
+
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.30.7
-Release: 1
+Version: 2.46.11
+Release: 1%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz
-
-
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
-
+Source0: sm-2.46.11.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
+
+BuildRequires: python
+BuildRequires: pylint
+BuildRequires: python-nose
+BuildRequires: python-coverage
+BuildRequires: python2-mock
+BuildRequires: python2-bitarray
+BuildRequires: python-monotonic
+
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+Requires: lvm2-sm-config
 Requires: python2-bitarray
+Requires: python-monotonic
 Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
@@ -36,6 +44,20 @@ DESTDIR=$RPM_BUILD_ROOT make
 
 %install
 DESTDIR=$RPM_BUILD_ROOT make install
+
+# Mark processes that should be moved to the data path
+%triggerin -- libcgroup-tools
+( patch -tsN -r - -d / -p1 || : )>/dev/null << 'EOF'
+--- /etc/cgrules.conf
++++ /etc/cgrules.conf
+@@ -7,4 +7,6 @@
+ #@student    cpu,memory    usergroup/student/
+ #peter        cpu        test1/
+ #%        memory        test2/
++*:tapdisk    cpu,cpuacct    vm.slice/
++%        blkio        vm.slice/
+ # End of file
+EOF
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -157,15 +179,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ISOSR.py
 /opt/xensource/sm/ISOSR.pyc
 /opt/xensource/sm/ISOSR.pyo
-/opt/xensource/sm/OCFSSR.py
-/opt/xensource/sm/OCFSSR.pyc
-/opt/xensource/sm/OCFSSR.pyo
-/opt/xensource/sm/OCFSoISCSISR.py
-/opt/xensource/sm/OCFSoISCSISR.pyc
-/opt/xensource/sm/OCFSoISCSISR.pyo
-/opt/xensource/sm/OCFSoHBASR.py
-/opt/xensource/sm/OCFSoHBASR.pyc
-/opt/xensource/sm/OCFSoHBASR.pyo
 /opt/xensource/sm/LUNperVDI.py
 /opt/xensource/sm/LUNperVDI.pyc
 /opt/xensource/sm/LUNperVDI.pyo
@@ -350,36 +363,131 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
-* Fri Apr 29 2022 Mark Syms <mark.syms@citrix.com> - 2.30.7-1
+* Wed Jun 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.11-1
+- Remove use of eval
+- Raise explicit error in case of NFS mount failure
+
+* Wed May  4 2022 Mark Syms <mark.syms@citrix.com> - 2.46.10-2
+- Add requires for lvm2-sm-config
+
+* Fri Mar 18 2022 Mark Syms <mark.syms@citrix.com> - 2.46.10-1
+- CA-365359: cope with on_slave.is_open passing server=None
+- Fix timeout_call: alarm must be reset in case of success
+- timeout_call returns the result of user function now
+
+* Mon Dec 13 2021 Mark Syms <mark.syms@citrix.com> - 2.46.9-1
+- CP-38670: add dependency on python-monotonic
+- Update product identification for QNAP iSCSI storage
+
+* Thu Oct 07 2021 Mark Syms <mark.syms@citrix.com> - 2.46.8-1
+- CA-359453: fallback to rename in snapshot if hardlinks are not supported
+- CP-38316: Update pathchecker for EQL to be readsector0
+
+* Mon Oct 04 2021 Mark Syms <mark.syms@citrix.com> - 2.46.7-1
+- CP-38283: Support explicit NFS 4.0 version choice
+- CP-38283: allow any NFS 4.x version
+- CA-359621: fix regression in error handler
+
+* Tue Sep 28 2021 Mark Syms <mark.syms@citrix.com> - 2.46.6-1
+- CA-359304: ignore relinking and activating tags in update_sm_config
+
+* Wed Sep  8 2021 Mark Syms <mark.syms@citrix.com> - 2.46.5-2
+- Dummy build
+
+* Tue Sep 07 2021 Mark Syms <mark.syms@citrix.com> - 2.46.5-1
+- CA-327302: report signals in CommandException
 - CA-352880: when deleting an HBA SR remove the kernel devices
 
-* Fri Oct 22 2021 Mark Syms <mark.syms@citrix.com> - 2.30.6-1
-- CA-359453: use rename not link if links not supported
-- CP-38316: update path checker for Equalogic at vendors request
+* Mon Aug 09 2021 Mark Syms <mark.syms@citrix.com> - 2.46.4-1
+- CA-356761: ensure that children are always reloaded on relink
+- CA-334762: Fix VDI import with storage driver domains
+- CA-356983: ignore more rules on td/nbd devices
 
-* Thu Oct  7 2021 Mark Syms <mark.syms@citrix.com> - 2.30.5-1
+* Thu Jul 15 2021 Mark Syms <mark.syms@citrix.com> - 2.46.3-1
+- CA-356645: use "self.session is None" not "self.session == None"
+- CP-37498: Fix all E711 errors in SM
+
+* Tue Jul 13 2021 Mark Syms <mark.syms@citrix.com> - 2.46.2-1
+- CA-356234: don't run repair if parent is raw
+- CA-356102: retry LV commands when 'Incorrect checksum in metadata' reported
+- CA-356411: correct check for session
+
+* Wed Jun 16 2021 Mark Syms <mark.syms@citrix.com> - 2.46.1-1
 - CA-355401: make post attach scan best effort and report errors
 - CA-355289: ensure xapi is initialised before starting GC
-- CA-356645: use "self.session is None" not "self.session == None"
+- If not NFS ACLs provided, assume everyone (external contributor)
 
-* Wed May 19 2021 Mark Syms <mark.syms@citrix.com> - 2.30.4-1
+* Mon May 24 2021 Mark Syms <mark.syms@citrix.com> - 2.46.0-1
+- CA-354692: check for device parameter in create/probe calls
+
+* Tue May 18 2021 Mark Syms <mark.syms@citrix.com> - 2.45.0-1
+- Remove OCFS SRs
 - CA-354228: Reinstate load calls in _pathrefresh
 
-* Fri Mar 26 2021 Ben Sims <ben.sims@citrix.com> - 2.30.3-1
-- CA-349759: don't call srUpdate within a lock
-- CA-352165: Check that 'device' exists in the dconf before using it
-- XSI-915: Improve performance of LVHDoHBA
-- CP-35625: Extract calls to unlink to helper and log
-- CP-35625: use link instead of rename to improve crash consistency
-- CP-35625: Extract calls to rename into helper and log.
-- CA-350871: Add lock context manager for LVM operations to allow for
-  higher level controlDon't take locks for readonly operations
-- CA-350871: Log if LVHD snapshot pauses VM for more than 60secs
+* Wed Apr 14 2021 Mark Syms <mark.syms@citrix.com> - 2.44.0-2
+- CP-36641: Fix build dependencies
+
+* Tue Mar 02 2021 Mark Syms <mark.syms@citrix.com> - 2.44.0-1
+- CA-352165: check for device key in dconf before referencing
+
+* Tue Feb 23 2021 Mark Syms <mark.syms@citrix.com> - 2.43.0-1
+- CA-351674: Reduce the frequency and cost of pathrefresh calls
+
+* Tue Feb 16 2021 Mark Syms <mark.syms@citrix.com> - 2.42.0-1
+- Support IPv6 in NFS
+
+* Wed Feb 03 2021 Mark Syms <mark.syms@citrix.com> - 2.41.0-1
+- Remove deprecated rawhba package
+
+* Mon Jan 25 2021 Mark Syms <mark.syms@citrix.com> - 2.40.0-1
+- CA-350871: optimise locking in LVHDSR snapshot
+
+* Wed Jan 06 2021 Mark Syms <mark.syms@citrix.com> - 2.39.0-1
+- New release
+- PEP8 housekeeping cleanup
 - CA-350437: simplify 02vhd-cleanup to only handle LVM refcounts
 
-* Wed Sep 30 2020 Tim Smith <tim.smith@citrix.com> - 2.29.1-1
-- CA-343115: ensure device symlinks are created correctly even when path count
-  not required
+* Thu Dec 10 2020 Mark Syms <mark.syms@citrix.com> - 2.38.0-1
+- New release
+
+* Fri Dec 04 2020 Mark Syms <mark.syms@citrix.com> - 2.37.0-1
+- Improved logging
+
+* Mon Nov 30 2020 Mark Syms <mark.syms@citrix.com> - 2.36.0-2
+- Enable sonarqube
+
+* Wed Nov 25 2020 Mark Syms <mark.syms@citrix.com> - 2.36.0-1
+- CA-349188: only check for the initator name, alias is optional
+
+* Fri Nov 06 2020 Mark Syms <mark.syms@citrix.com> - 2.35.0-1
+- EMC-75: add config for new DellEMC PowerStore array
+- Add TrueNAS ALUA support
+
+* Tue Oct 13 2020 Mark Syms <mark.syms@citrix.com> - 2.34.0-1
+- Stage 1 futurize on SM
+- CA-346583: make set-iscsi-initiator idempotent
+- CA-346590: log when activating flag removed
+
+* Wed Sep 30 2020 Mark Syms <mark.syms@citrix.com> - 2.33.0-1
+- CA-333441 create directory for set-iscsi-initiator
+- CA-344254: address race between GC and VDI activate
+
+* Tue Sep 15 2020 Mark Syms <mark.syms@citrix.com> - 2.32.0-1
+- Use object member session instead of creating a new one
+- CA-344254: add unit tests for blktap2.activate
+- CA-344254: add tests for coalesce
+
+* Tue Sep 01 2020 Mark Syms <mark.syms@citrix.com> - 2.31.0-1
+- CP-32998 - Use cgclassify to move tapdisk into pre configured vm.slice and vm-blktap.slice
+- CA-343115: ensure device symlinks are created correctly even when path count not required
+
+* Mon Jul 13 2020 Mark Syms <mark.syms@citrix.com> - 2.30.0-1
+- CA-340203: remove name header from mpath map list
+- CP-34042: Add unit tests for mpath utils and remove dead code
+- CP-33617 Initial set of unit tests for mpathcount.py
+- Add unit tests for blktap2.TapCtl
+- CP-33629 - Unit tests for HBA
+- CA-341777: pass args in the correct order
 
 * Fri May 29 2020 Mark Syms <mark.syms@citrix.com> - 2.29.0-1
 - CA-339329 firstboot scripts shouldn't sync DB when upgrading
@@ -698,29 +806,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 - CP-24593: Remove changes unrelated to CBT from patch introduced for CP-23919
 - CP-24592: Resize in VDI should remain unimplemented
 
-
-%package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
-Group:   System/Hypervisor
-Summary: rawhba SR type capability
-#Requires: sm = @SM_VERSION@-@SM_RELEASE@
-
-%description rawhba
-This package adds a new rawhba SR type. This SR type allows utilization of
-Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
-
-%files rawhba
-/opt/xensource/sm/RawHBASR.py
-%exclude /opt/xensource/sm/RawHBASR
-/opt/xensource/sm/RawHBASR.pyc
-/opt/xensource/sm/RawHBASR.pyo
-/opt/xensource/sm/B_util.py
-/opt/xensource/sm/B_util.pyc
-/opt/xensource/sm/B_util.pyo
-/opt/xensource/sm/enable-borehamwood
-
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -733,7 +819,6 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

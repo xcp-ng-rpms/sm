@@ -1,7 +1,7 @@
-From 48672f8792a551136971ffe8d90e0edf30c92e38 Mon Sep 17 00:00:00 2001
+From 9dc68f99bab5415ae5cd2d192c6c906c4f057716 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 07/14] feat(drivers): add LinstorSR driver
+Subject: [PATCH 06/12] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -60,13 +60,13 @@ module imports are protected by try.. except... blocks.
  drivers/linstorjournaler.py     |  155 +++
  drivers/linstorvhdutil.py       |  186 +++
  drivers/linstorvolumemanager.py | 1713 +++++++++++++++++++++++++
- drivers/tapdisk-pause           |   70 +-
- drivers/util.py                 |   46 +-
+ drivers/tapdisk-pause           |   52 +-
+ drivers/util.py                 |   43 +-
  linstor/Makefile                |   22 +
  linstor/linstor-monitord.c      |  402 ++++++
  systemd/linstor-monitor.service |   13 +
  tests/mocks/linstor/__init__.py |    0
- 14 files changed, 5361 insertions(+), 29 deletions(-)
+ 14 files changed, 5359 insertions(+), 10 deletions(-)
  create mode 100755 drivers/LinstorSR.py
  create mode 100755 drivers/linstor-manager
  create mode 100755 drivers/linstorjournaler.py
@@ -78,18 +78,18 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index fa594ad..83a9e0b 100755
+index 88f5b0f..fffb256 100755
 --- a/Makefile
 +++ b/Makefile
-@@ -8,6 +8,7 @@ SM_DRIVERS += udev
+@@ -7,6 +7,7 @@ SM_DRIVERS += Dummy
+ SM_DRIVERS += udev
  SM_DRIVERS += ISO
  SM_DRIVERS += HBA
- SM_DRIVERS += RawHBA
 +SM_DRIVERS += Linstor
  SM_DRIVERS += LVHD
  SM_DRIVERS += LVHDoISCSI
  SM_DRIVERS += LVHDoHBA
-@@ -35,6 +36,9 @@ SM_LIBS += verifyVHDsOnSR
+@@ -31,6 +32,9 @@ SM_LIBS += verifyVHDsOnSR
  SM_LIBS += scsiutil
  SM_LIBS += scsi_host_rescan
  SM_LIBS += vhdutil
@@ -99,7 +99,7 @@ index fa594ad..83a9e0b 100755
  SM_LIBS += lvhdutil
  SM_LIBS += cifutils
  SM_LIBS += xs_errors
-@@ -99,6 +103,7 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
+@@ -94,6 +98,7 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
  .PHONY: build
  build:
  	make -C dcopy 
@@ -107,7 +107,7 @@ index fa594ad..83a9e0b 100755
  
  .PHONY: precommit
  precommit: build
-@@ -174,6 +179,8 @@ install: precheck
+@@ -169,6 +174,8 @@ install: precheck
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
  	install -m 644 systemd/storage-init.service \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
@@ -116,15 +116,15 @@ index fa594ad..83a9e0b 100755
  	for i in $(UDEV_RULES); do \
  	  install -m 644 udev/$$i.rules \
  	    $(SM_STAGING)$(UDEV_RULES_DIR); done
-@@ -194,6 +201,7 @@ install: precheck
- 	cd $(SM_STAGING)$(SM_DEST) && rm -f OCFSoHBASR
+@@ -186,6 +193,7 @@ install: precheck
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoFCoESR && ln -sf LVHDoFCoESR.py LVMoFCoESR
  	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
  	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
 +	install -m 755 drivers/linstor-manager $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
  	install -m 755 drivers/lvhd-thin $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
  	install -m 755 drivers/on_slave.py $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)/on-slave
  	install -m 755 drivers/testing-hooks $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
-@@ -212,6 +220,7 @@ install: precheck
+@@ -203,6 +211,7 @@ install: precheck
  	install -m 755 scripts/kickpipe $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/set-iscsi-initiator $(SM_STAGING)$(LIBEXEC)
  	$(MAKE) -C dcopy install DESTDIR=$(SM_STAGING)
@@ -2284,16 +2284,18 @@ index 4014a2f..aa07315 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 9821520..6b6ec6c 100755
+index 3f5e5f9..ae8409c 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -47,7 +47,17 @@ import xs_errors
+@@ -48,10 +48,19 @@ import xs_errors
  from refcounter import RefCounter
  from ipc import IPCFlag
  from lvmanager import LVActivator
 -from srmetadata import LVMMetadataHandler
 +from srmetadata import LVMMetadataHandler, VDI_TYPE_TAG
-+
+ from functools import reduce
+ from monotonic import monotonic as _time
+ 
 +try:
 +    from linstorjournaler import LinstorJournaler
 +    from linstorvhdutil import LinstorVhdUtil
@@ -2303,10 +2305,10 @@ index 9821520..6b6ec6c 100755
 +except ImportError:
 +    LINSTOR_AVAILABLE = False
 +
- 
- # Disable automatic leaf-coalescing. Online leaf-coalesce is currently not 
- # possible due to lvhd_stop_using_() not working correctly. However, we leave 
-@@ -643,7 +653,19 @@ class VDI:
+ # Disable automatic leaf-coalescing. Online leaf-coalesce is currently not
+ # possible due to lvhd_stop_using_() not working correctly. However, we leave
+ # this option available through the explicit LEAFCLSC_FORCE flag in the VDI
+@@ -682,7 +691,19 @@ class VDI:
              if child not in childList:
                  thisPrunable = False
  
@@ -2327,7 +2329,7 @@ index 9821520..6b6ec6c 100755
              vdiList.append(self)
          return vdiList
  
-@@ -1347,6 +1369,111 @@ class LVHDVDI(VDI):
+@@ -1434,6 +1455,112 @@ class LVHDVDI(VDI):
                  lvhdutil.calcSizeLV(self.getSizeVHD())
  
  
@@ -2436,10 +2438,11 @@ index 9821520..6b6ec6c 100755
 +
 +    def _queryVHDBlocks(self):
 +        return self.sr._vhdutil.get_block_bitmap(self.uuid)
- 
++
  ################################################################################
  #
-@@ -1403,7 +1530,8 @@ class SR:
+ # SR
+@@ -1488,7 +1615,8 @@ class SR:
  
      TYPE_FILE = "file"
      TYPE_LVHD = "lvhd"
@@ -2449,7 +2452,7 @@ index 9821520..6b6ec6c 100755
  
      LOCK_RETRY_INTERVAL = 3
      LOCK_RETRY_ATTEMPTS = 20
-@@ -1424,6 +1552,8 @@ class SR:
+@@ -1509,6 +1637,8 @@ class SR:
              return FileSR(uuid, xapi, createLock, force)
          elif type == SR.TYPE_LVHD:
              return LVHDSR(uuid, xapi, createLock, force)
@@ -2458,7 +2461,7 @@ index 9821520..6b6ec6c 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2726,6 +2856,232 @@ class LVHDSR(SR):
+@@ -2814,6 +2944,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2691,7 +2694,7 @@ index 9821520..6b6ec6c 100755
  ################################################################################
  #
  #  Helpers
-@@ -2766,7 +3122,9 @@ def normalizeType(type):
+@@ -2855,7 +3211,9 @@ def normalizeType(type):
          "xfs", "zfs", "ext4"
      ]:
          type = SR.TYPE_FILE
@@ -5053,7 +5056,7 @@ index 0000000..d400421
 +                    return True
 +        return False
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 5936869..ed6abed 100755
+index e7d4a6c..ed6abed 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
 @@ -29,6 +29,12 @@ import lvhdutil
@@ -5069,32 +5072,7 @@ index 5936869..ed6abed 100755
  TAPDEV_BACKPATH_PFX = "/dev/sm/backend"
  TAPDEV_PHYPATH_PFX = "/dev/sm/phy"
  
-@@ -73,24 +79,6 @@ def _mkphylink(sr_uuid, vdi_uuid, path):
-     util.pread2(cmd)
-     return path
- 
--def _pathRefresh():
--    # LVM rename check
--    realpath = os.path.realpath(self.phypath)
--    phypath = vdi_type = None
--    util.SMlog("Realpath: %s" % realpath)
--    if realpath.startswith("/dev/VG_XenStorage-") and \
--            not os.path.exists(realpath):
--        util.SMlog("Path inconsistent")
--        pfx = "/dev/VG_XenStorage-%s/" % self.sr_uuid
--        for ty in ["LV","VHD"]:
--            p = pfx + ty + "-" + self.vdi_uuid
--            util.SMlog("Testing path: %s" % p)
--            if os.path.exists(p):
--                _mkphylink(self.sr_uuid, self.vdi_uuid, p)
--                phypath = p
--                if ty == "LV": vdi_type = "aio"
--                else: vdi_type = "vhd"
--
- def tapPause(session, args):
-     tap = Tapdisk(session, args)
-     return tap.Pause()
-@@ -148,7 +136,51 @@ class Tapdisk:
+@@ -130,7 +136,51 @@ class Tapdisk:
                      self.realpath = p
                      if ty == "LV": self.vdi_type = "aio"
                      else: self.vdi_type = "vhd"
@@ -5148,15 +5126,14 @@ index 5936869..ed6abed 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 435ad2b..a1bea70 100755
+index ba7917d..4514e62 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -651,10 +651,36 @@ def get_this_host():
-     f.close()
+@@ -700,10 +700,35 @@ def get_this_host():
      return uuid
  
+ 
 -def is_master(session):
-+
 +def get_master_ref(session):
      pools = session.xenapi.pool.get_all()
 -    master = session.xenapi.pool.get_master(pools[0])
@@ -5189,21 +5166,20 @@ index 435ad2b..a1bea70 100755
 +    return address
 +
  
+ 
  # XXX: this function doesn't do what it claims to do
- def get_localhost_uuid(session):
-@@ -1383,13 +1409,21 @@ def findRunningProcessOrOpenFile(name, process = True):
-     else:
+@@ -1483,13 +1508,21 @@ def findRunningProcessOrOpenFile(name, process=True):
          return (retVal, processandpids)
+ 
  
 -def retry(f, maxretry=20, period=3):
 +def retry(f, maxretry=20, period=3, exceptions=[Exception]):
      retries = 0
      while True:
-         try:            
+         try:
              return f()
--        except Exception, e:
--            SMlog("Got exception: %s. Retry number: %s" % (str(e),retries))
-+        except Exception as e:
+         except Exception as e:
+-            SMlog("Got exception: %s. Retry number: %s" % (str(e), retries))
 +            for exception in exceptions:
 +                if isinstance(e, exception):
 +                    SMlog('Got exception: {}. Retry number: {}'.format(

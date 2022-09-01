@@ -1,7 +1,7 @@
-From 052cdeb18107e20e6846f52fd792a7dcf5aa81ed Mon Sep 17 00:00:00 2001
+From 1c6da4cee731436b43bc3aeae676f404f65cb132 Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
-Subject: [PATCH 10/14] Added SM Driver for MooseFS
+Subject: [PATCH 08/12] Added SM Driver for MooseFS
 
 Co-authored-by: Piotr Robert Konopelko <piotr.konopelko@moosefs.pro>
 Signed-off-by: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
@@ -16,10 +16,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100644 tests/test_MooseFSSR.py
 
 diff --git a/Makefile b/Makefile
-index 83a9e0b..ab9a15e 100755
+index fffb256..8000fc7 100755
 --- a/Makefile
 +++ b/Makefile
-@@ -23,6 +23,7 @@ SM_DRIVERS += GlusterFS
+@@ -19,6 +19,7 @@ SM_DRIVERS += GlusterFS
  SM_DRIVERS += XFS
  SM_DRIVERS += ZFS
  SM_DRIVERS += EXT4
@@ -305,10 +305,10 @@ index 0000000..be5112c
 +else:
 +    SR.registerSR(MooseFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 6b6ec6c..cb5ceb9 100755
+index ae8409c..754813a 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3119,7 +3119,7 @@ def normalizeType(type):
+@@ -3208,7 +3208,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

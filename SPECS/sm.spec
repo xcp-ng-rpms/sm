@@ -1,26 +1,33 @@
+%global package_speccommit 4a63a08555d635e43f53b17baf3e01b1de6ac873
+%global package_srccommit v2.46.11
 # -*- rpm-spec -*-
+
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.30.7
-Release: 1.3%{?dist}
+Version: 2.46.11
+Release: 1.1%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz
-
-
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
-
+Source0: sm-2.46.11.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildRequires: gcc
-BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
+
+BuildRequires: python
+BuildRequires: pylint
+BuildRequires: python-nose
+BuildRequires: python-coverage
+BuildRequires: python2-mock
+BuildRequires: python2-bitarray
+BuildRequires: python-monotonic
+
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+Requires: lvm2-sm-config
 Requires: python2-bitarray
+Requires: python-monotonic
 Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
@@ -30,30 +37,19 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.7-xcpng..2.30.7-8.2
-# Note: the v2.30.7-xcpng tag was manually created by us on our fork because
-# the upstream sm doesn't provide maintenance updates anymore
-# To create this tag in the sources, you must create a 2.30.7-8.2 branch from the
-# previous -xcpng tag then cherry pick each upstream commit referenced in the changelog
-# of the upstream spec file.
-# To ensure you have all changes, you can use:
-# `diff -urq <sources> <upstream sources>`.
-# After that we can create the tag: `git tag -a v2.30.7-xcpng -m "v2.30.7-xcpng"`,
-# push the commits and tag.
-Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
-Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1003: 0003-Add-TrueNAS-multipath-config.patch
-Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
-Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
-Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
-Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
-Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
-Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
-Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+# git format-patch v2.46.11..2.46.11-8.3
+Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1002: 0002-Add-TrueNAS-multipath-config.patch
+Patch1003: 0003-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
+Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1005: 0005-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
+Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
+Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1008: 0008-Added-SM-Driver-for-MooseFS.patch
+Patch1009: 0009-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+Patch1010: 0010-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1011: 0011-Fix-is_open-call-for-many-drivers-25.patch
+Patch1012: 0012-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
 
 %description
 This package contains storage backends used in XCP
@@ -66,6 +62,20 @@ DESTDIR=$RPM_BUILD_ROOT make
 
 %install
 DESTDIR=$RPM_BUILD_ROOT make install
+
+# Mark processes that should be moved to the data path
+%triggerin -- libcgroup-tools
+( patch -tsN -r - -d / -p1 || : )>/dev/null << 'EOF'
+--- /etc/cgrules.conf
++++ /etc/cgrules.conf
+@@ -7,4 +7,6 @@
+ #@student    cpu,memory    usergroup/student/
+ #peter        cpu        test1/
+ #%        memory        test2/
++*:tapdisk    cpu,cpuacct    vm.slice/
++%        blkio        vm.slice/
+ # End of file
+EOF
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -197,15 +207,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ISOSR.py
 /opt/xensource/sm/ISOSR.pyc
 /opt/xensource/sm/ISOSR.pyo
-/opt/xensource/sm/OCFSSR.py
-/opt/xensource/sm/OCFSSR.pyc
-/opt/xensource/sm/OCFSSR.pyo
-/opt/xensource/sm/OCFSoISCSISR.py
-/opt/xensource/sm/OCFSoISCSISR.pyc
-/opt/xensource/sm/OCFSoISCSISR.pyo
-/opt/xensource/sm/OCFSoHBASR.py
-/opt/xensource/sm/OCFSoHBASR.pyc
-/opt/xensource/sm/OCFSoHBASR.pyo
 /opt/xensource/sm/LUNperVDI.py
 /opt/xensource/sm/LUNperVDI.pyc
 /opt/xensource/sm/LUNperVDI.pyo
@@ -431,118 +432,138 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
-* Fri Jul 08 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.3
-- Fix regression caused by is_open patch (LVHDSR + XCP-ng drivers)
+* Thu Sep 01 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.11-1.1
+- Rebase on CH 8.3 Preview
+- Remove patches merged upstream
+- Keep other patches still necessary.
 
-* Thu Jun 30 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.2
-- Add 0013-Fix-is_open-call-for-many-drivers-25.patch
-- Add 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+* Wed Jun 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.11-1
+- Remove use of eval
+- Raise explicit error in case of NFS mount failure
 
-* Wed Jun 15 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.1
-- Sync with hotfix XS82ECU1009
-- Sync patches with our latest 2.30.7-8.2 branch
-- Add 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-- Use subdirectory for each SR on the MooseFS server
-- *** Upstream changelog ***
-- * Fri Apr 29 2022 Mark Syms <mark.syms@citrix.com> - 2.30.7-1
-- - CA-352880: when deleting an HBA SR remove the kernel devices
+* Wed May  4 2022 Mark Syms <mark.syms@citrix.com> - 2.46.10-2
+- Add requires for lvm2-sm-config
 
-* Thu May 05 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.6-1.2
-- Add 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-- Keep folder mounted when ISO SR is used with legacy_mode=True
+* Fri Mar 18 2022 Mark Syms <mark.syms@citrix.com> - 2.46.10-1
+- CA-365359: cope with on_slave.is_open passing server=None
+- Fix timeout_call: alarm must be reset in case of success
+- timeout_call returns the result of user function now
 
-* Tue Jan 04 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.6-1.1
-- Sync with CH 8.2.1
-- Sync patches with our latest 2.30.6-8.2 branch
-- *** Upstream changelog ***
-- * Fri Oct 22 2021 Mark Syms <mark.syms@citrix.com> - 2.30.6-1
-- - CA-359453: use rename not link if links not supported
-- - CP-38316: update path checker for Equalogic at vendors request
-- * Thu Oct  7 2021 Mark Syms <mark.syms@citrix.com> - 2.30.5-1
-- - CA-355401: make post attach scan best effort and report errors
-- - CA-355289: ensure xapi is initialised before starting GC
-- - CA-356645: use "self.session is None" not "self.session == None"
+* Mon Dec 13 2021 Mark Syms <mark.syms@citrix.com> - 2.46.9-1
+- CP-38670: add dependency on python-monotonic
+- Update product identification for QNAP iSCSI storage
 
-* Tue Jun 22 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.4-1.1
-- Sync with hotfix XS82E028
-- Sync patches with our latest 2.30.4-8.2 branch
-- *** Upstream changelog ***
-- * Wed May 19 2021 Mark Syms <mark.syms@citrix.com> - 2.30.4-1
-- - CA-354228: Reinstate load calls in _pathrefresh
+* Thu Oct 07 2021 Mark Syms <mark.syms@citrix.com> - 2.46.8-1
+- CA-359453: fallback to rename in snapshot if hardlinks are not supported
+- CP-38316: Update pathchecker for EQL to be readsector0
 
-* Thu May 27 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.4
-- Remove 0009-Fix-regression-added-by-XSI-915.patch
-- Add 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588 to use upstream fix instead
+* Mon Oct 04 2021 Mark Syms <mark.syms@citrix.com> - 2.46.7-1
+- CP-38283: Support explicit NFS 4.0 version choice
+- CP-38283: allow any NFS 4.x version
+- CA-359621: fix regression in error handler
 
-* Tue May 18 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.3
-- Update 0009-Fix-regression-added-by-XSI-915.patch (fix regression in the patch itself)
+* Tue Sep 28 2021 Mark Syms <mark.syms@citrix.com> - 2.46.6-1
+- CA-359304: ignore relinking and activating tags in update_sm_config
 
-* Thu May 06 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.2
-- Add experimental MooseFS driver
+* Wed Sep  8 2021 Mark Syms <mark.syms@citrix.com> - 2.46.5-2
+- Dummy build
 
-* Thu Apr 29 2021 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.3-1.1
-- Sync with hotfix XS82E023
-- CA-349759: don't call srUpdate within a lock
-- CA-352165: Check that 'device' exists in the dconf before using it
-- XSI-915: Improve performance of LVHDoHBA
-- CP-35625: Extract calls to unlink to helper and log
-- CP-35625: use link instead of rename to improve crash consistency
-- CP-35625: Extract calls to rename into helper and log.
-- CA-350871: Add lock context manager for LVM operations to allow for
-  higher level controlDon't take locks for readonly operations
-- CA-350871: Log if LVHD snapshot pauses VM for more than 60secs
+* Tue Sep 07 2021 Mark Syms <mark.syms@citrix.com> - 2.46.5-1
+- CA-327302: report signals in CommandException
+- CA-352880: when deleting an HBA SR remove the kernel devices
+
+* Mon Aug 09 2021 Mark Syms <mark.syms@citrix.com> - 2.46.4-1
+- CA-356761: ensure that children are always reloaded on relink
+- CA-334762: Fix VDI import with storage driver domains
+- CA-356983: ignore more rules on td/nbd devices
+
+* Thu Jul 15 2021 Mark Syms <mark.syms@citrix.com> - 2.46.3-1
+- CA-356645: use "self.session is None" not "self.session == None"
+- CP-37498: Fix all E711 errors in SM
+
+* Tue Jul 13 2021 Mark Syms <mark.syms@citrix.com> - 2.46.2-1
+- CA-356234: don't run repair if parent is raw
+- CA-356102: retry LV commands when 'Incorrect checksum in metadata' reported
+- CA-356411: correct check for session
+
+* Wed Jun 16 2021 Mark Syms <mark.syms@citrix.com> - 2.46.1-1
+- CA-355401: make post attach scan best effort and report errors
+- CA-355289: ensure xapi is initialised before starting GC
+- If not NFS ACLs provided, assume everyone (external contributor)
+
+* Mon May 24 2021 Mark Syms <mark.syms@citrix.com> - 2.46.0-1
+- CA-354692: check for device parameter in create/probe calls
+
+* Tue May 18 2021 Mark Syms <mark.syms@citrix.com> - 2.45.0-1
+- Remove OCFS SRs
+- CA-354228: Reinstate load calls in _pathrefresh
+
+* Wed Apr 14 2021 Mark Syms <mark.syms@citrix.com> - 2.44.0-2
+- CP-36641: Fix build dependencies
+
+* Tue Mar 02 2021 Mark Syms <mark.syms@citrix.com> - 2.44.0-1
+- CA-352165: check for device key in dconf before referencing
+
+* Tue Feb 23 2021 Mark Syms <mark.syms@citrix.com> - 2.43.0-1
+- CA-351674: Reduce the frequency and cost of pathrefresh calls
+
+* Tue Feb 16 2021 Mark Syms <mark.syms@citrix.com> - 2.42.0-1
+- Support IPv6 in NFS
+
+* Wed Feb 03 2021 Mark Syms <mark.syms@citrix.com> - 2.41.0-1
+- Remove deprecated rawhba package
+
+* Mon Jan 25 2021 Mark Syms <mark.syms@citrix.com> - 2.40.0-1
+- CA-350871: optimise locking in LVHDSR snapshot
+
+* Wed Jan 06 2021 Mark Syms <mark.syms@citrix.com> - 2.39.0-1
+- New release
+- PEP8 housekeeping cleanup
 - CA-350437: simplify 02vhd-cleanup to only handle LVM refcounts
 - Sync patches with our latest 2.30.3-8.2 branch
 - 0009-Fix-regression-added-by-XSI-915.patch added
 
-* Thu Feb 25 2021 Benjamin Reis <benjamin.reis@vates.fr> - 2.29.1-1.3
-- Add: 0008-If-no-NFS-ACLs-provided-assume-everyone.patch
-- Fix crash when attempting to access non existent ACL (happened on QNAP devices)
+* Thu Dec 10 2020 Mark Syms <mark.syms@citrix.com> - 2.38.0-1
+- New release
 
-* Fri Nov 06 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.1-1.2
-- Sync patches with our latest 2.29.1-8.2 branch before XCP-ng 8.2 final release
-- 0006-feat-drivers-add-LinstorSR-driver.patch updated
-- 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch added
+* Fri Dec 04 2020 Mark Syms <mark.syms@citrix.com> - 2.37.0-1
+- Improved logging
 
-* Wed Nov 04 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.1-1.1
-- Sync with hotfix XS82E006
+* Mon Nov 30 2020 Mark Syms <mark.syms@citrix.com> - 2.36.0-2
+- Enable sonarqube
+
+* Wed Nov 25 2020 Mark Syms <mark.syms@citrix.com> - 2.36.0-1
+- CA-349188: only check for the initator name, alias is optional
+
+* Fri Nov 06 2020 Mark Syms <mark.syms@citrix.com> - 2.35.0-1
+- EMC-75: add config for new DellEMC PowerStore array
+- Add TrueNAS ALUA support
+
+* Tue Oct 13 2020 Mark Syms <mark.syms@citrix.com> - 2.34.0-1
+- Stage 1 futurize on SM
+- CA-346583: make set-iscsi-initiator idempotent
+- CA-346590: log when activating flag removed
+
+* Wed Sep 30 2020 Mark Syms <mark.syms@citrix.com> - 2.33.0-1
+- CA-333441 create directory for set-iscsi-initiator
+- CA-344254: address race between GC and VDI activate
+
+* Tue Sep 15 2020 Mark Syms <mark.syms@citrix.com> - 2.32.0-1
+- Use object member session instead of creating a new one
+- CA-344254: add unit tests for blktap2.activate
+- CA-344254: add tests for coalesce
+
+* Tue Sep 01 2020 Mark Syms <mark.syms@citrix.com> - 2.31.0-1
+- CP-32998 - Use cgclassify to move tapdisk into pre configured vm.slice and vm-blktap.slice
 - CA-343115: ensure device symlinks are created correctly even when path count not required
 
-* Fri Sep 18 2020 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.29.0-1.7
-- Update ZFS patch (use location instead of device in configuration)
-
-* Wed Aug 19 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.6
-- Add linstor-monitor daemon to detect master changes
-
-* Mon Aug 17 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.5
-- Re-enable linstor patch
-- Re-add support for ext4 driver since sm-additional-drivers is gone
-- Patches reordered after the 2.29.0-8.2 branch rebase
-
-* Mon Aug 17 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.4
-- Temporarily disable linstor patch
-
-* Thu Aug 13 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.3
-- Add experimental XFS, CephFS, Gluster and ZFS drivers
-- Add experimental Linstor driver and related required code changes
-- Patches now produced from our maintenance branch of the sm git repo
-- Obsolete sm-additional-drivers
-
-* Tue Jul 07 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.2
-- Re-add cleanup support for ext4 driver (not removing it from 8.2)
-- Add cleanup support for gluster and cephfs drivers
-- Rename sm-2.29.0-partial-xfs-support.XCP-ng.patch...
-- ... to sm-2.29.0-fix-cleanup-for-additional-drivers.XCP-ng.patch
-- That patch is temporary, until sm is fixed to let drivers define...
-- ... their type themselves.
-
-* Tue Jun 30 2020 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.29.0-1.1
-- Rebase on CH 8.2
-- Remove backported patches
-- Keep sm-2.2.3-rebrand-xs-sm-service.XCP-ng.patch
-- Rediff sm-2.29.0-add-TrueNAS-multipath-config.XCP-ng.patch
-- Remove support for the experimental `ext4` SR type
-- Rename patch to sm-2.29.0-partial-xfs-support.XCP-ng.patch
+* Mon Jul 13 2020 Mark Syms <mark.syms@citrix.com> - 2.30.0-1
+- CA-340203: remove name header from mpath map list
+- CP-34042: Add unit tests for mpath utils and remove dead code
+- CP-33617 Initial set of unit tests for mpathcount.py
+- Add unit tests for blktap2.TapCtl
+- CP-33629 - Unit tests for HBA
+- CA-341777: pass args in the correct order
 
 * Fri May 29 2020 Mark Syms <mark.syms@citrix.com> - 2.29.0-1
 - CA-339329 firstboot scripts shouldn't sync DB when upgrading
@@ -861,29 +882,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 - CP-24593: Remove changes unrelated to CBT from patch introduced for CP-23919
 - CP-24592: Resize in VDI should remain unimplemented
 
-
-%package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
-Group:   System/Hypervisor
-Summary: rawhba SR type capability
-#Requires: sm = @SM_VERSION@-@SM_RELEASE@
-
-%description rawhba
-This package adds a new rawhba SR type. This SR type allows utilization of
-Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
-
-%files rawhba
-/opt/xensource/sm/RawHBASR.py
-%exclude /opt/xensource/sm/RawHBASR
-/opt/xensource/sm/RawHBASR.pyc
-/opt/xensource/sm/RawHBASR.pyo
-/opt/xensource/sm/B_util.py
-/opt/xensource/sm/B_util.pyc
-/opt/xensource/sm/B_util.pyo
-/opt/xensource/sm/enable-borehamwood
-
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -896,7 +895,6 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

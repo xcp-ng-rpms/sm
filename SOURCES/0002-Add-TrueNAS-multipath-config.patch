@@ -1,22 +1,23 @@
-From 962f69972db40bafe6ff41f2151fa4150bdda37d Mon Sep 17 00:00:00 2001
+From f0c2536640265c6ba6fcb9153c7d4611489e6190 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 15:26:43 +0200
-Subject: [PATCH 03/14] Add TrueNAS multipath config
+Subject: [PATCH 02/12] Add TrueNAS multipath config
 
 This was a patch added to the sm RPM git repo before we had this
 forked git repo for sm in the xcp-ng github organisation.
 ---
- multipath/multipath.conf | 7 +++++++
- 1 file changed, 7 insertions(+)
+ multipath/multipath.conf | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/multipath/multipath.conf b/multipath/multipath.conf
-index ab6cfe1..9a7205a 100644
+index 8b875eb..3f5b4d6 100644
 --- a/multipath/multipath.conf
 +++ b/multipath/multipath.conf
-@@ -92,4 +92,11 @@ devices {
- 		prio		        alua
- 		uid_attribute		ID_SERIAL
- 	}
+@@ -113,5 +113,11 @@ devices {
+                 prio                   alua
+                 no_path_retry          60
+         }
+-
 +	device {
 +		vendor			"TrueNAS"
 +		product			"iSCSI Disk"

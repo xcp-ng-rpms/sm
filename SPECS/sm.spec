@@ -20,6 +20,9 @@ BuildRequires: python2-mock
 BuildRequires: python2-bitarray
 BuildRequires: python-monotonic
 
+# XCP-ng: gcc must be explicitly required in our build system
+BuildRequires: gcc
+
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd

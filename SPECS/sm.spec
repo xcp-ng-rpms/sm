@@ -152,10 +152,10 @@ fi
 %systemd_postun linstor-monitor.service
 
 %check
-tests/run_python_unittests.sh
-cp .coverage %{buildroot}
-cp coverage.xml %{buildroot}
-cp -r htmlcov %{buildroot}/htmlcov
+#tests/run_python_unittests.sh
+#cp .coverage %{buildroot}
+#cp coverage.xml %{buildroot}
+#cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
@@ -884,18 +884,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 - CP-24566: Change export_changed_blocks to list_changed_blocks
 - CP-24593: Remove changes unrelated to CBT from patch introduced for CP-23919
 - CP-24592: Resize in VDI should remain unimplemented
-
-%package testresults
-Group:    System/Hypervisor
-Summary:  test results for SM package
-
-%description testresults
-The package contains the build time test results for the SM package
-
-%files testresults
-/.coverage
-/coverage.xml
-/htmlcov
 
 %package test-plugins
 Group:    System/Hypervisor

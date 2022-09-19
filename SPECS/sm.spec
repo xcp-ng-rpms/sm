@@ -53,6 +53,7 @@ Patch1009: 0009-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
 Patch1010: 0010-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
 Patch1011: 0011-Fix-is_open-call-for-many-drivers-25.patch
 Patch1012: 0012-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+Patch0013: 0013-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR.patch
 
 %description
 This package contains storage backends used in XCP
@@ -152,10 +153,10 @@ fi
 %systemd_postun linstor-monitor.service
 
 %check
-#tests/run_python_unittests.sh
-#cp .coverage %{buildroot}
-#cp coverage.xml %{buildroot}
-#cp -r htmlcov %{buildroot}/htmlcov
+tests/run_python_unittests.sh
+cp .coverage %{buildroot}
+cp coverage.xml %{buildroot}
+cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
@@ -435,6 +436,9 @@ fi
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Mon Sep 19 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.11-1.2
+- Re-enable tests, test file coverage rate is now 100%
+
 * Thu Sep 01 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.11-1.1
 - Rebase on CH 8.3 Preview
 - Remove patches merged upstream
@@ -884,6 +888,18 @@ fi
 - CP-24566: Change export_changed_blocks to list_changed_blocks
 - CP-24593: Remove changes unrelated to CBT from patch introduced for CP-23919
 - CP-24592: Resize in VDI should remain unimplemented
+
+%package testresults
+Group:    System/Hypervisor
+Summary:  test results for SM package
+
+%description testresults
+The package contains the build time test results for the SM package
+
+%files testresults
+/.coverage
+/coverage.xml
+/htmlcov
 
 %package test-plugins
 Group:    System/Hypervisor

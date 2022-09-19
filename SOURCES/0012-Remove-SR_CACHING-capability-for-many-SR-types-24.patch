@@ -1,7 +1,7 @@
 From 49f1ec35a5c749868a9db4db37bed3d1423ae2aa Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:37:07 +0200
-Subject: [PATCH 12/12] Remove SR_CACHING capability for many SR types (#24)
+Subject: [PATCH 12/13] Remove SR_CACHING capability for many SR types (#24)
 
 SR_CACHING offers the capacity to use IntelliCache, but this
 feature is only available using NFS SR.

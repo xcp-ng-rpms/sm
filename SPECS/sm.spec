@@ -1,15 +1,15 @@
-%global package_speccommit 4a63a08555d635e43f53b17baf3e01b1de6ac873
-%global package_srccommit v2.46.11
+%global package_speccommit ae945748281ccd69e3249dbcc346fa18d77b9db5
+%global package_srccommit v2.46.16
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.46.11
+Version: 2.46.16
 Release: 1%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-2.46.11.tar.gz
+Source0: sm-2.46.16.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 BuildRequires: python
@@ -25,7 +25,7 @@ Requires(preun): systemd
 Requires(postun): systemd
 Requires: xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
-Requires: lvm2-sm-config
+Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
 Requires: python2-bitarray
 Requires: python-monotonic
 Requires(post): xs-presets >= 1.3
@@ -363,6 +363,27 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Wed Sep 21 2022 Tim Smith <tim.smith@citrix.com> - 2.46.16-1
+- CA-370572: relinking is a transient property, do not copy to clones
+- CA-370696 Do not attempt to validate device or NFS server paths
+
+* Wed Aug 31 2022 Mark Syms <mark.syms@citrix.com> - 2.46.15-1
+- CA-353437: give coalesce tracker grace iterations to make progress
+- CA-353437: activate a FIST point in the coalesce tracker for test injection
+- Add multipath configuration for Dell ME4
+
+* Wed Aug 31 2022  <mark.syms@citrix.com> - 2.46.14-2
+- CA-368585: Remove dependency on lvm2-sm-config
+
+* Mon Aug 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.14-1
+- CA-370037: report errors from NFS correctly
+
+* Tue Aug 16 2022 Mark Syms <mark.syms@citrix.com> - 2.46.13-1
+- Multipath fixes
+
+* Mon Jul 25 2022 Mark Syms <mark.syms@citrix.com> - 2.46.12-1
+- CA-368769: extend the timeout on tap-ctl close
+
 * Wed Jun 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.11-1
 - Remove use of eval
 - Raise explicit error in case of NFS mount failure

@@ -1,7 +1,7 @@
-From 1c6da4cee731436b43bc3aeae676f404f65cb132 Mon Sep 17 00:00:00 2001
+From 2db8ac7c92bc293736b4f1357cb774a5d75cef3b Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
-Subject: [PATCH 08/13] Added SM Driver for MooseFS
+Subject: [PATCH 08/14] Added SM Driver for MooseFS
 
 Co-authored-by: Piotr Robert Konopelko <piotr.konopelko@moosefs.pro>
 Signed-off-by: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
@@ -305,10 +305,10 @@ index 0000000..be5112c
 +else:
 +    SR.registerSR(MooseFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index ae8409c..754813a 100755
+index 248940a..a68f66f 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3208,7 +3208,7 @@ def normalizeType(type):
+@@ -3212,7 +3212,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -388,5 +388,5 @@ index 0000000..3349a44
 +        mfssr.detach('asr_uuid')
 +        self.assertTrue(mfssr.attached)
 -- 
-2.37.0
+2.30.2
 

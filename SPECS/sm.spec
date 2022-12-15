@@ -1,15 +1,15 @@
-%global package_speccommit 4a63a08555d635e43f53b17baf3e01b1de6ac873
-%global package_srccommit v2.46.11
+%global package_speccommit ae945748281ccd69e3249dbcc346fa18d77b9db5
+%global package_srccommit v2.46.16
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.46.11
-Release: 1.2%{?xsrel}%{?dist}
+Version: 2.46.16
+Release: 1.1%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-2.46.11.tar.gz
+Source0: sm-2.46.16.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 BuildRequires: python
@@ -28,7 +28,7 @@ Requires(preun): systemd
 Requires(postun): systemd
 Requires: xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
-Requires: lvm2-sm-config
+Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
 Requires: python2-bitarray
 Requires: python-monotonic
 Requires(post): xs-presets >= 1.3
@@ -40,7 +40,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.46.11..2.46.11-8.3
+# git format-patch v2.46.16..2.46.16-8.3
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-Add-TrueNAS-multipath-config.patch
 Patch1003: 0003-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
@@ -53,7 +53,8 @@ Patch1009: 0009-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
 Patch1010: 0010-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
 Patch1011: 0011-Fix-is_open-call-for-many-drivers-25.patch
 Patch1012: 0012-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch0013: 0013-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR.patch
+Patch0013: 0013-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
+Patch0014: 0014-Remove-_isvalidpathstring-calls.patch
 
 %description
 This package contains storage backends used in XCP
@@ -436,13 +437,31 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
-* Mon Sep 19 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.11-1.2
-- Re-enable tests, test file coverage rate is now 100%
-
-* Thu Sep 01 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.11-1.1
+* Thu Dec 15 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.16-1.1
 - Rebase on CH 8.3 Preview
 - Remove patches merged upstream
 - Keep other patches still necessary.
+
+* Wed Sep 21 2022 Tim Smith <tim.smith@citrix.com> - 2.46.16-1
+- CA-370572: relinking is a transient property, do not copy to clones
+- CA-370696 Do not attempt to validate device or NFS server paths
+
+* Wed Aug 31 2022 Mark Syms <mark.syms@citrix.com> - 2.46.15-1
+- CA-353437: give coalesce tracker grace iterations to make progress
+- CA-353437: activate a FIST point in the coalesce tracker for test injection
+- Add multipath configuration for Dell ME4
+
+* Wed Aug 31 2022  <mark.syms@citrix.com> - 2.46.14-2
+- CA-368585: Remove dependency on lvm2-sm-config
+
+* Mon Aug 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.14-1
+- CA-370037: report errors from NFS correctly
+
+* Tue Aug 16 2022 Mark Syms <mark.syms@citrix.com> - 2.46.13-1
+- Multipath fixes
+
+* Mon Jul 25 2022 Mark Syms <mark.syms@citrix.com> - 2.46.12-1
+- CA-368769: extend the timeout on tap-ctl close
 
 * Wed Jun 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.11-1
 - Remove use of eval

@@ -1,0 +1,52 @@
+From cc22ee6d1420ae9ca27f8c4d73557a3292c14d52 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 15 Dec 2022 10:52:28 +0100
+Subject: [PATCH 14/14] Remove `_isvalidpathstring` calls
+
+Since CA-370696 upstream commit, `_isvalidpathstring` is no longer available.
+So the device path given to a SR at creation is checked using specific commands:
+  - `vgcreate` for XFS SR.
+  - Normally the same idea for EXT4 but the creation is deprecated, so this change has
+    no impact.
+
+CA-370696 upstream commit: e48c01c215f550e9df032744b3a5c7db4780276d
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/EXT4SR.py | 4 ----
+ drivers/XFSSR.py  | 4 ----
+ 2 files changed, 8 deletions(-)
+
+diff --git a/drivers/EXT4SR.py b/drivers/EXT4SR.py
+index cb44049..bd67d00 100644
+--- a/drivers/EXT4SR.py
++++ b/drivers/EXT4SR.py
+@@ -62,10 +62,6 @@ class EXT4SR(FileSR.FileSR):
+             raise xs_errors.XenError('ConfigDeviceMissing')
+ 
+         self.root = self.dconf['device']
+-        for dev in self.root.split(','):
+-            if not self._isvalidpathstring(dev):
+-                raise xs_errors.XenError('ConfigDeviceInvalid', \
+-                      opterr='path is %s' % dev)
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+         self.vgname = EXT_PREFIX + sr_uuid
+         self.remotepath = os.path.join("/dev",self.vgname,sr_uuid)
+diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
+index 15dbe44..de35d73 100644
+--- a/drivers/XFSSR.py
++++ b/drivers/XFSSR.py
+@@ -71,10 +71,6 @@ class XFSSR(FileSR.FileSR):
+             raise xs_errors.XenError('ConfigDeviceMissing')
+ 
+         self.root = self.dconf['device']
+-        for dev in self.root.split(','):
+-            if not self._isvalidpathstring(dev):
+-                raise xs_errors.XenError('ConfigDeviceInvalid', \
+-                      opterr='path is %s' % dev)
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+         self.vgname = EXT_PREFIX + sr_uuid
+         self.remotepath = os.path.join("/dev",self.vgname,sr_uuid)
+-- 
+2.30.2
+

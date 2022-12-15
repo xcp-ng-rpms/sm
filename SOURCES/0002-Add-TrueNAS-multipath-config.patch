@@ -1,7 +1,7 @@
-From f0c2536640265c6ba6fcb9153c7d4611489e6190 Mon Sep 17 00:00:00 2001
+From db68f9c59217bb225c930a759a493be78d52f254 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 15:26:43 +0200
-Subject: [PATCH 02/13] Add TrueNAS multipath config
+Subject: [PATCH 02/14] Add TrueNAS multipath config
 
 This was a patch added to the sm RPM git repo before we had this
 forked git repo for sm in the xcp-ng github organisation.
@@ -10,10 +10,10 @@ forked git repo for sm in the xcp-ng github organisation.
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/multipath/multipath.conf b/multipath/multipath.conf
-index 8b875eb..3f5b4d6 100644
+index 0d4d0c9..5b14d23 100644
 --- a/multipath/multipath.conf
 +++ b/multipath/multipath.conf
-@@ -113,5 +113,11 @@ devices {
+@@ -124,5 +124,11 @@ devices {
                  prio                   alua
                  no_path_retry          60
          }
@@ -27,5 +27,5 @@ index 8b875eb..3f5b4d6 100644
 +	}
  }
 -- 
-2.37.0
+2.30.2
 

@@ -1,7 +1,7 @@
-From 9dc68f99bab5415ae5cd2d192c6c906c4f057716 Mon Sep 17 00:00:00 2001
+From f6fd10fe9f953c6ae34b5486b4f3cc8cd2e0017a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 06/13] feat(drivers): add LinstorSR driver
+Subject: [PATCH 06/14] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -2239,10 +2239,10 @@ index 0000000..8be1836
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 4014a2f..aa07315 100755
+index 1f58adc..e846666 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -887,4 +887,40 @@
+@@ -898,4 +898,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -2276,7 +2276,7 @@ index 4014a2f..aa07315 100755
 +            <description>LINSTOR SR creation error</description>
 +            <value>5006</value>
 +        </code>
-+        
++
 +        <code>
 +            <name>LinstorSRDelete</name>
 +            <description>LINSTOR SR delete error</description>
@@ -2284,7 +2284,7 @@ index 4014a2f..aa07315 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 3f5e5f9..ae8409c 100755
+index 62ce966..248940a 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -48,10 +48,19 @@ import xs_errors
@@ -2461,7 +2461,7 @@ index 3f5e5f9..ae8409c 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2814,6 +2944,232 @@ class LVHDSR(SR):
+@@ -2818,6 +2948,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2694,7 +2694,7 @@ index 3f5e5f9..ae8409c 100755
  ################################################################################
  #
  #  Helpers
-@@ -2855,7 +3211,9 @@ def normalizeType(type):
+@@ -2859,7 +3215,9 @@ def normalizeType(type):
          "xfs", "zfs", "ext4"
      ]:
          type = SR.TYPE_FILE
@@ -5126,7 +5126,7 @@ index e7d4a6c..ed6abed 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index ba7917d..4514e62 100755
+index 77fd052..0099d83 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -700,10 +700,35 @@ def get_this_host():
@@ -5168,7 +5168,7 @@ index ba7917d..4514e62 100755
  
  
  # XXX: this function doesn't do what it claims to do
-@@ -1483,13 +1508,21 @@ def findRunningProcessOrOpenFile(name, process=True):
+@@ -1484,13 +1509,21 @@ def findRunningProcessOrOpenFile(name, process=True):
          return (retVal, processandpids)
  
  
@@ -5651,5 +5651,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.37.0
+2.30.2
 

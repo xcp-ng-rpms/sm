@@ -1,7 +1,7 @@
-From 27e9e3cff252f870bc6e22dccd9f0f42d565feb0 Mon Sep 17 00:00:00 2001
+From f8847192974eb9087d4b4b05700678946d42b824 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
-Subject: [PATCH 04/13] feat(drivers): add ZFS driver to avoid losing VDI
+Subject: [PATCH 04/14] feat(drivers): add ZFS driver to avoid losing VDI
  metadata (xcp-ng/xcp#401)
 
 ---
@@ -25,10 +25,10 @@ index d0b36d8..955ee21 100755
  SM_LIBS := SR
  SM_LIBS += SRCommand
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 16a7ff7..4014a2f 100755
+index 97236fe..1f58adc 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -876,5 +876,15 @@
+@@ -887,5 +887,15 @@
              <value>1200</value>
          </code>
  
@@ -188,10 +188,10 @@ index 0000000..1b2f398
 +else:
 +    SR.registerSR(ZFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 8bee893..d9bd228 100755
+index 6ec7cd5..4b8a721 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2852,7 +2852,7 @@ def normalizeType(type):
+@@ -2856,7 +2856,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -201,5 +201,5 @@ index 8bee893..d9bd228 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.37.0
+2.30.2
 

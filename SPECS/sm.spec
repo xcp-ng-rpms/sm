@@ -1,24 +1,25 @@
-%global package_speccommit ae945748281ccd69e3249dbcc346fa18d77b9db5
-%global package_srccommit v2.46.16
+%global package_speccommit d1db94566be4ff4dcc574ff44b508e48e849dbe6
+%global package_srccommit v3.0.3
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.46.16
+Version: 3.0.3
 Release: 1%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-2.46.16.tar.gz
+Source0: sm-3.0.3.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
-BuildRequires: python
-BuildRequires: pylint
-BuildRequires: python-nose
-BuildRequires: python-coverage
-BuildRequires: python2-mock
-BuildRequires: python2-bitarray
-BuildRequires: python-monotonic
+%define __python python3.6
+
+BuildRequires: python3
+BuildRequires: python3-devel
+BuildRequires: python3-pylint
+BuildRequires: python3-coverage
+BuildRequires: python3-bitarray
+BuildRequires: python3-future
 
 Requires(post): systemd
 Requires(preun): systemd
@@ -26,8 +27,7 @@ Requires(postun): systemd
 Requires: xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
-Requires: python2-bitarray
-Requires: python-monotonic
+Requires: python3-bitarray
 Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
@@ -58,9 +58,6 @@ DESTDIR=$RPM_BUILD_ROOT make install
 +%        blkio        vm.slice/
  # End of file
 EOF
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %pre
 # Remove sm-multipath on install or upgrade, to ensure it goes
@@ -154,192 +151,76 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/storage-init
 /opt/xensource/sm/DummySR
 /opt/xensource/sm/DummySR.py
-/opt/xensource/sm/DummySR.pyc
-/opt/xensource/sm/DummySR.pyo
 /opt/xensource/sm/EXTSR
 /opt/xensource/sm/EXTSR.py
-/opt/xensource/sm/EXTSR.pyc
-/opt/xensource/sm/EXTSR.pyo
 /opt/xensource/sm/FileSR
 /opt/xensource/sm/FileSR.py
-/opt/xensource/sm/FileSR.pyc
-/opt/xensource/sm/FileSR.pyo
 /opt/xensource/sm/HBASR
 /opt/xensource/sm/HBASR.py
-/opt/xensource/sm/HBASR.pyc
-/opt/xensource/sm/HBASR.pyo
 /opt/xensource/sm/ISCSISR
 /opt/xensource/sm/RawISCSISR.py
-/opt/xensource/sm/RawISCSISR.pyc
-/opt/xensource/sm/RawISCSISR.pyo
 /opt/xensource/sm/BaseISCSI.py
-/opt/xensource/sm/BaseISCSI.pyc
-/opt/xensource/sm/BaseISCSI.pyo
 /opt/xensource/sm/ISOSR
 /opt/xensource/sm/ISOSR.py
-/opt/xensource/sm/ISOSR.pyc
-/opt/xensource/sm/ISOSR.pyo
 /opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/LUNperVDI.pyc
-/opt/xensource/sm/LUNperVDI.pyo
 /opt/xensource/sm/LVHDSR.py
-/opt/xensource/sm/LVHDSR.pyc
-/opt/xensource/sm/LVHDSR.pyo
 /opt/xensource/sm/LVHDoHBASR.py
-/opt/xensource/sm/LVHDoHBASR.pyc
-/opt/xensource/sm/LVHDoHBASR.pyo
 /opt/xensource/sm/LVHDoISCSISR.py
-/opt/xensource/sm/LVHDoISCSISR.pyc
-/opt/xensource/sm/LVHDoISCSISR.pyo
 /opt/xensource/sm/LVHDoFCoESR.py
-/opt/xensource/sm/LVHDoFCoESR.pyc
-/opt/xensource/sm/LVHDoFCoESR.pyo
 /opt/xensource/sm/LVMSR
 /opt/xensource/sm/LVMoHBASR
 /opt/xensource/sm/LVMoISCSISR
 /opt/xensource/sm/LVMoFCoESR
 /opt/xensource/sm/NFSSR
 /opt/xensource/sm/NFSSR.py
-/opt/xensource/sm/NFSSR.pyc
-/opt/xensource/sm/NFSSR.pyo
 /opt/xensource/sm/SMBSR
 /opt/xensource/sm/SMBSR.py
-/opt/xensource/sm/SMBSR.pyc
-/opt/xensource/sm/SMBSR.pyo
 /opt/xensource/sm/SHMSR.py
-/opt/xensource/sm/SHMSR.pyc
-/opt/xensource/sm/SHMSR.pyo
 /opt/xensource/sm/SR.py
-/opt/xensource/sm/SR.pyc
-/opt/xensource/sm/SR.pyo
 /opt/xensource/sm/SRCommand.py
-/opt/xensource/sm/SRCommand.pyc
-/opt/xensource/sm/SRCommand.pyo
 /opt/xensource/sm/VDI.py
-/opt/xensource/sm/VDI.pyc
-/opt/xensource/sm/VDI.pyo
 /opt/xensource/sm/XE_SR_ERRORCODES.xml
 /opt/xensource/sm/blktap2.py
-/opt/xensource/sm/blktap2.pyc
-/opt/xensource/sm/blktap2.pyo
 /opt/xensource/sm/cleanup.py
-/opt/xensource/sm/cleanup.pyc
-/opt/xensource/sm/cleanup.pyo
 /opt/xensource/sm/devscan.py
-/opt/xensource/sm/devscan.pyc
-/opt/xensource/sm/devscan.pyo
 /opt/xensource/sm/fjournaler.py
-/opt/xensource/sm/fjournaler.pyc
-/opt/xensource/sm/fjournaler.pyo
 /opt/xensource/sm/flock.py
-/opt/xensource/sm/flock.pyc
-/opt/xensource/sm/flock.pyo
 /opt/xensource/sm/ipc.py
-/opt/xensource/sm/ipc.pyc
-/opt/xensource/sm/ipc.pyo
 /opt/xensource/sm/iscsilib.py
-/opt/xensource/sm/iscsilib.pyc
-/opt/xensource/sm/iscsilib.pyo
 /opt/xensource/sm/fcoelib.py
-/opt/xensource/sm/fcoelib.pyc
-/opt/xensource/sm/fcoelib.pyo
 /opt/xensource/sm/journaler.py
-/opt/xensource/sm/journaler.pyc
-/opt/xensource/sm/journaler.pyo
 /opt/xensource/sm/lcache.py
-/opt/xensource/sm/lcache.pyc
-/opt/xensource/sm/lcache.pyo
 /opt/xensource/sm/lock.py
-/opt/xensource/sm/lock.pyc
-/opt/xensource/sm/lock.pyo
 /opt/xensource/sm/lvhdutil.py
-/opt/xensource/sm/lvhdutil.pyc
-/opt/xensource/sm/lvhdutil.pyo
 /opt/xensource/sm/lvmanager.py
-/opt/xensource/sm/lvmanager.pyc
-/opt/xensource/sm/lvmanager.pyo
 /opt/xensource/sm/lvmcache.py
-/opt/xensource/sm/lvmcache.pyc
-/opt/xensource/sm/lvmcache.pyo
 /opt/xensource/sm/lvutil.py
-/opt/xensource/sm/lvutil.pyc
-/opt/xensource/sm/lvutil.pyo
 /opt/xensource/sm/metadata.py
-/opt/xensource/sm/metadata.pyc
-/opt/xensource/sm/metadata.pyo
 /opt/xensource/sm/srmetadata.py
-/opt/xensource/sm/srmetadata.pyc
-/opt/xensource/sm/srmetadata.pyo
 /opt/xensource/sm/mpath_cli.py
-/opt/xensource/sm/mpath_cli.pyc
-/opt/xensource/sm/mpath_cli.pyo
 /opt/xensource/sm/mpath_dmp.py
-/opt/xensource/sm/mpath_dmp.pyc
-/opt/xensource/sm/mpath_dmp.pyo
 /opt/xensource/sm/mpath_null.py
-/opt/xensource/sm/mpath_null.pyc
-/opt/xensource/sm/mpath_null.pyo
 /opt/xensource/sm/mpathcount.py
-/opt/xensource/sm/mpathcount.pyc
-/opt/xensource/sm/mpathcount.pyo
 /opt/xensource/sm/mpathutil.py
-/opt/xensource/sm/mpathutil.pyc
-/opt/xensource/sm/mpathutil.pyo
 /opt/xensource/sm/mpp_mpathutil.py
-/opt/xensource/sm/mpp_mpathutil.pyc
-/opt/xensource/sm/mpp_mpathutil.pyo
 /opt/xensource/sm/nfs.py
-/opt/xensource/sm/nfs.pyc
-/opt/xensource/sm/nfs.pyo
 /opt/xensource/sm/refcounter.py
-/opt/xensource/sm/refcounter.pyc
-/opt/xensource/sm/refcounter.pyo
 /opt/xensource/sm/resetvdis.py
-/opt/xensource/sm/resetvdis.pyc
-/opt/xensource/sm/resetvdis.pyo
 /opt/xensource/sm/scsiutil.py
-/opt/xensource/sm/scsiutil.pyc
-/opt/xensource/sm/scsiutil.pyo
 /opt/xensource/sm/scsi_host_rescan.py
-/opt/xensource/sm/scsi_host_rescan.pyc
-/opt/xensource/sm/scsi_host_rescan.pyo
 /opt/xensource/sm/sysdevice.py
-/opt/xensource/sm/sysdevice.pyc
-/opt/xensource/sm/sysdevice.pyo
 /opt/xensource/sm/udevSR
 /opt/xensource/sm/udevSR.py
-/opt/xensource/sm/udevSR.pyc
-/opt/xensource/sm/udevSR.pyo
 /opt/xensource/sm/util.py
-/opt/xensource/sm/util.pyc
-/opt/xensource/sm/util.pyo
 /opt/xensource/sm/cifutils.py
-/opt/xensource/sm/cifutils.pyc
-/opt/xensource/sm/cifutils.pyo
 /opt/xensource/sm/verifyVHDsOnSR.py
-/opt/xensource/sm/verifyVHDsOnSR.pyc
-/opt/xensource/sm/verifyVHDsOnSR.pyo
 /opt/xensource/sm/vhdutil.py
-/opt/xensource/sm/vhdutil.pyc
-/opt/xensource/sm/vhdutil.pyo
 /opt/xensource/sm/trim_util.py
-/opt/xensource/sm/trim_util.pyc
-/opt/xensource/sm/trim_util.pyo
 /opt/xensource/sm/xs_errors.py
-/opt/xensource/sm/xs_errors.pyc
-/opt/xensource/sm/xs_errors.pyo
 /opt/xensource/sm/wwid_conf.py
-/opt/xensource/sm/wwid_conf.pyc
-/opt/xensource/sm/wwid_conf.pyo
 /opt/xensource/sm/pluginutil.py
-/opt/xensource/sm/pluginutil.pyc
-/opt/xensource/sm/pluginutil.pyo
 /opt/xensource/sm/constants.py
-/opt/xensource/sm/constants.pyc
-/opt/xensource/sm/constants.pyo
 /opt/xensource/sm/cbtutil.py
-/opt/xensource/sm/cbtutil.pyc
-/opt/xensource/sm/cbtutil.pyo
 /opt/xensource/sm/multipath-root-setup
 %dir /opt/xensource/sm/plugins
 /opt/xensource/sm/plugins/__init__.py*
@@ -363,6 +244,18 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Fri Jan 27 2023 Mark Syms <mark.syms@citrix.com> - 3.0.3-1
+- Include exportname in NBD data for attach
+
+* Tue Jan 17 2023 Mark Syms <mark.syms@citrix.com> - 3.0.2-1
+- CBT python3 fixes
+
+* Thu Jan 12 2023 Mark Syms <mark.syms@citrix.com> - 3.0.1-1
+- Check for open tapdisk NBD sockets before shutting down
+
+* Tue Oct 25 2022  <mark.syms@citrix.com> - 3.0.0-1
+- Migrate to Python3
+
 * Wed Sep 21 2022 Tim Smith <tim.smith@citrix.com> - 2.46.16-1
 - CA-370572: relinking is a transient property, do not copy to clones
 - CA-370696 Do not attempt to validate device or NFS server paths

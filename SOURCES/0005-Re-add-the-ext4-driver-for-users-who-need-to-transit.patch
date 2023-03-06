@@ -1,4 +1,4 @@
-From 1eeabb611a8473ffed157a3150608b307968304d Mon Sep 17 00:00:00 2001
+From ff148d4131c2ac884607d75c2f1dc9cc7eb73ca2 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
 Subject: [PATCH 05/14] Re-add the ext4 driver for users who need to transition
@@ -20,7 +20,7 @@ creation.
  create mode 100644 drivers/EXT4SR.py
 
 diff --git a/Makefile b/Makefile
-index 955ee21..88f5b0f 100755
+index 8b4aa8b..a6cfc55 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -17,6 +17,7 @@ SM_DRIVERS += CephFS
@@ -278,10 +278,10 @@ index 0000000..cb44049
 +    SR.registerSR(EXT4SR)
 \ No newline at end of file
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 4b8a721..62ce966 100755
+index b249c91..528429a 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2856,7 +2856,7 @@ def normalizeType(type):
+@@ -2853,7 +2853,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -291,5 +291,5 @@ index 4b8a721..62ce966 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.30.2
+2.39.2
 

@@ -1,4 +1,4 @@
-From f6fd10fe9f953c6ae34b5486b4f3cc8cd2e0017a Mon Sep 17 00:00:00 2001
+From d9829c0d5a83932780b90bc608bc2d2f6157135c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH 06/14] feat(drivers): add LinstorSR driver
@@ -78,7 +78,7 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index 88f5b0f..fffb256 100755
+index a6cfc55..fb0c057 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -7,6 +7,7 @@ SM_DRIVERS += Dummy
@@ -2284,17 +2284,17 @@ index 1f58adc..e846666 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 62ce966..248940a 100755
+index 528429a..16fb56f 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -48,10 +48,19 @@ import xs_errors
+@@ -46,10 +46,19 @@ import xs_errors
  from refcounter import RefCounter
  from ipc import IPCFlag
  from lvmanager import LVActivator
 -from srmetadata import LVMMetadataHandler
 +from srmetadata import LVMMetadataHandler, VDI_TYPE_TAG
  from functools import reduce
- from monotonic import monotonic as _time
+ from time import monotonic as _time
  
 +try:
 +    from linstorjournaler import LinstorJournaler
@@ -2308,7 +2308,7 @@ index 62ce966..248940a 100755
  # Disable automatic leaf-coalescing. Online leaf-coalesce is currently not
  # possible due to lvhd_stop_using_() not working correctly. However, we leave
  # this option available through the explicit LEAFCLSC_FORCE flag in the VDI
-@@ -682,7 +691,19 @@ class VDI:
+@@ -680,7 +689,19 @@ class VDI:
              if child not in childList:
                  thisPrunable = False
  
@@ -2329,7 +2329,7 @@ index 62ce966..248940a 100755
              vdiList.append(self)
          return vdiList
  
-@@ -1434,6 +1455,112 @@ class LVHDVDI(VDI):
+@@ -1432,6 +1453,112 @@ class LVHDVDI(VDI):
                  lvhdutil.calcSizeLV(self.getSizeVHD())
  
  
@@ -2442,7 +2442,7 @@ index 62ce966..248940a 100755
  ################################################################################
  #
  # SR
-@@ -1488,7 +1615,8 @@ class SR:
+@@ -1486,7 +1613,8 @@ class SR:
  
      TYPE_FILE = "file"
      TYPE_LVHD = "lvhd"
@@ -2452,7 +2452,7 @@ index 62ce966..248940a 100755
  
      LOCK_RETRY_INTERVAL = 3
      LOCK_RETRY_ATTEMPTS = 20
-@@ -1509,6 +1637,8 @@ class SR:
+@@ -1507,6 +1635,8 @@ class SR:
              return FileSR(uuid, xapi, createLock, force)
          elif type == SR.TYPE_LVHD:
              return LVHDSR(uuid, xapi, createLock, force)
@@ -2461,7 +2461,7 @@ index 62ce966..248940a 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2818,6 +2948,232 @@ class LVHDSR(SR):
+@@ -2815,6 +2945,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2694,7 +2694,7 @@ index 62ce966..248940a 100755
  ################################################################################
  #
  #  Helpers
-@@ -2859,7 +3215,9 @@ def normalizeType(type):
+@@ -2856,7 +3212,9 @@ def normalizeType(type):
          "xfs", "zfs", "ext4"
      ]:
          type = SR.TYPE_FILE
@@ -5056,7 +5056,7 @@ index 0000000..d400421
 +                    return True
 +        return False
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index e7d4a6c..ed6abed 100755
+index 6b7fc09..932fc3c 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
 @@ -29,6 +29,12 @@ import lvhdutil
@@ -5126,10 +5126,10 @@ index e7d4a6c..ed6abed 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 77fd052..0099d83 100755
+index 7647729..e734822 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -700,10 +700,35 @@ def get_this_host():
+@@ -694,10 +694,35 @@ def get_this_host():
      return uuid
  
  
@@ -5167,9 +5167,9 @@ index 77fd052..0099d83 100755
 +
  
  
- # XXX: this function doesn't do what it claims to do
-@@ -1484,13 +1509,21 @@ def findRunningProcessOrOpenFile(name, process=True):
-         return (retVal, processandpids)
+ def get_localhost_ref(session):
+@@ -1507,13 +1532,21 @@ def get_connected_sockets(pid):
+     return sockets
  
  
 -def retry(f, maxretry=20, period=3):
@@ -5651,5 +5651,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.30.2
+2.39.2
 

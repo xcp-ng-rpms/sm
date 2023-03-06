@@ -1,4 +1,4 @@
-From db68f9c59217bb225c930a759a493be78d52f254 Mon Sep 17 00:00:00 2001
+From 58161a0eb3f9f2fea731aa26b1863232b75202b1 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 15:26:43 +0200
 Subject: [PATCH 02/14] Add TrueNAS multipath config
@@ -27,5 +27,5 @@ index 0d4d0c9..5b14d23 100644
 +	}
  }
 -- 
-2.30.2
+2.39.2
 

@@ -1,4 +1,4 @@
-From cc22ee6d1420ae9ca27f8c4d73557a3292c14d52 Mon Sep 17 00:00:00 2001
+From f7b51388a7c5e90e51941e1945efb1087194fa9f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 15 Dec 2022 10:52:28 +0100
 Subject: [PATCH 14/14] Remove `_isvalidpathstring` calls
@@ -48,5 +48,5 @@ index 15dbe44..de35d73 100644
          self.vgname = EXT_PREFIX + sr_uuid
          self.remotepath = os.path.join("/dev",self.vgname,sr_uuid)
 -- 
-2.30.2
+2.39.2
 

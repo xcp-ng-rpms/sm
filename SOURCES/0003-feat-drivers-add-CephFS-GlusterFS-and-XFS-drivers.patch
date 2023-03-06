@@ -1,4 +1,4 @@
-From 52a72f5995f0fd5691d93a5b6f2bff3727f9456d Mon Sep 17 00:00:00 2001
+From cb6c37b86650b3dfff0e11fe56feb429511e7582 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
 Subject: [PATCH 03/14] feat(drivers): add CephFS, GlusterFS and XFS drivers
@@ -15,7 +15,7 @@ Subject: [PATCH 03/14] feat(drivers): add CephFS, GlusterFS and XFS drivers
  create mode 100644 drivers/XFSSR.py
 
 diff --git a/Makefile b/Makefile
-index bbb2443..d0b36d8 100755
+index 8c213a9..e3d9bf6 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -13,6 +13,9 @@ SM_DRIVERS += LVHDoHBA
@@ -876,10 +876,10 @@ index 0000000..15dbe44
 +else:
 +    SR.registerSR(XFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 0627be3..6ec7cd5 100755
+index 8082d1d..7b5647f 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2854,7 +2854,10 @@ def normalizeType(type):
+@@ -2851,7 +2851,10 @@ def normalizeType(type):
      if type in ["lvm", "lvmoiscsi", "lvmohba", "lvmofcoe"]:
          # temporary while LVHD is symlinked as LVM
          type = SR.TYPE_LVHD
@@ -892,5 +892,5 @@ index 0627be3..6ec7cd5 100755
      if not type in SR.TYPES:
          raise util.SMException("Unsupported SR type: %s" % type)
 -- 
-2.30.2
+2.39.2
 

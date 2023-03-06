@@ -1,7 +1,7 @@
-From ac3f0272702ffad88cfce67b80388817c131762d Mon Sep 17 00:00:00 2001
+From 9be80fe1d0a6e9172f7e4a8e09d9badbc410fb22 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
-Subject: [PATCH 11/14] Fix is_open call for many drivers (#25)
+Subject: [PATCH 12/20] Fix is_open call for many drivers (#25)
 
 Ensure all shared drivers are imported in `_is_open` definition to register
 them in the driver list. Otherwise this function always fails with a SRUnknownType exception.
@@ -34,26 +34,26 @@ index a2f7484..323718d 100644
              self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
          else:
 diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
-index 0092e50..6590640 100755
+index 0c84257..70f230f 100755
 --- a/drivers/NFSSR.py
 +++ b/drivers/NFSSR.py
-@@ -87,9 +87,12 @@ class NFSSR(FileSR.SharedFileSR):
+@@ -88,9 +88,12 @@ class NFSSR(FileSR.SharedFileSR):
              self.sm_config = self.srcmd.params.get('sr_sm_config') or {}
              self.other_config = self.srcmd.params.get('sr_other_config') or {}
          self.nosubdir = self.sm_config.get('nosubdir') == "true"
 -        if 'serverpath' in self.dconf:
 -            self.remotepath = os.path.join(self.dconf['serverpath'],
--                    not self.nosubdir and sr_uuid or "").encode('utf-8')
+-                    not self.nosubdir and sr_uuid or "")
 +        serverpath = self.dconf.get('serverpath')
 +        if serverpath is not None:
 +            self.remotepath = os.path.join(
 +                serverpath,
 +                not self.nosubdir and sr_uuid or ""
-+            ).encode('utf-8')
++            )
          self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
  
          # Handle optional dconf attributes
-@@ -101,7 +104,8 @@ class NFSSR(FileSR.SharedFileSR):
+@@ -102,7 +105,8 @@ class NFSSR(FileSR.SharedFileSR):
              self.options = ''
  
      def validate_remotepath(self, scan):
@@ -64,7 +64,7 @@ index 0092e50..6590640 100755
                  try:
                      self.scan_exports(self.dconf['server'])
 diff --git a/drivers/on_slave.py b/drivers/on_slave.py
-index 17acd8f..6718d97 100755
+index b4f33de..bb3f5db 100755
 --- a/drivers/on_slave.py
 +++ b/drivers/on_slave.py
 @@ -76,9 +76,14 @@ def _is_open(session, args):
@@ -101,5 +101,5 @@ index 17acd8f..6718d97 100755
  
      driver = SR.driver(srType)
 -- 
-2.30.2
+2.39.2
 

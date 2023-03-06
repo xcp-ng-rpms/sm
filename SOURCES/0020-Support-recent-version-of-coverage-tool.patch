@@ -1,0 +1,295 @@
+From a30cb1674b78400d91691b19c8976157e25e2df8 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 4 May 2023 10:24:22 +0200
+Subject: [PATCH 20/20] Support recent version of coverage tool (coverage
+ 7.2.5)
+
+Without these changes many warns/errors are emitted:
+- "assertEquals" is deprecated, "assertEqual" must be used instead
+- mocked objects in "setUp" method like "cleanup.IPCFlag" cannot be repatched
+  at the level of the test functions, otherwise tests are aborted,
+  this is the  behavior of coverage version 7.2.5
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ tests/test_ISOSR.py   |  2 +-
+ tests/test_LVHDSR.py  | 12 ++-----
+ tests/test_cleanup.py | 75 +++++++++++++++----------------------------
+ 3 files changed, 29 insertions(+), 60 deletions(-)
+
+diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
+index 2ef46c8..3addab6 100644
+--- a/tests/test_ISOSR.py
++++ b/tests/test_ISOSR.py
+@@ -74,7 +74,7 @@ class TestISOSR_overLocal(unittest.TestCase):
+         isosr = self.create_isosr()
+         with self.assertRaises(SR.SROSError) as ose:
+             isosr.attach(None)
+-        self.assertEquals(ose.exception.errno, 226)
++        self.assertEqual(ose.exception.errno, 226)
+         self.assertFalse(pread.called)
+ 
+ 
+diff --git a/tests/test_LVHDSR.py b/tests/test_LVHDSR.py
+index b9d0a41..67c18d1 100644
+--- a/tests/test_LVHDSR.py
++++ b/tests/test_LVHDSR.py
+@@ -287,11 +287,9 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         test_vhdInfo.hidden = hidden
+         self.mock_vhdutil.getVHDInfo.return_value = test_vhdInfo
+ 
+-    @mock.patch('LVHDSR.lvutil.LvmLockContext', autospec=True)
+     @mock.patch('LVHDSR.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+-    def test_clone_success(self, mock_xenapi, mock_lock,
+-                           mock_lock_context):
++    def test_clone_success(self, mock_xenapi, mock_lock):
+         """
+         Successfully create clone
+         """
+@@ -319,11 +317,9 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         # Assert
+         self.assertIsNotNone(clone)
+ 
+-    @mock.patch('LVHDSR.lvutil.LvmLockContext', autospec=True)
+     @mock.patch('LVHDSR.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+-    def test_snapshot_attached_success(
+-            self, mock_xenapi,  mock_lock, mock_lock_context):
++    def test_snapshot_attached_success(self, mock_xenapi, mock_lock):
+         """
+         LVHDSR.snapshot, attached on host, no CBT
+         """
+@@ -358,11 +354,9 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         # Assert
+         self.assertIsNotNone(snap)
+ 
+-    @mock.patch('LVHDSR.lvutil.LvmLockContext', autospec=True)
+     @mock.patch('LVHDSR.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+-    def test_snapshot_attached_cbt_success(
+-            self, mock_xenapi,  mock_lock, mock_lock_context):
++    def test_snapshot_attached_cbt_success(self, mock_xenapi, mock_lock):
+         """
+         LVHDSR.snapshot, attached on host, with CBT
+         """
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index 5a3f8b1..c3c5d62 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -53,8 +53,8 @@ def create_cleanup_sr(xapi, uuid=None):
+ 
+ class TestSR(unittest.TestCase):
+     def setUp(self):
+-        self.sleep_patcher = mock.patch('cleanup.time.sleep')
+-        self.sleep_patcher.start()
++        time_sleep_patcher = mock.patch('cleanup.time.sleep')
++        self.mock_time_sleep = time_sleep_patcher.start()
+ 
+         updateBlockInfo_patcher = mock.patch('cleanup.VDI.updateBlockInfo')
+         self.mock_updateBlockInfo = updateBlockInfo_patcher.start()
+@@ -116,15 +116,12 @@ class TestSR(unittest.TestCase):
+ 
+         self.assertEqual(0, sr._locked)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+-    def test_lock_succeeds_if_lock_is_acquired(
+-            self,
+-            mock_ipc_flag):
++    def test_lock_succeeds_if_lock_is_acquired(self):
+         """
+         After performing a lock, the counter equals to 1
+         """
+ 
+-        self.setup_abort_flag(mock_ipc_flag)
++        self.setup_abort_flag(self.mock_IPCFlag)
+         sr = create_cleanup_sr(self.xapi_mock)
+         sr._srLock = AlwaysFreeLock()
+ 
+@@ -132,43 +129,34 @@ class TestSR(unittest.TestCase):
+ 
+         self.assertEqual(1, sr._locked)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+-    def test_lock_raises_exception_if_abort_requested(
+-            self,
+-            mock_ipc_flag):
++    def test_lock_raises_exception_if_abort_requested(self):
+         """
+         If IPC abort was requested, lock raises AbortException
+         """
+ 
+-        self.setup_abort_flag(mock_ipc_flag, should_abort=True)
++        self.setup_abort_flag(self.mock_IPCFlag, should_abort=True)
+         sr = create_cleanup_sr(self.xapi_mock)
+         sr._srLock = AlwaysLockedLock()
+ 
+         self.assertRaises(cleanup.AbortException, sr.lock)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+-    def test_lock_raises_exception_if_unable_to_acquire_lock(
+-            self,
+-            mock_ipc_flag):
++    def test_lock_raises_exception_if_unable_to_acquire_lock(self):
+         """
+         If the lock is busy, SMException is raised
+         """
+ 
+-        self.setup_abort_flag(mock_ipc_flag)
++        self.setup_abort_flag(self.mock_IPCFlag)
+         sr = create_cleanup_sr(self.xapi_mock)
+         sr._srLock = AlwaysLockedLock()
+ 
+         self.assertRaises(util.SMException, sr.lock)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+-    def test_lock_leaves_sr_consistent_if_unable_to_acquire_lock(
+-            self,
+-            mock_ipc_flag):
++    def test_lock_leaves_sr_consistent_if_unable_to_acquire_lock(self):
+         """
+         If the lock is busy, the lock counter is not incremented
+         """
+ 
+-        self.setup_abort_flag(mock_ipc_flag)
++        self.setup_abort_flag(self.mock_IPCFlag)
+         sr = create_cleanup_sr(self.xapi_mock)
+         sr._srLock = AlwaysLockedLock()
+ 
+@@ -398,34 +386,28 @@ class TestSR(unittest.TestCase):
+         ret = cleanup._abort(None)
+         self.assertEqual(ret, True)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+     @mock.patch('cleanup.init')
+     def test__abort_return_false_if_flag_not_set(
+             self,
+-            mock_init,
+-            mock_ipcflag):
++            mock_init):
+         """
+         If flag not set return False.
+         """
+         mock_init.return_value = None
+ 
+         # Fake the flag returning False.
+-        mock_ipcflag.return_value.set.return_value = False
++        self.mock_IPCFlag.return_value.set.return_value = False
+ 
+         # Not important for this test but we call it so mock it.
+         cleanup.lockActive = AlwaysLockedLock()
+ 
+         ret = cleanup._abort(None)
+ 
+-        self.assertEqual(mock_ipcflag.return_value.set.call_count, 1)
++        self.assertEqual(self.mock_IPCFlag.return_value.set.call_count, 1)
+         self.assertEqual(ret, False)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+     @mock.patch('cleanup.init')
+-    def test__abort_should_raise_if_cant_get_lock(
+-            self,
+-            mock_init,
+-            mock_ipcflag):
++    def test__abort_should_raise_if_cant_get_lock(self, mock_init):
+         """
+         _abort should raise an exception if it completely
+         fails to get lockActive.
+@@ -433,7 +415,7 @@ class TestSR(unittest.TestCase):
+         mock_init.return_value = None
+ 
+         # Fake return true so we don't bomb out straight away.
+-        mock_ipcflag.return_value.set.return_value = True
++        self.mock_IPCFlag.return_value.set.return_value = True
+ 
+         # Fake never getting the lock.
+         cleanup.lockActive = AlwaysLockedLock()
+@@ -441,19 +423,18 @@ class TestSR(unittest.TestCase):
+         with self.assertRaises(util.CommandException):
+             cleanup._abort(None)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+     @mock.patch('cleanup.init')
+     def test__abort_should_succeed_if_aquires_on_second_attempt(
+             self,
+-            mock_init,
+-            mock_ipcflag):
++            mock_init
++            ):
+         """
+         _abort should succeed if gets lock on second attempt
+         """
+         mock_init.return_value = None
+ 
+         # Fake return true so we don't bomb out straight away.
+-        mock_ipcflag.return_value.set.return_value = True
++        self.mock_IPCFlag.return_value.set.return_value = True
+ 
+         # Use side effect to fake failing to get the lock
+         # on the first call, succeeding on the second.
+@@ -467,12 +448,11 @@ class TestSR(unittest.TestCase):
+         self.assertEqual(mocked_lock.acquireNoblock.call_count, 2)
+         self.assertEqual(ret, True)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+     @mock.patch('cleanup.init')
+     def test__abort_should_fail_if_reaches_maximum_retries_for_lock(
+             self,
+-            mock_init,
+-            mock_ipcflag):
++            mock_init
++            ):
+         """
+         _abort should fail if we max out the number of attempts for
+         obtaining the lock.
+@@ -480,7 +460,7 @@ class TestSR(unittest.TestCase):
+         mock_init.return_value = None
+ 
+         # Fake return true so we don't bomb out straight away.
+-        mock_ipcflag.return_value.set.return_value = True
++        self.mock_IPCFlag.return_value.set.return_value = True
+ 
+         # Fake a series of failed attempts to get the lock.
+         mocked_lock = AlwaysLockedLock()
+@@ -506,17 +486,13 @@ class TestSR(unittest.TestCase):
+         self.assertEqual(mocked_lock.acquireNoblock.call_count,
+                          cleanup.SR.LOCK_RETRY_ATTEMPTS + 1)
+ 
+-    @mock.patch('cleanup.IPCFlag', autospec=True)
+     @mock.patch('cleanup.init')
+-    def test__abort_succeeds_if_gets_lock_on_final_attempt(
+-            self,
+-            mock_init,
+-            mock_ipcflag):
++    def test__abort_succeeds_if_gets_lock_on_final_attempt(self, mock_init):
+         """
+         _abort succeeds if we get the lockActive on the final retry
+         """
+         mock_init.return_value = None
+-        mock_ipcflag.return_value.set.return_value = True
++        self.mock_IPCFlag.return_value.set.return_value = True
+         mocked_lock = AlwaysLockedLock()
+         mocked_lock.acquireNoblock = mock.Mock()
+ 
+@@ -1587,8 +1563,7 @@ class TestSR(unittest.TestCase):
+         # Remove called 3 times, twice from set, once on failure
+         self.assertEqual(3, self.xapi_mock.removeFromConfigVDI.call_count)
+ 
+-    @mock.patch('cleanup.time.sleep', autospec=True)
+-    def test_tag_children_for_relink_blocked(self, mock_sleep):
++    def test_tag_children_for_relink_blocked(self):
+         """
+         Cleanup: tag for relink, blocked - exception
+         """
+@@ -1605,7 +1580,7 @@ class TestSR(unittest.TestCase):
+ 
+         self.assertIn('Failed to tag vdi', str(sme.exception))
+ 
+-        self.assertGreater(mock_sleep.call_count, 5)
++        self.assertGreater(self.mock_time_sleep.call_count, 5)
+ 
+     @mock.patch('cleanup.util.get_this_host', autospec=True)
+     @mock.patch('cleanup._gcLoop', autospec=True)
+-- 
+2.39.2
+

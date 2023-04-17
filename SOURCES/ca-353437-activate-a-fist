@@ -1,0 +1,155 @@
+CA-353437: activate a FIST point in the coalesce tracker for test injection
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/cleanup.py    |    6 ++++--
+ drivers/util.py       |    1 +
+ tests/test_cleanup.py |   49 +++++++++++++++++++++++++++++++------------------
+ 3 files changed, 36 insertions(+), 20 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index fc5954a..97c332c 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1839,7 +1839,7 @@ class SR:
+         HISTORY_STRING = "Iteration: {its} -- Initial size {initSize}" \
+                          " --> Final size {finSize}"
+ 
+-        def __init__(self):
++        def __init__(self, sr):
+             self.itsNoProgress = 0
+             self.its = 0
+             self.minSize = float("inf")
+@@ -1847,6 +1847,7 @@ class SR:
+             self.reason = ""
+             self.startSize = None
+             self.finishSize = None
++            self.sr = sr
+ 
+         def abortCoalesce(self, prevSize, curSize):
+             res = False
+@@ -1871,6 +1872,7 @@ class SR:
+                 self.itsNoProgress += 1
+                 Util.log("No progress, attempt:"
+                          " {attempt}".format(attempt=self.itsNoProgress))
++                util.fistpoint.activate("cleanup_tracker_no_progress", self.sr.uuid)
+ 
+             if (not res) and (self.its > self.MAX_ITERATIONS):
+                 max = self.MAX_ITERATIONS
+@@ -1910,7 +1912,7 @@ class SR:
+         """Leaf-coalesce VDI vdi. Return true if we succeed, false if we cannot
+         complete due to external changes, namely vdi_delete and vdi_snapshot 
+         that alter leaf-coalescibility of vdi"""
+-        tracker = self.CoalesceTracker()
++        tracker = self.CoalesceTracker(self)
+         while not vdi.canLiveCoalesce(self.getStorageSpeed()):
+             prevSizeVHD = vdi.getSizeVHD()
+             if not self._snapshotCoalesce(vdi):
+diff --git a/drivers/util.py b/drivers/util.py
+index 435ad2b..e75118a 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -1275,6 +1275,7 @@ fistpoint = FistPoint( ["LVHDRT_finding_a_suitable_pair",
+                         "blktap_activate_error_handling",
+                         GCPAUSE_FISTPOINT,
+                         "cleanup_coalesceVHD_inject_failure",
++                        "cleanup_tracker_no_progress",
+                         "FileSR_fail_hardlink",
+                         "FileSR_fail_snap1",
+                         "FileSR_fail_snap2"])
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index 7fdaa57..fecbd26 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -1291,9 +1291,8 @@ class TestSR(unittest.TestCase):
+         self.trackerReportOk(tracker, expectedHistory,
+                              expectedReason, start, finish, minimum)
+ 
+-    def exerciseTracker(self, size1, size2, its,  expectedHistory,
++    def exerciseTracker(self, tracker, size1, size2, its, expectedHistory,
+                         expectedReason, start, finish, minimum):
+-        tracker = cleanup.SR.CoalesceTracker()
+         for x in range(its):
+             res = tracker.abortCoalesce(size1, size2)
+             self.assertFalse(res)
+@@ -1302,8 +1301,10 @@ class TestSR(unittest.TestCase):
+                             start, finish, minimum)
+ 
+     def test_leafCoalesceTracker(self):
++        sr = create_cleanup_sr(self.xapi_mock)
++
+         # Test initialization
+-        tracker = cleanup.SR.CoalesceTracker()
++        tracker = cleanup.SR.CoalesceTracker(sr)
+         self.assertEqual(tracker.itsNoProgress, 0)
+         self.assertEqual(tracker.its, 0)
+         self.assertEqual(tracker.minSize, float("inf"))
+@@ -1312,6 +1313,25 @@ class TestSR(unittest.TestCase):
+         self.assertEqual(tracker.startSize, None)
+         self.assertEqual(tracker.finishSize, None)
+ 
++        # Increase beyond maximum allowed growth
++        expectedHistory = [
++            "Iteration: 1 -- Initial size 100 --> Final size 100",
++            "Iteration: 2 -- Initial size 100 --> Final size 121",
++        ]
++        expectedReason = "Unexpected bump in size," \
++                         " compared to minimum acheived"
++        res = tracker.abortCoalesce(100, 100)
++        self.assertFalse(res)
++        res = tracker.abortCoalesce(100, 121)
++        self.autopsyTracker(tracker, res, expectedHistory,
++                            expectedReason, 100, 121, 100)
++
++    def test_leafCoaleesceTracker_too_many_iterations(self):
++        sr = create_cleanup_sr(self.xapi_mock)
++
++        # Test initialization
++        tracker = cleanup.SR.CoalesceTracker(sr)
++
+         # 10 iterations no progress 11th fails.
+         expectedHistory = [
+             "Iteration: 1 -- Initial size 10 --> Final size 10",
+@@ -1327,9 +1347,15 @@ class TestSR(unittest.TestCase):
+             "Iteration: 11 -- Initial size 10 --> Final size 10"
+         ]
+         expectedReason = "Max iterations (10) exceeded"
+-        self.exerciseTracker(10, 10, 10, expectedHistory,
++        self.exerciseTracker(tracker, 10, 10, 10, expectedHistory,
+                              expectedReason, 10, 10, 10)
+ 
++    def test_leafCoalesceTracker_getting_bigger(self):
++        sr = create_cleanup_sr(self.xapi_mock)
++
++        # Test initialization
++        tracker = cleanup.SR.CoalesceTracker(sr)
++
+         # 3 iterations getting bigger, then fail
+         expectedHistory = [
+             "Iteration: 1 -- Initial size 100 --> Final size 101",
+@@ -1338,22 +1364,9 @@ class TestSR(unittest.TestCase):
+             "Iteration: 4 -- Initial size 100 --> Final size 101"
+         ]
+         expectedReason = "No progress made for 3 iterations"
+-        self.exerciseTracker(100, 101, 3, expectedHistory,
++        self.exerciseTracker(tracker, 100, 101, 3, expectedHistory,
+                              expectedReason, 100, 101, 100)
+ 
+-        # Increase beyond maximum allowed growth
+-        expectedHistory = [
+-            "Iteration: 1 -- Initial size 100 --> Final size 100",
+-            "Iteration: 2 -- Initial size 100 --> Final size 121",
+-        ]
+-        expectedReason = "Unexpected bump in size,"\
+-                         " compared to minimum acheived"
+-        res = tracker.abortCoalesce(100, 100)
+-        self.assertFalse(res)
+-        res = tracker.abortCoalesce(100, 121)
+-        self.autopsyTracker(tracker, res, expectedHistory,
+-                            expectedReason, 100, 121, 100)
+-
+     def runAbortable(self, func, ret, ns, abortTest, pollInterval, timeOut):
+         return func()
+ 

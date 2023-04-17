@@ -1,0 +1,387 @@
+CA-359453: check shared File SRs support hardlinks at attach
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/FileSR.py              |   44 +++++++++++++
+ drivers/NFSSR.py               |    4 +
+ drivers/SMBSR.py               |    3 +
+ drivers/util.py                |    5 +
+ tests/mocks/XenAPI/__init__.py |    3 +
+ tests/test_FileSR.py           |  135 ++++++++++++++++++++++++++++++++++++++++
+ tests/test_NFSSR.py            |    3 +
+ tests/test_SMBSR.py            |   24 +++++--
+ 8 files changed, 209 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index f95efea..ebacd68 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -25,8 +25,10 @@ import cleanup
+ import blktap2
+ import time
+ import glob
++from uuid import uuid4
+ from lock import Lock
+ import xmlrpclib
++import XenAPI
+ from constants import CBTLOG_TAG
+ 
+ geneology = {}
+@@ -1077,6 +1079,48 @@ class FileVDI(VDI.VDI):
+     def _cbt_log_exists(self, logpath):
+         return util.pathexists(logpath)
+ 
++
++class SharedFileSR(FileSR):
++    """
++    FileSR subclass for SRs that use shared network storage
++    """
++    NO_HARDLINK_SUPPORT = "no_hardlinks"
++
++    def _raise_hardlink_error(self):
++        raise OSError(542, "Unknown error 524")
++
++    def _check_hardlinks(self):
++        test_name = os.path.join(self.path, str(uuid4()))
++        open(test_name, 'ab').close()
++
++        link_name = '%s.new' % test_name
++        try:
++            # XSI-1100: Fail the link operation
++            util.fistpoint.activate_custom_fn(
++                "FileSR_fail_hardlink",
++                self._raise_hardlink_error)
++
++            os.link(test_name, link_name)
++            self.session.xenapi.SR.remove_from_sm_config(
++                self.sr_ref, SharedFileSR.NO_HARDLINK_SUPPORT)
++        except OSError:
++            msg = "File system for SR %s does not support hardlinks, crash " \
++                "consistency of snapshots cannot be assured" % self.uuid
++            util.SMlog(msg, priority=util.LOG_WARNING)
++            try:
++                self.session.xenapi.SR.add_to_sm_config(
++                    self.sr_ref, SharedFileSR.NO_HARDLINK_SUPPORT, 'True')
++                self.session.xenapi.message.create(
++                    "sr_does_not_support_hardlinks", 2, "SR", self.uuid,
++                    msg)
++            except XenAPI.Failure:
++                # Might already be set and checking has TOCTOU issues
++                pass
++        finally:
++            util.force_unlink(link_name)
++            util.force_unlink(test_name)
++
++
+ if __name__ == '__main__':
+     SRCommand.run(FileSR, DRIVER_INFO)
+ else:
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index b2a6880..dcfe7ff 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -60,7 +60,7 @@ NFSPORT = 2049
+ DEFAULT_TRANSPORT = "tcp"
+ PROBEVERSION = 'probeversion'
+ 
+-class NFSSR(FileSR.FileSR):
++class NFSSR(FileSR.SharedFileSR):
+     """NFS file-based storage repository"""
+     def handles(type):
+         return type == 'nfs'
+@@ -143,6 +143,8 @@ class NFSSR(FileSR.FileSR):
+             io_retrans = nfs.get_nfs_retrans(self.other_config)
+             self.mount_remotepath(sr_uuid, timeout=io_timeout, 
+                                   retrans=io_retrans)
++
++            self._check_hardlinks()
+         self.attached = True
+ 
+ 
+diff --git a/drivers/SMBSR.py b/drivers/SMBSR.py
+index 1110dfa..496fabc 100755
+--- a/drivers/SMBSR.py
++++ b/drivers/SMBSR.py
+@@ -63,7 +63,7 @@ class SMBException(Exception):
+ # mountpoint = /var/run/sr-mount/SMB/<smb_server_name>/<share_name>/uuid
+ # linkpath = mountpoint/uuid - path to SR directory on share
+ # path = /var/run/sr-mount/uuid - symlink to SR directory on share
+-class SMBSR(FileSR.FileSR):
++class SMBSR(FileSR.SharedFileSR):
+     """SMB file-based storage repository"""
+     def handles(type):
+         return type == 'smb'
+@@ -193,6 +193,7 @@ class SMBSR(FileSR.FileSR):
+                 os.symlink(self.linkpath, self.path)
+             except SMBException, exc:
+                 raise xs_errors.XenError('SMBMount', opterr=exc.errstr)
++            self._check_hardlinks()
+         self.attached = True
+ 
+     def probe(self):
+diff --git a/drivers/util.py b/drivers/util.py
+index b08f245..8bbb03a 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -1273,7 +1273,10 @@ fistpoint = FistPoint( ["LVHDRT_finding_a_suitable_pair",
+                         "xenrt_default_vdi_type_legacy",
+                         "blktap_activate_inject_failure",
+                         "blktap_activate_error_handling",
+-                        GCPAUSE_FISTPOINT] )
++                        GCPAUSE_FISTPOINT,
++                        "cleanup_coalesceVHD_inject_failure",
++                        "FileSR_fail_hardlink"])
++
+ 
+ def set_dirty(session, sr):
+     try:
+diff --git a/tests/mocks/XenAPI/__init__.py b/tests/mocks/XenAPI/__init__.py
+index e69de29..21cb15c 100644
+--- a/tests/mocks/XenAPI/__init__.py
++++ b/tests/mocks/XenAPI/__init__.py
+@@ -0,0 +1,3 @@
++class Failure(Exception):
++    def __init__(self, details):
++        pass
+diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
+index c12919c..37bee37 100644
+--- a/tests/test_FileSR.py
++++ b/tests/test_FileSR.py
+@@ -3,10 +3,12 @@ import mock
+ import nfs
+ import NFSSR # Without this the FileSR won't import
+ import FileSR
++import SR
+ import os
+ import stat
+ import unittest
+ import uuid
++from XenAPI import Failure
+ 
+ 
+ class FakeFileVDI(FileSR.FileVDI):
+@@ -81,3 +83,136 @@ class TestFileVDI(unittest.TestCase):
+         found = vdi._find_path_with_retries(vdi_uuid)
+ 
+         self.assertFalse(found)
++
++
++class FakeSharedFileSR(FileSR.SharedFileSR):
++    """
++    Test SR class for SharedFileSR
++    """
++    def load(self, sr_uuid):
++        self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
++
++    def attach(self, sr_uuid):
++        self._check_hardlinks()
++
++
++class TestShareFileSR(unittest.TestCase):
++    """
++    Tests for common Shared File SR operations
++    """
++    TEST_SR_REF = "test_sr_ref"
++    ERROR_524 = "Unknown error 524"
++    NO_HARDLINKS = "no_hardlinks"
++
++    def setUp(self):
++        fist_patcher = mock.patch('FileSR.util.FistPoint.is_active',
++                                  autospec=True)
++        self.mock_fist = fist_patcher.start()
++
++        self.active_fists = set()
++        def active_fists():
++            return self.active_fists
++
++        def is_active(self, name):
++            return name in active_fists()
++
++        self.mock_fist.side_effect = is_active
++
++        link_patcher = mock.patch('FileSR.os.link')
++        self.mock_link = link_patcher.start()
++
++        unlink_patcher = mock.patch('FileSR.util.force_unlink')
++        self.mock_unlink = unlink_patcher.start()
++
++        lock_patcher = mock.patch('FileSR.Lock')
++        self.mock_lock = lock_patcher.start()
++
++        xapi_patcher = mock.patch('SR.XenAPI')
++        self.mock_xapi = xapi_patcher.start()
++        self.mock_session = mock.MagicMock()
++        self.mock_xapi.xapi_local.return_value = self.mock_session
++
++        self.session_ref = "dummy_session"
++
++        self.addCleanup(mock.patch.stopall)
++
++        self.sr_uuid = str(uuid.uuid4())
++
++    def create_test_sr(self):
++        srcmd = mock.Mock()
++        srcmd.dconf = {}
++        srcmd.params = {'command': "some_command",
++                        'session_ref': self.session_ref,
++                        'sr_ref': TestShareFileSR.TEST_SR_REF}
++        return FakeSharedFileSR(srcmd, self.sr_uuid)
++
++    def test_attach_success(self):
++        """
++        Attach SR on FS with expected features
++        """
++        test_sr = self.create_test_sr()
++
++        with mock.patch('__builtin__.open'):
++            test_sr.attach(self.sr_uuid)
++
++        # Assert
++        self.mock_session.xenapi.SR.remove_from_sm_config.assert_called_with(
++            TestShareFileSR.TEST_SR_REF, TestShareFileSR.NO_HARDLINKS)
++
++    def test_attach_link_fail(self):
++        """
++        Attach SR on FS with no hardlinks
++        """
++        test_sr = self.create_test_sr()
++
++        self.mock_link.side_effect = OSError(524, TestShareFileSR.ERROR_524)
++
++        # Act
++        with mock.patch('__builtin__.open'):
++            test_sr.attach(self.sr_uuid)
++
++        # Assert
++        self.mock_session.xenapi.SR.add_to_sm_config.assert_called_with(
++            TestShareFileSR.TEST_SR_REF, TestShareFileSR.NO_HARDLINKS, 'True')
++        self.mock_session.xenapi.message.create.assert_called_with(
++            'sr_does_not_support_hardlinks', 2, "SR", self.sr_uuid, mock.ANY)
++
++    def test_attach_link_fail_already_set(self):
++        """
++        Attach SR on FS with no hardlinks with config set
++        """
++        test_sr = self.create_test_sr()
++
++        self.mock_link.side_effect = OSError(524, TestShareFileSR.ERROR_524)
++        self.mock_session.xenapi.SR.add_to_sm_config.side_effect = Failure(
++            ['MAP_DUPLICATE_KEY', 'SR', 'sm_config',
++            'OpaqueRef:be8cc595-4924-4946-9082-59aef531daae',
++             TestShareFileSR.NO_HARDLINKS])
++
++        # Act
++        with mock.patch('__builtin__.open'):
++            test_sr.attach(self.sr_uuid)
++
++        # Assert
++        self.mock_session.xenapi.SR.add_to_sm_config.assert_called_with(
++            TestShareFileSR.TEST_SR_REF, TestShareFileSR.NO_HARDLINKS, 'True')
++
++    def test_attach_fist_active(self):
++        """
++        Attach SR with FIST point active to set no hardlinks
++        """
++        # Arrange
++        test_sr = self.create_test_sr()
++        self.active_fists.add('FileSR_fail_hardlink')
++
++        self.mock_link.side_effect = OSError(524, TestShareFileSR.ERROR_524)
++
++        # Act
++        with mock.patch('__builtin__.open'):
++            test_sr.attach(self.sr_uuid)
++
++        # Assert
++        self.mock_session.xenapi.SR.add_to_sm_config.assert_called_with(
++            TestShareFileSR.TEST_SR_REF, TestShareFileSR.NO_HARDLINKS, 'True')
++        self.mock_session.xenapi.message.create.assert_called_with(
++            'sr_does_not_support_hardlinks', 2, "SR", self.sr_uuid, mock.ANY)
+diff --git a/tests/test_NFSSR.py b/tests/test_NFSSR.py
+index efea89a..53fba4c 100644
+--- a/tests/test_NFSSR.py
++++ b/tests/test_NFSSR.py
+@@ -65,6 +65,7 @@ class TestNFSSR(unittest.TestCase):
+ 
+         self.assertRaises(nfs.NfsException, self.create_nfssr)
+ 
++    @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('util.makedirs', autospec=True)
+     @mock.patch('NFSSR.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount', autospec=True)
+@@ -72,7 +73,7 @@ class TestNFSSR(unittest.TestCase):
+     @mock.patch('nfs.check_server_tcp', autospec=True)
+     @mock.patch('nfs.validate_nfsversion', autospec=True)
+     def test_attach(self, validate_nfsversion, check_server_tcp, _testhost,
+-                    soft_mount, Lock, makedirs):
++                    soft_mount, Lock, makedirs, mock_checklinks):
+         validate_nfsversion.return_value = "aNfsversionChanged"
+         nfssr = self.create_nfssr(server='aServer', serverpath='/aServerpath',
+                                   sr_uuid='UUID', useroptions='options')
+diff --git a/tests/test_SMBSR.py b/tests/test_SMBSR.py
+index 2c52969..2513d23 100644
+--- a/tests/test_SMBSR.py
++++ b/tests/test_SMBSR.py
+@@ -71,14 +71,16 @@ class Test_SMBSR(unittest.TestCase):
+         smbsr.attach('asr_uuid')
+         self.assertTrue(smbsr.attached)
+ 
++    @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.makeMountPoint', autospec=True)
+     @mock.patch('SMBSR.Lock', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+     @mock.patch('os.symlink', autospec=True)
+     @mock.patch('util.listdir', autospec=True)
+-    def test_attach_vanilla(self, listdir, symlink, pread, mock_lock, makeMountPoint, mock_checkmount):
+-        mock_checkmount.return_value=False
++    def test_attach_vanilla(self, listdir, symlink, pread, mock_lock,
++                            makeMountPoint, mock_checkmount, mock_checklinks):
++        mock_checkmount.return_value = False
+         smbsr = self.create_smbsr()
+         makeMountPoint.return_value = "/var/mount"
+         smbsr.attach('asr_uuid')
+@@ -86,29 +88,35 @@ class Test_SMBSR(unittest.TestCase):
+         pread.assert_called_with(['mount.cifs', '\\aServer', "/var/mount", '-o', 'cache=loose,vers=3.0,actimeo=0'],
+                                  new_env={'PASSWD': 'aPassword', 'USER': 'aUsername'})
+ 
++    @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.makeMountPoint', autospec=True)
+     @mock.patch('SMBSR.Lock', autospecd=True)
+     @mock.patch('util.pread', autospec=True)
+     @mock.patch('os.symlink', autospec=True)
+     @mock.patch('util.listdir', autospec=True)
+-    def test_attach_with_cifs_password(self, listdir, symlink, pread, mock_lock, makeMountPoint, mock_checkmount):
+-        smbsr = self.create_smbsr(dconf_update={"password":"winter2019"})
+-        mock_checkmount.return_value=False
++    def test_attach_with_cifs_password(
++            self, listdir, symlink, pread, mock_lock, makeMountPoint,
++            mock_checkmount, mock_checklinks):
++        smbsr = self.create_smbsr(dconf_update={"password": "winter2019"})
++        mock_checkmount.return_value = False
+         makeMountPoint.return_value = "/var/mount"
+         smbsr.attach('asr_uuid')
+         self.assertTrue(smbsr.attached)
+         pread.assert_called_with(['mount.cifs', '\\aServer', "/var/mount", '-o', 'cache=loose,vers=3.0,actimeo=0'], new_env={'PASSWD': 'winter2019', 'USER': 'aUsername'})
+ 
++    @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.makeMountPoint', autospec=True)
+     @mock.patch('SMBSR.Lock', autospecd=True)
+     @mock.patch('util.pread', autospec=True)
+     @mock.patch('os.symlink', autospec=True)
+     @mock.patch('util.listdir', autospec=True)
+-    def test_attach_with_cifs_password_and_domain(self, listdir,  symlink, pread, mock_lock, makeMountPoint, mock_checkmount):
+-        smbsr = self.create_smbsr(username="citrix\jsmith", dconf_update={"password":"winter2019"})
+-        mock_checkmount.return_value=False
++    def test_attach_with_cifs_password_and_domain(
++            self, listdir, symlink, pread, mock_lock, makeMountPoint,
++            mock_checkmount, mock_checklinks):
++        smbsr = self.create_smbsr(username="citrix\jsmith", dconf_update={"password": "winter2019"})
++        mock_checkmount.return_value = False
+         makeMountPoint.return_value = "/var/mount"
+         smbsr.attach('asr_uuid')
+         self.assertTrue(smbsr.attached)

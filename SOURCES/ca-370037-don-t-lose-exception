@@ -1,0 +1,83 @@
+CA-370037: don't lose exception context when re-raising.
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/NFSSR.py    |    2 +-
+ tests/test_NFSSR.py |   41 +++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 42 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index dcfe7ff..5321b79 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -212,7 +212,7 @@ class NFSSR(FileSR.SharedFileSR):
+                 os.rmdir(self.path)
+             except:
+                 pass
+-            raise exn
++            raise
+ 
+         if not self.nosubdir:
+             newpath = os.path.join(self.path, sr_uuid)
+diff --git a/tests/test_NFSSR.py b/tests/test_NFSSR.py
+index 53fba4c..e203140 100644
+--- a/tests/test_NFSSR.py
++++ b/tests/test_NFSSR.py
+@@ -1,7 +1,9 @@
+ import mock
+ import nfs
+ import NFSSR
++import SR
+ import unittest
++from uuid import uuid4
+ 
+ 
+ class FakeNFSSR(NFSSR.NFSSR):
+@@ -65,6 +67,45 @@ class TestNFSSR(unittest.TestCase):
+ 
+         self.assertRaises(nfs.NfsException, self.create_nfssr)
+ 
++    @mock.patch('util.makedirs')
++    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('nfs.soft_mount')
++    @mock.patch('util._testHost')
++    @mock.patch('nfs.check_server_tcp')
++    @mock.patch('nfs.validate_nfsversion')
++    def test_sr_create(self, validate_nfsversion, check_server_tcp, _testhost,
++                       soft_mount, Lock, makedirs):
++        nfssr = self.create_nfssr(server='aServer', serverpath='/aServerpath',
++                                  sr_uuid='UUID', useroptions='options')
++
++        sr_uuid = str(uuid4())
++        size = 100
++        nfssr.create(sr_uuid, size)
++
++    @mock.patch('NFSSR.os.rmdir')
++    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('nfs.soft_mount')
++    @mock.patch('util._testHost')
++    @mock.patch('nfs.check_server_tcp')
++    @mock.patch('nfs.validate_nfsversion')
++    @mock.patch('NFSSR.xs_errors.XML_DEFS',
++                'drivers/XE_SR_ERRORCODES.xml')
++    def test_sr_create_mount_error(
++            self, validate_nfsversion, check_server_tcp, _testhost,
++            soft_mount, Lock, mock_rmdir):
++
++        validate_nfsversion.return_value = '3'
++
++        nfssr = self.create_nfssr(server='aServer', serverpath='/aServerpath',
++                                  sr_uuid='UUID', useroptions='options')
++
++        check_server_tcp.side_effect = nfs.NfsException("Failed to detect NFS Server")
++
++        sr_uuid = str(uuid4())
++        size = 100
++        with self.assertRaises(SR.SROSError):
++            nfssr.create(sr_uuid, size)
++
+     @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('util.makedirs', autospec=True)
+     @mock.patch('NFSSR.Lock', autospec=True)

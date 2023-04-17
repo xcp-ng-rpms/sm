@@ -1,0 +1,22 @@
+CA-372772: fix miscalculation of seek offset
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/util.py |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/util.py b/drivers/util.py
+index e75118a..2353f4b 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -581,7 +581,7 @@ def zeroOut(path, fromByte, bytes):
+ 
+     blocks = bytes / blockSize
+     bytes -= blocks * blockSize
+-    fromByte = fromBlock + blocks * blockSize
++    fromByte = (fromBlock + blocks) * blockSize
+     if blocks:
+         cmd = [CMD_DD, "if=/dev/zero", "of=%s" % path, "bs=%s" % blockSize, \
+                 "seek=%s" % fromBlock, "count=%s" % blocks]

@@ -1,0 +1,58 @@
+CA-352880: when deleting an HBA SR remove the kernel devices
+
+From: Mark Syms <mark.syms@citrix.com>
+
+If this is not done, in particular with a Fibre Channel SR where
+the LUN mapping may be subsequently removed kernel errors can be
+encnountered until the host is rebooted if another HBA SR is
+scanned.
+
+e.g.
+
+Mar 23 13:43:10 <host> kernel: [446324.856765] sd 1:0:2:0: [sdd] tag#0 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+Mar 23 13:43:10 <host> kernel: [446324.856775] sd 1:0:2:0: [sdd] tag#0 Sense Key : Illegal Request [current]
+Mar 23 13:43:10 <host> kernel: [446324.856778] sd 1:0:2:0: [sdd] tag#0 Add. Sense: Logical unit not supported
+Mar 23 13:43:10 <host> kernel: [446324.856784] sd 1:0:2:0: [sdd] tag#0 CDB: Read(10) 28 00 00 00 00 00 00 00 80 00
+
+If the host is rebooted between the SR being deleted and the LUN
+mapping being removed then this error will recur until the host
+is rebooted again.
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/LVHDoHBASR.py |   16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/LVHDoHBASR.py b/drivers/LVHDoHBASR.py
+index 4160d71..186f663 100755
+--- a/drivers/LVHDoHBASR.py
++++ b/drivers/LVHDoHBASR.py
+@@ -188,14 +188,26 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+             except:
+                 pass
+ 
++    def _remove_device_nodes(self):
++        """
++        Remove the kernel device nodes
++        """
++        nodes = glob.glob('/dev/disk/by-scsid/%s/*' % self.SCSIid)
++        util.SMlog('Remove_nodes, nodes are %s' % nodes)
++        for node in nodes:
++            with open('/sys/block/%s/device/delete' %
++                      (os.path.basename(node)), 'w') as f:
++                f.write('1\n')
++
+     def delete(self, sr_uuid):
+         self._pathrefresh(LVHDoHBASR)
+         try:
+             LVHDSR.LVHDSR.delete(self, sr_uuid)
+         finally:
+             if self.mpath == "true":
+-                self.mpathmodule.reset(self.SCSIid, True) # explicit unmap
+-                
++                self.mpathmodule.reset(self.SCSIid, explicit_unmap=True)
++            self._remove_device_nodes()
++
+     def vdi(self, uuid):
+         return LVHDoHBAVDI(self, uuid)
+     

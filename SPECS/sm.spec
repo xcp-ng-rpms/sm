@@ -1,18 +1,50 @@
+%global package_speccommit 24e197c0114396c911ff96a3041d4c6b470998a0
+%global usver 2.30.8
+%global xsver 2
+%global xsrel %{xsver}%{?xscount}%{?xshash}
+%global package_srccommit v2.29.0
 # -*- rpm-spec -*-
+
+
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.30.7
-Release: 1
+Version: 2.30.8
+Release: %{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz
-
-
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
-
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
+Source0: sm-2.29.0.tar.gz
+Patch0: ca-343115-ensure-device
+Patch1: ca-350522-backport
+Patch2: ca-350871-log-if-lvhd-snapshot
+Patch3: ca-350871-add-lock-context
+Patch4: cp-35625-extract-calls-to
+Patch5: cp-35625-use-link-instead-of
+Patch6: cp-35625-extract-calls-to-1
+Patch7: xsi-915-improve-performance-of
+Patch8: ca-352165-check-that-device
+Patch9: merge-pull-request-530-from
+Patch10: ca-354228-reinstate-load-calls
+Patch11: ca-355401-make-post-attach
+Patch12: ca-355289-ensure-xapi-is
+Patch13: ca-356645-use-self.session-is
+Patch14: ca-359453-check-shared-file
+Patch15: ca-359453-add-fist-fault
+Patch16: ca-359453-use-rename-not-link
+Patch17: cp-38316-dell-requested-that
+Patch18: ca-352880-when-deleting-an-hba
+Patch19: ca-369613-report-errors
+Patch20: ca-369395-default-multipath
+Patch21: ca-370037-don-t-lose-exception
+Patch22: ca-370037-correctly-format
+Patch23: added-dell-me4-multipath
+Patch24: ca-370696-do-not-attempt-to
+Patch25: ca-344254-add-tests-for
+Patch26: ca-344254-simplify-test
+Patch27: ca-353437-give-coalesce
+Patch28: ca-353437-activate-a-fist
+Patch29: ca-372641-fix-_expand_size-for
+Patch30: ca-372772-fix-miscalculation
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 Requires(post): systemd
 Requires(preun): systemd
@@ -350,6 +382,18 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Wed Nov 23 2022 Mark Syms <mark.syms@citrix.com> - 2.30.8-2
+- CA-353437: give coalesce tracker grace iterations to make progress
+- CA-372641: fix _expand_size for multipath
+- CA-372772: fix miscalculation of seek offset
+
+* Fri Sep 23 2022 Tim Smith <tim.smith@citrix.com> - 2.30.8-1
+- CA-369613: report errors correctly from multipath
+- CA-369395: default multipath handle to dmp if not set
+- CA-370037: improvements to exception handling
+- Added Dell ME4 multipath config
+- CA-370696 Do not attempt to validate device or NFS server paths
+
 * Fri Apr 29 2022 Mark Syms <mark.syms@citrix.com> - 2.30.7-1
 - CA-352880: when deleting an HBA SR remove the kernel devices
 
@@ -700,7 +744,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -720,7 +763,6 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -733,7 +775,6 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

@@ -1,0 +1,207 @@
+CA-354228: Reinstate load calls in _pathrefresh
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/LVHDoHBASR.py   |   16 ++++++++--------
+ drivers/LVHDoISCSISR.py |   10 +++++-----
+ drivers/OCFSoHBASR.py   |    8 ++++----
+ drivers/OCFSoISCSISR.py |    6 +++---
+ drivers/SR.py           |    3 ++-
+ 5 files changed, 22 insertions(+), 21 deletions(-)
+
+diff --git a/drivers/LVHDoHBASR.py b/drivers/LVHDoHBASR.py
+index de5ed86..4160d71 100755
+--- a/drivers/LVHDoHBASR.py
++++ b/drivers/LVHDoHBASR.py
+@@ -105,8 +105,8 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+     def create(self, sr_uuid, size):
+         self.hbasr.attach(sr_uuid)
+         if self.mpath == "true":
+-            self.mpathmodule.refresh(self.SCSIid,0)
+-        self._pathrefresh()
++            self.mpathmodule.refresh(self.SCSIid, 0)
++        self._pathrefresh(LVHDoHBASR)
+         try:
+             LVHDSR.LVHDSR.create(self, sr_uuid, size)
+         finally:
+@@ -124,7 +124,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+             for file in os.listdir(path):
+                 self.block_setscheduler('%s/%s' % (path,file))
+ 
+-        self._pathrefresh()
++        self._pathrefresh(LVHDoHBASR)
+         if not os.path.exists(self.dconf['device']):
+             # Force a rescan on the bus
+             self.hbasr._init_hbadict()
+@@ -141,11 +141,11 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+         if self.mpath == "true":
+             if 'device' not in self.dconf or not os.path.exists(self.dconf['device']):
+                 util.SMlog("@@@@@ path does not exists")
+-                self.mpathmodule.refresh(self.SCSIid,0)
+-                self._pathrefresh()
++                self.mpathmodule.refresh(self.SCSIid, 0)
++                self._pathrefresh(LVHDoHBASR)
+                 self._setMultipathableFlag(SCSIid=self.SCSIid)
+         else:
+-                self._pathrefresh()
++                self._pathrefresh(LVHDoHBASR)
+         LVHDSR.LVHDSR.scan(self, sr_uuid)
+ 
+     def probe(self):
+@@ -165,7 +165,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+             self.mpathmodule.refresh(self.SCSIid,0)
+ 
+         try:
+-            self._pathrefresh()
++            self._pathrefresh(LVHDoHBASR)
+             result = LVHDSR.LVHDSR.probe(self)
+             if self.mpath == "true":
+                 self.mpathmodule.reset(self.SCSIid,True)
+@@ -189,7 +189,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+                 pass
+ 
+     def delete(self, sr_uuid):
+-        self._pathrefresh()
++        self._pathrefresh(LVHDoHBASR)
+         try:
+             LVHDSR.LVHDSR.delete(self, sr_uuid)
+         finally:
+diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
+index 4494894..42b17b8 100755
+--- a/drivers/LVHDoISCSISR.py
++++ b/drivers/LVHDoISCSISR.py
+@@ -464,7 +464,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+                         continue
+                 if not upgraded:
+                     raise xs_errors.XenError('InvalidDev')
+-            self._pathrefresh()
++            self._pathrefresh(LVHDoISCSISR)
+             LVHDSR.LVHDSR.create(self, sr_uuid, size)
+         except Exception, inst:
+             self.iscsi.detach(sr_uuid)
+@@ -472,7 +472,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         self.iscsi.detach(sr_uuid)
+ 
+     def delete(self, sr_uuid):
+-        self._pathrefresh()
++        self._pathrefresh(LVHDoISCSISR)
+         LVHDSR.LVHDSR.delete(self, sr_uuid)
+         for i in self.iscsiSRs:
+             i.detach(sr_uuid)
+@@ -506,7 +506,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+                 for a in self.iscsi.adapter:
+                     scsiutil.rescan([self.iscsi.adapter[a]])
+ 
+-            self._pathrefresh()
++            self._pathrefresh(LVHDoISCSISR)
+             LVHDSR.LVHDSR.attach(self, sr_uuid)
+         except Exception, inst:
+             for i in self.iscsiSRs:
+@@ -520,7 +520,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+             i.detach(sr_uuid)
+ 
+     def scan(self, sr_uuid):
+-        self._pathrefresh()
++        self._pathrefresh(LVHDoISCSISR)
+         if self.mpath == "true":
+             for i in self.iscsiSRs:
+                 try:
+@@ -549,7 +549,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         if not self.iscsi._attach_LUN_bySCSIid(self.SCSIid):
+             util.SMlog("Unable to detect LUN")
+             raise xs_errors.XenError('InvalidDev')
+-        self._pathrefresh()
++        self._pathrefresh(LVHDoISCSISR)
+         out = LVHDSR.LVHDSR.probe(self)
+         self.iscsi.detach(self.uuid)
+         return out
+diff --git a/drivers/OCFSoHBASR.py b/drivers/OCFSoHBASR.py
+index 400a856..0bb7b9d 100755
+--- a/drivers/OCFSoHBASR.py
++++ b/drivers/OCFSoHBASR.py
+@@ -73,7 +73,7 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+         self.hbasr.attach(sr_uuid)
+         if self.mpath == "true":
+             self.mpathmodule.refresh(self.SCSIid,0)
+-        self._pathrefresh()
++        self._pathrefresh(OCFSoHBASR)
+         try:
+             super(OCFSoHBASR, self).create(sr_uuid, size)
+         finally:
+@@ -91,7 +91,7 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+             for file in os.listdir(path):
+                 self.block_setscheduler('%s/%s' % (path,file))
+ 
+-        self._pathrefresh()
++        self._pathrefresh(OCFSoHBASR)
+         if not os.path.exists(self.dconf['device']):
+             # Force a rescan on the bus
+             self.hbasr._init_hbadict()
+@@ -110,7 +110,7 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+             if 'device' not in self.dconf or not os.path.exists(self.dconf['device']):
+                 util.SMlog("%s path does not exists" % self.dconf['device'])
+                 self.mpathmodule.refresh(self.SCSIid,0)
+-                self._pathrefresh()
++                self._pathrefresh(OCFSoHBASR)
+                 self._setMultipathableFlag(SCSIid=self.SCSIid)
+         super(OCFSoHBASR, self).scan(sr_uuid)
+ 
+@@ -130,7 +130,7 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+                 raise xs_errors.XenError('SRInUse')
+             self.mpathmodule.refresh(self.SCSIid,0)
+         try:
+-            self._pathrefresh()
++            self._pathrefresh(OCFSoHBASR)
+             result = super(OCFSoHBASR, self).probe()
+             if self.mpath == "true":
+                 self.mpathmodule.reset(self.SCSIid,True)
+diff --git a/drivers/OCFSoISCSISR.py b/drivers/OCFSoISCSISR.py
+index d72065d..b84d824 100755
+--- a/drivers/OCFSoISCSISR.py
++++ b/drivers/OCFSoISCSISR.py
+@@ -446,7 +446,7 @@ class OCFSoISCSISR(OCFSSR.OCFSSR):
+                         continue
+                 if not upgraded:
+                     raise xs_errors.XenError('InvalidDev')
+-            self._pathrefresh()
++            self._pathrefresh(OCFSoISCSISR)
+             OCFSSR.OCFSSR.create(self, sr_uuid, size)
+         except Exception, inst:
+             self.iscsi.detach(sr_uuid)
+@@ -484,7 +484,7 @@ class OCFSoISCSISR(OCFSSR.OCFSSR):
+                 # Force a manual bus refresh
+                 for a in self.iscsi.adapter:
+                     scsiutil.rescan([self.iscsi.adapter[a]])
+-            self._pathrefresh()
++            self._pathrefresh(OCFSoISCSISR)
+             OCFSSR.OCFSSR.attach(self, sr_uuid)
+         except Exception, inst:
+             for i in self.iscsiSRs:
+@@ -518,7 +518,7 @@ class OCFSoISCSISR(OCFSSR.OCFSSR):
+         if not self.iscsi._attach_LUN_bySCSIid(self.SCSIid):
+             util.SMlog("Unable to detect LUN")
+             raise xs_errors.XenError('InvalidDev')
+-        self._pathrefresh()
++        self._pathrefresh(OCFSoISCSISR)
+         out = OCFSSR.OCFSSR.probe(self)
+         self.iscsi.detach(self.uuid)
+         return out
+diff --git a/drivers/SR.py b/drivers/SR.py
+index abf246a..feb606b 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -490,10 +490,11 @@ class SR(object):
+                         raise xs_errors.XenError('ConfigDeviceInvalid', \
+                               opterr='path is %s' % dev)
+ 
+-    def _pathrefresh(self):
++    def _pathrefresh(self, obj):
+         SCSIid = getattr(self, 'SCSIid')
+         self.dconf['device'] = self.mpathmodule.path(SCSIid)
+         self.checkroot()
++        super(obj, self).load(self.uuid)
+ 
+     def _setMultipathableFlag(self, SCSIid=''):
+         try:

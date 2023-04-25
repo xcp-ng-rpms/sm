@@ -1,0 +1,36 @@
+CA-352165: Check that 'device' exists in the dconf before using it, avoiding exception
+
+From: Ben Sims <ben.sims@citrix.com>
+
+Signed-off-by: Ben Sims <ben.sims@citrix.com>
+---
+ drivers/LVHDoHBASR.py |    2 +-
+ drivers/OCFSoHBASR.py |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/LVHDoHBASR.py b/drivers/LVHDoHBASR.py
+index 874ee65..de5ed86 100755
+--- a/drivers/LVHDoHBASR.py
++++ b/drivers/LVHDoHBASR.py
+@@ -139,7 +139,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+         # to point of the wrong device instead of dm-x. Running multipathing will
+         # take care of this scenario.
+         if self.mpath == "true":
+-            if not os.path.exists(self.dconf['device']):
++            if 'device' not in self.dconf or not os.path.exists(self.dconf['device']):
+                 util.SMlog("@@@@@ path does not exists")
+                 self.mpathmodule.refresh(self.SCSIid,0)
+                 self._pathrefresh()
+diff --git a/drivers/OCFSoHBASR.py b/drivers/OCFSoHBASR.py
+index f064d2e..400a856 100755
+--- a/drivers/OCFSoHBASR.py
++++ b/drivers/OCFSoHBASR.py
+@@ -107,7 +107,7 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+         # to point of the wrong device instead of dm-x. Running multipathing 
+         # will take care of this scenario.
+         if self.mpath == "true":
+-            if not os.path.exists(self.dconf['device']):
++            if 'device' not in self.dconf or not os.path.exists(self.dconf['device']):
+                 util.SMlog("%s path does not exists" % self.dconf['device'])
+                 self.mpathmodule.refresh(self.SCSIid,0)
+                 self._pathrefresh()

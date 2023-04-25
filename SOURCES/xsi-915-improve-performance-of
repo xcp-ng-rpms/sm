@@ -1,0 +1,392 @@
+XSI-915: Improve performance of LVHDoHBA operations by
+
+From: Ben Sims <ben.sims@citrix.com>
+
+1) Reducing expensive calls to _pathfresh
+            2) Use multipath with option "-l" and then falling back to using the more expensive "-ll"
+               only if first operation it fails.
+            3) Add missing vdi_epoch operations to vdi operation list
+
+Signed-off-by: Ben Sims <ben.sims@citrix.com>
+---
+ drivers/EXTSR.py        |    8 --------
+ drivers/LVHDSR.py       |    7 -------
+ drivers/LVHDoFCoESR.py  |    1 -
+ drivers/LVHDoHBASR.py   |   12 +++++++-----
+ drivers/LVHDoISCSISR.py |    9 +++++----
+ drivers/OCFSoHBASR.py   |    9 ++++-----
+ drivers/OCFSoISCSISR.py |    7 +++----
+ drivers/SR.py           |   15 ++++++++++++---
+ drivers/mpath_dmp.py    |    6 ++++--
+ drivers/util.py         |    3 ++-
+ tests/test_mpath_dmp.py |   14 +++++++-------
+ 11 files changed, 44 insertions(+), 47 deletions(-)
+
+diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
+index 3eeffa3..9160075 100755
+--- a/drivers/EXTSR.py
++++ b/drivers/EXTSR.py
+@@ -57,14 +57,6 @@ class EXTSR(FileSR.FileSR):
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+         self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+-        if not self.dconf.has_key('device') or not self.dconf['device']:
+-            raise xs_errors.XenError('ConfigDeviceMissing')
+-
+-        self.root = self.dconf['device']
+-        for dev in self.root.split(','):
+-            if not self._isvalidpathstring(dev):
+-                raise xs_errors.XenError('ConfigDeviceInvalid', \
+-                      opterr='path is %s' % dev)
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+         self.vgname = EXT_PREFIX + sr_uuid
+         self.remotepath = os.path.join("/dev",self.vgname,sr_uuid)
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index 92685b7..3abb404 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -148,13 +148,6 @@ class LVHDSR(SR.SR):
+ 
+     def load(self, sr_uuid):
+         self.ops_exclusive = OPS_EXCLUSIVE
+-        if not self.dconf.has_key('device') or not self.dconf['device']:
+-            raise xs_errors.XenError('ConfigDeviceMissing',)
+-        self.root = self.dconf['device']
+-        for dev in self.root.split(','):
+-            if not self._isvalidpathstring(dev):
+-                raise xs_errors.XenError('ConfigDeviceInvalid', \
+-                        opterr='path is %s' % dev)
+ 
+         self.isMaster = False
+         if self.dconf.has_key('SRmaster') and self.dconf['SRmaster'] == 'true':
+diff --git a/drivers/LVHDoFCoESR.py b/drivers/LVHDoFCoESR.py
+index 4875392..e27f5e6 100755
+--- a/drivers/LVHDoFCoESR.py
++++ b/drivers/LVHDoFCoESR.py
+@@ -83,7 +83,6 @@ class LVHDoFCoESR(LVHDoHBASR.LVHDoHBASR):
+             raise xs_errors.XenError('ConfigSCSIid')
+ 
+         self.SCSIid = self.dconf['SCSIid']
+-        self._pathrefresh(LVHDoFCoESR, load = False)
+         LVHDSR.LVHDSR.load(self, sr_uuid)
+ 
+     def vdi(self, uuid):
+diff --git a/drivers/LVHDoHBASR.py b/drivers/LVHDoHBASR.py
+index 687fa58..874ee65 100755
+--- a/drivers/LVHDoHBASR.py
++++ b/drivers/LVHDoHBASR.py
+@@ -100,14 +100,13 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+                 raise xs_errors.XenError('ConfigSCSIid')
+ 
+         self.SCSIid = self.dconf['SCSIid']
+-        self._pathrefresh(LVHDoHBASR, load = False)
+         LVHDSR.LVHDSR.load(self, sr_uuid)
+ 
+     def create(self, sr_uuid, size):
+         self.hbasr.attach(sr_uuid)
+         if self.mpath == "true":
+             self.mpathmodule.refresh(self.SCSIid,0)
+-        self._pathrefresh(LVHDoHBASR)
++        self._pathrefresh()
+         try:
+             LVHDSR.LVHDSR.create(self, sr_uuid, size)
+         finally:
+@@ -125,7 +124,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+             for file in os.listdir(path):
+                 self.block_setscheduler('%s/%s' % (path,file))
+ 
+-        self._pathrefresh(LVHDoHBASR)
++        self._pathrefresh()
+         if not os.path.exists(self.dconf['device']):
+             # Force a rescan on the bus
+             self.hbasr._init_hbadict()
+@@ -143,8 +142,10 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+             if not os.path.exists(self.dconf['device']):
+                 util.SMlog("@@@@@ path does not exists")
+                 self.mpathmodule.refresh(self.SCSIid,0)
+-                self._pathrefresh(LVHDoHBASR)
++                self._pathrefresh()
+                 self._setMultipathableFlag(SCSIid=self.SCSIid)
++        else:
++                self._pathrefresh()
+         LVHDSR.LVHDSR.scan(self, sr_uuid)
+ 
+     def probe(self):
+@@ -164,7 +165,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+             self.mpathmodule.refresh(self.SCSIid,0)
+ 
+         try:
+-            self._pathrefresh(LVHDoHBASR)
++            self._pathrefresh()
+             result = LVHDSR.LVHDSR.probe(self)
+             if self.mpath == "true":
+                 self.mpathmodule.reset(self.SCSIid,True)
+@@ -188,6 +189,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+                 pass
+ 
+     def delete(self, sr_uuid):
++        self._pathrefresh()
+         try:
+             LVHDSR.LVHDSR.delete(self, sr_uuid)
+         finally:
+diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
+index 5479eec..4494894 100755
+--- a/drivers/LVHDoISCSISR.py
++++ b/drivers/LVHDoISCSISR.py
+@@ -325,7 +325,6 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+                     except:
+                         raise xs_errors.XenError('ISCSILogout')
+ 
+-        self._pathrefresh(LVHDoISCSISR, load = False)
+ 
+         LVHDSR.LVHDSR.load(self, sr_uuid)
+ 
+@@ -465,7 +464,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+                         continue
+                 if not upgraded:
+                     raise xs_errors.XenError('InvalidDev')
+-            self._pathrefresh(LVHDoISCSISR)
++            self._pathrefresh()
+             LVHDSR.LVHDSR.create(self, sr_uuid, size)
+         except Exception, inst:
+             self.iscsi.detach(sr_uuid)
+@@ -473,6 +472,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         self.iscsi.detach(sr_uuid)
+ 
+     def delete(self, sr_uuid):
++        self._pathrefresh()
+         LVHDSR.LVHDSR.delete(self, sr_uuid)
+         for i in self.iscsiSRs:
+             i.detach(sr_uuid)
+@@ -506,7 +506,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+                 for a in self.iscsi.adapter:
+                     scsiutil.rescan([self.iscsi.adapter[a]])
+ 
+-            self._pathrefresh(LVHDoISCSISR)
++            self._pathrefresh()
+             LVHDSR.LVHDSR.attach(self, sr_uuid)
+         except Exception, inst:
+             for i in self.iscsiSRs:
+@@ -520,6 +520,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+             i.detach(sr_uuid)
+ 
+     def scan(self, sr_uuid):
++        self._pathrefresh()
+         if self.mpath == "true":
+             for i in self.iscsiSRs:
+                 try:
+@@ -548,7 +549,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         if not self.iscsi._attach_LUN_bySCSIid(self.SCSIid):
+             util.SMlog("Unable to detect LUN")
+             raise xs_errors.XenError('InvalidDev')
+-        self._pathrefresh(LVHDoISCSISR)
++        self._pathrefresh()
+         out = LVHDSR.LVHDSR.probe(self)
+         self.iscsi.detach(self.uuid)
+         return out
+diff --git a/drivers/OCFSoHBASR.py b/drivers/OCFSoHBASR.py
+index 6716dea..f064d2e 100755
+--- a/drivers/OCFSoHBASR.py
++++ b/drivers/OCFSoHBASR.py
+@@ -67,14 +67,13 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+             raise xs_errors.XenError('ConfigSCSIid')
+ 
+         self.SCSIid = self.dconf['SCSIid']
+-        self._pathrefresh(OCFSoHBASR, load = False)
+         super(OCFSoHBASR, self).load(sr_uuid)
+ 
+     def create(self, sr_uuid, size):
+         self.hbasr.attach(sr_uuid)
+         if self.mpath == "true":
+             self.mpathmodule.refresh(self.SCSIid,0)
+-        self._pathrefresh(OCFSoHBASR)
++        self._pathrefresh()
+         try:
+             super(OCFSoHBASR, self).create(sr_uuid, size)
+         finally:
+@@ -92,7 +91,7 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+             for file in os.listdir(path):
+                 self.block_setscheduler('%s/%s' % (path,file))
+ 
+-        self._pathrefresh(OCFSoHBASR)
++        self._pathrefresh()
+         if not os.path.exists(self.dconf['device']):
+             # Force a rescan on the bus
+             self.hbasr._init_hbadict()
+@@ -111,7 +110,7 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+             if not os.path.exists(self.dconf['device']):
+                 util.SMlog("%s path does not exists" % self.dconf['device'])
+                 self.mpathmodule.refresh(self.SCSIid,0)
+-                self._pathrefresh(OCFSoHBASR)
++                self._pathrefresh()
+                 self._setMultipathableFlag(SCSIid=self.SCSIid)
+         super(OCFSoHBASR, self).scan(sr_uuid)
+ 
+@@ -131,7 +130,7 @@ class OCFSoHBASR(OCFSSR.OCFSSR):
+                 raise xs_errors.XenError('SRInUse')
+             self.mpathmodule.refresh(self.SCSIid,0)
+         try:
+-            self._pathrefresh(OCFSoHBASR)
++            self._pathrefresh()
+             result = super(OCFSoHBASR, self).probe()
+             if self.mpath == "true":
+                 self.mpathmodule.reset(self.SCSIid,True)
+diff --git a/drivers/OCFSoISCSISR.py b/drivers/OCFSoISCSISR.py
+index f48495e..d72065d 100755
+--- a/drivers/OCFSoISCSISR.py
++++ b/drivers/OCFSoISCSISR.py
+@@ -308,7 +308,6 @@ class OCFSoISCSISR(OCFSSR.OCFSSR):
+                 except:
+                     raise xs_errors.XenError('ISCSILogout')
+ 
+-        self._pathrefresh(OCFSoISCSISR, load = False)
+         OCFSSR.OCFSSR.load(self, sr_uuid)
+ 
+     def print_LUNs_XML(self):
+@@ -447,7 +446,7 @@ class OCFSoISCSISR(OCFSSR.OCFSSR):
+                         continue
+                 if not upgraded:
+                     raise xs_errors.XenError('InvalidDev')
+-            self._pathrefresh(OCFSoISCSISR)
++            self._pathrefresh()
+             OCFSSR.OCFSSR.create(self, sr_uuid, size)
+         except Exception, inst:
+             self.iscsi.detach(sr_uuid)
+@@ -485,7 +484,7 @@ class OCFSoISCSISR(OCFSSR.OCFSSR):
+                 # Force a manual bus refresh
+                 for a in self.iscsi.adapter:
+                     scsiutil.rescan([self.iscsi.adapter[a]])
+-            self._pathrefresh(OCFSoISCSISR)
++            self._pathrefresh()
+             OCFSSR.OCFSSR.attach(self, sr_uuid)
+         except Exception, inst:
+             for i in self.iscsiSRs:
+@@ -519,7 +518,7 @@ class OCFSoISCSISR(OCFSSR.OCFSSR):
+         if not self.iscsi._attach_LUN_bySCSIid(self.SCSIid):
+             util.SMlog("Unable to detect LUN")
+             raise xs_errors.XenError('InvalidDev')
+-        self._pathrefresh(OCFSoISCSISR)
++        self._pathrefresh()
+         out = OCFSSR.OCFSSR.probe(self)
+         self.iscsi.detach(self.uuid)
+         return out
+diff --git a/drivers/SR.py b/drivers/SR.py
+index b8dda26..abf246a 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -145,6 +145,7 @@ class SR(object):
+         self.driver_config = {}
+ 
+         self.load(sr_uuid)
++        self.checkroot()
+ 
+     @staticmethod
+     def from_uuid(session, sr_uuid):
+@@ -480,11 +481,19 @@ class SR(object):
+         else:
+             self.mpathmodule.deactivate()
+ 
+-    def _pathrefresh(self, obj, load = True):
++    def checkroot(self):
++        if 'device' in self.dconf:
++            self.root = self.dconf['device']
++            if self.root:
++                for dev in self.root.split(','):
++                    if not self._isvalidpathstring(dev):
++                        raise xs_errors.XenError('ConfigDeviceInvalid', \
++                              opterr='path is %s' % dev)
++
++    def _pathrefresh(self):
+         SCSIid = getattr(self, 'SCSIid')
+         self.dconf['device'] = self.mpathmodule.path(SCSIid)
+-        if load:
+-            super(obj, self).load(self.uuid)
++        self.checkroot()
+ 
+     def _setMultipathableFlag(self, SCSIid=''):
+         try:
+diff --git a/drivers/mpath_dmp.py b/drivers/mpath_dmp.py
+index 75be1e7..ca8d5e7 100755
+--- a/drivers/mpath_dmp.py
++++ b/drivers/mpath_dmp.py
+@@ -182,8 +182,10 @@ def refresh(sid,npaths):
+ def _is_valid_multipath_device(sid):
+ 
+     # Check if device is already multipathed
+-    (ret, stdout, stderr) = util.doexec(['/usr/sbin/multipath', '-ll', sid])
+-    if not stdout+stderr:
++    (ret, stdout, stderr) = util.doexec(['/usr/sbin/multipath', '-l', sid])
++    if not stdout + stderr:
++        (ret, stdout, stderr) = util.doexec(['/usr/sbin/multipath', '-ll', sid])
++    if not stdout + stderr:
+         (ret, stdout, stderr) = util.doexec(['/usr/sbin/multipath', '-a', sid])
+         if ret < 0:
+             util.SMlog("Failed to add {}: wwid could be explicitly "
+diff --git a/drivers/util.py b/drivers/util.py
+index 337add2..b08f245 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -1098,7 +1098,8 @@ def _containsVDIinuse(srobj):
+ 
+ def isVDICommand(cmd):
+     if cmd == None or cmd in ["vdi_attach", "vdi_detach",
+-                              "vdi_activate", "vdi_deactivate"]:
++                              "vdi_activate", "vdi_deactivate",
++                              "vdi_epoch_begin", "vdi_epoch_end"]:
+         return True
+     else:
+         return False
+diff --git a/tests/test_mpath_dmp.py b/tests/test_mpath_dmp.py
+index 1c0b6be..b4abd7e 100644
+--- a/tests/test_mpath_dmp.py
++++ b/tests/test_mpath_dmp.py
+@@ -34,18 +34,18 @@ class TestMpathDmp(unittest.TestCase):
+         self.assertTrue(mpath_dmp._is_valid_multipath_device("fake_dev"))
+ 
+         # Test 'multipath -a' failure
+-        util_mod.doexec.side_effect = [(0, "", ""), (1, "out", "err")]
++        util_mod.doexec.side_effect = [(0, "", ""), (0, "", ""), (1, "out", "err")]
+         self.assertFalse(mpath_dmp._is_valid_multipath_device("fake_dev"))
+ 
+         # Test failure when device is not available
+         mock_os.path.exists.return_value = False
+-        util_mod.doexec.side_effect = [(0, "", ""), (0, "out", "err")]
++        util_mod.doexec.side_effect = [(0, "", ""), (0, "", ""), (0, "out", "err")]
+         self.assertFalse(mpath_dmp._is_valid_multipath_device("fake_dev"))
+ 
+         # Test 'multipath -c' with error and empty output
+         mock_os.path.exists.return_value = True
+         mock_os.listdir.side_effect = [['sdc']]
+-        util_mod.doexec.side_effect = [(0, "", ""), (0, "out", "err"),
++        util_mod.doexec.side_effect = [(0, "", ""), (0, "", ""), (0, "out", "err"),
+                                        (1, "", ""), OSError()]
+         with self.assertRaises(SR.SROSError) as exc:
+             mpath_dmp._is_valid_multipath_device("xx")
+@@ -53,23 +53,23 @@ class TestMpathDmp(unittest.TestCase):
+ 
+         # Test 'multipath -c' with error but some output
+         mock_os.listdir.side_effect = [['sdc']]
+-        util_mod.doexec.side_effect = [(0, "", ""), (0, "out", "err"),
++        util_mod.doexec.side_effect = [(0, "", ""), (0, "", ""), (0, "out", "err"),
+                                        (1, "xx", "")]
+         self.assertFalse(mpath_dmp._is_valid_multipath_device("fake_dev"))
+ 
+         mock_os.listdir.side_effect = [['sdc']]
+-        util_mod.doexec.side_effect = [(0, "", ""), (0, "out", "err"),
++        util_mod.doexec.side_effect = [(0, "", ""), (0, "", ""), (0, "out", "err"),
+                                        (1, "xx", "yy")]
+         self.assertFalse(mpath_dmp._is_valid_multipath_device("fake_dev"))
+ 
+         mock_os.listdir.side_effect = [['sdc']]
+-        util_mod.doexec.side_effect = [(0, "", ""), (0, "out", "err"),
++        util_mod.doexec.side_effect = [(0, "", ""), (0, "", ""), (0, "out", "err"),
+                                        (1, "", "yy")]
+         self.assertFalse(mpath_dmp._is_valid_multipath_device("fake_dev"))
+ 
+         # Test when everything is fine
+         mock_os.listdir.side_effect = [['sdc']]
+-        util_mod.doexec.side_effect = [(0, "", ""), (0, "out", "err"),
++        util_mod.doexec.side_effect = [(0, "", ""), (0, "", ""), (0, "out", "err"),
+                                        (0, "out", "err")]
+         self.assertTrue(mpath_dmp._is_valid_multipath_device("fake_dev"))
+ 

@@ -1,0 +1,33 @@
+Added Dell ME4 multipath config
+
+From: Ulrich Goettlich <Ulrich.Goettlich@vonaffenfels.de>
+
+See https://downloads.dell.com/manuals/common/powervault-me4-series-linux-3924-bp-l_en-us.pdf
+
+Signed-off-by: Ulrich Goettlich <Ulrich.Goettlich@vonaffenfels.de>
+---
+ multipath/multipath.conf |   11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/multipath/multipath.conf b/multipath/multipath.conf
+index ab6cfe1..aaf45e5 100644
+--- a/multipath/multipath.conf
++++ b/multipath/multipath.conf
+@@ -40,6 +40,17 @@ devices {
+ 		prio			rdac
+ 		no_path_retry		30
+ 	}
++	device {
++		vendor			"DellEMC"
++		product			"ME4"
++		path_grouping_policy	"group_by_prio"
++		path_checker		"tur"
++		hardware_handler	"1 alua"
++		prio			"alua"
++		failback		immediate
++		rr_weight		"uniform"
++		path_selector		"service-time 0"
++	}
+ 	device {
+ 		vendor			"DGC"
+ 		product			".*"

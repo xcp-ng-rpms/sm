@@ -1,0 +1,24 @@
+Merge pull request #530 from MarkSymsCtx/CA-349759
+
+From: Mark Syms <MarkSymsCtx@users.noreply.github.com>
+
+CA-349759: don't call srUpdate within a lock
+---
+ drivers/cleanup.py |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 9d863f2..f8eb188 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2842,9 +2842,9 @@ def _gcLoop(sr, dryRun):
+                     sr.lock()
+                     try:
+                         sr.garbageCollect(dryRun)
+-                        sr.xapi.srUpdate()
+                     finally:
+                         sr.unlock()
++                    sr.xapi.srUpdate()
+ 
+                 candidate = sr.findCoalesceable()
+                 if candidate:

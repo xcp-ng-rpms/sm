@@ -1,0 +1,43 @@
+CA-370037: correctly format error message
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/nfs.py    |    2 +-
+ tests/test_nfs.py |    9 +++++++++
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/nfs.py b/drivers/nfs.py
+index 6d0c537..a40b8ed 100644
+--- a/drivers/nfs.py
++++ b/drivers/nfs.py
+@@ -269,7 +269,7 @@ def get_supported_nfs_versions(server):
+         return list(cv & valid_versions)
+     except:
+         util.SMlog("Unable to obtain list of valid nfs versions")
+-        raise NfsException('Failed to read supported NFS version from server' %
++        raise NfsException('Failed to read supported NFS version from server %s' %
+                            (server))
+ 
+ def get_nfs_timeout(other_config):
+diff --git a/tests/test_nfs.py b/tests/test_nfs.py
+index 248acb9..71800ab 100644
+--- a/tests/test_nfs.py
++++ b/tests/test_nfs.py
+@@ -19,6 +19,15 @@ class Test_nfs(unittest.TestCase):
+ 
+         pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-p', 'aServer'], quiet=False)
+ 
++    @mock.patch('util.pread', autospec=True)
++    def test_check_server_tcp_nfsversion_error(self, pread):
++        pread.side_effect = util.CommandException
++
++        with self.assertRaises(nfs.NfsException):
++            nfs.check_server_tcp('aServer', 'aNfsversion')
++
++        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-p', 'aServer'], quiet=False)
++
+     @mock.patch('time.sleep', autospec=True)
+     # Can't use autospec due to http://bugs.python.org/issue17826
+     @mock.patch('util.pread')

@@ -1,20 +1,52 @@
+%global package_speccommit 24e197c0114396c911ff96a3041d4c6b470998a0
+%global usver 2.30.8
+%global xsver 2
+%global xsrel %{xsver}%{?xscount}%{?xshash}
+%global package_srccommit v2.29.0
 # -*- rpm-spec -*-
+
+
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 2.30.7
-Release: 1.3%{?dist}
+Version: 2.30.8
+Release: %{?xsrel}.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-
-Source0: https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz
-
-
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
-
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildRequires: gcc
+Source0: sm-2.29.0.tar.gz
+Patch0: ca-343115-ensure-device
+Patch1: ca-350522-backport
+Patch2: ca-350871-log-if-lvhd-snapshot
+Patch3: ca-350871-add-lock-context
+Patch4: cp-35625-extract-calls-to
+Patch5: cp-35625-use-link-instead-of
+Patch6: cp-35625-extract-calls-to-1
+Patch7: xsi-915-improve-performance-of
+Patch8: ca-352165-check-that-device
+Patch9: merge-pull-request-530-from
+Patch10: ca-354228-reinstate-load-calls
+Patch11: ca-355401-make-post-attach
+Patch12: ca-355289-ensure-xapi-is
+Patch13: ca-356645-use-self.session-is
+Patch14: ca-359453-check-shared-file
+Patch15: ca-359453-add-fist-fault
+Patch16: ca-359453-use-rename-not-link
+Patch17: cp-38316-dell-requested-that
+Patch18: ca-352880-when-deleting-an-hba
+Patch19: ca-369613-report-errors
+Patch20: ca-369395-default-multipath
+Patch21: ca-370037-don-t-lose-exception
+Patch22: ca-370037-correctly-format
+Patch23: added-dell-me4-multipath
+Patch24: ca-370696-do-not-attempt-to
+Patch25: ca-344254-add-tests-for
+Patch26: ca-344254-simplify-test
+Patch27: ca-353437-give-coalesce
+Patch28: ca-353437-activate-a-fist
+Patch29: ca-372641-fix-_expand_size-for
+Patch30: ca-372772-fix-miscalculation
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
+BuildRequires: gcc
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
@@ -30,30 +62,17 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.7-xcpng..2.30.7-8.2
-# Note: the v2.30.7-xcpng tag was manually created by us on our fork because
+# git format-patch v2.30.8-xcpng..2.30.8-8.2
+# Note: the v2.30.8-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
-# To create this tag in the sources, you must create a 2.30.7-8.2 branch from the
+# To create this tag in the sources, you must create a 2.30.8-8.2 branch from the
 # previous -xcpng tag then cherry pick each upstream commit referenced in the changelog
 # of the upstream spec file.
 # To ensure you have all changes, you can use:
 # `diff -urq <sources> <upstream sources>`.
-# After that we can create the tag: `git tag -a v2.30.7-xcpng -m "v2.30.7-xcpng"`,
+# After that we can create the tag: `git tag -a v2.30.8-xcpng -m "v2.30.8-xcpng"`,
 # push the commits and tag.
-Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
-Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1003: 0003-Add-TrueNAS-multipath-config.patch
-Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
-Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
-Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
-Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
-Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
-Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
-Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+TODO
 
 %description
 This package contains storage backends used in XCP
@@ -431,6 +450,21 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue Apr 25 2023 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-2.1
+- Sync with hotfix XS82ECU1022
+- TODO: Update XCP-ng patches
+- *** Upstream changelog ***
+- * Wed Nov 23 2022 Mark Syms <mark.syms@citrix.com> - 2.30.8-2
+- - CA-353437: give coalesce tracker grace iterations to make progress
+- - CA-372641: fix _expand_size for multipath
+- - CA-372772: fix miscalculation of seek offset
+- * Fri Sep 23 2022 Tim Smith <tim.smith@citrix.com> - 2.30.8-1
+- - CA-369613: report errors correctly from multipath
+- - CA-369395: default multipath handle to dmp if not set
+- - CA-370037: improvements to exception handling
+- - Added Dell ME4 multipath config
+- - CA-370696 Do not attempt to validate device or NFS server paths
+
 * Fri Jul 08 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.7-1.3
 - Fix regression caused by is_open patch (LVHDSR + XCP-ng drivers)
 
@@ -863,7 +897,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 
 %package rawhba
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:   System/Hypervisor
 Summary: rawhba SR type capability
 #Requires: sm = @SM_VERSION@-@SM_RELEASE@
@@ -883,7 +916,6 @@ Fiber Channel raw LUNs as separate VDIs (LUN per VDI)
 /opt/xensource/sm/enable-borehamwood
 
 %package testresults
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  test results for SM package
 
@@ -896,7 +928,6 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Provides: gitsha(https://code.citrite.net/rest/archive/latest/projects/XS/repos/sm/archive?at=v2.30.7&format=tar.gz&prefix=sm-2.30.7#/sm-2.30.7.tar.gz) = e678302305f954a3bb03db38ae4d6c8baf0f40c7
 Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 

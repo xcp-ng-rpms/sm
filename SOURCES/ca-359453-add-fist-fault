@@ -1,0 +1,107 @@
+CA-359453: add FIST fault injection points to fail snapshots
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/FileSR.py    |   11 +++++++++++
+ drivers/util.py      |    4 +++-
+ tests/test_FileSR.py |   38 ++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 52 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index ebacd68..62b5e24 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -779,6 +779,9 @@ class FileVDI(VDI.VDI):
+         util.SMlog("FileVDI._unlink %s" % (path))
+         os.unlink(path)
+ 
++    def __fist_enospace(self):
++        raise util.CommandException(28, "vhd-util snapshot", reason="No space")
++
+     def _snapshot(self, snap_type, cbtlog=None, cbt_consistency=None):
+         util.SMlog("FileVDI._snapshot for %s (type %s)" % (self.uuid, snap_type))
+ 
+@@ -838,9 +841,17 @@ class FileVDI(VDI.VDI):
+             # snap_type == VDI.SNAPSHOT_DOUBLE because dst never existed
+             # before so nobody will try to query it.
+             tmpsrc = "%s.%s" % (src, "new")
++            # Fault injection site to fail the snapshot with ENOSPACE
++            util.fistpoint.activate_custom_fn(
++                "FileSR_fail_snap1",
++                self.__fist_enospace)
+             util.ioretry(lambda: self._snap(tmpsrc, newsrcname))
+             self._rename(tmpsrc, src)
+             if snap_type == VDI.SNAPSHOT_DOUBLE:
++                # Fault injection site to fail the snapshot with ENOSPACE
++                util.fistpoint.activate_custom_fn(
++                    "FileSR_fail_snap2",
++                    self.__fist_enospace)
+                 util.ioretry(lambda: self._snap(dst, newsrcname))
+             # mark the original file (in this case, its newsrc)
+             # as hidden so that it does not show up in subsequent scans
+diff --git a/drivers/util.py b/drivers/util.py
+index 8bbb03a..435ad2b 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -1275,7 +1275,9 @@ fistpoint = FistPoint( ["LVHDRT_finding_a_suitable_pair",
+                         "blktap_activate_error_handling",
+                         GCPAUSE_FISTPOINT,
+                         "cleanup_coalesceVHD_inject_failure",
+-                        "FileSR_fail_hardlink"])
++                        "FileSR_fail_hardlink",
++                        "FileSR_fail_snap1",
++                        "FileSR_fail_snap2"])
+ 
+ 
+ def set_dirty(session, sr):
+diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
+index 37bee37..8444dac 100644
+--- a/tests/test_FileSR.py
++++ b/tests/test_FileSR.py
+@@ -17,6 +17,44 @@ class FakeFileVDI(FileSR.FileVDI):
+ 
+ 
+ class TestFileVDI(unittest.TestCase):
++    def setUp(self):
++        startlog_patcher = mock.patch('FileSR.util.start_log_entry',
++                                        autospec=True)
++        self.mock_startlog = startlog_patcher.start()
++        endlog_patcher = mock.patch('FileSR.util.end_log_entry',
++                                      autospec=True)
++        self.mock_endlog = endlog_patcher.start()
++        os_link_patcher = mock.patch('FileSR.os.link', autospec=True)
++        self.mock_os_link = os_link_patcher.start()
++        os_stat_patcher = mock.patch('FileSR.os.stat')
++        self.mock_os_stat = os_stat_patcher.start()
++        os_rename_patcher = mock.patch('FileSR.os.rename', autospec=True)
++        self.mock_os_rename = os_rename_patcher.start()
++        os_unlink_patcher = mock.patch('FileSR.os.unlink', autospec=True)
++        self.mock_os_unlink = os_unlink_patcher.start()
++        pread_patcher = mock.patch('FileSR.util.pread')
++        self.mock_pread = pread_patcher.start()
++        gethidden_patch = mock.patch('FileSR.vhdutil.getHidden')
++        self.mock_gethidden = gethidden_patch.start()
++
++        errors_patcher = mock.patch('FileSR.xs_errors.XML_DEFS',
++                "drivers/XE_SR_ERRORCODES.xml")
++        errors_patcher.start()
++
++        fist_patcher = mock.patch('FileSR.util.FistPoint.is_active',
++                                  autospec=True)
++        self.mock_fist = fist_patcher.start()
++        self.active_fists = set()
++        def active_fists():
++            return self.active_fists
++
++        def is_active(self, name):
++            return name in active_fists()
++
++        self.mock_fist.side_effect = is_active
++
++        self.addCleanup(mock.patch.stopall)
++
+     @mock.patch('os.lstat', autospec=True)
+     def test_find_vhd_path(self, mock_os_stat):
+         vdi_uuid=uuid.uuid4()

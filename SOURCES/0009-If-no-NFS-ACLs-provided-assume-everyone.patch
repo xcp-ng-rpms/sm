@@ -1,4 +1,4 @@
-From 34c51dd1a0bf8fc3ba489cd540ec58e5870e1456 Mon Sep 17 00:00:00 2001
+From a53beccf65c329a7f1af25c330c20f770252b7fd Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Thu, 25 Feb 2021 09:54:52 +0100
 Subject: [PATCH 09/14] If no NFS ACLs provided, assume everyone:
@@ -16,7 +16,7 @@ Relevant issues:
  2 files changed, 35 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/nfs.py b/drivers/nfs.py
-index 6d0c537..75691fe 100644
+index a40b8ed..c06cfc4 100644
 --- a/drivers/nfs.py
 +++ b/drivers/nfs.py
 @@ -202,7 +202,11 @@ def scan_exports(target):
@@ -33,10 +33,10 @@ index 6d0c537..75691fe 100644
          entry.appendChild(subentry)
          textnode = dom.createTextNode(path)
 diff --git a/tests/test_nfs.py b/tests/test_nfs.py
-index 248acb9..96eeba9 100644
+index 71800ab..cef414f 100644
 --- a/tests/test_nfs.py
 +++ b/tests/test_nfs.py
-@@ -131,3 +131,33 @@ class Test_nfs(unittest.TestCase):
+@@ -140,3 +140,33 @@ class Test_nfs(unittest.TestCase):
          for thenfsversion in ['3', '4', '4.1']:
              self.assertEquals(nfs.validate_nfsversion(thenfsversion),
                                thenfsversion)
@@ -71,5 +71,5 @@ index 248acb9..96eeba9 100644
 +        self.assertEqual(len(pread2.mock_calls), 1)
 +        pread2.assert_called_with(['/usr/sbin/showmount', '--no-headers', '-e', 'aServer'])
 -- 
-2.37.0
+2.39.2
 

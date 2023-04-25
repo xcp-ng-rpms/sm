@@ -72,7 +72,20 @@ Obsoletes: sm-additional-drivers
 # `diff -urq <sources> <upstream sources>`.
 # After that we can create the tag: `git tag -a v2.30.8-xcpng -m "v2.30.8-xcpng"`,
 # push the commits and tag.
-TODO
+Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
+Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1003: 0003-Add-TrueNAS-multipath-config.patch
+Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
+Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
+Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
+Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
+Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
+Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
+Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
 
 %description
 This package contains storage backends used in XCP
@@ -452,7 +465,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %changelog
 * Tue Apr 25 2023 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-2.1
 - Sync with hotfix XS82ECU1022
-- TODO: Update XCP-ng patches
+- Sync patches with our latest 2.30.8-8.2 branch
 - *** Upstream changelog ***
 - * Wed Nov 23 2022 Mark Syms <mark.syms@citrix.com> - 2.30.8-2
 - - CA-353437: give coalesce tracker grace iterations to make progress

@@ -1,4 +1,4 @@
-From 052cdeb18107e20e6846f52fd792a7dcf5aa81ed Mon Sep 17 00:00:00 2001
+From c1483fc0d2394cf297ff304ee09faafd2b2b2143 Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
 Subject: [PATCH 10/14] Added SM Driver for MooseFS
@@ -10,8 +10,8 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  Makefile                |   1 +
  drivers/MooseFSSR.py    | 271 ++++++++++++++++++++++++++++++++++++++++
  drivers/cleanup.py      |   2 +-
- tests/test_MooseFSSR.py |  64 ++++++++++
- 4 files changed, 337 insertions(+), 1 deletion(-)
+ tests/test_MooseFSSR.py |  62 +++++++++
+ 4 files changed, 335 insertions(+), 1 deletion(-)
  create mode 100755 drivers/MooseFSSR.py
  create mode 100644 tests/test_MooseFSSR.py
 
@@ -305,10 +305,10 @@ index 0000000..be5112c
 +else:
 +    SR.registerSR(MooseFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 6b6ec6c..cb5ceb9 100755
+index a60c987..b027d88 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3119,7 +3119,7 @@ def normalizeType(type):
+@@ -3123,7 +3123,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -319,10 +319,10 @@ index 6b6ec6c..cb5ceb9 100755
      if type in ["linstor"]:
 diff --git a/tests/test_MooseFSSR.py b/tests/test_MooseFSSR.py
 new file mode 100644
-index 0000000..3349a44
+index 0000000..5a61cf5
 --- /dev/null
 +++ b/tests/test_MooseFSSR.py
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,62 @@
 +import mock
 +import MooseFSSR
 +import unittest
@@ -342,14 +342,12 @@ index 0000000..3349a44
 +class TestMooseFSSR(unittest.TestCase):
 +
 +    def create_moosefssr(self, masterhost='aServer', rootpath='/aServerpath',
-+                     sr_uuid='asr_uuid', useroptions=''):
++                     sr_uuid='asr_uuid'):
 +        srcmd = mock.Mock()
 +        srcmd.dconf = {
 +            'masterhost': masterhost,
 +            'rootpath': rootpath
 +        }
-+        if useroptions:
-+            srcmd.dconf.update({'options': useroptions})
 +        srcmd.params = {
 +            'command': 'some_command',
 +            'device_config': {}
@@ -388,5 +386,5 @@ index 0000000..3349a44
 +        mfssr.detach('asr_uuid')
 +        self.assertTrue(mfssr.attached)
 -- 
-2.37.0
+2.39.2
 

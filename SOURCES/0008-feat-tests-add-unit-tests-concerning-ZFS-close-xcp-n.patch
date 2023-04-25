@@ -1,4 +1,4 @@
-From be342b7bd7c685a92c5383da0343ec0e89f054d4 Mon Sep 17 00:00:00 2001
+From 5f4ae6317d4505fcab4ed7e959f11389a4d7a442 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 27 Oct 2020 15:04:36 +0100
 Subject: [PATCH 08/14] feat(tests): add unit tests concerning ZFS (close
@@ -8,8 +8,8 @@ Subject: [PATCH 08/14] feat(tests): add unit tests concerning ZFS (close
 - Check if "scan" failed if the path is not mounted (not a ZFS mountpoint)
 ---
  drivers/ZFSSR.py    |  32 ++++++------
- tests/test_ZFSSR.py | 118 ++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 134 insertions(+), 16 deletions(-)
+ tests/test_ZFSSR.py | 115 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 131 insertions(+), 16 deletions(-)
  create mode 100644 tests/test_ZFSSR.py
 
 diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
@@ -85,10 +85,10 @@ index 1b2f398..d375210 100644
  class ZFSFileVDI(FileSR.FileVDI):
 diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
 new file mode 100644
-index 0000000..c477fa3
+index 0000000..6f8040d
 --- /dev/null
 +++ b/tests/test_ZFSSR.py
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,115 @@
 +import FileSR
 +import mock
 +import os
@@ -141,8 +141,7 @@ index 0000000..c477fa3
 +            self.create_zfs_sr()
 +        except SR.SROSError as e:
 +            # Check SRUnavailable error.
-+            if e.errno != 47:
-+                raise
++            self.assertTrue(e.errno == 47)
 +            failed = True
 +        self.assertTrue(failed)
 +
@@ -168,8 +167,7 @@ index 0000000..c477fa3
 +            sr.create(sr.uuid, 42)
 +        except SR.SROSError as e:
 +            # Check ZFSSRCreate error.
-+            if e.errno != 5000:
-+                raise
++            self.assertTrue(e.errno == 5000)
 +            failed = True
 +        self.assertTrue(failed)
 +
@@ -203,10 +201,9 @@ index 0000000..c477fa3
 +            sr.scan(sr.uuid)
 +        except SR.SROSError as e:
 +            # Check SRUnavailable error.
-+            if e.errno != 47:
-+                raise
++            self.assertTrue(e.errno == 47)
 +            failed = True
 +        self.assertTrue(failed)
 -- 
-2.37.0
+2.39.2
 

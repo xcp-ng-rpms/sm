@@ -1,4 +1,4 @@
-From 31d6a2a41d918663e6e52c7fc2a98d8ad193c195 Mon Sep 17 00:00:00 2001
+From ece61a8594f7337fb86bb1ea4893d43d8c554fec Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
 Subject: [PATCH 06/14] Re-add the ext4 driver for users who need to transition
@@ -14,9 +14,9 @@ However, like in XCP-ng 8.1, the driver will refuse any new ext4 SR
 creation.
 ---
  Makefile           |   1 +
- drivers/EXT4SR.py  | 239 +++++++++++++++++++++++++++++++++++++++++++++
+ drivers/EXT4SR.py  | 235 +++++++++++++++++++++++++++++++++++++++++++++
  drivers/cleanup.py |   2 +-
- 3 files changed, 241 insertions(+), 1 deletion(-)
+ 3 files changed, 237 insertions(+), 1 deletion(-)
  create mode 100644 drivers/EXT4SR.py
 
 diff --git a/Makefile b/Makefile
@@ -33,10 +33,10 @@ index 4619e82..fa594ad 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/EXT4SR.py b/drivers/EXT4SR.py
 new file mode 100644
-index 0000000..cb44049
+index 0000000..bd67d00
 --- /dev/null
 +++ b/drivers/EXT4SR.py
-@@ -0,0 +1,239 @@
+@@ -0,0 +1,235 @@
 +#!/usr/bin/env python
 +#
 +# Original work copyright (C) Citrix systems
@@ -101,10 +101,6 @@ index 0000000..cb44049
 +            raise xs_errors.XenError('ConfigDeviceMissing')
 +
 +        self.root = self.dconf['device']
-+        for dev in self.root.split(','):
-+            if not self._isvalidpathstring(dev):
-+                raise xs_errors.XenError('ConfigDeviceInvalid', \
-+                      opterr='path is %s' % dev)
 +        self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
 +        self.vgname = EXT_PREFIX + sr_uuid
 +        self.remotepath = os.path.join("/dev",self.vgname,sr_uuid)
@@ -278,10 +274,10 @@ index 0000000..cb44049
 +    SR.registerSR(EXT4SR)
 \ No newline at end of file
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index de2a32d..9821520 100755
+index 327103f..867c789 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2763,7 +2763,7 @@ def normalizeType(type):
+@@ -2767,7 +2767,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -291,5 +287,5 @@ index de2a32d..9821520 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.37.0
+2.39.2
 

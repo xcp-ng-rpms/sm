@@ -1,4 +1,4 @@
-From 48672f8792a551136971ffe8d90e0edf30c92e38 Mon Sep 17 00:00:00 2001
+From dec7d21fc5380fc6c2866fbfe8dcece9e937071c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH 07/14] feat(drivers): add LinstorSR driver
@@ -2239,52 +2239,52 @@ index 0000000..8be1836
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 4014a2f..aa07315 100755
+index 1f58adc..fa87109 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -887,4 +887,40 @@
+@@ -898,4 +898,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
 +
-+        <code>
-+            <name>LinstorMaster</name>
-+            <description>Linstor request must come from master</description>
-+            <value>5002</value>
-+        </code>
++       <code>
++           <name>LinstorMaster</name>
++           <description>Linstor request must come from master</description>
++           <value>5002</value>
++       </code>
 +
-+        <code>
-+            <name>LinstorConfigHostsMissing</name>
-+            <description>The request is missing the LINSTOR hosts parameter</description>
-+            <value>5003</value>
-+        </code>
++       <code>
++           <name>LinstorConfigHostsMissing</name>
++           <description>The request is missing the LINSTOR hosts parameter</description>
++           <value>5003</value>
++       </code>
 +
-+        <code>
-+            <name>LinstorConfigGroupNameMissing</name>
-+            <description>The request is missing the LINSTOR group name parameter</description>
-+            <value>5004</value>
-+        </code>
++       <code>
++           <name>LinstorConfigGroupNameMissing</name>
++           <description>The request is missing the LINSTOR group name parameter</description>
++           <value>5004</value>
++       </code>
 +
-+        <code>
-+            <name>LinstorConfigRedundancyMissing</name>
-+            <description>The request is missing the LINSTOR redundancy parameter</description>
-+            <value>5005</value>
-+        </code>
++       <code>
++           <name>LinstorConfigRedundancyMissing</name>
++           <description>The request is missing the LINSTOR redundancy parameter</description>
++           <value>5005</value>
++       </code>
 +
-+        <code>
-+            <name>LinstorSRCreate</name>
-+            <description>LINSTOR SR creation error</description>
-+            <value>5006</value>
-+        </code>
-+        
-+        <code>
-+            <name>LinstorSRDelete</name>
-+            <description>LINSTOR SR delete error</description>
-+            <value>5007</value>
-+        </code>
++       <code>
++           <name>LinstorSRCreate</name>
++           <description>LINSTOR SR creation error</description>
++           <value>5006</value>
++       </code>
++
++       <code>
++           <name>LinstorSRDelete</name>
++           <description>LINSTOR SR delete error</description>
++           <value>5007</value>
++       </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 9821520..6b6ec6c 100755
+index 867c789..a60c987 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -47,7 +47,17 @@ import xs_errors
@@ -2458,7 +2458,7 @@ index 9821520..6b6ec6c 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2726,6 +2856,232 @@ class LVHDSR(SR):
+@@ -2730,6 +2860,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2691,7 +2691,7 @@ index 9821520..6b6ec6c 100755
  ################################################################################
  #
  #  Helpers
-@@ -2766,7 +3122,9 @@ def normalizeType(type):
+@@ -2770,7 +3126,9 @@ def normalizeType(type):
          "xfs", "zfs", "ext4"
      ]:
          type = SR.TYPE_FILE
@@ -5148,7 +5148,7 @@ index 5936869..ed6abed 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 435ad2b..a1bea70 100755
+index 2353f4b..f673937 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -651,10 +651,36 @@ def get_this_host():
@@ -5191,7 +5191,7 @@ index 435ad2b..a1bea70 100755
  
  # XXX: this function doesn't do what it claims to do
  def get_localhost_uuid(session):
-@@ -1383,13 +1409,21 @@ def findRunningProcessOrOpenFile(name, process = True):
+@@ -1384,13 +1410,21 @@ def findRunningProcessOrOpenFile(name, process = True):
      else:
          return (retVal, processandpids)
  
@@ -5675,5 +5675,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.37.0
+2.39.2
 

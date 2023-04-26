@@ -21,15 +21,6 @@ index 4616985..53f86b8 100644
      try:
          sv = get_supported_nfs_versions(server)
          return (True if nfsversion in sv else False)
-@@ -74,7 +79,7 @@ def check_server_tcp(server, nfsversion=DEFAULT_NFSVERSION):
- def check_server_service(server):
-     """Ensure NFS service is up and available on the remote server.
-
--    Returns False if fails to detect service after
-+    Returns False if fails to detect service after
-     NFS_SERVICE_RETRY * NFS_SERVICE_WAIT
-     """
-
 @@ -132,7 +137,7 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
 
      # Wait for NFS service to be available

@@ -55,6 +55,7 @@ Patch1011: 0011-Fix-is_open-call-for-many-drivers-25.patch
 Patch1012: 0012-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
 Patch0013: 0013-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
 Patch0014: 0014-Remove-_isvalidpathstring-calls.patch
+Patch0015: brs.patch
 
 %description
 This package contains storage backends used in XCP

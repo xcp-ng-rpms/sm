@@ -1,0 +1,41 @@
+diff --git i/drivers/nfs.py w/drivers/nfs.py
+index 4616985..53f86b8 100644
+--- i/drivers/nfs.py
++++ w/drivers/nfs.py
+@@ -56,6 +56,8 @@ class NfsException(Exception):
+     def __init__(self, errstr):
+         self.errstr = errstr
+
++def is_nfs_4(nfsversion):
++    return nfsversion in NFS_VERSION and nfsversion != DEFAULT_NFSVERSION
+
+ def check_server_tcp(server, nfsversion=DEFAULT_NFSVERSION):
+     """Make sure that NFS over TCP/IP V3 is supported on the server.
+@@ -63,6 +65,9 @@ def check_server_tcp(server, nfsversion=DEFAULT_NFSVERSION):
+     Returns True if everything is OK
+     False otherwise.
+     """
++    if is_nfs_4(nfsversion):
++        return True
++
+     try:
+         sv = get_supported_nfs_versions(server)
+         return (True if nfsversion in sv else False)
+@@ -74,7 +79,7 @@ def check_server_tcp(server, nfsversion=DEFAULT_NFSVERSION):
+ def check_server_service(server):
+     """Ensure NFS service is up and available on the remote server.
+
+-    Returns False if fails to detect service after
++    Returns False if fails to detect service after
+     NFS_SERVICE_RETRY * NFS_SERVICE_WAIT
+     """
+
+@@ -132,7 +137,7 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+
+     # Wait for NFS service to be available
+     try:
+-        if not check_server_service(remoteserver):
++        if not (is_nfs_4(nfsversion) or check_server_service(remoteserver)):
+             raise util.CommandException(
+                 code=errno.EOPNOTSUPP,
+                 reason='No NFS service on server: `%s`' % remoteserver

@@ -1,5 +1,5 @@
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 4616985..fed7d2f 100644
+index 4616985..513760a 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
 @@ -56,6 +56,8 @@ class NfsException(Exception):
@@ -44,11 +44,11 @@ index 4616985..fed7d2f 100644
      # Wait for NFS service to be available
      try:
 -        if not check_server_service(remoteserver):
-+        if not (is_nfs_4(nfsversion) or check_server_service(remoteserver, nfsversion)):
++        if not check_server_service(remoteserver, nfsversion):
              raise util.CommandException(
                  code=errno.EOPNOTSUPP,
                  reason='No NFS service on server: `%s`' % remoteserver
-diff --git i/tests/test_nfs.py w/tests/test_nfs.py
+                 diff --git i/tests/test_nfs.py w/tests/test_nfs.py
 index d86b373..a69f328 100644
 --- i/tests/test_nfs.py
 +++ w/tests/test_nfs.py

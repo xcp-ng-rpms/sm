@@ -1,5 +1,5 @@
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 4616985..4d57a87 100644
+index 4616985..fed7d2f 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
 @@ -56,6 +56,8 @@ class NfsException(Exception):
@@ -21,12 +21,42 @@ index 4616985..4d57a87 100644
      try:
          sv = get_supported_nfs_versions(server)
          return (True if nfsversion in sv else False)
-@@ -132,7 +137,7 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+@@ -71,13 +76,16 @@ def check_server_tcp(server, nfsversion=DEFAULT_NFSVERSION):
+                            inst.code)
+
+
+-def check_server_service(server):
++def check_server_service(server, nfsversion=DEFAULT_NFSVERSION):
+     """Ensure NFS service is up and available on the remote server.
+
+     Returns False if fails to detect service after
+     NFS_SERVICE_RETRY * NFS_SERVICE_WAIT
+     """
+
++    if is_nfs_4(nfsversion):
++        return True
++
+     retries = 0
+     errlist = [errno.EPERM, errno.EPIPE, errno.EIO]
+
+@@ -132,7 +140,7 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
 
      # Wait for NFS service to be available
      try:
 -        if not check_server_service(remoteserver):
-+        if not (is_nfs_4(nfsversion) or check_server_service(remoteserver)):
++        if not (is_nfs_4(nfsversion) or check_server_service(remoteserver, nfsversion)):
              raise util.CommandException(
                  code=errno.EOPNOTSUPP,
                  reason='No NFS service on server: `%s`' % remoteserver
+diff --git i/tests/test_nfs.py w/tests/test_nfs.py
+index d86b373..a69f328 100644
+--- i/tests/test_nfs.py
++++ w/tests/test_nfs.py
+@@ -139,7 +139,7 @@ class Test_nfs(unittest.TestCase):
+         nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
+                        timeout=None, nfsversion='4')
+
+-        check_server_service.assert_called_once_with('remoteserver')
++        check_server_service.assert_called_once_with('remoteserver', '4')
+         pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
+                                                                 '4'))

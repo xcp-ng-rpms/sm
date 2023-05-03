@@ -26,7 +26,7 @@ index 6590640..cf504ff 100755
  
      def set_transport(self):
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 3bed7ad..b63b48a 100644
+index 3bed7ad..b6b68f1 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
 @@ -43,6 +43,8 @@ import time
@@ -192,21 +192,27 @@ index 3bed7ad..b63b48a 100644
      return dom
  
  
-@@ -263,7 +306,7 @@ def scan_srlist(path, dconf):
+@@ -263,10 +306,11 @@ def scan_srlist(path, dconf):
      return dom.toprettyxml()
  
  
 -def get_supported_nfs_versions(server):
-+def get_supported_nfs_versions(server, tranport):
++def get_supported_nfs_versions(server, transport):
      """Return list of supported nfs versions."""
      valid_versions = set(['3', '4'])
      cv = set()
-@@ -276,11 +319,25 @@ def get_supported_nfs_versions(server):
++    res = None
+     try:
+         ns = util.pread2([RPCINFO_BIN, "-s", "%s" % server])
+         ns = ns.split("\n")
+@@ -275,12 +319,26 @@ def get_supported_nfs_versions(server):
+                 cvi = ns[i].split()[1].split(",")
                  for j in range(len(cvi)):
                      cv.add(cvi[j])
-         return list(cv & valid_versions)
+-        return list(cv & valid_versions)
 -    except:
 -        util.SMlog("Unable to obtain list of valid nfs versions")
++        res = list(cv & valid_versions)
 +    except Exception:
 +        util.SMlog("Unable to obtain list of valid nfs versions with rpcinfo, trying NSFv4")
 +

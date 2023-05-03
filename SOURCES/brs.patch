@@ -35,7 +35,7 @@ index 6590640..1a028ca 100755
  
      def set_transport(self):
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 3bed7ad..ea98898 100644
+index 3bed7ad..2b20fff 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
 @@ -43,6 +43,7 @@ import time
@@ -89,12 +89,21 @@ index 3bed7ad..ea98898 100644
  
      retries = 0
      errlist = [errno.EPERM, errno.EPIPE, errno.EIO]
+@@ -118,7 +125,7 @@ def validate_nfsversion(nfsversion):
+ 
+ 
+ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+-               timeout=None, nfsversion=DEFAULT_NFSVERSION, retrans=None):
++               timeout=None, nfsversion=DEFAULT_NFSVERSION, retrans=None, check_service=True):
+     """Mount the remote NFS export at 'mountpoint'.
+ 
+     The 'timeout' param here is in deciseconds (tenths of a second). See
 @@ -134,7 +141,7 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
  
      # Wait for NFS service to be available
      try:
 -        if not check_server_service(remoteserver):
-+        if not check_server_service(remoteserver, transport):
++        if check_service and not check_server_service(remoteserver, transport):
              raise util.CommandException(
                  code=errno.EOPNOTSUPP,
                  reason='No NFS service on server: `%s`' % remoteserver
@@ -169,7 +178,7 @@ index 3bed7ad..ea98898 100644
  
 +    try:
 +        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, target)
-+        soft_mount(mountpoint, target, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4')
++        soft_mount(mountpoint, target, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4', check_service=False)
 +        paths = os.listdir(mountpoint)
 +        util.SMlog(mountpoint)
 +        unmount(mountpoint, NSFv4_PSEUDOFS)
@@ -242,7 +251,7 @@ index 3bed7ad..ea98898 100644
 +
 +    try:
 +        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, server)
-+        soft_mount(mountpoint, server, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4')
++        soft_mount(mountpoint, server, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4', check_service=False)
 +        util.pread2([NFS_STAT, '-m'])
 +        unmount(mountpoint, NSFv4_PSEUDOFS)
 +        if res is None:

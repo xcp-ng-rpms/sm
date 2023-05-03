@@ -35,7 +35,7 @@ index 6590640..1a028ca 100755
  
      def set_transport(self):
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 3bed7ad..28fc9f8 100644
+index 3bed7ad..8c590c4 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
 @@ -43,6 +43,8 @@ import time
@@ -273,26 +273,34 @@ index 29306cc..6762912 100644
          soft_mount.assert_called_once_with('/var/run/sr-mount/UUID',
                                             'aServer',
 diff --git i/tests/test_nfs.py w/tests/test_nfs.py
-index fd0f257..47da4d0 100644
+index fd0f257..e93e557 100644
 --- i/tests/test_nfs.py
 +++ w/tests/test_nfs.py
-@@ -10,13 +10,13 @@ class Test_nfs(unittest.TestCase):
+@@ -9,32 +9,36 @@ import util
+ class Test_nfs(unittest.TestCase):
  
      @mock.patch('util.pread', autospec=True)
-     def test_check_server_tcp(self, pread):
+-    def test_check_server_tcp(self, pread):
 -        nfs.check_server_tcp('aServer')
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
++    def test_check_server_tcp(self, pread, get_supported_nfs_versions):
 +        nfs.check_server_tcp('aServer', 'tcp')
  
          pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-s', 'aServer'], quiet=False)
  
      @mock.patch('util.pread', autospec=True)
-     def test_check_server_tcp_nfsversion(self, pread):
+-    def test_check_server_tcp_nfsversion(self, pread):
 -        nfs.check_server_tcp('aServer', 'aNfsversion')
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
++    def test_check_server_tcp_nfsversion(self, pread, get_supported_nfs_versions):
 +        nfs.check_server_tcp('aServer', 'tcp', 'aNfsversion')
  
          pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-s', 'aServer'], quiet=False)
  
-@@ -25,16 +25,17 @@ class Test_nfs(unittest.TestCase):
+     @mock.patch('util.pread', autospec=True)
+-    def test_check_server_tcp_nfsversion_error(self, pread):
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
++    def test_check_server_tcp_nfsversion_error(self, pread, get_supported_nfs_versions):
          pread.side_effect = util.CommandException
  
          with self.assertRaises(nfs.NfsException):
@@ -313,7 +321,7 @@ index fd0f257..47da4d0 100644
  
          self.assertTrue(service_found)
          self.assertEqual(len(pread.mock_calls), 1)
-@@ -49,36 +50,39 @@ class Test_nfs(unittest.TestCase):
+@@ -49,36 +53,39 @@ class Test_nfs(unittest.TestCase):
          pread.side_effect = ["",
                             "",
                             "    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
@@ -360,7 +368,7 @@ index fd0f257..47da4d0 100644
  
          self.assertTrue(service_found)
          self.assertEqual(len(pread.mock_calls), 2)
-@@ -87,7 +91,7 @@ class Test_nfs(unittest.TestCase):
+@@ -87,7 +94,7 @@ class Test_nfs(unittest.TestCase):
      @mock.patch('util.pread2')
      def test_get_supported_nfs_versions(self, pread2):
          pread2.side_effect = ["    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
@@ -369,7 +377,7 @@ index fd0f257..47da4d0 100644
  
          self.assertEqual(versions, ['3', '4'])
          self.assertEqual(len(pread2.mock_calls), 1)
-@@ -106,7 +110,7 @@ class Test_nfs(unittest.TestCase):
+@@ -106,7 +113,7 @@ class Test_nfs(unittest.TestCase):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None)
  
@@ -378,7 +386,7 @@ index fd0f257..47da4d0 100644
          pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3'))
  
-@@ -117,7 +121,7 @@ class Test_nfs(unittest.TestCase):
+@@ -117,7 +124,7 @@ class Test_nfs(unittest.TestCase):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'tcp6',
                         timeout=None)
  
@@ -387,7 +395,7 @@ index fd0f257..47da4d0 100644
          pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3', True))
  
-@@ -129,7 +133,7 @@ class Test_nfs(unittest.TestCase):
+@@ -129,7 +136,7 @@ class Test_nfs(unittest.TestCase):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None, nfsversion='3')
  
@@ -396,7 +404,7 @@ index fd0f257..47da4d0 100644
          pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3'))
  
-@@ -141,7 +145,7 @@ class Test_nfs(unittest.TestCase):
+@@ -141,7 +148,7 @@ class Test_nfs(unittest.TestCase):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None, nfsversion='4')
  
@@ -405,7 +413,7 @@ index fd0f257..47da4d0 100644
          pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '4'))
  
-@@ -168,7 +172,7 @@ class Test_nfs(unittest.TestCase):
+@@ -168,7 +175,7 @@ class Test_nfs(unittest.TestCase):
      @mock.patch('util.pread2')
      def test_scan_exports(self, pread2):
          pread2.side_effect = ["/srv/nfs\n/srv/nfs2 *\n/srv/nfs3 127.0.0.1/24"]

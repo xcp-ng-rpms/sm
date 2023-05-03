@@ -1,5 +1,5 @@
 diff --git i/drivers/NFSSR.py w/drivers/NFSSR.py
-index 6590640..cf504ff 100755
+index 6590640..1a028ca 100755
 --- i/drivers/NFSSR.py
 +++ w/drivers/NFSSR.py
 @@ -116,11 +116,11 @@ class NFSSR(FileSR.SharedFileSR):
@@ -16,6 +16,15 @@ index 6590640..cf504ff 100755
          except nfs.NfsException as exc:
              raise xs_errors.XenError('NFSVersion',
                                       opterr=exc.errstr)
+@@ -168,7 +168,7 @@ class NFSSR(FileSR.SharedFileSR):
+ 
+         self.mount(temppath, self.remotepath)
+         try:
+-            return nfs.scan_srlist(temppath, self.dconf)
++            return nfs.scan_srlist(temppath, self.transport, self.dconf)
+         finally:
+             try:
+                 nfs.unmount(temppath, True)
 @@ -255,7 +255,7 @@ class NFSSR(FileSR.SharedFileSR):
  
      def scan_exports(self, target):
@@ -26,7 +35,7 @@ index 6590640..cf504ff 100755
  
      def set_transport(self):
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 3bed7ad..65a803d 100644
+index 3bed7ad..28fc9f8 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
 @@ -43,6 +43,8 @@ import time
@@ -90,7 +99,7 @@ index 3bed7ad..65a803d 100644
              raise util.CommandException(
                  code=errno.EOPNOTSUPP,
                  reason='No NFS service on server: `%s`' % remoteserver
-@@ -188,39 +196,74 @@ def unmount(mountpoint, rmmountpoint):
+@@ -188,43 +196,78 @@ def unmount(mountpoint, rmmountpoint):
              raise NfsException("rmdir failed with error '%s'" % inst.strerror)
  
  
@@ -192,12 +201,17 @@ index 3bed7ad..65a803d 100644
      return dom
  
  
+-def scan_srlist(path, dconf):
++def scan_srlist(path, transport, dconf):
+     """Scan and report SR, UUID."""
+     dom = xml.dom.minidom.Document()
+     element = dom.createElement("SRlist")
 @@ -247,7 +290,7 @@ def scan_srlist(path, dconf):
      if PROBEVERSION in dconf:
          util.SMlog("Add supported nfs versions to sr-probe")
          try:
 -            supported_versions = get_supported_nfs_versions(dconf.get('server'))
-+            supported_versions = get_supported_nfs_versions(dconf.get('server'), dconf.get('transport'))
++            supported_versions = get_supported_nfs_versions(dconf.get('server'), transport)
              supp_ver = dom.createElement("SupportedVersions")
              element.appendChild(supp_ver)
  
@@ -245,3 +259,101 @@ index 3bed7ad..65a803d 100644
  
  def get_nfs_timeout(other_config):
      nfs_timeout = 100
+diff --git i/tests/test_NFSSR.py w/tests/test_NFSSR.py
+index 29306cc..6762912 100644
+--- i/tests/test_NFSSR.py
++++ w/tests/test_NFSSR.py
+@@ -121,7 +121,7 @@ class TestNFSSR(unittest.TestCase):
+ 
+         nfssr.attach(None)
+ 
+-        check_server_tcp.assert_called_once_with('aServer',
++        check_server_tcp.assert_called_once_with('aServer', 'tcp',
+                                                  'aNfsversionChanged')
+         soft_mount.assert_called_once_with('/var/run/sr-mount/UUID',
+                                            'aServer',
+diff --git i/tests/test_nfs.py w/tests/test_nfs.py
+index fd0f257..7d09d0a 100644
+--- i/tests/test_nfs.py
++++ w/tests/test_nfs.py
+@@ -34,7 +34,7 @@ class Test_nfs(unittest.TestCase):
+     @mock.patch('util.pread')
+     def test_check_server_service(self, pread, sleep):
+         pread.side_effect = ["    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
+-        service_found = nfs.check_server_service('aServer')
++        service_found = nfs.check_server_service('aServer', 'tcp')
+ 
+         self.assertTrue(service_found)
+         self.assertEqual(len(pread.mock_calls), 1)
+@@ -49,7 +49,7 @@ class Test_nfs(unittest.TestCase):
+         pread.side_effect = ["",
+                            "",
+                            "    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
+-        service_found = nfs.check_server_service('aServer')
++        service_found = nfs.check_server_service('aServer', 'tcp')
+ 
+         self.assertTrue(service_found)
+         self.assertEqual(len(pread.mock_calls), 3)
+@@ -60,7 +60,7 @@ class Test_nfs(unittest.TestCase):
+     def test_check_server_service_not_available(self, pread, sleep):
+         pread.return_value = ""
+ 
+-        service_found = nfs.check_server_service('aServer')
++        service_found = nfs.check_server_service('aServer', 'tcp')
+ 
+         self.assertFalse(service_found)
+ 
+@@ -70,7 +70,7 @@ class Test_nfs(unittest.TestCase):
+     def test_check_server_service_exception(self, pread, sleep):
+         pread.side_effect = [util.CommandException(errno.ENOMEM)]
+         with self.assertRaises(util.CommandException):
+-            nfs.check_server_service('aServer')
++            nfs.check_server_service('aServer', 'tcp')
+ 
+     @mock.patch('time.sleep', autospec=True)
+     # Can't use autospec due to http://bugs.python.org/issue17826
+@@ -78,7 +78,7 @@ class Test_nfs(unittest.TestCase):
+     def test_check_server_service_first_call_exception(self, pread, sleep):
+         pread.side_effect = [util.CommandException(errno.EPIPE),
+                             "    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
+-        service_found = nfs.check_server_service('aServer')
++        service_found = nfs.check_server_service('aServer', 'tcp')
+ 
+         self.assertTrue(service_found)
+         self.assertEqual(len(pread.mock_calls), 2)
+@@ -106,7 +106,7 @@ class Test_nfs(unittest.TestCase):
+         nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
+                        timeout=None)
+ 
+-        check_server_service.assert_called_once_with('remoteserver')
++        check_server_service.assert_called_once_with('remoteserver', 'transport')
+         pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
+                                                                 '3'))
+ 
+@@ -117,7 +117,7 @@ class Test_nfs(unittest.TestCase):
+         nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'tcp6',
+                        timeout=None)
+ 
+-        check_server_service.assert_called_once_with('remoteserver')
++        check_server_service.assert_called_once_with('remoteserver', 'transport')
+         pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
+                                                                 '3', True))
+ 
+@@ -129,7 +129,7 @@ class Test_nfs(unittest.TestCase):
+         nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
+                        timeout=None, nfsversion='3')
+ 
+-        check_server_service.assert_called_once_with('remoteserver')
++        check_server_service.assert_called_once_with('remoteserver', 'transport')
+         pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
+                                                                 '3'))
+ 
+@@ -141,7 +141,7 @@ class Test_nfs(unittest.TestCase):
+         nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
+                        timeout=None, nfsversion='4')
+ 
+-        check_server_service.assert_called_once_with('remoteserver')
++        check_server_service.assert_called_once_with('remoteserver', 'transport')
+         pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
+                                                                 '4'))
+ 

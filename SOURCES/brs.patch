@@ -169,7 +169,7 @@ index 3bed7ad..28fc9f8 100644
 +        util.SMlog("Unable to scan exports with rpcingo, trying NFSv4")
  
 +    try:
-+        mountpoint = "%s/%s" % NFS4_TMP_MOUNTPOINT, target
++        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, target)
 +        soft_mount(mountpoint, target, NSFv4_PSEUDOFS, transport, nfsversion='4')
 +        paths = util.pread2([LS])
 +        unmount(mountpoint, NSFv4_PSEUDOFS)
@@ -240,7 +240,7 @@ index 3bed7ad..28fc9f8 100644
 +        util.SMlog("Unable to obtain list of valid nfs versions with rpcinfo, trying NSFv4")
 +
 +    try:
-+        mountpoint = "%s/%s" % NFS4_TMP_MOUNTPOINT, server
++        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, server)
 +        soft_mount(mountpoint, server, NSFv4_PSEUDOFS, transport, nfsversion='4')
 +        util.pread2([NFS_STAT, '-m'])
 +        unmount(mountpoint, NSFv4_PSEUDOFS)

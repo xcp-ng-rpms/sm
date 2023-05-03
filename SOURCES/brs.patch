@@ -35,19 +35,18 @@ index 6590640..1a028ca 100755
  
      def set_transport(self):
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 3bed7ad..8c590c4 100644
+index 3bed7ad..ea98898 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
-@@ -43,6 +43,8 @@ import time
+@@ -43,6 +43,7 @@ import time
  
  RPCINFO_BIN = "/usr/sbin/rpcinfo"
  SHOWMOUNT_BIN = "/usr/sbin/showmount"
 +NFS_STAT = "/usr/sbin/nfsstat"
-+LS = "/usr/bin/ls"
  
  DEFAULT_NFSVERSION = '3'
  
-@@ -52,6 +54,8 @@ NFS_VERSION = [
+@@ -52,6 +53,8 @@ NFS_VERSION = [
  NFS_SERVICE_WAIT = 30
  NFS_SERVICE_RETRY = 6
  
@@ -56,7 +55,7 @@ index 3bed7ad..8c590c4 100644
  
  class NfsException(Exception):
  
-@@ -59,26 +63,30 @@ class NfsException(Exception):
+@@ -59,26 +62,30 @@ class NfsException(Exception):
          self.errstr = errstr
  
  
@@ -90,7 +89,7 @@ index 3bed7ad..8c590c4 100644
  
      retries = 0
      errlist = [errno.EPERM, errno.EPIPE, errno.EIO]
-@@ -134,7 +142,7 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+@@ -134,7 +141,7 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
  
      # Wait for NFS service to be available
      try:
@@ -99,7 +98,7 @@ index 3bed7ad..8c590c4 100644
              raise util.CommandException(
                  code=errno.EOPNOTSUPP,
                  reason='No NFS service on server: `%s`' % remoteserver
-@@ -188,43 +196,78 @@ def unmount(mountpoint, rmmountpoint):
+@@ -188,43 +195,80 @@ def unmount(mountpoint, rmmountpoint):
              raise NfsException("rmdir failed with error '%s'" % inst.strerror)
  
  
@@ -170,9 +169,11 @@ index 3bed7ad..8c590c4 100644
  
 +    try:
 +        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, target)
-+        soft_mount(mountpoint, target, NSFv4_PSEUDOFS, transport, nfsversion='4')
-+        paths = util.pread2([LS])
++        soft_mount(mountpoint, target, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4')
++        paths = os.listdir(mountpoint)
++        util.SMlog(mountpoint)
 +        unmount(mountpoint, NSFv4_PSEUDOFS)
++        util.SMlog("unmounted")
 +        for path in paths.split("\n"):
 +            entry = dom.createElement('Export')
 +            element.appendChild(entry)
@@ -206,7 +207,7 @@ index 3bed7ad..8c590c4 100644
      """Scan and report SR, UUID."""
      dom = xml.dom.minidom.Document()
      element = dom.createElement("SRlist")
-@@ -247,7 +290,7 @@ def scan_srlist(path, dconf):
+@@ -247,7 +291,7 @@ def scan_srlist(path, dconf):
      if PROBEVERSION in dconf:
          util.SMlog("Add supported nfs versions to sr-probe")
          try:
@@ -215,7 +216,7 @@ index 3bed7ad..8c590c4 100644
              supp_ver = dom.createElement("SupportedVersions")
              element.appendChild(supp_ver)
  
-@@ -263,10 +306,11 @@ def scan_srlist(path, dconf):
+@@ -263,10 +307,11 @@ def scan_srlist(path, dconf):
      return dom.toprettyxml()
  
  
@@ -228,7 +229,7 @@ index 3bed7ad..8c590c4 100644
      try:
          ns = util.pread2([RPCINFO_BIN, "-s", "%s" % server])
          ns = ns.split("\n")
-@@ -275,12 +319,26 @@ def get_supported_nfs_versions(server):
+@@ -275,12 +320,26 @@ def get_supported_nfs_versions(server):
                  cvi = ns[i].split()[1].split(",")
                  for j in range(len(cvi)):
                      cv.add(cvi[j])
@@ -241,7 +242,7 @@ index 3bed7ad..8c590c4 100644
 +
 +    try:
 +        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, server)
-+        soft_mount(mountpoint, server, NSFv4_PSEUDOFS, transport, nfsversion='4')
++        soft_mount(mountpoint, server, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4')
 +        util.pread2([NFS_STAT, '-m'])
 +        unmount(mountpoint, NSFv4_PSEUDOFS)
 +        if res is None:
@@ -273,7 +274,7 @@ index 29306cc..6762912 100644
          soft_mount.assert_called_once_with('/var/run/sr-mount/UUID',
                                             'aServer',
 diff --git i/tests/test_nfs.py w/tests/test_nfs.py
-index fd0f257..e93e557 100644
+index fd0f257..f14d4e5 100644
 --- i/tests/test_nfs.py
 +++ w/tests/test_nfs.py
 @@ -9,32 +9,36 @@ import util
@@ -321,7 +322,15 @@ index fd0f257..e93e557 100644
  
          self.assertTrue(service_found)
          self.assertEqual(len(pread.mock_calls), 1)
-@@ -49,36 +53,39 @@ class Test_nfs(unittest.TestCase):
+@@ -43,42 +47,46 @@ class Test_nfs(unittest.TestCase):
+         #sleep.assert_not_called()
+ 
+     @mock.patch('time.sleep', autospec=True)
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
+     # Can't use autospec due to http://bugs.python.org/issue17826
+     @mock.patch('util.pread')
+-    def test_check_server_service_with_retries(self, pread, sleep):
++    def test_check_server_service_with_retries(self, pread, sleep, get_supported_nfs_versions):
          pread.side_effect = ["",
                             "",
                             "    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
@@ -368,7 +377,7 @@ index fd0f257..e93e557 100644
  
          self.assertTrue(service_found)
          self.assertEqual(len(pread.mock_calls), 2)
-@@ -87,7 +94,7 @@ class Test_nfs(unittest.TestCase):
+@@ -87,7 +95,7 @@ class Test_nfs(unittest.TestCase):
      @mock.patch('util.pread2')
      def test_get_supported_nfs_versions(self, pread2):
          pread2.side_effect = ["    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
@@ -377,7 +386,7 @@ index fd0f257..e93e557 100644
  
          self.assertEqual(versions, ['3', '4'])
          self.assertEqual(len(pread2.mock_calls), 1)
-@@ -106,7 +113,7 @@ class Test_nfs(unittest.TestCase):
+@@ -106,7 +114,7 @@ class Test_nfs(unittest.TestCase):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None)
  
@@ -386,7 +395,7 @@ index fd0f257..e93e557 100644
          pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3'))
  
-@@ -117,7 +124,7 @@ class Test_nfs(unittest.TestCase):
+@@ -117,7 +125,7 @@ class Test_nfs(unittest.TestCase):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'tcp6',
                         timeout=None)
  
@@ -395,7 +404,7 @@ index fd0f257..e93e557 100644
          pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3', True))
  
-@@ -129,7 +136,7 @@ class Test_nfs(unittest.TestCase):
+@@ -129,7 +137,7 @@ class Test_nfs(unittest.TestCase):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None, nfsversion='3')
  
@@ -404,7 +413,7 @@ index fd0f257..e93e557 100644
          pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3'))
  
-@@ -141,7 +148,7 @@ class Test_nfs(unittest.TestCase):
+@@ -141,7 +149,7 @@ class Test_nfs(unittest.TestCase):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None, nfsversion='4')
  
@@ -413,7 +422,7 @@ index fd0f257..e93e557 100644
          pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '4'))
  
-@@ -168,7 +175,7 @@ class Test_nfs(unittest.TestCase):
+@@ -168,7 +176,7 @@ class Test_nfs(unittest.TestCase):
      @mock.patch('util.pread2')
      def test_scan_exports(self, pread2):
          pread2.side_effect = ["/srv/nfs\n/srv/nfs2 *\n/srv/nfs3 127.0.0.1/24"]

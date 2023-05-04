@@ -308,47 +308,48 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 %changelog
 * Thu May 04 2023 Yann Dirson <yann.dirson@vates.fr> - 3.0.3-1.1
-- Rebase on CH 8.3 Preview
-- Remove patches merged upstream
-- Keep other patches still necessary.
+- Rebase on sm 3.0.3
 - Patches for python3 compat.
 - Switch interpreter to python3 in drivers.
 - Use python36-bitarray not python3-bitarray.
 - Use python36-pylint not python3-pylint.
 - BuildRequires: python36-mock for %check.
+- *** Upstream changelog ***
+- * Fri Jan 27 2023 Mark Syms <mark.syms@citrix.com> - 3.0.3-1
+- - Include exportname in NBD data for attach
+- * Tue Jan 17 2023 Mark Syms <mark.syms@citrix.com> - 3.0.2-1
+- - CBT python3 fixes
+- * Thu Jan 12 2023 Mark Syms <mark.syms@citrix.com> - 3.0.1-1
+- - Check for open tapdisk NBD sockets before shutting down
+- * Tue Oct 25 2022  <mark.syms@citrix.com> - 3.0.0-1
+- - Migrate to Python3
 
-* Fri Jan 27 2023 Mark Syms <mark.syms@citrix.com> - 3.0.3-1
-- Include exportname in NBD data for attach
+* Thu Dec 15 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.16-1.1
+- Rebase on sm 2.46.16
+- *** Upstream changelog ***
+- * Wed Sep 21 2022 Tim Smith <tim.smith@citrix.com> - 2.46.16-1
+- - CA-370572: relinking is a transient property, do not copy to clones
+- - CA-370696 Do not attempt to validate device or NFS server paths
+- * Wed Aug 31 2022 Mark Syms <mark.syms@citrix.com> - 2.46.15-1
+- - CA-353437: give coalesce tracker grace iterations to make progress
+- - CA-353437: activate a FIST point in the coalesce tracker for test injection
+- - Add multipath configuration for Dell ME4
+- * Wed Aug 31 2022  <mark.syms@citrix.com> - 2.46.14-2
+- - CA-368585: Remove dependency on lvm2-sm-config
+- * Mon Aug 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.14-1
+- - CA-370037: report errors from NFS correctly
+- * Tue Aug 16 2022 Mark Syms <mark.syms@citrix.com> - 2.46.13-1
+- - Multipath fixes
+- * Mon Jul 25 2022 Mark Syms <mark.syms@citrix.com> - 2.46.12-1
+- - CA-368769: extend the timeout on tap-ctl close
 
-* Tue Jan 17 2023 Mark Syms <mark.syms@citrix.com> - 3.0.2-1
-- CBT python3 fixes
+* Mon Sep 19 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.11-1.2
+- Re-enable tests, test file coverage rate is now 100%
 
-* Thu Jan 12 2023 Mark Syms <mark.syms@citrix.com> - 3.0.1-1
-- Check for open tapdisk NBD sockets before shutting down
-
-* Tue Oct 25 2022  <mark.syms@citrix.com> - 3.0.0-1
-- Migrate to Python3
-
-* Wed Sep 21 2022 Tim Smith <tim.smith@citrix.com> - 2.46.16-1
-- CA-370572: relinking is a transient property, do not copy to clones
-- CA-370696 Do not attempt to validate device or NFS server paths
-
-* Wed Aug 31 2022 Mark Syms <mark.syms@citrix.com> - 2.46.15-1
-- CA-353437: give coalesce tracker grace iterations to make progress
-- CA-353437: activate a FIST point in the coalesce tracker for test injection
-- Add multipath configuration for Dell ME4
-
-* Wed Aug 31 2022  <mark.syms@citrix.com> - 2.46.14-2
-- CA-368585: Remove dependency on lvm2-sm-config
-
-* Mon Aug 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.14-1
-- CA-370037: report errors from NFS correctly
-
-* Tue Aug 16 2022 Mark Syms <mark.syms@citrix.com> - 2.46.13-1
-- Multipath fixes
-
-* Mon Jul 25 2022 Mark Syms <mark.syms@citrix.com> - 2.46.12-1
-- CA-368769: extend the timeout on tap-ctl close
+* Thu Sep 01 2022 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.46.11-1.1
+- Rebase on CH 8.3 Preview
+- Remove patches merged upstream
+- Keep other patches still necessary.
 
 * Wed Jun 22 2022 Mark Syms <mark.syms@citrix.com> - 2.46.11-1
 - Remove use of eval
@@ -433,8 +434,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 - New release
 - PEP8 housekeeping cleanup
 - CA-350437: simplify 02vhd-cleanup to only handle LVM refcounts
-- Sync patches with our latest 2.30.3-8.2 branch
-- 0009-Fix-regression-added-by-XSI-915.patch added
 
 * Thu Dec 10 2020 Mark Syms <mark.syms@citrix.com> - 2.38.0-1
 - New release

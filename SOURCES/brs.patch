@@ -280,7 +280,7 @@ index 29306cc..6762912 100644
          soft_mount.assert_called_once_with('/var/run/sr-mount/UUID',
                                             'aServer',
 diff --git i/tests/test_nfs.py w/tests/test_nfs.py
-index fd0f257..a17374b 100644
+index fd0f257..4c27035 100644
 --- i/tests/test_nfs.py
 +++ w/tests/test_nfs.py
 @@ -10,13 +10,13 @@ class Test_nfs(unittest.TestCase):
@@ -362,43 +362,60 @@ index fd0f257..a17374b 100644
  
          self.assertEqual(versions, ['3', '4'])
          self.assertEqual(len(pread2.mock_calls), 1)
-@@ -106,7 +106,7 @@ class Test_nfs(unittest.TestCase):
+@@ -100,48 +100,38 @@ class Test_nfs(unittest.TestCase):
+                  'soft,proto=%s,vers=%s,acdirmin=0,acdirmax=0' % (transport, vers)])
+ 
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('nfs.check_server_service', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+-    def test_soft_mount(self, pread, check_server_service, makedirs):
++    def test_soft_mount(self, pread, makedirs):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None)
  
 -        check_server_service.assert_called_once_with('remoteserver')
-+        check_server_service.assert_called_once_with('remoteserver', 'transport')
          pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3'))
  
-@@ -117,7 +117,7 @@ class Test_nfs(unittest.TestCase):
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('nfs.check_server_service', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+-    def test_soft_mount_ipv6(self, pread, check_server_service, makedirs):
++    def test_soft_mount_ipv6(self, pread, makedirs):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'tcp6',
                         timeout=None)
  
 -        check_server_service.assert_called_once_with('remoteserver')
-+        check_server_service.assert_called_once_with('remoteserver', 'tcp6')
          pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3', True))
  
-@@ -129,7 +129,7 @@ class Test_nfs(unittest.TestCase):
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('nfs.check_server_service', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+-    def test_soft_mount_nfsversion_3(self, pread,
+-                                     check_server_service, makedirs):
++    def test_soft_mount_nfsversion_3(self, pread, makedirs):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None, nfsversion='3')
  
 -        check_server_service.assert_called_once_with('remoteserver')
-+        check_server_service.assert_called_once_with('remoteserver', 'transport')
          pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '3'))
  
-@@ -141,7 +141,7 @@ class Test_nfs(unittest.TestCase):
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('nfs.check_server_service', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+-    def test_soft_mount_nfsversion_4(self, pread,
+-                                     check_server_service, makedirs):
++    def test_soft_mount_nfsversion_4(self, pread, makedirs):
          nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
                         timeout=None, nfsversion='4')
  
 -        check_server_service.assert_called_once_with('remoteserver')
-+        check_server_service.assert_called_once_with('remoteserver', 'transport')
          pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
                                                                  '4'))
  
-@@ -168,7 +168,7 @@ class Test_nfs(unittest.TestCase):
+@@ -168,7 +158,7 @@ class Test_nfs(unittest.TestCase):
      @mock.patch('util.pread2')
      def test_scan_exports(self, pread2):
          pread2.side_effect = ["/srv/nfs\n/srv/nfs2 *\n/srv/nfs3 127.0.0.1/24"]

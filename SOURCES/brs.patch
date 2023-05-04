@@ -36,18 +36,21 @@ index 6590640..daa0bf3 100755
  
      def set_transport(self):
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 3bed7ad..d114d73 100644
+index 3bed7ad..76ceb1f 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
-@@ -43,6 +43,7 @@ import time
+@@ -43,8 +43,10 @@ import time
  
  RPCINFO_BIN = "/usr/sbin/rpcinfo"
  SHOWMOUNT_BIN = "/usr/sbin/showmount"
 +NFS_STAT = "/usr/sbin/nfsstat"
  
  DEFAULT_NFSVERSION = '3'
++SUPPORTED_NFS_VERSIONS = ['3', '4', '4.0', '4.1']
  
-@@ -52,6 +53,8 @@ NFS_VERSION = [
+ NFS_VERSION = [
+     'nfsversion', 'for type=nfs, NFS protocol version - 3, 4, 4.0, 4.1']
+@@ -52,6 +54,8 @@ NFS_VERSION = [
  NFS_SERVICE_WAIT = 30
  NFS_SERVICE_RETRY = 6
  
@@ -56,7 +59,7 @@ index 3bed7ad..d114d73 100644
  
  class NfsException(Exception):
  
-@@ -59,26 +62,31 @@ class NfsException(Exception):
+@@ -59,26 +63,31 @@ class NfsException(Exception):
          self.errstr = errstr
  
  
@@ -91,7 +94,7 @@ index 3bed7ad..d114d73 100644
  
      retries = 0
      errlist = [errno.EPERM, errno.EPIPE, errno.EIO]
-@@ -131,18 +139,6 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+@@ -131,18 +140,6 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
          raise NfsException("Failed to make directory: code is %d" %
                             inst.code)
  
@@ -110,7 +113,7 @@ index 3bed7ad..d114d73 100644
      mountcommand = 'mount.nfs'
  
      options = "soft,proto=%s,vers=%s" % (
-@@ -188,43 +184,78 @@ def unmount(mountpoint, rmmountpoint):
+@@ -188,43 +185,78 @@ def unmount(mountpoint, rmmountpoint):
              raise NfsException("rmdir failed with error '%s'" % inst.strerror)
  
  
@@ -221,7 +224,7 @@ index 3bed7ad..d114d73 100644
      """Scan and report SR, UUID."""
      dom = xml.dom.minidom.Document()
      element = dom.createElement("SRlist")
-@@ -247,7 +278,7 @@ def scan_srlist(path, dconf):
+@@ -247,7 +279,7 @@ def scan_srlist(path, dconf):
      if PROBEVERSION in dconf:
          util.SMlog("Add supported nfs versions to sr-probe")
          try:
@@ -230,16 +233,19 @@ index 3bed7ad..d114d73 100644
              supp_ver = dom.createElement("SupportedVersions")
              element.appendChild(supp_ver)
  
-@@ -263,7 +294,7 @@ def scan_srlist(path, dconf):
+@@ -263,9 +295,9 @@ def scan_srlist(path, dconf):
      return dom.toprettyxml()
  
  
 -def get_supported_nfs_versions(server):
 +def get_supported_nfs_versions(server, transport):
      """Return list of supported nfs versions."""
-     valid_versions = set(['3', '4'])
+-    valid_versions = set(['3', '4'])
++    valid_versions = set(SUPPORTED_NFS_VERSIONS)
      cv = set()
-@@ -276,11 +307,21 @@ def get_supported_nfs_versions(server):
+     try:
+         ns = util.pread2([RPCINFO_BIN, "-s", "%s" % server])
+@@ -276,11 +308,21 @@ def get_supported_nfs_versions(server):
                  for j in range(len(cvi)):
                      cv.add(cvi[j])
          return list(cv & valid_versions)

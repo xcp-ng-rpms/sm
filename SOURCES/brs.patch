@@ -35,7 +35,7 @@ index 6590640..1a028ca 100755
  
      def set_transport(self):
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 3bed7ad..2b20fff 100644
+index 3bed7ad..75ba726 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
 @@ -43,6 +43,7 @@ import time
@@ -55,7 +55,7 @@ index 3bed7ad..2b20fff 100644
  
  class NfsException(Exception):
  
-@@ -59,26 +62,30 @@ class NfsException(Exception):
+@@ -59,26 +62,31 @@ class NfsException(Exception):
          self.errstr = errstr
  
  
@@ -84,30 +84,32 @@ index 3bed7ad..2b20fff 100644
      """
 +    
 +    sv = get_supported_nfs_versions(server, transport)
++    # Services are not present in Nsv4 only, this doesn't mean there's no NFS
 +    if sv == ['4']:
 +        return True
  
      retries = 0
      errlist = [errno.EPERM, errno.EPIPE, errno.EIO]
-@@ -118,7 +125,7 @@ def validate_nfsversion(nfsversion):
+@@ -131,18 +139,6 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+         raise NfsException("Failed to make directory: code is %d" %
+                            inst.code)
  
- 
- def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
--               timeout=None, nfsversion=DEFAULT_NFSVERSION, retrans=None):
-+               timeout=None, nfsversion=DEFAULT_NFSVERSION, retrans=None, check_service=True):
-     """Mount the remote NFS export at 'mountpoint'.
- 
-     The 'timeout' param here is in deciseconds (tenths of a second). See
-@@ -134,7 +141,7 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
- 
-     # Wait for NFS service to be available
-     try:
+-
+-    # Wait for NFS service to be available
+-    try:
 -        if not check_server_service(remoteserver):
-+        if check_service and not check_server_service(remoteserver, transport):
-             raise util.CommandException(
-                 code=errno.EOPNOTSUPP,
-                 reason='No NFS service on server: `%s`' % remoteserver
-@@ -188,43 +195,80 @@ def unmount(mountpoint, rmmountpoint):
+-            raise util.CommandException(
+-                code=errno.EOPNOTSUPP,
+-                reason='No NFS service on server: `%s`' % remoteserver
+-            )
+-    except util.CommandException as inst:
+-        raise NfsException("Failed to detect NFS service on server `%s`"
+-                           % remoteserver)
+-
+     mountcommand = 'mount.nfs'
+ 
+     options = "soft,proto=%s,vers=%s" % (
+@@ -188,43 +184,77 @@ def unmount(mountpoint, rmmountpoint):
              raise NfsException("rmdir failed with error '%s'" % inst.strerror)
  
  
@@ -144,7 +146,9 @@ index 3bed7ad..2b20fff 100644
 -        entry.appendChild(subentry)
 -        textnode = dom.createTextNode(access)
 -        subentry.appendChild(textnode)
-+    fail = True
+-
+-    return dom
+-
 +    try:
 +        cmd = [SHOWMOUNT_BIN, "--no-headers", "-e", target]
 +        for val in util.pread2(cmd).split('\n'):
@@ -172,18 +176,19 @@ index 3bed7ad..2b20fff 100644
 +            entry.appendChild(subentry)
 +            textnode = dom.createTextNode(access)
 +            subentry.appendChild(textnode)
-+        fail = False
++        return dom
 +    except Exception:
-+        util.SMlog("Unable to scan exports with rpcingo, trying NFSv4")
++        util.SMlog("Unable to scan exports with %s, trying NFSv4" % SHOWMOUNT_BIN)
  
+-def scan_srlist(path, dconf):
 +    try:
 +        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, target)
-+        soft_mount(mountpoint, target, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4', check_service=False)
++        soft_mount(mountpoint, target, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4')
 +        paths = os.listdir(mountpoint)
 +        util.SMlog(mountpoint)
 +        unmount(mountpoint, NSFv4_PSEUDOFS)
 +        util.SMlog("unmounted")
-+        for path in paths.split("\n"):
++        for path in paths:
 +            entry = dom.createElement('Export')
 +            element.appendChild(entry)
 +
@@ -201,22 +206,19 @@ index 3bed7ad..2b20fff 100644
 +            # Assume everyone as we do not have any info about it
 +            textnode = dom.createTextNode("*")
 +            subentry.appendChild(textnode)
-+        fail = False
++        return dom
 +    except Exception:
 +        util.SMlog("Unable to scan exports with NFSv4 pseudo FS mount")
 +
-+    if fail:
-+        raise NfsException('Failed to read NFS export paths from server %s' %
++    raise NfsException('Failed to read NFS export paths from server %s' %
 +                           (target))
-     return dom
- 
- 
--def scan_srlist(path, dconf):
++
++
 +def scan_srlist(path, transport, dconf):
      """Scan and report SR, UUID."""
      dom = xml.dom.minidom.Document()
      element = dom.createElement("SRlist")
-@@ -247,7 +291,7 @@ def scan_srlist(path, dconf):
+@@ -247,7 +277,7 @@ def scan_srlist(path, dconf):
      if PROBEVERSION in dconf:
          util.SMlog("Add supported nfs versions to sr-probe")
          try:
@@ -225,7 +227,7 @@ index 3bed7ad..2b20fff 100644
              supp_ver = dom.createElement("SupportedVersions")
              element.appendChild(supp_ver)
  
-@@ -263,10 +307,11 @@ def scan_srlist(path, dconf):
+@@ -263,7 +293,7 @@ def scan_srlist(path, dconf):
      return dom.toprettyxml()
  
  
@@ -234,38 +236,29 @@ index 3bed7ad..2b20fff 100644
      """Return list of supported nfs versions."""
      valid_versions = set(['3', '4'])
      cv = set()
-+    res = None
-     try:
-         ns = util.pread2([RPCINFO_BIN, "-s", "%s" % server])
-         ns = ns.split("\n")
-@@ -275,12 +320,26 @@ def get_supported_nfs_versions(server):
-                 cvi = ns[i].split()[1].split(",")
+@@ -276,11 +306,21 @@ def get_supported_nfs_versions(server):
                  for j in range(len(cvi)):
                      cv.add(cvi[j])
--        return list(cv & valid_versions)
+         return list(cv & valid_versions)
 -    except:
 -        util.SMlog("Unable to obtain list of valid nfs versions")
-+        res = list(cv & valid_versions)
+-        raise NfsException('Failed to read supported NFS version from server %s' %
+-                           (server))
 +    except Exception:
-+        util.SMlog("Unable to obtain list of valid nfs versions with rpcinfo, trying NSFv4")
-+
++        util.SMlog("Unable to obtain list of valid nfs versions with %s, trying NSFv4" % RPCINFO_BIN)
+ 
++    # NFSv4 only
 +    try:
 +        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, server)
-+        soft_mount(mountpoint, server, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4', check_service=False)
++        soft_mount(mountpoint, server, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4')
 +        util.pread2([NFS_STAT, '-m'])
 +        unmount(mountpoint, NSFv4_PSEUDOFS)
-+        if res is None:
-+            res = ['4']
-+        else:
-+            res.add('4')
++        return ['4']
 +    except Exception:
 +        util.SMlog("Unable to obtain list of valid nfs versions with NSFv4 pseudo FS mount")
 +
-+    if res is None:
-         raise NfsException('Failed to read supported NFS version from server %s' %
-                            (server))
--
-+    return res
++    raise NfsException('Failed to read supported NFS version from server %s' %
++                           (server))
  
  def get_nfs_timeout(other_config):
      nfs_timeout = 100

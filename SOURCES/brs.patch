@@ -280,7 +280,7 @@ index 29306cc..6762912 100644
          soft_mount.assert_called_once_with('/var/run/sr-mount/UUID',
                                             'aServer',
 diff --git i/tests/test_nfs.py w/tests/test_nfs.py
-index fd0f257..65f320e 100644
+index fd0f257..681b690 100644
 --- i/tests/test_nfs.py
 +++ w/tests/test_nfs.py
 @@ -10,13 +10,13 @@ class Test_nfs(unittest.TestCase):
@@ -310,11 +310,11 @@ index fd0f257..65f320e 100644
 +        self.assertEqual(len(pread.mock_calls), 2)
  
      @mock.patch('time.sleep', autospec=True)
-+    @mock.patch('nfs.get_supported_versions', autospec=True)
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
      # Can't use autospec due to http://bugs.python.org/issue17826
      @mock.patch('util.pread')
 -    def test_check_server_service(self, pread, sleep):
-+    def test_check_server_service(self, pread, sleep, get_supported_versions):
++    def test_check_server_service(self, pread, sleep, get_supported_nfs_versions):
          pread.side_effect = ["    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
 -        service_found = nfs.check_server_service('aServer')
 +        service_found = nfs.check_server_service('aServer', 'tcp')
@@ -340,22 +340,22 @@ index fd0f257..65f320e 100644
          self.assertFalse(service_found)
  
      @mock.patch('time.sleep', autospec=True)
-+    @mock.patch('nfs.get_supported_versions', autospec=True)
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
      # Can't use autospec due to http://bugs.python.org/issue17826
      @mock.patch('util.pread')
 -    def test_check_server_service_exception(self, pread, sleep):
-+    def test_check_server_service_exception(self, pread, sleep, get_supported_versions):
++    def test_check_server_service_exception(self, pread, sleep, get_supported_nfs_versions):
          pread.side_effect = [util.CommandException(errno.ENOMEM)]
          with self.assertRaises(util.CommandException):
 -            nfs.check_server_service('aServer')
 +            nfs.check_server_service('aServer', 'tcp')
  
      @mock.patch('time.sleep', autospec=True)
-+    @mock.patch('nfs.get_supported_versions', autospec=True)
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
      # Can't use autospec due to http://bugs.python.org/issue17826
      @mock.patch('util.pread')
 -    def test_check_server_service_first_call_exception(self, pread, sleep):
-+    def test_check_server_service_first_call_exception(self, pread, sleep, get_supported_versions):
++    def test_check_server_service_first_call_exception(self, pread, sleep, get_supported_nfs_versions):
          pread.side_effect = [util.CommandException(errno.EPIPE),
                              "    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
 -        service_found = nfs.check_server_service('aServer')

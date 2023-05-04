@@ -1,8 +1,8 @@
 diff --git i/drivers/NFSSR.py w/drivers/NFSSR.py
-index 6590640..1a028ca 100755
+index 6590640..daa0bf3 100755
 --- i/drivers/NFSSR.py
 +++ w/drivers/NFSSR.py
-@@ -116,11 +116,11 @@ class NFSSR(FileSR.SharedFileSR):
+@@ -116,11 +116,12 @@ class NFSSR(FileSR.SharedFileSR):
      def check_server(self):
          try:
              if PROBEVERSION in self.dconf:
@@ -12,11 +12,12 @@ index 6590640..1a028ca 100755
                      self.nfsversion = sv[0]
              else:
 -                nfs.check_server_tcp(self.remoteserver, self.nfsversion)
-+                nfs.check_server_tcp(self.remoteserver, self.transport, self.nfsversion)
++                if not nfs.check_server_tcp(self.remoteserver, self.transport, self.nfsversion):
++                    raise nfs.NfsException("Unsupported NFS version: %s" % self.nfsversion)
          except nfs.NfsException as exc:
              raise xs_errors.XenError('NFSVersion',
                                       opterr=exc.errstr)
-@@ -168,7 +168,7 @@ class NFSSR(FileSR.SharedFileSR):
+@@ -168,7 +169,7 @@ class NFSSR(FileSR.SharedFileSR):
  
          self.mount(temppath, self.remotepath)
          try:
@@ -25,7 +26,7 @@ index 6590640..1a028ca 100755
          finally:
              try:
                  nfs.unmount(temppath, True)
-@@ -255,7 +255,7 @@ class NFSSR(FileSR.SharedFileSR):
+@@ -255,7 +256,7 @@ class NFSSR(FileSR.SharedFileSR):
  
      def scan_exports(self, target):
          util.SMlog("scanning2 (target=%s)" % target)
@@ -35,7 +36,7 @@ index 6590640..1a028ca 100755
  
      def set_transport(self):
 diff --git i/drivers/nfs.py w/drivers/nfs.py
-index 3bed7ad..75ba726 100644
+index 3bed7ad..d114d73 100644
 --- i/drivers/nfs.py
 +++ w/drivers/nfs.py
 @@ -43,6 +43,7 @@ import time
@@ -109,7 +110,7 @@ index 3bed7ad..75ba726 100644
      mountcommand = 'mount.nfs'
  
      options = "soft,proto=%s,vers=%s" % (
-@@ -188,43 +184,77 @@ def unmount(mountpoint, rmmountpoint):
+@@ -188,43 +184,78 @@ def unmount(mountpoint, rmmountpoint):
              raise NfsException("rmdir failed with error '%s'" % inst.strerror)
  
  
@@ -149,6 +150,8 @@ index 3bed7ad..75ba726 100644
 -
 -    return dom
 -
+-
+-def scan_srlist(path, dconf):
 +    try:
 +        cmd = [SHOWMOUNT_BIN, "--no-headers", "-e", target]
 +        for val in util.pread2(cmd).split('\n'):
@@ -179,8 +182,8 @@ index 3bed7ad..75ba726 100644
 +        return dom
 +    except Exception:
 +        util.SMlog("Unable to scan exports with %s, trying NFSv4" % SHOWMOUNT_BIN)
- 
--def scan_srlist(path, dconf):
++
++    # NFSv4 only
 +    try:
 +        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, target)
 +        soft_mount(mountpoint, target, NSFv4_PSEUDOFS, transport, timeout=5, nfsversion='4')
@@ -218,7 +221,7 @@ index 3bed7ad..75ba726 100644
      """Scan and report SR, UUID."""
      dom = xml.dom.minidom.Document()
      element = dom.createElement("SRlist")
-@@ -247,7 +277,7 @@ def scan_srlist(path, dconf):
+@@ -247,7 +278,7 @@ def scan_srlist(path, dconf):
      if PROBEVERSION in dconf:
          util.SMlog("Add supported nfs versions to sr-probe")
          try:
@@ -227,7 +230,7 @@ index 3bed7ad..75ba726 100644
              supp_ver = dom.createElement("SupportedVersions")
              element.appendChild(supp_ver)
  
-@@ -263,7 +293,7 @@ def scan_srlist(path, dconf):
+@@ -263,7 +294,7 @@ def scan_srlist(path, dconf):
      return dom.toprettyxml()
  
  
@@ -236,7 +239,7 @@ index 3bed7ad..75ba726 100644
      """Return list of supported nfs versions."""
      valid_versions = set(['3', '4'])
      cv = set()
-@@ -276,11 +306,21 @@ def get_supported_nfs_versions(server):
+@@ -276,11 +307,21 @@ def get_supported_nfs_versions(server):
                  for j in range(len(cvi)):
                      cv.add(cvi[j])
          return list(cv & valid_versions)

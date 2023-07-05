@@ -5,7 +5,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.0.3
-Release: 1.1%{?xsrel}%{?dist}
+Release: 1.3%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -64,6 +64,9 @@ Patch1017: 0017-py3-use-of-integer-division-operator.patch
 Patch1018: 0018-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
 Patch1019: 0019-py3-switch-interpreter-to-python3.patch
 Patch1020: 0020-Support-recent-version-of-coverage-tool.patch
+Patch1021: 0021-Fix-blktap-error-mapping-in-python3.patch
+Patch1022: 0022-feat-LinstorSR-import-all-8.2-changes.patch
+Patch1023: 0023-feat-LinstorSR-is-now-compatible-with-python-3.patch
 
 %description
 This package contains storage backends used in XCP
@@ -285,28 +288,39 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 # XCP-ng
+/etc/systemd/system/linstor-satellite.service.d/override.conf
+/etc/systemd/system/var-lib-linstor.service
 /etc/xapi.d/plugins/linstor-manager
+/opt/xensource/bin/linstor-kv-tool
+/opt/xensource/libexec/fork-log-daemon
+/opt/xensource/libexec/linstor-monitord
+/opt/xensource/libexec/safe-umount
 /opt/xensource/sm/CephFSSR
 /opt/xensource/sm/CephFSSR.py
 /opt/xensource/sm/EXT4SR
 /opt/xensource/sm/EXT4SR.py
 /opt/xensource/sm/GlusterFSSR
 /opt/xensource/sm/GlusterFSSR.py
+/opt/xensource/sm/linstorjournaler.py
 /opt/xensource/sm/LinstorSR
 /opt/xensource/sm/LinstorSR.py
+/opt/xensource/sm/linstorvhdutil.py
+/opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/MooseFSSR
 /opt/xensource/sm/MooseFSSR.py
 /opt/xensource/sm/XFSSR
 /opt/xensource/sm/XFSSR.py
 /opt/xensource/sm/ZFSSR
 /opt/xensource/sm/ZFSSR.py
-/opt/xensource/sm/linstorjournaler.py
-/opt/xensource/sm/linstorvhdutil.py
-/opt/xensource/sm/linstorvolumemanager.py
-/opt/xensource/libexec/linstor-monitord
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Jul 20 2023 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.3-1.3
+- LINSTOR driver support for XCP-ng 8.3
+- Add 0021-Fix-blktap-error-mapping-in-python3.patch
+- Add 0022-feat-LinstorSR-import-all-8.2-changes.patch
+- Add 0023-feat-LinstorSR-is-now-compatible-with-python-3.patch
+
 * Thu May 04 2023 Yann Dirson <yann.dirson@vates.fr> - 3.0.3-1.1
 - Rebase on sm 3.0.3
 - Patches for python3 compat.

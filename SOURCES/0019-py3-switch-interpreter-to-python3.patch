@@ -1,7 +1,7 @@
 From eed9421f32a7e78ef62ae4650c1f42b4da5cbda3 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Mon, 27 Mar 2023 15:30:46 +0200
-Subject: [PATCH 19/20] py3: switch interpreter to python3
+Subject: [PATCH 19/23] py3: switch interpreter to python3
 
 ---
  drivers/CephFSSR.py             | 2 +-
@@ -95,5 +95,5 @@ index 1b86a43..182b889 100755
  # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
  #
 -- 
-2.39.2
+2.41.0
 

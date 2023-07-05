@@ -1,7 +1,7 @@
 From a791ed9fb9a76ae0e89bad6ba36b116f3aba6c99 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
-Subject: [PATCH 06/20] Re-add the ext4 driver for users who need to transition
+Subject: [PATCH 06/23] Re-add the ext4 driver for users who need to transition
 
 The driver is needed to transition to the ext driver.
 Users who upgrade from XCP-ng <= 8.0 need a working driver so that they
@@ -304,5 +304,5 @@ index b249c91..528429a 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.39.2
+2.41.0
 

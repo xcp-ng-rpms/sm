@@ -1,7 +1,7 @@
 From 9f577219491e316ddd41a1671549a9a92e7a3dd8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
-Subject: [PATCH 13/19] Fix is_open call for many drivers (#25)
+Subject: [PATCH 13/21] Fix is_open call for many drivers (#25)
 
 Ensure all shared drivers are imported in `_is_open` definition to register
 them in the driver list. Otherwise this function always fails with a SRUnknownType exception.
@@ -104,5 +104,5 @@ index 0d60d96..534e6c9 100755
  
      driver = SR.driver(srType)
 -- 
-2.42.0
+2.43.0
 

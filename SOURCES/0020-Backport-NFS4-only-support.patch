@@ -1,0 +1,430 @@
+From 4733167e3b196095adf1406b1ea6a0223202b3ab Mon Sep 17 00:00:00 2001
+From: Benjamin Reis <benjamin.reis@vates.tech>
+Date: Mon, 18 Dec 2023 10:22:26 +0100
+Subject: [PATCH 20/21] Backport NFS4 only support
+
+See: https://github.com/xapi-project/sm/pull/617
+
+Signed-off-by: Benjamin Reis <benjamin.reis@vates.tech>
+---
+ drivers/NFSSR.py    |   9 +--
+ drivers/nfs.py      | 145 ++++++++++++++++++++++++++++++++++----------
+ tests/test_NFSSR.py |   2 +-
+ tests/test_nfs.py   |  47 +++++++-------
+ 4 files changed, 139 insertions(+), 64 deletions(-)
+
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index 52fbc5f..2e20483 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -115,11 +115,12 @@ class NFSSR(FileSR.SharedFileSR):
+     def check_server(self):
+         try:
+             if self.dconf.has_key(PROBEVERSION):
+-                sv = nfs.get_supported_nfs_versions(self.remoteserver)
++                sv = nfs.get_supported_nfs_versions(self.remoteserver, self.transport)
+                 if len(sv):
+                     self.nfsversion = sv[0]
+             else:
+-                nfs.check_server_tcp(self.remoteserver, self.nfsversion)
++                if not nfs.check_server_tcp(self.remoteserver, self.transport, self.nfsversion):
++                    raise nfs.NfsException("Unsupported NFS version: %s" % self.nfsversion)
+         except nfs.NfsException, exc:
+             raise xs_errors.XenError('NFSVersion',
+                                      opterr=exc.errstr)
+@@ -168,7 +169,7 @@ class NFSSR(FileSR.SharedFileSR):
+ 
+         self.mount(temppath, self.remotepath)
+         try:
+-            return nfs.scan_srlist(temppath, self.dconf)
++            return nfs.scan_srlist(temppath, self.transport, self.dconf)
+         finally:
+             try:
+                 nfs.unmount(temppath, True)
+@@ -257,7 +258,7 @@ class NFSSR(FileSR.SharedFileSR):
+     
+     def scan_exports(self, target):
+         util.SMlog("scanning2 (target=%s)" % target)
+-        dom = nfs.scan_exports(target)
++        dom = nfs.scan_exports(target, self.transport)
+         print >>sys.stderr,dom.toprettyxml()
+ 
+ class NFSFileVDI(FileSR.FileVDI):
+diff --git a/drivers/nfs.py b/drivers/nfs.py
+index 80b71a5..ddb869e 100644
+--- a/drivers/nfs.py
++++ b/drivers/nfs.py
+@@ -44,6 +44,7 @@ import time
+ 
+ RPCINFO_BIN = "/usr/sbin/rpcinfo"
+ SHOWMOUNT_BIN = "/usr/sbin/showmount"
++NFS_STAT = "/usr/sbin/nfsstat"
+ 
+ DEFAULT_NFSVERSION = '3'
+ 
+@@ -53,32 +54,40 @@ NFS_VERSION = [
+ NFS_SERVICE_WAIT = 30
+ NFS_SERVICE_RETRY = 6
+ 
++NFS4_PSEUDOFS = "/"
++NFS4_TMP_MOUNTPOINT = "/tmp/mnt"
++
+ class NfsException(Exception):
+ 
+     def __init__(self, errstr):
+         self.errstr = errstr
+ 
+ 
+-def check_server_tcp(server, nfsversion=DEFAULT_NFSVERSION):
++def check_server_tcp(server, transport, nfsversion=DEFAULT_NFSVERSION):
+     """Make sure that NFS over TCP/IP V3 is supported on the server.
+ 
+     Returns True if everything is OK
+     False otherwise.
+     """
+     try:
+-        sv = get_supported_nfs_versions(server)
+-        return (True if nfsversion in sv else False)
++        sv = get_supported_nfs_versions(server, transport)
++        return (nfsversion[0] in sv)
+     except util.CommandException, inst:
+         raise NfsException("rpcinfo failed or timed out: return code %d" %
+                            inst.code)
+ 
+-def check_server_service(server):
++def check_server_service(server, transport):
+     """Ensure NFS service is up and available on the remote server.
+ 
+     Returns False if fails to detect service after 
+     NFS_SERVICE_RETRY * NFS_SERVICE_WAIT
+     """
+ 
++    sv = get_supported_nfs_versions(server, transport)
++    # Services are not present in NFS4 only, this doesn't mean there's no NFS
++    if sv == ['4']:
++        return True
++
+     retries = 0
+     errlist = [errno.EPERM, errno.EPIPE, errno.EIO]
+ 
+@@ -131,14 +140,6 @@ def soft_mount(mountpoint, remoteserver, remotepath, transport, useroptions='',
+                            inst.code)
+ 
+ 
+-    # Wait for NFS service to be available
+-    try: 
+-        if not check_server_service(remoteserver):
+-            raise util.CommandException(code=errno.EOPNOTSUPP,
+-                    reason="No NFS service on host")
+-    except util.CommandException, inst: 
+-        raise NfsException("Failed to detect NFS service on server %s" 
+-                           % remoteserver)
+ 
+     mountcommand = 'mount.nfs'
+     if nfsversion == '4':
+@@ -184,13 +185,11 @@ def unmount(mountpoint, rmmountpoint):
+             raise NfsException("rmdir failed with error '%s'" % inst.strerror)
+ 
+ 
+-def scan_exports(target):
+-    """Scan target and return an XML DOM with target, path and accesslist."""
+-    util.SMlog("scanning")
++def _scan_exports_nfs3(target, dom, element):
++    """ Scan target and return an XML DOM with target, path and accesslist.
++        Using NFS3 services.
++    """
+     cmd = [SHOWMOUNT_BIN, "--no-headers", "-e", target]
+-    dom = xml.dom.minidom.Document()
+-    element = dom.createElement("nfs-exports")
+-    dom.appendChild(element)
+     for val in util.pread2(cmd).split('\n'):
+         if not len(val):
+             continue
+@@ -219,8 +218,56 @@ def scan_exports(target):
+ 
+     return dom
+ 
++def _scan_exports_nfs4_only(target, transport, dom, element):
++    """ Scan target and return an XML DOM with target, path and accesslist.
++        Using NFS4 only pseudo FS.
++    """
++
++    mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, target)
++    soft_mount(mountpoint, target, NFS4_PSEUDOFS, transport, nfsversion="4")
++    paths = os.listdir(mountpoint)
++    unmount(mountpoint, NFS4_PSEUDOFS)
++    for path in paths:
++        entry = dom.createElement("Export")
++        element.appendChild(entry)
++
++        subentry = dom.createElement("Target")
++        entry.appendChild(subentry)
++        textnode = dom.createTextNode(target)
++        subentry.appendChild(textnode)
++        subentry = dom.createElement("Path")
++        entry.appendChild(subentry)
++        textnode = dom.createTextNode(path)
++        subentry.appendChild(textnode)
++
++        subentry = dom.createElement("Accesslist")
++        entry.appendChild(subentry)
++        # Assume everyone as we do not have any info about it
++        textnode = dom.createTextNode("*")
++        subentry.appendChild(textnode)
++    return dom
++
++def scan_exports(target, transport):
++    """Scan target and return an XML DOM with target, path and accesslist."""
++    util.SMlog("scanning")
++    dom = xml.dom.minidom.Document()
++    element = dom.createElement("nfs-exports")
++    dom.appendChild(element)
++    try:
++        return _scan_exports_nfs3(target, dom, element)
++    except Exception:
++        util.SMlog("Unable to scan exports with %s, trying NFSv4" % SHOWMOUNT_BIN)
++
++    # NFSv4 only
++    try:
++        return _scan_exports_nfs4_only(target, transport, dom, element)
++    except Exception:
++        util.SMlog("Unable to scan exports with NFSv4 pseudo FS mount")
++
++    raise NfsException("Failed to read NFS export paths from server %s" %
++                           (target))
+ 
+-def scan_srlist(path, dconf):
++def scan_srlist(path, transport, dconf):
+     """Scan and report SR, UUID."""
+     dom = xml.dom.minidom.Document()
+     element = dom.createElement("SRlist")
+@@ -243,7 +290,7 @@ def scan_srlist(path, dconf):
+     if dconf.has_key(PROBEVERSION):
+         util.SMlog("Add supported nfs versions to sr-probe")
+         try:
+-            supported_versions = get_supported_nfs_versions(dconf.get('server'))
++            supported_versions = get_supported_nfs_versions(dconf.get('server'), transport)
+             supp_ver = dom.createElement("SupportedVersions")
+             element.appendChild(supp_ver)
+ 
+@@ -259,21 +306,53 @@ def scan_srlist(path, dconf):
+     return dom.toprettyxml()
+ 
+ 
+-def get_supported_nfs_versions(server):
+-    """Return list of supported nfs versions."""
+-    valid_versions = set(['3', '4'])
++def _get_supported_nfs_version_rpcinfo(server):
++    """ Return list of supported nfs versions.
++        Using NFS3 services.
++    """
++
++    valid_versions = set(["3", "4"])
++    cv = set()
++    ns = util.pread2([RPCINFO_BIN, "-s", "%s" % server])
++    ns = ns.split("\n")
++    for i in range(len(ns)):
++        if ns[i].find("nfs") > 0:
++            cvi = ns[i].split()[1].split(",")
++            for j in range(len(cvi)):
++                cv.add(cvi[j])
++    return sorted(cv & valid_versions)
++
++
++def _is_nfs4_supported(server, transport):
++    """ Return list of supported nfs versions.
++        Using NFS4 pseudo FS.
++    """
++
+     cv = set()
+     try:
+-        ns = util.pread2([RPCINFO_BIN, "-p", "%s" % server])
+-        ns = ns.split("\n")
+-        for i in range(len(ns)):
+-            if ns[i].find("nfs") > 0:
+-                cvi = ns[i].split()[1]
+-                cv.add(cvi)
+-        return list(cv & valid_versions)
+-    except:
+-        util.SMlog("Unable to obtain list of valid nfs versions")
+-        raise NfsException('Failed to read supported NFS version from server %s' %
++        mountpoint = "%s/%s" % (NFS4_TMP_MOUNTPOINT, server)
++        soft_mount(mountpoint, server, NFS4_PSEUDOFS, transport, nfsversion='4')
++        util.pread2([NFS_STAT, "-m"])
++        unmount(mountpoint, NFS4_PSEUDOFS)
++        return True
++    except Exception:
++        return False
++
++
++def get_supported_nfs_versions(server, transport):
++    """Return list of supported nfs versions."""
++    try:
++        return _get_supported_nfs_version_rpcinfo(server)
++    except Exception:
++        util.SMlog("Unable to obtain list of valid nfs versions with %s, trying NFSv4" % RPCINFO_BIN)
++
++    # NFSv4 only
++    if _is_nfs4_supported(server, transport):
++        return ["4"]
++    else:
++        util.SMlog("Unable to obtain list of valid nfs versions with NFSv4 pseudo FS mount")
++
++    raise NfsException("Failed to read supported NFS version from server %s" %
+                            (server))
+ 
+ def get_nfs_timeout(other_config):
+diff --git a/tests/test_NFSSR.py b/tests/test_NFSSR.py
+index c683634..ed28c71 100644
+--- a/tests/test_NFSSR.py
++++ b/tests/test_NFSSR.py
+@@ -121,7 +121,7 @@ class TestNFSSR(unittest.TestCase):
+ 
+         nfssr.attach(None)
+ 
+-        check_server_tcp.assert_called_once_with('aServer',
++        check_server_tcp.assert_called_once_with('aServer', 'tcp',
+                                                  'aNfsversionChanged')
+         soft_mount.assert_called_once_with('/var/run/sr-mount/UUID',
+                                            'aServer',
+diff --git a/tests/test_nfs.py b/tests/test_nfs.py
+index cef414f..9ea807f 100644
+--- a/tests/test_nfs.py
++++ b/tests/test_nfs.py
+@@ -9,31 +9,32 @@ class Test_nfs(unittest.TestCase):
+ 
+     @mock.patch('util.pread', autospec=True)
+     def test_check_server_tcp(self, pread):
+-        nfs.check_server_tcp('aServer')
++        nfs.check_server_tcp('aServer', 'tcp')
+ 
+-        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-p', 'aServer'], quiet=False)
++        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-s', 'aServer'], quiet=False)
+ 
+     @mock.patch('util.pread', autospec=True)
+     def test_check_server_tcp_nfsversion(self, pread):
+-        nfs.check_server_tcp('aServer', 'aNfsversion')
++        nfs.check_server_tcp('aServer', 'tcp', 'aNfsversion')
+ 
+-        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-p', 'aServer'], quiet=False)
++        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-s', 'aServer'], quiet=False)
+ 
+     @mock.patch('util.pread', autospec=True)
+     def test_check_server_tcp_nfsversion_error(self, pread):
+         pread.side_effect = util.CommandException
+ 
+         with self.assertRaises(nfs.NfsException):
+-            nfs.check_server_tcp('aServer', 'aNfsversion')
++            nfs.check_server_tcp('aServer', 'tcp', 'aNfsversion')
+ 
+-        pread.assert_called_once_with(['/usr/sbin/rpcinfo', '-p', 'aServer'], quiet=False)
++        self.assertEqual(len(pread.mock_calls), 2)
+ 
+     @mock.patch('time.sleep', autospec=True)
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
+     # Can't use autospec due to http://bugs.python.org/issue17826
+     @mock.patch('util.pread')
+-    def test_check_server_service(self, pread, sleep):
++    def test_check_server_service(self, pread, get_supported_nfs_versions, sleep):
+         pread.side_effect=["    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
+-        service_found = nfs.check_server_service('aServer')
++        service_found = nfs.check_server_service('aServer', 'tcp')
+ 
+         self.assertTrue(service_found)
+         self.assertEqual(len(pread.mock_calls), 1)
+@@ -48,7 +49,7 @@ class Test_nfs(unittest.TestCase):
+         pread.side_effect=["",
+                            "",
+                            "    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
+-        service_found = nfs.check_server_service('aServer')
++        service_found = nfs.check_server_service('aServer', 'tcp')
+ 
+         self.assertTrue(service_found)
+         self.assertEqual(len(pread.mock_calls), 3)
+@@ -59,26 +60,28 @@ class Test_nfs(unittest.TestCase):
+     def test_check_server_service_not_available(self, pread, sleep):
+         pread.return_value=""
+ 
+-        service_found = nfs.check_server_service('aServer')
++        service_found = nfs.check_server_service('aServer', 'tcp')
+ 
+         self.assertFalse(service_found)
+ 
+     @mock.patch('time.sleep', autospec=True)
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
+     # Can't use autospec due to http://bugs.python.org/issue17826
+     @mock.patch('util.pread')
+-    def test_check_server_service_exception(self, pread, sleep):
++    def test_check_server_service_exception(self, pread, get_supported_nfs_versions, sleep):
+         pread.side_effect=[util.CommandException(errno.ENOMEM)]
+         with self.assertRaises(util.CommandException):
+-            nfs.check_server_service('aServer')
++            nfs.check_server_service('aServer', 'tcp')
+ 
+ 
+     @mock.patch('time.sleep', autospec=True)
++    @mock.patch('nfs.get_supported_nfs_versions', autospec=True)
+     # Can't use autospec due to http://bugs.python.org/issue17826
+     @mock.patch('util.pread')
+-    def test_check_server_service_first_call_exception(self, pread, sleep):
++    def test_check_server_service_first_call_exception(self, pread, get_supported_nfs_versions, sleep):
+         pread.side_effect=[util.CommandException(errno.EPIPE),
+                             "    100003  4,3,2     udp6,tcp6,udp,tcp                nfs         superuser"]
+-        service_found = nfs.check_server_service('aServer')
++        service_found = nfs.check_server_service('aServer', 'tcp')
+ 
+         self.assertTrue(service_found)
+         self.assertEqual(len(pread.mock_calls), 2)
+@@ -88,37 +91,29 @@ class Test_nfs(unittest.TestCase):
+                  'soft,proto=transport,vers=%s,acdirmin=0,acdirmax=0' % vers])
+ 
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('nfs.check_server_service', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+-    def test_soft_mount(self, pread, check_server_service, makedirs):
++    def test_soft_mount(self, pread, makedirs):
+         nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
+                        timeout=None)
+ 
+-        check_server_service.assert_called_once_with('remoteserver')
+         pread.assert_called_once_with(self.get_soft_mount_pread('mount.nfs',
+                                                                 '3'))
+ 
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('nfs.check_server_service', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+-    def test_soft_mount_nfsversion_3(self, pread, 
+-                                     check_server_service, makedirs):
++    def test_soft_mount_nfsversion_3(self, pread, makedirs):
+         nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
+                        timeout=None, nfsversion='3')
+ 
+-        check_server_service.assert_called_once_with('remoteserver')
+         pread.assert_called_with(self.get_soft_mount_pread('mount.nfs',
+                                                                 '3'))
+ 
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('nfs.check_server_service', autospec=True)
+     @mock.patch('util.pread', autospec=True)
+-    def test_soft_mount_nfsversion_4(self, pread, 
+-                                     check_server_service, makedirs):
++    def test_soft_mount_nfsversion_4(self, pread, makedirs):
+         nfs.soft_mount('mountpoint', 'remoteserver', 'remotepath', 'transport',
+                        timeout=None, nfsversion='4')
+ 
+-        check_server_service.assert_called_once_with('remoteserver')
+         pread.assert_called_with(self.get_soft_mount_pread('mount.nfs4',
+                                                                 '4'))
+ 
+@@ -145,7 +140,7 @@ class Test_nfs(unittest.TestCase):
+     @mock.patch('util.pread2')
+     def test_scan_exports(self, pread2):
+         pread2.side_effect = ["/srv/nfs\n/srv/nfs2 *\n/srv/nfs3 127.0.0.1/24"]
+-        res = nfs.scan_exports('aServer')
++        res = nfs.scan_exports('aServer', 'tcp')
+ 
+         expected = """<?xml version="1.0" ?>
+ <nfs-exports>
+-- 
+2.43.0
+

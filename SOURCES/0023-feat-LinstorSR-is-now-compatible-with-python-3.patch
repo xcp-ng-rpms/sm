@@ -1,0 +1,324 @@
+From fbb999c7ae1dda0ef6a8e5a2e66d5ec69ff30bda Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 30 Jun 2023 12:41:43 +0200
+Subject: [PATCH 23/23] feat(LinstorSR): is now compatible with python 3
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py            | 19 +++++++++----------
+ drivers/cleanup.py              |  2 +-
+ drivers/linstor-manager         |  2 +-
+ drivers/linstorvhdutil.py       | 13 +++++--------
+ drivers/linstorvolumemanager.py | 30 +++++++++++++++---------------
+ drivers/util.py                 |  2 +-
+ scripts/fork-log-daemon         |  2 +-
+ scripts/linstor-kv-tool         |  2 +-
+ scripts/safe-umount             |  2 +-
+ 9 files changed, 35 insertions(+), 39 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index ca5015e..f5b3bcf 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -816,7 +816,7 @@ class LinstorSR(SR.SR):
+         self._load_vdis()
+         self._update_physical_size()
+ 
+-        for vdi_uuid in self.vdis.keys():
++        for vdi_uuid in list(self.vdis.keys()):
+             if self.vdis[vdi_uuid].deleted:
+                 del self.vdis[vdi_uuid]
+ 
+@@ -934,7 +934,7 @@ class LinstorSR(SR.SR):
+         secondary_hosts = []
+ 
+         hosts = self.session.xenapi.host.get_all_records()
+-        for host_ref, host_rec in hosts.iteritems():
++        for host_ref, host_rec in hosts.items():
+             hostname = host_rec['hostname']
+             if controller_node_name == hostname:
+                 controller_host = host_ref
+@@ -1045,7 +1045,7 @@ class LinstorSR(SR.SR):
+         # We use the size of the smallest disk, this is an approximation that
+         # ensures the displayed physical size is reachable by the user.
+         (min_physical_size, pool_count) = self._linstor.get_min_physical_size()
+-        self.physical_size = min_physical_size * pool_count / \
++        self.physical_size = min_physical_size * pool_count // \
+             self._linstor.redundancy
+ 
+         self.physical_utilisation = self._linstor.allocated_volume_size
+@@ -1285,7 +1285,7 @@ class LinstorSR(SR.SR):
+ 
+         # 9. Remove all hidden leaf nodes to avoid introducing records that
+         # will be GC'ed.
+-        for vdi_uuid in self.vdis.keys():
++        for vdi_uuid in list(self.vdis.keys()):
+             if vdi_uuid not in geneology and self.vdis[vdi_uuid].hidden:
+                 util.SMlog(
+                     'Scan found hidden leaf ({}), ignoring'.format(vdi_uuid)
+@@ -1497,17 +1497,16 @@ class LinstorSR(SR.SR):
+     # --------------------------------------------------------------------------
+ 
+     def _create_linstor_cache(self):
+-        # TODO: use a nonlocal with python3.
+-        class context:
+-            reconnect = False
++        reconnect = False
+ 
+         def create_cache():
++            nonlocal reconnect
+             try:
+-                if context.reconnect:
++                if reconnect:
+                     self._reconnect()
+                 return self._linstor.get_volumes_with_info()
+             except Exception as e:
+-                context.reconnect = True
++                reconnect = True
+                 raise e
+ 
+         self._all_volume_metadata_cache = \
+@@ -2649,7 +2648,7 @@ class LinstorVDI(VDI.VDI):
+                 '--nbd-name',
+                 volume_name,
+                 '--urls',
+-                ','.join(map(lambda ip: 'http://' + ip + ':' + port, ips)),
++                ','.join(['http://' + ip + ':' + port for ip in ips]),
+                 '--device-size',
+                 str(device_size)
+             ]
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index c655942..9e20707 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3194,7 +3194,7 @@ class LinstorSR(SR):
+     def _checkSlaves(self, vdi):
+         try:
+             all_openers = self._linstor.get_volume_openers(vdi.uuid)
+-            for openers in all_openers.itervalues():
++            for openers in all_openers.values():
+                 for opener in openers.values():
+                     if opener['process-name'] != 'tapdisk':
+                         raise util.SMException(
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index 45201ee..9ff7fff 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
+ #
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index 83d7f8b..4cf4f86 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -25,9 +25,6 @@ import xs_errors
+ 
+ MANAGER_PLUGIN = 'linstor-manager'
+ 
+-# EMEDIUMTYPE constant (124) is not available in python2.
+-EMEDIUMTYPE = 124
+-
+ 
+ def call_vhd_util_on_host(session, host_ref, method, device_path, args):
+     try:
+@@ -105,7 +102,7 @@ def linstorhostcall(local_method, remote_method):
+                 'groupName': self._linstor.group_name
+             }
+             remote_args.update(**kwargs)
+-            remote_args = {str(key): str(value) for key, value in remote_args.iteritems()}
++            remote_args = {str(key): str(value) for key, value in remote_args.items()}
+ 
+             try:
+                 def remote_call():
+@@ -331,7 +328,7 @@ class LinstorVhdUtil:
+                 try:
+                     return local_method(device_path, *args, **kwargs)
+                 except util.CommandException as e:
+-                    if e.code == errno.EROFS or e.code == EMEDIUMTYPE:
++                    if e.code == errno.EROFS or e.code == errno.EMEDIUMTYPE:
+                         raise ErofsLinstorCallException(e)  # Break retry calls.
+                     if e.code == errno.ENOENT:
+                         raise NoPathLinstorCallException(e)
+@@ -380,7 +377,7 @@ class LinstorVhdUtil:
+             'groupName': self._linstor.group_name
+         }
+         remote_args.update(**kwargs)
+-        remote_args = {str(key): str(value) for key, value in remote_args.iteritems()}
++        remote_args = {str(key): str(value) for key, value in remote_args.items()}
+ 
+         volume_uuid = self._linstor.get_volume_uuid_from_device_path(
+             device_path
+@@ -403,12 +400,12 @@ class LinstorVhdUtil:
+                 )
+ 
+             no_host_found = True
+-            for hostname, openers in all_openers.iteritems():
++            for hostname, openers in all_openers.items():
+                 if not openers:
+                     continue
+ 
+                 try:
+-                    host_ref = next(ref for ref, rec in hosts.iteritems() if rec['hostname'] == hostname)
++                    host_ref = next(ref for ref, rec in hosts.items() if rec['hostname'] == hostname)
+                 except StopIteration:
+                     continue
+ 
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index a9f39e0..91de3a9 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -526,8 +526,8 @@ class LinstorVolumeManager(object):
+                 current[volume.number] = max(current_size, current.get(volume.number) or 0)
+ 
+         total_size = 0
+-        for volumes in sizes.itervalues():
+-            for size in volumes.itervalues():
++        for volumes in sizes.values():
++            for size in volumes.values():
+                 total_size += size
+ 
+         return total_size * 1024
+@@ -1638,8 +1638,8 @@ class LinstorVolumeManager(object):
+ 
+         lin = cls._create_linstor_instance(uri, keep_uri_unmodified=True)
+ 
+-        node_names = ips.keys()
+-        for node_name, ip in ips.iteritems():
++        node_names = list(ips.keys())
++        for node_name, ip in ips.items():
+             while True:
+                 # Try to create node.
+                 result = lin.node_create(
+@@ -2204,13 +2204,13 @@ class LinstorVolumeManager(object):
+     def _request_device_path(self, volume_uuid, volume_name, activate=False):
+         node_name = socket.gethostname()
+ 
+-        resources = filter(
++        resource = next(filter(
+             lambda resource: resource.node_name == node_name and
+             resource.name == volume_name,
+             self._get_resource_cache().resources
+-        )
++        ), None)
+ 
+-        if not resources:
++        if not resource:
+             if activate:
+                 self._mark_resource_cache_as_dirty()
+                 self._activate_device_path(
+@@ -2222,7 +2222,7 @@ class LinstorVolumeManager(object):
+                 .format(volume_uuid)
+             )
+         # Contains a path of the /dev/drbd<id> form.
+-        return resources[0].volumes[0].device_path
++        return resource.volumes[0].device_path
+ 
+     def _destroy_resource(self, resource_name, force=False):
+         result = self._linstor.resource_dfn_delete(resource_name)
+@@ -2240,7 +2240,7 @@ class LinstorVolumeManager(object):
+ 
+         # If force is used, ensure there is no opener.
+         all_openers = get_all_volume_openers(resource_name, '0')
+-        for openers in all_openers.itervalues():
++        for openers in all_openers.values():
+             if openers:
+                 self._mark_resource_cache_as_dirty()
+                 raise LinstorVolumeManagerError(
+@@ -2506,18 +2506,18 @@ class LinstorVolumeManager(object):
+         node_name = socket.gethostname()
+ 
+         try:
+-            resources = filter(
++            resource = next(filter(
+                 lambda resource: resource.node_name == node_name and
+                 resource.name == DATABASE_VOLUME_NAME,
+                 lin.resource_list_raise().resources
+-            )
++            ), None)
+         except Exception as e:
+             raise LinstorVolumeManagerError(
+                 'Unable to get resources during database creation: {}'
+                 .format(e)
+             )
+ 
+-        if not resources:
++        if not resource:
+             if activate:
+                 cls._activate_device_path(
+                     lin, node_name, DATABASE_VOLUME_NAME
+@@ -2530,7 +2530,7 @@ class LinstorVolumeManager(object):
+                 .format(DATABASE_PATH)
+             )
+         # Contains a path of the /dev/drbd<id> form.
+-        return resources[0].volumes[0].device_path
++        return resource.volumes[0].device_path
+ 
+     @classmethod
+     def _create_database_volume(
+@@ -2565,7 +2565,7 @@ class LinstorVolumeManager(object):
+             )
+ 
+         # Ensure we have a correct list of storage pools.
+-        nodes_with_pool = map(lambda pool: pool.node_name, pools.storage_pools)
++        nodes_with_pool = [pool.node_name for pool in pools.storage_pools]
+         assert nodes_with_pool  # We must have at least one storage pool!
+         for node_name in nodes_with_pool:
+             assert node_name in node_names
+@@ -2815,7 +2815,7 @@ class LinstorVolumeManager(object):
+     def _move_files(cls, src_dir, dest_dir, force=False):
+         def listdir(dir):
+             ignored = ['lost+found']
+-            return filter(lambda file: file not in ignored, os.listdir(dir))
++            return [file for file in os.listdir(dir) if file not in ignored]
+ 
+         try:
+             if not force:
+diff --git a/drivers/util.py b/drivers/util.py
+index 376aaf7..3cf7fa7 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -751,7 +751,7 @@ def get_this_host_address(session):
+ def get_host_addresses(session):
+     addresses = []
+     hosts = session.xenapi.host.get_all_records()
+-    for record in hosts.itervalues():
++    for record in hosts.values():
+         addresses.append(record['address'])
+     return addresses
+ 
+diff --git a/scripts/fork-log-daemon b/scripts/fork-log-daemon
+index 665a60b..986de63 100755
+--- a/scripts/fork-log-daemon
++++ b/scripts/fork-log-daemon
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ 
+ import select
+ import signal
+diff --git a/scripts/linstor-kv-tool b/scripts/linstor-kv-tool
+index c907027..9d74656 100755
+--- a/scripts/linstor-kv-tool
++++ b/scripts/linstor-kv-tool
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Copyright (C) 2022  Vates SAS
+ #
+diff --git a/scripts/safe-umount b/scripts/safe-umount
+index 9c1dcc4..3c64a3f 100755
+--- a/scripts/safe-umount
++++ b/scripts/safe-umount
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2
++#!/usr/bin/env python3
+ 
+ import argparse
+ import subprocess
+-- 
+2.41.0
+

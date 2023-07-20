@@ -1,7 +1,7 @@
 From ebe8920deb4fe92510afed47f473b1b34185c433 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:28:10 +0100
-Subject: [PATCH 16/20] py3: futurize fix of xmlrpc calls for CephFS,
+Subject: [PATCH 16/23] py3: futurize fix of xmlrpc calls for CephFS,
  GlusterFS, MooseFS, Linstore
 
 Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
@@ -118,5 +118,5 @@ index 8860fdf..febb559 100755
      def attach_from_config(self, sr_uuid, vdi_uuid):
          try:
 -- 
-2.39.2
+2.41.0
 

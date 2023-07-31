@@ -1,7 +1,7 @@
-From 5205a36d7d35203f20873890a2d27a938cd1032f Mon Sep 17 00:00:00 2001
+From f395ccb05bae57bed51413f2e59d09c5b505313f Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 13:53:21 +0100
-Subject: [PATCH 18/23] test_on_slave: allow to work with SR using absolute
+Subject: [PATCH 17/22] test_on_slave: allow to work with SR using absolute
  PROBE_MOUNTPOINT
 
 PROBE_MOUNTPOINT in a some drivers is a relative path, which is resolved

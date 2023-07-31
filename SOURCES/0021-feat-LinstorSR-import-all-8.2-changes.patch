@@ -1,7 +1,7 @@
-From 7783e98332b701604dd6bebe6f5ff39eb3ad3288 Mon Sep 17 00:00:00 2001
+From bdb879ac3c9d54d928166fe530df9be76cb7c75d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
-Subject: [PATCH 22/23] feat(LinstorSR): import all 8.2 changes
+Subject: [PATCH 21/22] feat(LinstorSR): import all 8.2 changes
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -32,10 +32,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100755 scripts/safe-umount
 
 diff --git a/Makefile b/Makefile
-index 03d0d53..d01652d 100755
+index 61868d9..5a1527e 100755
 --- a/Makefile
 +++ b/Makefile
-@@ -84,6 +84,7 @@ PLUGIN_SCRIPT_DEST := /etc/xapi.d/plugins/
+@@ -83,6 +83,7 @@ PLUGIN_SCRIPT_DEST := /etc/xapi.d/plugins/
  LIBEXEC := /opt/xensource/libexec/
  UDEV_RULES_DIR := /etc/udev/rules.d/
  UDEV_SCRIPTS_DIR := /etc/udev/scripts/
@@ -43,7 +43,7 @@ index 03d0d53..d01652d 100755
  SYSTEMD_SERVICE_DIR := /usr/lib/systemd/system/
  INIT_DIR := /etc/rc.d/init.d/
  MPATH_CONF_DIR := /etc/multipath.xenserver/
-@@ -138,6 +139,8 @@ install: precheck
+@@ -137,6 +138,8 @@ install: precheck
  	mkdir -p $(SM_STAGING)$(UDEV_RULES_DIR)
  	mkdir -p $(SM_STAGING)$(UDEV_SCRIPTS_DIR)
  	mkdir -p $(SM_STAGING)$(INIT_DIR)
@@ -52,7 +52,7 @@ index 03d0d53..d01652d 100755
  	mkdir -p $(SM_STAGING)$(SYSTEMD_SERVICE_DIR)
  	mkdir -p $(SM_STAGING)$(MPATH_CONF_DIR)
  	mkdir -p $(SM_STAGING)$(MODPROBE_DIR)
-@@ -163,6 +166,10 @@ install: precheck
+@@ -162,6 +165,10 @@ install: precheck
  	  $(SM_STAGING)/$(SM_DEST)
  	install -m 644 etc/logrotate.d/$(SMLOG_CONF) \
  	  $(SM_STAGING)/$(LOGROTATE_DIR)
@@ -63,7 +63,7 @@ index 03d0d53..d01652d 100755
  	install -m 644 etc/make-dummy-sr.service \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
  	install -m 644 systemd/xs-sm.service \
-@@ -206,6 +213,9 @@ install: precheck
+@@ -205,6 +212,9 @@ install: precheck
  	install -m 755 drivers/iscsilib.py $(SM_STAGING)$(SM_DEST)
  	install -m 755 drivers/fcoelib.py $(SM_STAGING)$(SM_DEST)
  	mkdir -p $(SM_STAGING)$(LIBEXEC)
@@ -2008,7 +2008,7 @@ index 3a419aa..7b47356 100755
                          tapdisk = cls.__from_blktap(blktap)
                          node = '/sys/dev/block/%d:%d' % (tapdisk.major(), tapdisk.minor)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index fe9f996..c655942 100755
+index 629e110..a93d416 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -53,8 +53,10 @@ from time import monotonic as _time

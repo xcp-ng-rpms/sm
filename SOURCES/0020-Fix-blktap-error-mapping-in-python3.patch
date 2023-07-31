@@ -1,7 +1,7 @@
-From ce9791fb94a78951bd441120678cca9da1bf7025 Mon Sep 17 00:00:00 2001
+From 0ab24af4e6a2cd9075fda7f7e02658acf7169d06 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 5 Jul 2023 11:41:41 +0200
-Subject: [PATCH 21/23] Fix blktap error mapping in python3
+Subject: [PATCH 20/22] Fix blktap error mapping in python3
 
 ```
     def _errmsg(self):

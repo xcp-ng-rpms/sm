@@ -1,7 +1,7 @@
-From f3d7952941cb13de5e69fadf6377616eb84ad98e Mon Sep 17 00:00:00 2001
+From 0190bca54fa3ba669c53838624d97e0dfff6ef72 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:13:18 +0100
-Subject: [PATCH 15/23] py3: simple changes from futurize on XCP-ng drivers
+Subject: [PATCH 14/22] py3: simple changes from futurize on XCP-ng drivers
 
 * `except` syntax fixes
 * drop `has_key()` usage
@@ -283,7 +283,7 @@ index 212f1ad..8860fdf 100755
              if inst.code != errno.ENOENT:
                  raise SR.SROSError(114, "Failed to remove MooseFS mount point")
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index cb00d8f..fe9f996 100755
+index 7404a9b..629e110 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2968,7 +2968,7 @@ class LinstorSR(SR):

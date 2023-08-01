@@ -1,7 +1,7 @@
-From cf4f5b431c7c04d82bdc48bd5c858d26e210097f Mon Sep 17 00:00:00 2001
+From 4cd515127f947e1478813cba4ce979baebe8c756 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 07/23] feat(drivers): add LinstorSR driver
+Subject: [PATCH 06/22] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -78,7 +78,7 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index a6cfc55..fb0c057 100755
+index 8b4aa8b..e45ffbb 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -7,6 +7,7 @@ SM_DRIVERS += Dummy
@@ -89,7 +89,7 @@ index a6cfc55..fb0c057 100755
  SM_DRIVERS += LVHD
  SM_DRIVERS += LVHDoISCSI
  SM_DRIVERS += LVHDoHBA
-@@ -31,6 +32,9 @@ SM_LIBS += verifyVHDsOnSR
+@@ -30,6 +31,9 @@ SM_LIBS += verifyVHDsOnSR
  SM_LIBS += scsiutil
  SM_LIBS += scsi_host_rescan
  SM_LIBS += vhdutil
@@ -99,7 +99,7 @@ index a6cfc55..fb0c057 100755
  SM_LIBS += lvhdutil
  SM_LIBS += cifutils
  SM_LIBS += xs_errors
-@@ -94,6 +98,7 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
+@@ -93,6 +97,7 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
  .PHONY: build
  build:
  	make -C dcopy 
@@ -107,7 +107,7 @@ index a6cfc55..fb0c057 100755
  
  .PHONY: precommit
  precommit: build
-@@ -169,6 +174,8 @@ install: precheck
+@@ -168,6 +173,8 @@ install: precheck
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
  	install -m 644 systemd/storage-init.service \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
@@ -116,7 +116,7 @@ index a6cfc55..fb0c057 100755
  	for i in $(UDEV_RULES); do \
  	  install -m 644 udev/$$i.rules \
  	    $(SM_STAGING)$(UDEV_RULES_DIR); done
-@@ -186,6 +193,7 @@ install: precheck
+@@ -185,6 +192,7 @@ install: precheck
  	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoFCoESR && ln -sf LVHDoFCoESR.py LVMoFCoESR
  	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
  	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
@@ -124,7 +124,7 @@ index a6cfc55..fb0c057 100755
  	install -m 755 drivers/lvhd-thin $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
  	install -m 755 drivers/on_slave.py $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)/on-slave
  	install -m 755 drivers/testing-hooks $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
-@@ -203,6 +211,7 @@ install: precheck
+@@ -202,6 +210,7 @@ install: precheck
  	install -m 755 scripts/kickpipe $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/set-iscsi-initiator $(SM_STAGING)$(LIBEXEC)
  	$(MAKE) -C dcopy install DESTDIR=$(SM_STAGING)
@@ -2284,7 +2284,7 @@ index 1f58adc..e846666 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 528429a..16fb56f 100755
+index b249c91..ad32d51 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -2695,7 +2695,7 @@ index 528429a..16fb56f 100755
  #
  #  Helpers
 @@ -2856,7 +3212,9 @@ def normalizeType(type):
-         "xfs", "zfs", "ext4"
+         "xfs", "zfs"
      ]:
          type = SR.TYPE_FILE
 -    if not type in SR.TYPES:

@@ -1,7 +1,7 @@
-From 0fb832eae7c2414d2f3971253ece4b103e44c83d Mon Sep 17 00:00:00 2001
+From cf480ecb48d156f3efcc7179ff9c54895773921d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 04/23] feat(drivers): add XFS driver
+Subject: [PATCH 04/22] feat(drivers): add XFS driver
 
 Originally-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 

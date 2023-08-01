@@ -1,7 +1,7 @@
-From fbb999c7ae1dda0ef6a8e5a2e66d5ec69ff30bda Mon Sep 17 00:00:00 2001
+From ee506590b8497ddad1a29c0c9d05a73f9c877fa6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
-Subject: [PATCH 23/23] feat(LinstorSR): is now compatible with python 3
+Subject: [PATCH 22/22] feat(LinstorSR): is now compatible with python 3
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -88,7 +88,7 @@ index ca5015e..f5b3bcf 100755
                  str(device_size)
              ]
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index c655942..9e20707 100755
+index a93d416..db1d8a0 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3194,7 +3194,7 @@ class LinstorSR(SR):

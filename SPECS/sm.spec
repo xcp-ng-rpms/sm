@@ -5,7 +5,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.0.3
-Release: 1.4%{?xsrel}%{?dist}
+Release: 1.5%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -66,6 +66,8 @@ Patch1019: 0019-Support-recent-version-of-coverage-tool.patch
 Patch1020: 0020-Fix-blktap-error-mapping-in-python3.patch
 Patch1021: 0021-feat-LinstorSR-import-all-8.2-changes.patch
 Patch1022: 0022-feat-LinstorSR-is-now-compatible-with-python-3.patch
+Patch1023: 0023-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
+Patch1028: 0024-Fix-vdi-ref-when-static-vdis-are-used.patch
 
 %description
 This package contains storage backends used in XCP
@@ -312,6 +314,11 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue Aug 22 2023 Guillaume Thouvenin <guillaume.thouvenin@vates.tech> - 3.0.3-1.5
+- Fix issues when running quicktest on ZFS and LVMoISCSI
+- Add 0023-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
+- Add 0024-Fix-vdi-ref-when-static-vdis-are-used.patch
+
 * Mon Jul 31 2023 Benjamin Reis <benjamin.reis@vates.fr> - 3.0.3-1.4
 - Drop 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
 

@@ -1,0 +1,36 @@
+From 3bf41acc381c3d89e0bd0e017fd1653076987ae9 Mon Sep 17 00:00:00 2001
+From: Guillaume <guillaume.thouvenin@vates.tech>
+Date: Wed, 16 Aug 2023 13:42:21 +0200
+Subject: [PATCH 16/16] Fix vdi-ref when static vdis are used
+
+When static vdis are used there is no snapshots and we don't want to
+call method from XAPI.
+
+Signed-off-by: Guillaume <guillaume.thouvenin@vates.tech>
+---
+ drivers/LVHDSR.py | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index dd8e20b..6ac3f80 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -1532,10 +1532,11 @@ class LVHDVDI(VDI.VDI):
+         elif self.sr.provision == "thick":
+             needDeflate = False
+             # except for snapshots, which are always deflated
+-            vdi_ref = self.sr.srcmd.params['vdi_ref']
+-            snap = self.session.xenapi.VDI.get_is_a_snapshot(vdi_ref)
+-            if snap:
+-                needDeflate = True
++            if self.sr.srcmd.cmd != 'vdi_detach_from_config':
++                vdi_ref = self.sr.srcmd.params['vdi_ref']
++                snap = self.session.xenapi.VDI.get_is_a_snapshot(vdi_ref)
++                if snap:
++                    needDeflate = True
+ 
+         if needDeflate:
+             try:
+-- 
+2.41.0
+

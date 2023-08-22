@@ -1,0 +1,28 @@
+From 1167204e6869853c63c9a0daa0b7582bccac0fc4 Mon Sep 17 00:00:00 2001
+From: BenjiReis <benjamin.reis@vates.fr>
+Date: Fri, 4 Aug 2023 12:10:08 +0200
+Subject: [PATCH 15/16] Remove `SR_PROBE` from ZFS capabilities (#37)
+
+The probe method is not implemented so we
+shouldn't advertise it.
+
+Signed-off-by: BenjiReis <benjamin.reis@vates.fr>
+---
+ drivers/ZFSSR.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
+index d375210..b803211 100644
+--- a/drivers/ZFSSR.py
++++ b/drivers/ZFSSR.py
+@@ -23,7 +23,6 @@ import util
+ import xs_errors
+ 
+ CAPABILITIES = [
+-    'SR_PROBE',
+     'SR_UPDATE',
+     'VDI_CREATE',
+     'VDI_DELETE',
+-- 
+2.41.0
+

@@ -1,0 +1,31 @@
+From c6b87140a83b81e5c40a76fd0633f44fe0cb49ef Mon Sep 17 00:00:00 2001
+From: Samuel Verschelde <stormi-xcp@ylix.fr>
+Date: Fri, 27 Jan 2023 12:23:13 +0100
+Subject: [PATCH 18/19] Add custom.conf multipath configuration file
+
+Meant to be installed as /etc/multipath/conf.d/custom.conf for users
+to have an easy entry point for editing, as well as information on what
+will happen to this file through future system updates and upgrades.
+
+Signed-off-by: Samuel Verschelde <stormi-xcp@ylix.fr>
+(cherry picked from commit 18b79a5b1f49c02d8ee8ba2408d0395d1cfb3ee9)
+---
+ multipath/custom.conf | 6 ++++++
+ 1 file changed, 6 insertions(+)
+ create mode 100644 multipath/custom.conf
+
+diff --git a/multipath/custom.conf b/multipath/custom.conf
+new file mode 100644
+index 0000000..3c8583f
+--- /dev/null
++++ b/multipath/custom.conf
+@@ -0,0 +1,6 @@
++# Custom configuration for multipathd
++
++# Changes made to this file will not be overwritten by future system updates.
++# They will also be retained through system upgrades to newer releases.
++
++# Refer to "man multipath.conf"
+-- 
+2.30.2
+

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.3%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -88,6 +88,9 @@ Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
 Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
 Patch1015: 0015-Remove-SR_PROBE-from-ZFS-capabilities-37.patch
 Patch1016: 0016-Fix-vdi-ref-when-static-vdis-are-used.patch
+Patch1017: 0017-Tell-users-not-to-edit-multipath.conf-directly.patch
+Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
+Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
 
 %description
 This package contains storage backends used in XCP
@@ -417,7 +420,14 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/65-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
 %config /etc/udev/rules.d/58-xapi.rules
-%config /etc/multipath.xenserver/multipath.conf
+# XCP-ng: we don't replace this file if it has local modifications
+# Doing so may break production for very little benefit:
+# If there are changes, this means they need them, and anything
+# we may add to the file is likely to be irrelevant for their setup.
+%config(noreplace) /etc/multipath.xenserver/multipath.conf
+# XCP-ng: Add directory and file for custom multipath config.
+%dir /etc/multipath/conf.d
+%config(noreplace) /etc/multipath/conf.d/custom.conf
 %config /etc/udev/rules.d/69-dm-lvm-metad.rules
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
@@ -465,6 +475,15 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Fri Aug 25 2023 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.30.8-2.3
+- Do not overwrite multipath.conf if users made changes
+- Add warning to multipath.conf to prevent future modifications
+  (for users which haven't modified it yet, that is, the vast majority)
+- Add /etc/multipath/conf.d/custom.conf for user customization
+- Add 0017-Tell-users-not-to-edit-multipath.conf-directly.patch
+- Add 0018-Add-custom.conf-multipath-configuration-file.patch
+- Add 0019-Install-etc-multipath-conf.d-custom.conf.patch
+
 * Tue Aug 22 2023 Guillaume Thouvenin <guillaume.thouvenin@vates.tech> - 2.30.8-2.2
 - Fix issues when running quicktest on ZFS and LVMoISCSI
 - Add 0015-Remove-SR_PROBE-from-ZFS-capabilities-37.patch

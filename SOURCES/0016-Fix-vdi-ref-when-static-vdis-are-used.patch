@@ -1,7 +1,7 @@
 From 3bf41acc381c3d89e0bd0e017fd1653076987ae9 Mon Sep 17 00:00:00 2001
 From: Guillaume <guillaume.thouvenin@vates.tech>
 Date: Wed, 16 Aug 2023 13:42:21 +0200
-Subject: [PATCH 16/16] Fix vdi-ref when static vdis are used
+Subject: [PATCH 16/19] Fix vdi-ref when static vdis are used
 
 When static vdis are used there is no snapshots and we don't want to
 call method from XAPI.
@@ -32,5 +32,5 @@ index dd8e20b..6ac3f80 100755
          if needDeflate:
              try:
 -- 
-2.41.0
+2.30.2
 

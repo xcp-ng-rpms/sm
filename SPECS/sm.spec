@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -86,6 +86,8 @@ Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
 Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
 Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
 Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+Patch1015: 0015-Remove-SR_PROBE-from-ZFS-capabilities-37.patch
+Patch1016: 0016-Fix-vdi-ref-when-static-vdis-are-used.patch
 
 %description
 This package contains storage backends used in XCP
@@ -463,6 +465,11 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue Aug 22 2023 Guillaume Thouvenin <guillaume.thouvenin@vates.tech> - 2.30.8-2.2
+- Fix issues when running quicktest on ZFS and LVMoISCSI
+- Add 0015-Remove-SR_PROBE-from-ZFS-capabilities-37.patch
+- Add 0016-Fix-vdi-ref-when-static-vdis-are-used.patch
+
 * Tue Apr 25 2023 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-2.1
 - Sync with hotfix XS82ECU1022
 - Sync patches with our latest 2.30.8-8.2 branch

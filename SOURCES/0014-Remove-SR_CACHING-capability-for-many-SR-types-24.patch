@@ -1,7 +1,7 @@
 From 32be9cfcd581a06075c549f68aff3ed709affcad Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:37:07 +0200
-Subject: [PATCH 14/14] Remove SR_CACHING capability for many SR types (#24)
+Subject: [PATCH 14/16] Remove SR_CACHING capability for many SR types (#24)
 
 SR_CACHING offers the capacity to use IntelliCache, but this
 feature is only available using NFS SR.
@@ -56,5 +56,5 @@ index ab72f4e..212f1ad 100755
                  "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
                  "VDI_GENERATE_CONFIG",
 -- 
-2.39.2
+2.41.0
 

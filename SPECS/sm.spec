@@ -1,15 +1,16 @@
-%global package_speccommit d1db94566be4ff4dcc574ff44b508e48e849dbe6
-%global package_srccommit v3.0.3
+%global package_speccommit 6ea36e7be2614635a7f63ea2972737623ad89fc7
+%global package_srccommit v3.0.10
+
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.0.3
+Version: 3.0.10
 Release: 1%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.0.3.tar.gz
+Source0: sm-3.0.10.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 %define __python python3.6
@@ -71,6 +72,8 @@ EOF
 %systemd_post storage-init.service
 %systemd_post usb-scan.socket
 %systemd_post mpathcount.socket
+%systemd_post sr_health_check.timer
+%systemd_post sr_health_check.service
 
 # On upgrade, migrate from the old statefile to the new statefile so that
 # storage is not reinitialized.
@@ -88,6 +91,9 @@ if [ -e /etc/multipath.conf -a ! -h /etc/multipath.conf ]; then
 fi
 update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.xenserver/multipath.conf 90
 
+systemctl enable sr_health_check.timer
+systemctl start sr_health_check.timer
+
 %preun
 %systemd_preun make-dummy-sr.service
 %systemd_preun mpcount.service
@@ -96,6 +102,8 @@ update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.
 %systemd_preun storage-init.service
 %systemd_preun usb-scan.socket
 %systemd_preun mpathcount.socket
+%systemd_preun sr_health_check.timer
+%systemd_preun sr_health_check.service
 # Remove sm-multipath on upgrade or uninstall, to ensure it goes
 [ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
 # only remove in case of erase (but not at upgrade)
@@ -110,12 +118,8 @@ exit 0
 %systemd_postun sm-mpath-root.service
 %systemd_postun xs-sm.service
 %systemd_postun storage-init.service
-if [ $1 -eq 0 ]; then
-    [ ! -d /etc/lvm/master ] || rm -Rf /etc/lvm/master || exit $?
-    cp -f /etc/lvm/lvm.conf.orig /etc/lvm/lvm.conf || exit $?
-elif [ $1 -eq 1 ]; then
-    true;
-fi
+%systemd_postun sr_health_check.timer
+%systemd_postun sr_health_check.service
 
 %check
 tests/run_python_unittests.sh
@@ -138,7 +142,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/bin/blktap2
 /opt/xensource/bin/tapdisk-cache-stats
 /opt/xensource/bin/xe-getarrayidentifier
-/opt/xensource/bin/xe-get-arrayid-lunnum
 /opt/xensource/bin/xe-getlunidentifier
 /opt/xensource/debug/tp
 /opt/xensource/libexec/check-device-sharing
@@ -202,7 +205,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/mpath_null.py
 /opt/xensource/sm/mpathcount.py
 /opt/xensource/sm/mpathutil.py
-/opt/xensource/sm/mpp_mpathutil.py
 /opt/xensource/sm/nfs.py
 /opt/xensource/sm/refcounter.py
 /opt/xensource/sm/resetvdis.py
@@ -222,6 +224,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/constants.py
 /opt/xensource/sm/cbtutil.py
 /opt/xensource/sm/multipath-root-setup
+/opt/xensource/sm/sr_health_check.py
 %dir /opt/xensource/sm/plugins
 /opt/xensource/sm/plugins/__init__.py*
 /sbin/mpathutil
@@ -234,6 +237,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/mpathcount.service
 %{_unitdir}/mpathcount.socket
 %{_unitdir}/storage-init.service
+%{_unitdir}/sr_health_check.timer
+%{_unitdir}/sr_health_check.service
 %config /etc/udev/rules.d/65-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
 %config /etc/udev/rules.d/58-xapi.rules
@@ -243,7 +248,72 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
+%package testresults
+Group:    System/Hypervisor
+Summary:  test results for SM package
+
+%description testresults
+The package contains the build time test results for the SM package
+
+%files testresults
+/.coverage
+/coverage.xml
+/htmlcov
+
+%package test-plugins
+Group:    System/Hypervisor
+Summary:  System test fake key lookup plugin
+
+%description test-plugins
+The package contains a fake key lookup plugin for system tests
+
+%files test-plugins
+/opt/xensource/sm/plugins/keymanagerutil.py*
+
 %changelog
+* Tue Aug 01 2023 Mark Syms <mark.syms@citrix.com> - 3.0.10-1
+- CA-379329: install and enable sr_health_check_timer
+
+* Wed Jul 05 2023 Mark Syms <mark.syms@citrix.com> - 3.0.9-1
+- FileSR: fix error code
+- FileSR: get rid of unused loadLocked parameter in calls
+- drivers: removed use code in .vdi() and associated loadLocked arg
+- EXTSR: get rid of superfluous explicit line continuations
+- CA-379434: extend wait for multipath to 30 seconds
+- Support recent version of coverage tool (coverage 7.2.5)
+
+* Wed Jun 21 2023 Mark Syms <mark.syms@citrix.com> - 3.0.8-1
+- CA-374612: extend wait for multipath device arrival to 30 seconds
+- CA-378768: set scheduler on multipath device
+
+* Mon Jun 12 2023 Mark Syms <mark.syms@citrix.com> - 3.0.7-3
+- Rebuild
+
+* Thu Jun 01 2023 Mark Syms <mark.syms@citrix.com> - 3.0.7-2
+- Rebuild
+
+* Wed May 31 2023 Mark Syms <mark.syms@citrix.com> - 3.0.7-1
+- Set schedulers correctly on 6.x kernel
+
+* Thu May 18 2023 Mark Syms <mark.syms@citrix.com> - 3.0.6-3
+- Rebuild
+
+* Wed Apr 12 2023 Mark Syms <mark.syms@citrix.com> - 3.0.6-2
+- Rebuild
+
+* Wed Mar 29 2023 Mark Syms <mark.syms@citrix.com> - 3.0.6-1
+- remove uninstall operations now unrelated to this package
+- CA-375367 NFS timeout parameters not always set correctly
+- CP-27709: filter error messages about ioctl not supported in trim
+- CA-375968: multi session iSCSI updates
+- Upstream changes to harmonise multipath configuration
+
+* Tue Feb 21 2023 Mark Syms <mark.syms@citrix.com> - 3.0.4-2
+- More python3 string fixes
+
+* Mon Feb 20 2023 Mark Syms <mark.syms@citrix.com> - 3.0.4-1
+- Python3 string fixes
+
 * Fri Jan 27 2023 Mark Syms <mark.syms@citrix.com> - 3.0.3-1
 - Include exportname in NBD data for attach
 
@@ -720,24 +790,3 @@ cp -r htmlcov %{buildroot}/htmlcov
 - CP-24593: Remove changes unrelated to CBT from patch introduced for CP-23919
 - CP-24592: Resize in VDI should remain unimplemented
 
-%package testresults
-Group:    System/Hypervisor
-Summary:  test results for SM package
-
-%description testresults
-The package contains the build time test results for the SM package
-
-%files testresults
-/.coverage
-/coverage.xml
-/htmlcov
-
-%package test-plugins
-Group:    System/Hypervisor
-Summary:  System test fake key lookup plugin
-
-%description test-plugins
-The pckage contains a fake key lookup plugin for system tests
-
-%files test-plugins
-/opt/xensource/sm/plugins/keymanagerutil.py*

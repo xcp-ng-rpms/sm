@@ -1,4 +1,4 @@
-From 7f961824a2eac4224cd75a721c885c5bc86aa199 Mon Sep 17 00:00:00 2001
+From 650edc6d5f8a131acdc4986cea91cbdb7c0ef1a9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
 Subject: [PATCH 20/22] feat(LinstorSR): is now compatible with python 3
@@ -17,10 +17,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  9 files changed, 35 insertions(+), 39 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 77f5683..4cbfe6d 100755
+index 9cb4ed4..b9616fb 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
-@@ -826,7 +826,7 @@ class LinstorSR(SR.SR):
+@@ -832,7 +832,7 @@ class LinstorSR(SR.SR):
          self._load_vdis()
          self._update_physical_size()
  
@@ -29,7 +29,7 @@ index 77f5683..4cbfe6d 100755
              if self.vdis[vdi_uuid].deleted:
                  del self.vdis[vdi_uuid]
  
-@@ -944,7 +944,7 @@ class LinstorSR(SR.SR):
+@@ -950,7 +950,7 @@ class LinstorSR(SR.SR):
          secondary_hosts = []
  
          hosts = self.session.xenapi.host.get_all_records()
@@ -38,7 +38,7 @@ index 77f5683..4cbfe6d 100755
              hostname = host_rec['hostname']
              if controller_node_name == hostname:
                  controller_host = host_ref
-@@ -1055,7 +1055,7 @@ class LinstorSR(SR.SR):
+@@ -1061,7 +1061,7 @@ class LinstorSR(SR.SR):
          # We use the size of the smallest disk, this is an approximation that
          # ensures the displayed physical size is reachable by the user.
          (min_physical_size, pool_count) = self._linstor.get_min_physical_size()
@@ -47,7 +47,7 @@ index 77f5683..4cbfe6d 100755
              self._linstor.redundancy
  
          self.physical_utilisation = self._linstor.allocated_volume_size
-@@ -1295,7 +1295,7 @@ class LinstorSR(SR.SR):
+@@ -1301,7 +1301,7 @@ class LinstorSR(SR.SR):
  
          # 9. Remove all hidden leaf nodes to avoid introducing records that
          # will be GC'ed.
@@ -56,7 +56,7 @@ index 77f5683..4cbfe6d 100755
              if vdi_uuid not in geneology and self.vdis[vdi_uuid].hidden:
                  util.SMlog(
                      'Scan found hidden leaf ({}), ignoring'.format(vdi_uuid)
-@@ -1507,17 +1507,16 @@ class LinstorSR(SR.SR):
+@@ -1513,17 +1513,16 @@ class LinstorSR(SR.SR):
      # --------------------------------------------------------------------------
  
      def _create_linstor_cache(self):
@@ -78,7 +78,7 @@ index 77f5683..4cbfe6d 100755
                  raise e
  
          self._all_volume_metadata_cache = \
-@@ -2659,7 +2658,7 @@ class LinstorVDI(VDI.VDI):
+@@ -2665,7 +2664,7 @@ class LinstorVDI(VDI.VDI):
                  '--nbd-name',
                  volume_name,
                  '--urls',

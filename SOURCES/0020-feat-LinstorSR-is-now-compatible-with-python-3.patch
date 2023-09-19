@@ -1,7 +1,7 @@
-From ee506590b8497ddad1a29c0c9d05a73f9c877fa6 Mon Sep 17 00:00:00 2001
+From 7f961824a2eac4224cd75a721c885c5bc86aa199 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
-Subject: [PATCH 22/24] feat(LinstorSR): is now compatible with python 3
+Subject: [PATCH 20/22] feat(LinstorSR): is now compatible with python 3
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -17,10 +17,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  9 files changed, 35 insertions(+), 39 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index ca5015e..f5b3bcf 100755
+index 77f5683..4cbfe6d 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
-@@ -816,7 +816,7 @@ class LinstorSR(SR.SR):
+@@ -826,7 +826,7 @@ class LinstorSR(SR.SR):
          self._load_vdis()
          self._update_physical_size()
  
@@ -29,7 +29,7 @@ index ca5015e..f5b3bcf 100755
              if self.vdis[vdi_uuid].deleted:
                  del self.vdis[vdi_uuid]
  
-@@ -934,7 +934,7 @@ class LinstorSR(SR.SR):
+@@ -944,7 +944,7 @@ class LinstorSR(SR.SR):
          secondary_hosts = []
  
          hosts = self.session.xenapi.host.get_all_records()
@@ -38,7 +38,7 @@ index ca5015e..f5b3bcf 100755
              hostname = host_rec['hostname']
              if controller_node_name == hostname:
                  controller_host = host_ref
-@@ -1045,7 +1045,7 @@ class LinstorSR(SR.SR):
+@@ -1055,7 +1055,7 @@ class LinstorSR(SR.SR):
          # We use the size of the smallest disk, this is an approximation that
          # ensures the displayed physical size is reachable by the user.
          (min_physical_size, pool_count) = self._linstor.get_min_physical_size()
@@ -47,7 +47,7 @@ index ca5015e..f5b3bcf 100755
              self._linstor.redundancy
  
          self.physical_utilisation = self._linstor.allocated_volume_size
-@@ -1285,7 +1285,7 @@ class LinstorSR(SR.SR):
+@@ -1295,7 +1295,7 @@ class LinstorSR(SR.SR):
  
          # 9. Remove all hidden leaf nodes to avoid introducing records that
          # will be GC'ed.
@@ -56,7 +56,7 @@ index ca5015e..f5b3bcf 100755
              if vdi_uuid not in geneology and self.vdis[vdi_uuid].hidden:
                  util.SMlog(
                      'Scan found hidden leaf ({}), ignoring'.format(vdi_uuid)
-@@ -1497,17 +1497,16 @@ class LinstorSR(SR.SR):
+@@ -1507,17 +1507,16 @@ class LinstorSR(SR.SR):
      # --------------------------------------------------------------------------
  
      def _create_linstor_cache(self):
@@ -78,7 +78,7 @@ index ca5015e..f5b3bcf 100755
                  raise e
  
          self._all_volume_metadata_cache = \
-@@ -2649,7 +2648,7 @@ class LinstorVDI(VDI.VDI):
+@@ -2659,7 +2658,7 @@ class LinstorVDI(VDI.VDI):
                  '--nbd-name',
                  volume_name,
                  '--urls',
@@ -88,10 +88,10 @@ index ca5015e..f5b3bcf 100755
                  str(device_size)
              ]
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index a93d416..db1d8a0 100755
+index 51f2912..e90cf79 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3194,7 +3194,7 @@ class LinstorSR(SR):
+@@ -3192,7 +3192,7 @@ class LinstorSR(SR):
      def _checkSlaves(self, vdi):
          try:
              all_openers = self._linstor.get_volume_openers(vdi.uuid)
@@ -277,10 +277,10 @@ index a9f39e0..91de3a9 100755
          try:
              if not force:
 diff --git a/drivers/util.py b/drivers/util.py
-index 376aaf7..3cf7fa7 100755
+index c6bb8d0..8c5bd37 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -751,7 +751,7 @@ def get_this_host_address(session):
+@@ -750,7 +750,7 @@ def get_this_host_address(session):
  def get_host_addresses(session):
      addresses = []
      hosts = session.xenapi.host.get_all_records()

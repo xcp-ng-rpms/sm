@@ -1,7 +1,7 @@
-From b1f4dd1bd94e163f0c181e88ae228291ad6107ee Mon Sep 17 00:00:00 2001
+From 66ded63ca8dc481991e151c49bb1cb9564b2ffdb Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
-Subject: [PATCH 05/24] feat(drivers): add ZFS driver to avoid losing VDI
+Subject: [PATCH 04/22] feat(drivers): add ZFS driver to avoid losing VDI
  metadata (xcp-ng/xcp#401)
 
 ---
@@ -13,10 +13,10 @@ Subject: [PATCH 05/24] feat(drivers): add ZFS driver to avoid losing VDI
  create mode 100644 drivers/ZFSSR.py
 
 diff --git a/Makefile b/Makefile
-index e3d9bf6..8b4aa8b 100755
+index 75230b6..8bf6250 100755
 --- a/Makefile
 +++ b/Makefile
-@@ -16,6 +16,7 @@ SM_DRIVERS += LVHDoFCoE
+@@ -17,6 +17,7 @@ SM_DRIVERS += LVHDoFCoE
  SM_DRIVERS += CephFS
  SM_DRIVERS += GlusterFS
  SM_DRIVERS += XFS
@@ -188,7 +188,7 @@ index 0000000..1b2f398
 +else:
 +    SR.registerSR(ZFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 7b5647f..b249c91 100755
+index 9e2353f..ef72ab5 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2853,7 +2853,7 @@ def normalizeType(type):

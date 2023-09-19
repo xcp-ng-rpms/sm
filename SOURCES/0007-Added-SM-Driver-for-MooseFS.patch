@@ -1,7 +1,7 @@
-From d05e4d21a3a40f36977f989173bec3272d121354 Mon Sep 17 00:00:00 2001
+From d56fc523ebbb125876dff2e8bf406a738c10d7fc Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
-Subject: [PATCH 08/24] Added SM Driver for MooseFS
+Subject: [PATCH 07/22] Added SM Driver for MooseFS
 
 Co-authored-by: Piotr Robert Konopelko <piotr.konopelko@moosefs.pro>
 Signed-off-by: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
@@ -16,10 +16,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100644 tests/test_MooseFSSR.py
 
 diff --git a/Makefile b/Makefile
-index e45ffbb..61868d9 100755
+index 05a78a2..9cba307 100755
 --- a/Makefile
 +++ b/Makefile
-@@ -18,6 +18,7 @@ SM_DRIVERS += CephFS
+@@ -19,6 +19,7 @@ SM_DRIVERS += CephFS
  SM_DRIVERS += GlusterFS
  SM_DRIVERS += XFS
  SM_DRIVERS += ZFS
@@ -305,7 +305,7 @@ index 0000000..be5112c
 +else:
 +    SR.registerSR(MooseFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index ad32d51..7404a9b 100755
+index be67a8c..e32ea63 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3209,7 +3209,7 @@ def normalizeType(type):

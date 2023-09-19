@@ -1,7 +1,7 @@
-From 4cd515127f947e1478813cba4ce979baebe8c756 Mon Sep 17 00:00:00 2001
+From 9cbec26536ced42c7284652057855d17049dec33 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 06/24] feat(drivers): add LinstorSR driver
+Subject: [PATCH 05/22] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -52,7 +52,7 @@ module imports are protected by try.. except... blocks.
 
 - Provide a linstor-monitor daemon to check master changes
 ---
- Makefile                        |    9 +
+ Makefile                        |   12 +-
  drivers/LinstorSR.py            | 2100 +++++++++++++++++++++++++++++++
  drivers/XE_SR_ERRORCODES.xml    |   36 +
  drivers/cleanup.py              |  366 +++++-
@@ -66,7 +66,7 @@ module imports are protected by try.. except... blocks.
  linstor/linstor-monitord.c      |  402 ++++++
  systemd/linstor-monitor.service |   13 +
  tests/mocks/linstor/__init__.py |    0
- 14 files changed, 5359 insertions(+), 10 deletions(-)
+ 14 files changed, 5360 insertions(+), 12 deletions(-)
  create mode 100755 drivers/LinstorSR.py
  create mode 100755 drivers/linstor-manager
  create mode 100755 drivers/linstorjournaler.py
@@ -78,10 +78,10 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index 8b4aa8b..e45ffbb 100755
+index 8bf6250..05a78a2 100755
 --- a/Makefile
 +++ b/Makefile
-@@ -7,6 +7,7 @@ SM_DRIVERS += Dummy
+@@ -8,6 +8,7 @@ SM_DRIVERS += Dummy
  SM_DRIVERS += udev
  SM_DRIVERS += ISO
  SM_DRIVERS += HBA
@@ -89,7 +89,7 @@ index 8b4aa8b..e45ffbb 100755
  SM_DRIVERS += LVHD
  SM_DRIVERS += LVHDoISCSI
  SM_DRIVERS += LVHDoHBA
-@@ -30,6 +31,9 @@ SM_LIBS += verifyVHDsOnSR
+@@ -31,6 +32,9 @@ SM_LIBS += verifyVHDsOnSR
  SM_LIBS += scsiutil
  SM_LIBS += scsi_host_rescan
  SM_LIBS += vhdutil
@@ -99,24 +99,26 @@ index 8b4aa8b..e45ffbb 100755
  SM_LIBS += lvhdutil
  SM_LIBS += cifutils
  SM_LIBS += xs_errors
-@@ -93,6 +97,7 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
+@@ -93,7 +97,8 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
+ 
  .PHONY: build
  build:
- 	make -C dcopy 
+-	make -C dcopy 
++	make -C dcopy
 +	make -C linstor
  
  .PHONY: precommit
  precommit: build
-@@ -168,6 +173,8 @@ install: precheck
+@@ -173,6 +178,8 @@ install: precheck
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
- 	install -m 644 systemd/storage-init.service \
+ 	install -m 644 systemd/sr_health_check.timer \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
 +	install -m 644 systemd/linstor-monitor.service \
 +	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
  	for i in $(UDEV_RULES); do \
  	  install -m 644 udev/$$i.rules \
  	    $(SM_STAGING)$(UDEV_RULES_DIR); done
-@@ -185,6 +192,7 @@ install: precheck
+@@ -190,6 +197,7 @@ install: precheck
  	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoFCoESR && ln -sf LVHDoFCoESR.py LVMoFCoESR
  	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
  	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
@@ -124,7 +126,7 @@ index 8b4aa8b..e45ffbb 100755
  	install -m 755 drivers/lvhd-thin $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
  	install -m 755 drivers/on_slave.py $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)/on-slave
  	install -m 755 drivers/testing-hooks $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
-@@ -202,6 +210,7 @@ install: precheck
+@@ -207,6 +215,7 @@ install: precheck
  	install -m 755 scripts/kickpipe $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/set-iscsi-initiator $(SM_STAGING)$(LIBEXEC)
  	$(MAKE) -C dcopy install DESTDIR=$(SM_STAGING)
@@ -132,6 +134,11 @@ index 8b4aa8b..e45ffbb 100755
  	ln -sf $(SM_DEST)blktap2.py $(SM_STAGING)$(BIN_DEST)/blktap2
  	ln -sf $(SM_DEST)lcache.py $(SM_STAGING)$(BIN_DEST)tapdisk-cache-stats
  	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
+@@ -219,4 +228,3 @@ install: precheck
+ .PHONY: clean
+ clean:
+ 	rm -rf $(SM_STAGING)
+-
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
 new file mode 100755
 index 0000000..8be1836
@@ -2284,7 +2291,7 @@ index 1f58adc..e846666 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index b249c91..ad32d51 100755
+index ef72ab5..be67a8c 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -5126,10 +5133,10 @@ index 6b7fc09..932fc3c 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 7647729..e734822 100755
+index 50c9a5a..1621be9 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -694,10 +694,35 @@ def get_this_host():
+@@ -693,10 +693,35 @@ def get_this_host():
      return uuid
  
  
@@ -5168,7 +5175,7 @@ index 7647729..e734822 100755
  
  
  def get_localhost_ref(session):
-@@ -1507,13 +1532,21 @@ def get_connected_sockets(pid):
+@@ -1514,13 +1539,21 @@ def get_connected_sockets(pid):
      return sockets
  
  

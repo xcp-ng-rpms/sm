@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.0.10
-Release: 1.1%{?xsrel}%{?dist}
+Release: 1.2%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -339,6 +339,14 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
+* Tue Sep 19 2023 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.10-1.2
+- Import sm 8.2 LINSTOR fixes on 8.3:
+- Ensure we always have a device path during leaf-coalesce calls
+- Always use lock.acquire() during attach/detach
+- Make sure hostnames are unique at SR creation
+- Ensure we can attach non-special static VDIs
+- Ensure we can detach when deflate call is not possible
+
 * Tue Sep 19 2023 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.0.10-1.1
 - Rebase on 3.0.10-1
 - Drop 0002-Add-TrueNAS-multipath-config.patch

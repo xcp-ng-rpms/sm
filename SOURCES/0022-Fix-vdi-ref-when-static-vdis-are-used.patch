@@ -1,4 +1,4 @@
-From 94751d41ac40a366c03428ed1e182b205dcdafe6 Mon Sep 17 00:00:00 2001
+From e05967859f781b7eb85e5a66f7ba40340526e0f3 Mon Sep 17 00:00:00 2001
 From: Guillaume <guillaume.thouvenin@vates.tech>
 Date: Wed, 16 Aug 2023 13:42:21 +0200
 Subject: [PATCH 22/22] Fix vdi-ref when static vdis are used

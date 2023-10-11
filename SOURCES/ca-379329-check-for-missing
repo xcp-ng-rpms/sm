@@ -1,0 +1,926 @@
+CA-379329: check for missing iSCSI sessions and reconnect
+
+From: Mark Syms <mark.syms@citrix.com>
+
+If, when an iSCSI SR is attached, some of the paths are not reachable
+they will not be subsequently connected should the connectivity issues
+be resolved, without detaching the SR or rebooting the host. Neither
+of these options give a good experience for users of the software. Add
+a systemd timer which will, periodically (default 10 minutes), ask
+each SR to do SR specific "health" checks. Currently only a checker
+for the iSCSI sessions is present but more can be added to this
+pattern in the future as needs arise.
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ Makefile                        |    5 
+ drivers/BaseISCSI.py            |    2 
+ drivers/LVHDoISCSISR.py         |  473 ++++++++++++++++++++-------------------
+ drivers/SR.py                   |    4 
+ drivers/sr_health_check.py      |   61 +++++
+ systemd/sr_health_check.service |    8 +
+ systemd/sr_health_check.timer   |   13 +
+ tests/test_LVHDoISCSISR.py      |  103 ++++++++
+ tests/test_sr_health_check.py   |   95 ++++++++
+ 9 files changed, 529 insertions(+), 235 deletions(-)
+ create mode 100755 drivers/sr_health_check.py
+ create mode 100644 systemd/sr_health_check.service
+ create mode 100644 systemd/sr_health_check.timer
+ create mode 100644 tests/test_sr_health_check.py
+
+diff --git a/Makefile b/Makefile
+index f752a9e..d07a8ca 100755
+--- a/Makefile
++++ b/Makefile
+@@ -63,6 +63,7 @@ SM_LIBS += pluginutil
+ SM_LIBS += fcoelib
+ SM_LIBS += constants
+ SM_LIBS += cbtutil
++SM_LIBS += sr_health_check
+ 
+ UDEV_RULES = 65-multipath 55-xs-mpath-scsidev 57-usb 58-xapi
+ MPATH_DAEMON = sm-multipath
+@@ -169,6 +170,10 @@ install: precheck
+ 	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
+ 	install -m 644 systemd/storage-init.service \
+ 	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
++	install -m 644 systemd/sr_health_check.service \
++	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
++	install -m 644 systemd/sr_health_check.timer \
++	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
+ 	for i in $(UDEV_RULES); do \
+ 	  install -m 644 udev/$$i.rules \
+ 	    $(SM_STAGING)$(UDEV_RULES_DIR); done
+diff --git a/drivers/BaseISCSI.py b/drivers/BaseISCSI.py
+index 69d697d..095d713 100755
+--- a/drivers/BaseISCSI.py
++++ b/drivers/BaseISCSI.py
+@@ -136,7 +136,7 @@ class BaseISCSISR(SR.SR):
+         self.default_vdi_visibility = False
+         
+         # Required parameters
+-        if not self.dconf.has_key('target') or  not self.dconf['target']:
++        if 'target' not in self.dconf or not self.dconf['target']:
+             raise xs_errors.XenError('ConfigTargetMissing')
+ 
+         # we are no longer putting hconf in the xml.
+diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
+index 20e5ba6..485a33c 100755
+--- a/drivers/LVHDoISCSISR.py
++++ b/drivers/LVHDoISCSISR.py
+@@ -81,242 +81,131 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         if util.isVDICommand(self.original_srcmd.cmd):
+             self.SCSIid = self.dconf['SCSIid']
+         else:
+-            if self.original_srcmd.dconf.has_key('target'):
+-                self.original_srcmd.dconf['targetlist'] = self.original_srcmd.dconf['target']
+-            iscsi = BaseISCSI.BaseISCSISR(self.original_srcmd, sr_uuid)
++            self.create_iscsi_sessions(sr_uuid)
++
++        LVHDSR.LVHDSR.load(self, sr_uuid)
++
++    def create_iscsi_sessions(self, sr_uuid):
++        if 'target' in self.original_srcmd.dconf:
++            self.original_srcmd.dconf['targetlist'] = self.original_srcmd.dconf['target']
++        iscsi = BaseISCSI.BaseISCSISR(self.original_srcmd, sr_uuid)
++        self.iscsiSRs = []
++        self.iscsiSRs.append(iscsi)
++        saved_exc = None
++        if self.dconf['target'].find(',') == 0 or self.dconf['targetIQN'] == "*":
++            # Instantiate multiple sessions
+             self.iscsiSRs = []
+-            self.iscsiSRs.append(iscsi)
+-
+-            saved_exc = None
+-            if self.dconf['target'].find(',') == 0 or self.dconf['targetIQN'] == "*":
+-                # Instantiate multiple sessions
+-                self.iscsiSRs = []
+-                if self.dconf['targetIQN'] == "*":
+-                    IQN = "any"
+-                else:
+-                    IQN = self.dconf['targetIQN']
+-                dict = {}
+-                IQNstring = ""
+-                IQNs = []
+-                try:
+-                    if self.dconf.has_key('multiSession'):
+-                        IQNs = self.dconf['multiSession'].split("|")
+-                        for IQN in IQNs:
+-                            if IQN:
+-                                dict[IQN] = ""
+-                            else:
+-                                try:
+-                                    IQNs.remove(IQN)
+-                                except:
+-                                    # Exceptions are not expected but just in case
+-                                    pass
+-                        # Order in multiSession must be preserved. It is important for dual-controllers.
+-                        # IQNstring cannot be built with a dictionary iteration because of this
+-                        IQNstring = self.dconf['multiSession']
+-                    else:
+-                        for tgt in self.dconf['target'].split(','):
++            if self.dconf['targetIQN'] == "*":
++                IQN = "any"
++            else:
++                IQN = self.dconf['targetIQN']
++            dict = {}
++            IQNstring = ""
++            IQNs = []
++            try:
++                if 'multiSession' in self.dconf:
++                    IQNs = self.dconf['multiSession'].split("|")
++                    for IQN in IQNs:
++                        if IQN:
++                            dict[IQN] = ""
++                        else:
+                             try:
+-                                tgt_ip = util._convertDNS(tgt)
++                                IQNs.remove(IQN)
+                             except:
+-                                raise xs_errors.XenError('DNSError')
+-                            iscsilib.ensure_daemon_running_ok(iscsi.localIQN)
+-                            map = iscsilib.discovery(tgt_ip,iscsi.port,iscsi.chapuser,iscsi.chappassword,targetIQN=IQN)
+-                            util.SMlog("Discovery for IP %s returned %s" % (tgt,map))
+-                            for i in range(0,len(map)):
+-                                (portal,tpgt,iqn) = map[i]
+-                                (ipaddr, port) = iscsilib.parse_IP_port(portal)
+-                                try:
+-                                    util._testHost(ipaddr, long(port), 'ISCSITarget')
+-                                except:
+-                                    util.SMlog("Target Not reachable: (%s:%s)" % (ipaddr, port))
+-                                    continue
+-                                key = "%s,%s,%s" % (ipaddr,port,iqn)
+-                                dict[key] = ""
+-                    # Again, do not mess up with IQNs order. Dual controllers will benefit from that
+-                    if IQNstring == "":
+-                        # Compose the IQNstring first
+-                        for key in dict.iterkeys(): IQNstring += "%s|" % key
+-                        # Reinitialize and store iterator
+-                        key_iterator = dict.iterkeys()
+-                    else:
+-                        key_iterator = IQNs
+-
+-                    # Now load the individual iSCSI base classes
+-                    for key in key_iterator:
+-                        (ipaddr,port,iqn) = key.split(',')
+-                        srcmd_copy = copy.deepcopy(self.original_srcmd)
+-                        srcmd_copy.dconf['target'] = ipaddr
+-                        srcmd_copy.dconf['targetIQN'] = iqn
+-                        srcmd_copy.dconf['multiSession'] = IQNstring
+-                        util.SMlog("Setting targetlist: %s" % srcmd_copy.dconf['targetlist'])
+-                        self.iscsiSRs.append(BaseISCSI.BaseISCSISR(srcmd_copy, sr_uuid))
+-                    pbd = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
+-                    if pbd <> None and not self.dconf.has_key('multiSession'):
+-                        dconf = self.session.xenapi.PBD.get_device_config(pbd)
+-                        dconf['multiSession'] = IQNstring
+-                        self.session.xenapi.PBD.set_device_config(pbd, dconf)
+-                except Exception as exc:
+-                    util.logException("LVHDoISCSISR.load")
+-                    saved_exc = exc
+-            try:
+-                self.iscsi = self.iscsiSRs[0]
+-            except IndexError as exc:
+-                if isinstance(saved_exc, SR.SROSError):
+-                    raise saved_exc # pylint: disable-msg=E0702
+-                elif isinstance(saved_exc, Exception):
+-                    raise xs_errors.XenError('SMGeneral', str(saved_exc))
++                                # Exceptions are not expected but just in case
++                                pass
++                    # Order in multiSession must be preserved. It is important for dual-controllers.
++                    # IQNstring cannot be built with a dictionary iteration because of this
++                    IQNstring = self.dconf['multiSession']
+                 else:
+-                    raise xs_errors.XenError('SMGeneral', str(exc))
+-
+-            # Be extremely careful not to throw exceptions here since this function
+-            # is the main one used by all operations including probing and creating
+-            pbd = None
+-            try:
+-                pbd = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
+-            except:
+-                pass
+-
+-            # Apart from the upgrade case, user must specify a SCSIid
+-            if not self.dconf.has_key('SCSIid'):
+-                # Dual controller issue
+-                self.LUNs = {}  # Dict for LUNs from all the iscsi objects
+-                for ii in range(0, len(self.iscsiSRs)):
+-                    self.iscsi = self.iscsiSRs[ii]
+-                    self._LUNprint(sr_uuid)
+-                    for key in self.iscsi.LUNs:
+-                        self.LUNs[key] = self.iscsi.LUNs[key]
+-                self.print_LUNs_XML()
+-                self.iscsi = self.iscsiSRs[0] # back to original value
+-                raise xs_errors.XenError('ConfigSCSIid')
+-
+-            self.SCSIid = self.dconf['SCSIid']
+-
+-            # This block checks if the first iscsi target contains the right SCSIid.
+-            # If not it scans the other iscsi targets because chances are that more
+-            # than one controller is present
+-            dev_match = False
+-            forced_login = False
+-            # No need to check if only one iscsi target is present
+-            if len(self.iscsiSRs) == 1:
+-                pass
+-            else:
+-                target_success = False
+-                attempt_discovery = False
+-                for iii in range(0, len(self.iscsiSRs)):
+-                    # Check we didn't leave any iscsi session open
+-                    # If exceptions happened before, the cleanup function has worked on the right target.
+-                    if forced_login == True:
++                    for tgt in self.dconf['target'].split(','):
+                         try:
+-                            iscsilib.ensure_daemon_running_ok(self.iscsi.localIQN)
+-                            iscsilib.logout(self.iscsi.target, self.iscsi.targetIQN)
+-                            forced_login = False
++                            tgt_ip = util._convertDNS(tgt)
+                         except:
+-                            raise xs_errors.XenError('ISCSILogout')
+-                    self.iscsi = self.iscsiSRs[iii]
+-                    util.SMlog("path %s" %self.iscsi.path)
+-                    util.SMlog("iscsci data: targetIQN %s, portal %s" % (self.iscsi.targetIQN, self.iscsi.target))
+-                    iscsilib.ensure_daemon_running_ok(self.iscsi.localIQN)
+-                    if not iscsilib._checkTGT(self.iscsi.targetIQN):
+-                        attempt_discovery = True
+-                        try:
+-                            # Ensure iscsi db has been populated
+-                            map = iscsilib.discovery(
+-                                      self.iscsi.target,
+-                                      self.iscsi.port,
+-                                      self.iscsi.chapuser,
+-                                      self.iscsi.chappassword,
+-                                      targetIQN=self.iscsi.targetIQN)
+-                            if len(map) == 0:
+-                                util.SMlog("Discovery for iscsi data targetIQN %s,"
+-                                           " portal %s returned empty list"
+-                                           " Trying another path if available" %
+-                                           (self.iscsi.targetIQN,
+-                                            self.iscsi.target))
++                            raise xs_errors.XenError('DNSError')
++                        iscsilib.ensure_daemon_running_ok(iscsi.localIQN)
++                        map = iscsilib.discovery(tgt_ip, iscsi.port, iscsi.chapuser, iscsi.chappassword, targetIQN=IQN)
++                        util.SMlog("Discovery for IP %s returned %s" % (tgt, map))
++                        for i in range(0, len(map)):
++                            (portal, tpgt, iqn) = map[i]
++                            (ipaddr, port) = iscsilib.parse_IP_port(portal)
++                            try:
++                                util._testHost(ipaddr, int(port), 'ISCSITarget')
++                            except:
++                                util.SMlog("Target Not reachable: (%s:%s)" % (ipaddr, port))
+                                 continue
+-                        except:
+-                            util.SMlog("Discovery failed for iscsi data targetIQN"
+-                                       " %s, portal %s. Trying another path if"
+-                                       " available" %
+-                                       (self.iscsi.targetIQN, self.iscsi.target))
+-                            continue
+-                        try:
+-                            iscsilib.login(self.iscsi.target,
+-                                           self.iscsi.targetIQN,
+-                                           self.iscsi.chapuser,
+-                                           self.iscsi.chappassword,
+-                                           self.iscsi.incoming_chapuser,
+-                                           self.iscsi.incoming_chappassword,
+-                                           self.mpath == "true")
+-                        except:
+-                            util.SMlog("Login failed for iscsi data targetIQN %s,"
+-                                       " portal %s. Trying another path"
+-                                       " if available" %
+-                                       (self.iscsi.targetIQN, self.iscsi.target))
+-                            continue
+-                        target_success = True;
+-                        forced_login = True
+-                    # A session should be active.
+-                    if not util.wait_for_path(self.iscsi.path, BaseISCSI.MAX_TIMEOUT):
+-                        util.SMlog("%s has no associated LUNs" % self.iscsi.targetIQN)
+-                        continue
+-                    scsiid_path = "/dev/disk/by-id/scsi-" + self.SCSIid
+-                    if not util.wait_for_path(scsiid_path, BaseISCSI.MAX_TIMEOUT):
+-                        util.SMlog("%s not found" %scsiid_path)
+-                        continue
+-                    for file in filter(self.iscsi.match_lun, util.listdir(self.iscsi.path)):
+-                        lun_path = os.path.join(self.iscsi.path,file)
+-                        lun_dev = scsiutil.getdev(lun_path)
+-                        try:
+-                            lun_scsiid = scsiutil.getSCSIid(lun_dev)
+-                        except:
+-                            util.SMlog("getSCSIid failed on %s in iscsi %s: LUN"
+-                                       " offline or iscsi path down" %
+-                                        (lun_dev, self.iscsi.path))
+-                            continue
+-                        util.SMlog("dev from lun %s %s" %(lun_dev, lun_scsiid))
+-                        if lun_scsiid == self.SCSIid:
+-                            util.SMlog("lun match in %s" %self.iscsi.path)
+-                            dev_match = True
+-                            # No more need to raise ISCSITarget exception.
+-                            # Resetting attempt_discovery
+-                            attempt_discovery = False
+-                            break
+-                    if dev_match:
+-                        if iii == 0:
+-                            break
+-                        util.SMlog("IQN reordering needed")
+-                        new_iscsiSRs = []
+-                        IQNs = {}
+-                        IQNstring = ""
+-                        # iscsiSRs can be seen as a circular buffer: the head now is the matching one
+-                        for kkk in range(iii, len(self.iscsiSRs)) + range(0, iii):
+-                            new_iscsiSRs.append(self.iscsiSRs[kkk])
+-                            ipaddr = self.iscsiSRs[kkk].target
+-                            port = self.iscsiSRs[kkk].port
+-                            iqn = self.iscsiSRs[kkk].targetIQN
+-                            key = "%s,%s,%s" % (ipaddr,port,iqn)
+-                            # The final string must preserve the order without repetition
+-                            if not IQNs.has_key(key):
+-                                IQNs[key] = ""
+-                                IQNstring += "%s|" % key
+-                        util.SMlog("IQNstring is now %s" %IQNstring)
+-                        self.iscsiSRs = new_iscsiSRs
+-                        util.SMlog("iqn %s is leading now" %self.iscsiSRs[0].targetIQN)
+-                        # Updating pbd entry, if any
+-                        try:
+-                            pbd = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
+-                            if pbd <> None and self.dconf.has_key('multiSession'):
+-                                util.SMlog("Updating multiSession in PBD")
+-                                dconf = self.session.xenapi.PBD.get_device_config(pbd)
+-                                dconf['multiSession'] = IQNstring
+-                                self.session.xenapi.PBD.set_device_config(pbd, dconf)
+-                        except:
+-                            pass
+-                        break
+-                if not target_success and attempt_discovery:
+-                    raise xs_errors.XenError('ISCSITarget')
+-
+-                # Check for any unneeded open iscsi sessions
++                            key = "%s,%s,%s" % (ipaddr, port, iqn)
++                            dict[key] = ""
++                # Again, do not mess up with IQNs order. Dual controllers will benefit from that
++                if IQNstring == "":
++                    # Compose the IQNstring first
++                    for key in dict.keys():
++                        IQNstring += "%s|" % key
++                    # Reinitialize and store iterator
++                    key_iterator = iter(dict.keys())
++                else:
++                    key_iterator = IQNs
++
++                # Now load the individual iSCSI base classes
++                for key in key_iterator:
++                    (ipaddr, port, iqn) = key.split(',')
++                    srcmd_copy = copy.deepcopy(self.original_srcmd)
++                    srcmd_copy.dconf['target'] = ipaddr
++                    srcmd_copy.dconf['targetIQN'] = iqn
++                    srcmd_copy.dconf['multiSession'] = IQNstring
++                    util.SMlog("Setting targetlist: %s" % srcmd_copy.dconf['targetlist'])
++                    self.iscsiSRs.append(BaseISCSI.BaseISCSISR(srcmd_copy, sr_uuid))
++                pbd = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
++                if pbd is not None and 'multiSession' not in self.dconf:
++                    dconf = self.session.xenapi.PBD.get_device_config(pbd)
++                    dconf['multiSession'] = IQNstring
++                    self.session.xenapi.PBD.set_device_config(pbd, dconf)
++            except Exception as exc:
++                util.logException("LVHDoISCSISR.load")
++                saved_exc = exc
++        try:
++            self.iscsi = self.iscsiSRs[0]
++        except IndexError as exc:
++            if isinstance(saved_exc, SR.SROSError):
++                raise saved_exc  # pylint: disable-msg=E0702
++            elif isinstance(saved_exc, Exception):
++                raise xs_errors.XenError('SMGeneral', str(saved_exc))
++            else:
++                raise xs_errors.XenError('SMGeneral', str(exc))
++        # Be extremely careful not to throw exceptions here since this function
++        # is the main one used by all operations including probing and creating
++        pbd = None
++        try:
++            pbd = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
++        except:
++            pass
++        # Apart from the upgrade case, user must specify a SCSIid
++        if 'SCSIid' not in self.dconf:
++            # Dual controller issue
++            self.LUNs = {}  # Dict for LUNs from all the iscsi objects
++            for ii in range(0, len(self.iscsiSRs)):
++                self.iscsi = self.iscsiSRs[ii]
++                self._LUNprint(sr_uuid)
++                for key in self.iscsi.LUNs:
++                    self.LUNs[key] = self.iscsi.LUNs[key]
++            self.print_LUNs_XML()
++            self.iscsi = self.iscsiSRs[0]  # back to original value
++            raise xs_errors.XenError('ConfigSCSIid')
++        self.SCSIid = self.dconf['SCSIid']
++        # This block checks if the first iscsi target contains the right SCSIid.
++        # If not it scans the other iscsi targets because chances are that more
++        # than one controller is present
++        dev_match = False
++        forced_login = False
++        # No need to check if only one iscsi target is present
++        if len(self.iscsiSRs) == 1:
++            pass
++        else:
++            target_success = False
++            attempt_discovery = False
++            for iii in range(0, len(self.iscsiSRs)):
++                # Check we didn't leave any iscsi session open
++                # If exceptions happened before, the cleanup function has worked on the right target.
+                 if forced_login == True:
+                     try:
+                         iscsilib.ensure_daemon_running_ok(self.iscsi.localIQN)
+@@ -324,9 +213,118 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+                         forced_login = False
+                     except:
+                         raise xs_errors.XenError('ISCSILogout')
++                self.iscsi = self.iscsiSRs[iii]
++                util.SMlog("path %s" % self.iscsi.path)
++                util.SMlog("iscsci data: targetIQN %s, portal %s" % (self.iscsi.targetIQN, self.iscsi.target))
++                iscsilib.ensure_daemon_running_ok(self.iscsi.localIQN)
++                if not iscsilib._checkTGT(self.iscsi.targetIQN):
++                    attempt_discovery = True
++                    try:
++                        # Ensure iscsi db has been populated
++                        map = iscsilib.discovery(
++                            self.iscsi.target,
++                            self.iscsi.port,
++                            self.iscsi.chapuser,
++                            self.iscsi.chappassword,
++                            targetIQN=self.iscsi.targetIQN)
++                        if len(map) == 0:
++                            util.SMlog("Discovery for iscsi data targetIQN %s,"
++                                       " portal %s returned empty list"
++                                       " Trying another path if available" %
++                                       (self.iscsi.targetIQN,
++                                        self.iscsi.target))
++                            continue
++                    except:
++                        util.SMlog("Discovery failed for iscsi data targetIQN"
++                                   " %s, portal %s. Trying another path if"
++                                   " available" %
++                                   (self.iscsi.targetIQN, self.iscsi.target))
++                        continue
++                    try:
++                        iscsilib.login(self.iscsi.target,
++                                       self.iscsi.targetIQN,
++                                       self.iscsi.chapuser,
++                                       self.iscsi.chappassword,
++                                       self.iscsi.incoming_chapuser,
++                                       self.iscsi.incoming_chappassword,
++                                       self.mpath == "true")
++                    except:
++                        util.SMlog("Login failed for iscsi data targetIQN %s,"
++                                   " portal %s. Trying another path"
++                                   " if available" %
++                                   (self.iscsi.targetIQN, self.iscsi.target))
++                        continue
++                    target_success = True
++                    forced_login = True
++                # A session should be active.
++                if not util.wait_for_path(self.iscsi.path, BaseISCSI.MAX_TIMEOUT):
++                    util.SMlog("%s has no associated LUNs" % self.iscsi.targetIQN)
++                    continue
++                scsiid_path = "/dev/disk/by-id/scsi-" + self.SCSIid
++                if not util.wait_for_path(scsiid_path, BaseISCSI.MAX_TIMEOUT):
++                    util.SMlog("%s not found" % scsiid_path)
++                    continue
++                for file in filter(self.iscsi.match_lun, util.listdir(self.iscsi.path)):
++                    lun_path = os.path.join(self.iscsi.path, file)
++                    lun_dev = scsiutil.getdev(lun_path)
++                    try:
++                        lun_scsiid = scsiutil.getSCSIid(lun_dev)
++                    except:
++                        util.SMlog("getSCSIid failed on %s in iscsi %s: LUN"
++                                   " offline or iscsi path down" %
++                                   (lun_dev, self.iscsi.path))
++                        continue
++                    util.SMlog("dev from lun %s %s" % (lun_dev, lun_scsiid))
++                    if lun_scsiid == self.SCSIid:
++                        util.SMlog("lun match in %s" % self.iscsi.path)
++                        dev_match = True
++                        # No more need to raise ISCSITarget exception.
++                        # Resetting attempt_discovery
++                        attempt_discovery = False
++                        break
++                if dev_match:
++                    if iii == 0:
++                        break
++                    util.SMlog("IQN reordering needed")
++                    new_iscsiSRs = []
++                    IQNs = {}
++                    IQNstring = ""
++                    # iscsiSRs can be seen as a circular buffer: the head now is the matching one
++                    for kkk in list(range(iii, len(self.iscsiSRs))) + list(range(0, iii)):
++                        new_iscsiSRs.append(self.iscsiSRs[kkk])
++                        ipaddr = self.iscsiSRs[kkk].target
++                        port = self.iscsiSRs[kkk].port
++                        iqn = self.iscsiSRs[kkk].targetIQN
++                        key = "%s,%s,%s" % (ipaddr, port, iqn)
++                        # The final string must preserve the order without repetition
++                        if key not in IQNs:
++                            IQNs[key] = ""
++                            IQNstring += "%s|" % key
++                    util.SMlog("IQNstring is now %s" % IQNstring)
++                    self.iscsiSRs = new_iscsiSRs
++                    util.SMlog("iqn %s is leading now" % self.iscsiSRs[0].targetIQN)
++                    # Updating pbd entry, if any
++                    try:
++                        pbd = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
++                        if pbd is not None and 'multiSession' in self.dconf:
++                            util.SMlog("Updating multiSession in PBD")
++                            dconf = self.session.xenapi.PBD.get_device_config(pbd)
++                            dconf['multiSession'] = IQNstring
++                            self.session.xenapi.PBD.set_device_config(pbd, dconf)
++                    except:
++                        pass
++                    break
++            if not target_success and attempt_discovery:
++                raise xs_errors.XenError('ISCSITarget')
+ 
+-
+-        LVHDSR.LVHDSR.load(self, sr_uuid)
++            # Check for any unneeded open iscsi sessions
++            if forced_login == True:
++                try:
++                    iscsilib.ensure_daemon_running_ok(self.iscsi.localIQN)
++                    iscsilib.logout(self.iscsi.target, self.iscsi.targetIQN)
++                    forced_login = False
++                except:
++                    raise xs_errors.XenError('ISCSILogout')
+ 
+     def print_LUNs_XML(self):
+         dom = xml.dom.minidom.Document()
+@@ -554,6 +552,19 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         self.iscsi.detach(self.uuid)
+         return out
+ 
++    def check_sr(self, sr_uuid):
++        """Hook to check SR health"""
++        pbdref = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
++        if pbdref:
++                other_config = self.session.xenapi.PBD.get_other_config(pbdref)
++                if util.sessions_less_than_targets(other_config, self.dconf):
++                    self.create_iscsi_sessions(sr_uuid)
++                    for iscsi in self.iscsiSRs:
++                        try:
++                            iscsi.attach(sr_uuid)
++                        except SR.SROSError:
++                            util.SMlog("Failed to attach iSCSI target")
++
+     def vdi(self, uuid):
+         return LVHDoISCSIVDI(self, uuid)
+     
+diff --git a/drivers/SR.py b/drivers/SR.py
+index 3311e55..8cb516d 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -354,6 +354,10 @@ class SR(object):
+         """Post-init hook"""
+         pass
+ 
++    def check_sr(self, sr_uuid):
++        """Hook to check SR health"""
++        pass
++
+     def vdi(self, uuid):
+         """Return VDI object owned by this repository"""
+         if not self.vdis.has_key(uuid):
+diff --git a/drivers/sr_health_check.py b/drivers/sr_health_check.py
+new file mode 100755
+index 0000000..9c164fd
+--- /dev/null
++++ b/drivers/sr_health_check.py
+@@ -0,0 +1,61 @@
++#!/usr/bin/python
++
++# Copyright (C) Cloud Software Group, Inc.
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU Lesser General Public License as published
++# by the Free Software Foundation; version 2.1 only.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++# GNU Lesser General Public License for more details.
++#
++# You should have received a copy of the GNU Lesser General Public License
++# along with this program; if not, write to the Free Software Foundation, Inc.,
++# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++
++"""
++Health check for SR, to be triggered periodically by a systemd timer. What is checked is
++SR implementation type dependent.
++"""
++
++import SR
++import util
++
++
++def main():
++    """
++    For all locally plugged SRs check that they are healthy
++    """
++    try:
++        session = util.get_localAPI_session()
++    except SR.SROSError:
++        util.SMlog("Unable to open local XAPI session", priority=util.LOG_ERR)
++        return
++
++    localhost = util.get_localhost_uuid(session)
++
++    sm_types = [x['type'] for x in session.xenapi.SM.get_all_records_where(
++        'field "required_api_version" = "1.0"').values()]
++    for sm_type in sm_types:
++        srs = session.xenapi.SR.get_all_records_where(
++            'field "type" = "{sm_type}"'.format(sm_type=sm_type))
++        for sr in srs:
++            pbds = session.xenapi.PBD.get_all_records_where(
++                'field "SR" = "{sr}" and field "host" = "{localhost}"'.format(
++                    sr=sr, localhost=localhost))
++            if not pbds:
++                continue
++
++            pbd_ref, pbd = pbds.popitem()
++            if not pbd['currently_attached']:
++                continue
++
++            sr_uuid = srs[sr]['uuid']
++            sr_obj = SR.SR.from_uuid(session, sr_uuid)
++            sr_obj.check_sr(sr_uuid)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/systemd/sr_health_check.service b/systemd/sr_health_check.service
+new file mode 100644
+index 0000000..3b82631
+--- /dev/null
++++ b/systemd/sr_health_check.service
+@@ -0,0 +1,8 @@
++[Unit]
++Description=Healthy Check service for Storage Repositories
++Wants=xapi-init-complete.target
++
++[Service]
++Type=oneshot
++ExecStart=/opt/xensource/sm/sr_health_check.py
++
+diff --git a/systemd/sr_health_check.timer b/systemd/sr_health_check.timer
+new file mode 100644
+index 0000000..d5f5f59
+--- /dev/null
++++ b/systemd/sr_health_check.timer
+@@ -0,0 +1,13 @@
++[Unit]
++Description=Period SR health check
++
++[Timer]
++# Jitter it a bit
++RandomizedDelaySec=30
++# Run 10 minutes after first activated...
++OnActiveSec=600
++# ...and at 10-minute intervals thereafter
++OnUnitInactiveSec=600
++
++[Install]
++WantedBy=timers.target
+diff --git a/tests/test_LVHDoISCSISR.py b/tests/test_LVHDoISCSISR.py
+index d9667fe..bae25d7 100644
+--- a/tests/test_LVHDoISCSISR.py
++++ b/tests/test_LVHDoISCSISR.py
+@@ -1,13 +1,20 @@
+-import unittest
+ import mock
++import unittest
++
++from uuid import uuid4
+ 
+ import SR
+ import LVHDoISCSISR
++from BaseISCSI import BaseISCSISR
++import SRCommand
++import util
+ import xs_errors
+ 
+ import testlib
+ from test_ISCSISR import NonInitingISCSISR
+ 
++TEST_SR_UUID = 'test_uuid'
++
+ 
+ class RandomError(Exception):
+     pass
+@@ -60,8 +67,8 @@ class TestLVHDoISCSISR_load(unittest.TestCase):
+             mock.patch('SR.driver'),
+         ]
+ 
+-        map(lambda patcher: patcher.start(), patchers)
+-        map(lambda patcher: self.addCleanup(patcher.stop), patchers)
++        for patcher in patchers:
++            patcher.start()
+ 
+         self.lvhd_o_iscsi_sr = NonInitingLVHDoISCSISR(
+             {'targetIQN': '*'},
+@@ -70,6 +77,8 @@ class TestLVHDoISCSISR_load(unittest.TestCase):
+ 
+         self.fake_uuid = 'deadbeef'
+ 
++        self.addCleanup(mock.patch.stopall)
++
+     @mock.patch('iscsilib.ensure_daemon_running_ok')
+     @testlib.with_context
+     def test_1st_try_block_raise_XenError(
+@@ -112,3 +121,91 @@ class TestLVHDoISCSISR_load(unittest.TestCase):
+             str(cm.exception),
+             'General backend error [opterr=Raise RandomError]'
+         )
++
++
++class TestLVHDoISCSISR(unittest.TestCase):
++
++    def setUp(self):
++        util_patcher = mock.patch('LVHDoISCSISR.util')
++        self.mock_util = util_patcher.start()
++        self.mock_util.sessions_less_than_targets = util.sessions_less_than_targets
++        baseiscsi_patcher = mock.patch('LVHDoISCSISR.BaseISCSI.BaseISCSISR')
++        patched_baseiscsi = baseiscsi_patcher.start()
++        self.mock_baseiscsi = mock.create_autospec(BaseISCSISR)
++        patched_baseiscsi.return_value = self.mock_baseiscsi
++        self.mock_session = mock.MagicMock()
++        xenapi_patcher = mock.patch('SR.XenAPI')
++        mock_xenapi = xenapi_patcher.start()
++        mock_xenapi.xapi_local.return_value = self.mock_session
++
++        copy_patcher = mock.patch('LVHDoISCSISR.SR.copy.deepcopy')
++        self.mock_copy = copy_patcher.start()
++
++        def deepcopy(to_copy):
++            return to_copy
++
++        self.mock_copy.side_effect = deepcopy
++
++        lock_patcher = mock.patch('LVHDSR.Lock')
++        self.mock_lock = lock_patcher.start()
++
++        self.addCleanup(mock.patch.stopall)
++
++        dummy_cmd = mock.create_autospec(SRCommand)
++        dummy_cmd.dconf = {
++            'SCSIid': '3600a098038313577792450384a4a6275',
++            'multihomelist': 'tgt1:3260,tgt2:3260',
++            'target': "10.70.89.34",
++            'targetIQN': 'iqn.2009-01.example.test:iscsi085e938a'
++        }
++        dummy_cmd.params = {
++            'command': 'nop',
++            'session_ref': 'test_session',
++            'host_ref': 'test_host',
++            'sr_ref': 'sr_ref'
++        }
++        dummy_cmd.cmd = None
++
++        self.sr_uuid = str(uuid4())
++        self.subject = LVHDoISCSISR.LVHDoISCSISR(
++            dummy_cmd, self.sr_uuid)
++
++    def test_check_sr_pbd_not_found(self):
++        # Arrange
++        self.mock_util.find_my_pbd.return_value = None
++
++        # Act
++        self.subject.check_sr(TEST_SR_UUID)
++
++        # Assert
++        self.mock_util.find_my_pbd.assert_called_with(
++            self.mock_session, 'test_host', 'sr_ref')
++
++    def test_check_sr_correct_sessions_count(self):
++        # Arrange
++        self.mock_util.find_my_pbd.return_value = 'my_pbd'
++        self.mock_session.xenapi.PBD.get_other_config.return_value = {
++            'iscsi_sessions': 2
++        }
++
++        # Act
++        self.subject.check_sr(TEST_SR_UUID)
++
++        # Assert
++        self.mock_session.xenapi.PBD.get_other_config.assert_called_with('my_pbd')
++
++    def test_check_sr_not_enough_sessions(self):
++        # Arrange
++        self.mock_util.find_my_pbd.return_value = 'my_pbd'
++        self.mock_session.xenapi.PBD.get_other_config.return_value = {
++            'iscsi_sessions': 1
++        }
++
++
++        # Act
++        self.subject.check_sr(TEST_SR_UUID)
++
++        # Assert
++        self.mock_baseiscsi.attach.assert_called_with(
++            TEST_SR_UUID
++        )
+diff --git a/tests/test_sr_health_check.py b/tests/test_sr_health_check.py
+new file mode 100644
+index 0000000..2a59ac8
+--- /dev/null
++++ b/tests/test_sr_health_check.py
+@@ -0,0 +1,95 @@
++import mock
++import unittest
++
++import sr_health_check
++from SR import SR
++
++TEST_HOST = 'test_host'
++
++SR_UUID = 'sr uuid'
++
++
++class TestSrHealthCheck(unittest.TestCase):
++
++    def setUp(self):
++        util_patcher = mock.patch('sr_health_check.util')
++        self.mock_util = util_patcher.start()
++        self.mock_session = mock.MagicMock()
++        self.mock_util.get_localAPI_session.return_value = self.mock_session
++        sr_patcher = mock.patch('sr_health_check.SR.SR', autospec=True)
++        self.mock_sr = sr_patcher.start()
++
++        self.addCleanup(mock.patch.stopall)
++
++    def expect_good_sr_record(self):
++        self.mock_session.xenapi.SR.get_all_records_where.return_value = {
++            "iscsi_ref": {'uuid': SR_UUID, 'host': TEST_HOST}
++        }
++
++    def expect_good_localhost(self):
++        self.mock_util.get_localhost_uuid.return_value = TEST_HOST
++
++    def expect_good_sm_types(self):
++        self.mock_session.xenapi.SM.get_all_records_where.return_value = {
++            'lvmoiscsi_type_ref': {'type': 'lvmoiscsi'}
++        }
++
++    def test_health_check_no_srs(self):
++        # Arrange
++        self.expect_good_sm_types()
++        self.mock_session.xenapi.SR.get_all_records_where.return_value = {}
++
++        # Act
++        sr_health_check.main()
++
++        # Assert
++        self.mock_session.xenapi.SR.get_all_records_where.assert_called()
++
++    def test_health_check_no_local_pbd(self):
++        # Arrange
++        self.expect_good_localhost()
++        self.expect_good_sm_types()
++        self.expect_good_sr_record()
++        self.mock_session.xenapi.PBD.get_all_records_where.return_value = {}
++
++        # Act
++        sr_health_check.main()
++
++        # Assert
++        self.mock_session.xenapi.PBD.get_all_records_where.assert_called_with(
++            'field "SR" = "iscsi_ref" and field "host" = "{TEST_HOST}"'.format(
++                TEST_HOST=TEST_HOST))
++
++    def test_health_check_sr_not_plugged(self):
++        # Arrange
++        self.expect_good_localhost()
++        self.expect_good_sm_types()
++        self.expect_good_sr_record()
++        self.mock_session.xenapi.PBD.get_all_records_where.return_value = {
++            'pbd_ref': {'currently_attached': False}
++        }
++
++        # Act
++        sr_health_check.main()
++
++        # Assert
++        self.mock_session.xenapi.PBD.get_all_records_where.assert_called_with(
++            'field "SR" = "iscsi_ref" and field "host" = "{TEST_HOST}"'.format(
++                TEST_HOST=TEST_HOST))
++
++    def test_health_check_run_sr_check(self):
++        # Arrange
++        self.expect_good_localhost()
++        self.expect_good_sm_types()
++        self.expect_good_sr_record()
++        self.mock_session.xenapi.PBD.get_all_records_where.return_value = {
++            'pbd_ref': {'currently_attached': True}
++        }
++        mock_sr = mock.create_autospec(SR)
++        self.mock_sr.from_uuid.return_value = mock_sr
++
++        # Act
++        sr_health_check.main()
++
++        # Assert
++        mock_sr.check_sr.assert_called_with(SR_UUID)

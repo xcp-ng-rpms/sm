@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.3.0.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -91,6 +91,7 @@ Patch1016: 0016-Fix-vdi-ref-when-static-vdis-are-used.patch
 Patch1017: 0017-Tell-users-not-to-edit-multipath.conf-directly.patch
 Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
 Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
+Patch1020: 0020-fix-NFSSR-ensure-we-can-attach-SR-during-attach_from.patch
 
 %description
 This package contains storage backends used in XCP
@@ -475,6 +476,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Oct 12 2023 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-2.3.0.1
+- Add 0020-fix-NFSSR-ensure-we-can-attach-SR-during-attach_from.patch
+
 * Fri Aug 25 2023 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.30.8-2.3
 - Do not overwrite multipath.conf if users made changes
 - Add warning to multipath.conf to prevent future modifications

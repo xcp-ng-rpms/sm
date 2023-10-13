@@ -1,7 +1,9 @@
-%global package_speccommit 24e197c0114396c911ff96a3041d4c6b470998a0
+%global package_speccommit 9faa87ad6b5c28edf9354b9d89b4f3c9c7638e5e
 %global usver 2.30.8
-%global xsver 2
+%global xsver 7
 %global xsrel %{xsver}%{?xscount}%{?xshash}
+# Series applies on top of v2.29.0 and includes all later tags to 2.30.7
+# after that tag the commits are in the patchqueue here.
 %global package_srccommit v2.29.0
 # -*- rpm-spec -*-
 
@@ -9,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -45,6 +47,9 @@ Patch27: ca-353437-give-coalesce
 Patch28: ca-353437-activate-a-fist
 Patch29: ca-372641-fix-_expand_size-for
 Patch30: ca-372772-fix-miscalculation
+Patch31: ca-375968-multi-session-iscsi
+Patch32: ca-379329-check-for-missing
+Patch33: cp-45514-set-ownership-and
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 BuildRequires: gcc
 Requires(post): systemd
@@ -72,25 +77,7 @@ Obsoletes: sm-additional-drivers
 # `diff -urq <sources> <upstream sources>`.
 # After that we can create the tag: `git tag -a v2.30.8-xcpng -m "v2.30.8-xcpng"`,
 # push the commits and tag.
-Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
-Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1003: 0003-Add-TrueNAS-multipath-config.patch
-Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
-Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
-Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
-Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
-Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
-Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
-Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch1015: 0015-Remove-SR_PROBE-from-ZFS-capabilities-37.patch
-Patch1016: 0016-Fix-vdi-ref-when-static-vdis-are-used.patch
-Patch1017: 0017-Tell-users-not-to-edit-multipath.conf-directly.patch
-Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
-Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
+TODO
 
 %description
 This package contains storage backends used in XCP
@@ -119,6 +106,8 @@ rm -rf $RPM_BUILD_ROOT
 %systemd_post storage-init.service
 %systemd_post usb-scan.socket
 %systemd_post mpathcount.socket
+%systemd_post sr_health_check.timer
+%systemd_post sr_health_check.service
 
 # On upgrade, migrate from the old statefile to the new statefile so that
 # storage is not reinitialized.
@@ -136,6 +125,9 @@ if [ -e /etc/multipath.conf -a ! -h /etc/multipath.conf ]; then
 fi
 update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.xenserver/multipath.conf 90
 
+systemctl enable sr_health_check.timer
+systemctl start sr_health_check.timer
+
 # XCP-ng: enable linstor-monitor by default.
 # However it won't start without linstor-controller.service
 systemctl enable linstor-monitor.service
@@ -148,6 +140,8 @@ systemctl enable linstor-monitor.service
 %systemd_preun storage-init.service
 %systemd_preun usb-scan.socket
 %systemd_preun mpathcount.socket
+%systemd_preun sr_health_check.timer
+%systemd_preun sr_health_check.service
 # Remove sm-multipath on upgrade or uninstall, to ensure it goes
 [ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
 # only remove in case of erase (but not at upgrade)
@@ -165,6 +159,8 @@ exit 0
 %systemd_postun sm-mpath-root.service
 %systemd_postun xs-sm.service
 %systemd_postun storage-init.service
+%systemd_postun sr_health_check.timer
+%systemd_postun sr_health_check.service
 if [ $1 -eq 0 ]; then
     [ ! -d /etc/lvm/master ] || rm -Rf /etc/lvm/master || exit $?
     cp -f /etc/lvm/lvm.conf.orig /etc/lvm/lvm.conf || exit $?
@@ -405,6 +401,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/cbtutil.pyc
 /opt/xensource/sm/cbtutil.pyo
 /opt/xensource/sm/multipath-root-setup
+/opt/xensource/sm/sr_health_check.py
+/opt/xensource/sm/sr_health_check.pyc
+/opt/xensource/sm/sr_health_check.pyo
 %dir /opt/xensource/sm/plugins
 /opt/xensource/sm/plugins/__init__.py*
 /sbin/mpathutil
@@ -417,6 +416,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/mpathcount.service
 %{_unitdir}/mpathcount.socket
 %{_unitdir}/storage-init.service
+%{_unitdir}/sr_health_check.timer
+%{_unitdir}/sr_health_check.service
 %config /etc/udev/rules.d/65-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
 %config /etc/udev/rules.d/58-xapi.rules
@@ -475,6 +476,21 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Fri Oct 13 2023 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-7.1
+- Sync with hotfix XS82ECU1051
+- - TODO: Update XCP-ng patches
+- *** Upstream changelog ***
+- * Thu Sep 28 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-7
+- - CP-45514: set ownership and perms on backeend device
+- * Fri Aug 04 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-6
+- - Fixes for CA-379329, monitor for missing iSCSI sessions
+- * Fri Jun 30 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-5
+- - CA-375968: multi session iSCSI updates
+- * Fri Jun 30 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-4
+- - Rebuild
+- * Mon Jun 26 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-3
+- - Backport fix for CA-378768
+
 * Fri Aug 25 2023 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.30.8-2.3
 - Do not overwrite multipath.conf if users made changes
 - Add warning to multipath.conf to prevent future modifications

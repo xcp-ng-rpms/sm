@@ -1,0 +1,32 @@
+CA-375968: multi session iSCSI updates
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Make iSCSI multi session robust to discovery failures as
+well as login failures. Some of the sessions are permitted
+to fail so long as at least one successfully connects.
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/LVHDoISCSISR.py |    8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
+index 42b17b8..20e5ba6 100755
+--- a/drivers/LVHDoISCSISR.py
++++ b/drivers/LVHDoISCSISR.py
+@@ -483,10 +483,10 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+             for i in self.iscsiSRs:
+                 try:
+                     i.attach(sr_uuid)
+-                except SR.SROSError, inst:
+-                    # Some iscsi objects can fail login but not all. Storing exception
+-                    if inst.errno == 141:
+-                        util.SMlog("Connection failed for target %s, continuing.." %i.target)
++                except SR.SROSError as inst:
++                    # Some iscsi objects can fail login/discovery but not all. Storing exception
++                    if inst.errno in [141, 83]:
++                        util.SMlog("Connection failed for target %s, continuing.." % i.target)
+                         stored_exception = inst
+                         continue
+                     else:

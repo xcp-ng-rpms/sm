@@ -1,4 +1,4 @@
-From ece61a8594f7337fb86bb1ea4893d43d8c554fec Mon Sep 17 00:00:00 2001
+From 696bd1cac5552ff3559fa229bc376cfb0fbe4092 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
 Subject: [PATCH 06/19] Re-add the ext4 driver for users who need to transition
@@ -20,7 +20,7 @@ creation.
  create mode 100644 drivers/EXT4SR.py
 
 diff --git a/Makefile b/Makefile
-index 4619e82..fa594ad 100755
+index f93b7be..9bc0a9d 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -21,6 +21,7 @@ SM_DRIVERS += CephFS
@@ -287,5 +287,5 @@ index 327103f..867c789 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.30.2
+2.41.0
 

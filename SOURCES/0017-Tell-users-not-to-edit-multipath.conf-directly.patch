@@ -1,4 +1,4 @@
-From 341ac817e7df747233bc0147a9353f8a308373eb Mon Sep 17 00:00:00 2001
+From 9e7f3ac4bcd60a96c29056539976ce496418f898 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 27 Jan 2023 12:03:15 +0100
 Subject: [PATCH 17/19] Tell users not to edit multipath.conf directly
@@ -30,5 +30,5 @@ index 1073faa..3de1144 100644
  # multipathd.
  # For information on the syntax refer to `man multipath.conf` and the examples
 -- 
-2.30.2
+2.41.0
 

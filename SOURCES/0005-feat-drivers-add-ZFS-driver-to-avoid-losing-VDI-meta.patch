@@ -1,4 +1,4 @@
-From 9cb3f6724c62bfda5eaf5a29952c4d0b83dcffdf Mon Sep 17 00:00:00 2001
+From dbfbe5fb194286c502a2e40fe6d6f4a1eb82526e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
 Subject: [PATCH 05/19] feat(drivers): add ZFS driver to avoid losing VDI
@@ -13,7 +13,7 @@ Subject: [PATCH 05/19] feat(drivers): add ZFS driver to avoid losing VDI
  create mode 100644 drivers/ZFSSR.py
 
 diff --git a/Makefile b/Makefile
-index 8f06e91..4619e82 100755
+index 0a10470..f93b7be 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -20,6 +20,7 @@ SM_DRIVERS += LVHDoFCoE
@@ -201,5 +201,5 @@ index ad1ee86..327103f 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.30.2
+2.41.0
 

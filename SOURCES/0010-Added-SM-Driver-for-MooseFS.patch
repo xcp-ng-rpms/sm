@@ -1,4 +1,4 @@
-From c1483fc0d2394cf297ff304ee09faafd2b2b2143 Mon Sep 17 00:00:00 2001
+From 769a4b9d253cf14ed6f37ab06c77dcef5c22fd50 Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
 Subject: [PATCH 10/19] Added SM Driver for MooseFS
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100644 tests/test_MooseFSSR.py
 
 diff --git a/Makefile b/Makefile
-index 83a9e0b..ab9a15e 100755
+index 609e182..b0ae353 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -23,6 +23,7 @@ SM_DRIVERS += GlusterFS
@@ -386,5 +386,5 @@ index 0000000..5a61cf5
 +        mfssr.detach('asr_uuid')
 +        self.assertTrue(mfssr.attached)
 -- 
-2.30.2
+2.41.0
 

@@ -1,4 +1,4 @@
-From dec7d21fc5380fc6c2866fbfe8dcece9e937071c Mon Sep 17 00:00:00 2001
+From b06f04fcf8a8aefe69d4300cbaa3fc9821dd8100 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH 07/19] feat(drivers): add LinstorSR driver
@@ -52,7 +52,7 @@ module imports are protected by try.. except... blocks.
 
 - Provide a linstor-monitor daemon to check master changes
 ---
- Makefile                        |    9 +
+ Makefile                        |   10 +-
  drivers/LinstorSR.py            | 2100 +++++++++++++++++++++++++++++++
  drivers/XE_SR_ERRORCODES.xml    |   36 +
  drivers/cleanup.py              |  366 +++++-
@@ -66,7 +66,7 @@ module imports are protected by try.. except... blocks.
  linstor/linstor-monitord.c      |  402 ++++++
  systemd/linstor-monitor.service |   13 +
  tests/mocks/linstor/__init__.py |    0
- 14 files changed, 5361 insertions(+), 29 deletions(-)
+ 14 files changed, 5361 insertions(+), 30 deletions(-)
  create mode 100755 drivers/LinstorSR.py
  create mode 100755 drivers/linstor-manager
  create mode 100755 drivers/linstorjournaler.py
@@ -78,7 +78,7 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index fa594ad..83a9e0b 100755
+index 9bc0a9d..609e182 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -8,6 +8,7 @@ SM_DRIVERS += udev
@@ -99,7 +99,7 @@ index fa594ad..83a9e0b 100755
  SM_LIBS += lvhdutil
  SM_LIBS += cifutils
  SM_LIBS += xs_errors
-@@ -99,6 +103,7 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
+@@ -100,6 +104,7 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
  .PHONY: build
  build:
  	make -C dcopy 
@@ -107,16 +107,16 @@ index fa594ad..83a9e0b 100755
  
  .PHONY: precommit
  precommit: build
-@@ -174,6 +179,8 @@ install: precheck
+@@ -179,6 +184,8 @@ install: precheck
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
- 	install -m 644 systemd/storage-init.service \
+ 	install -m 644 systemd/sr_health_check.timer \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
 +	install -m 644 systemd/linstor-monitor.service \
 +	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
  	for i in $(UDEV_RULES); do \
  	  install -m 644 udev/$$i.rules \
  	    $(SM_STAGING)$(UDEV_RULES_DIR); done
-@@ -194,6 +201,7 @@ install: precheck
+@@ -199,6 +206,7 @@ install: precheck
  	cd $(SM_STAGING)$(SM_DEST) && rm -f OCFSoHBASR
  	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
  	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
@@ -124,7 +124,7 @@ index fa594ad..83a9e0b 100755
  	install -m 755 drivers/lvhd-thin $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
  	install -m 755 drivers/on_slave.py $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)/on-slave
  	install -m 755 drivers/testing-hooks $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
-@@ -212,6 +220,7 @@ install: precheck
+@@ -217,6 +225,7 @@ install: precheck
  	install -m 755 scripts/kickpipe $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/set-iscsi-initiator $(SM_STAGING)$(LIBEXEC)
  	$(MAKE) -C dcopy install DESTDIR=$(SM_STAGING)
@@ -132,6 +132,11 @@ index fa594ad..83a9e0b 100755
  	ln -sf $(SM_DEST)blktap2.py $(SM_STAGING)$(BIN_DEST)/blktap2
  	ln -sf $(SM_DEST)lcache.py $(SM_STAGING)$(BIN_DEST)tapdisk-cache-stats
  	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
+@@ -230,4 +239,3 @@ install: precheck
+ .PHONY: clean
+ clean:
+ 	rm -rf $(SM_STAGING)
+-
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
 new file mode 100755
 index 0000000..8be1836
@@ -5675,5 +5680,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.30.2
+2.41.0
 

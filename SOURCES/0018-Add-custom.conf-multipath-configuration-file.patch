@@ -1,4 +1,4 @@
-From c6b87140a83b81e5c40a76fd0633f44fe0cb49ef Mon Sep 17 00:00:00 2001
+From 20616a73ecb5f6a4c2609768273b33280d294ee6 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 27 Jan 2023 12:23:13 +0100
 Subject: [PATCH 18/19] Add custom.conf multipath configuration file
@@ -27,5 +27,5 @@ index 0000000..3c8583f
 +
 +# Refer to "man multipath.conf"
 -- 
-2.30.2
+2.41.0
 

@@ -1,4 +1,4 @@
-From ca464c9f43c5e52420b75f37854cf5db826a929c Mon Sep 17 00:00:00 2001
+From b7d3ea782aafcc6a5a7dcab7242e7da2895c84b2 Mon Sep 17 00:00:00 2001
 From: Mark Syms <mark.syms@citrix.com>
 Date: Thu, 20 May 2021 17:40:06 +0100
 Subject: [PATCH 01/19] backport of ccd121cc248d79b749a63d4ad099e6d5f4b8b588:
@@ -67,7 +67,7 @@ index cfee071..dd8e20b 100755
          return lvutil.srlist_toxml(
                  lvutil.scan_srlist(lvhdutil.VG_PREFIX, self.dconf['device']),
 diff --git a/drivers/SR.py b/drivers/SR.py
-index 3311e55..ad28649 100755
+index 8cb516d..be693d6 100755
 --- a/drivers/SR.py
 +++ b/drivers/SR.py
 @@ -49,6 +49,15 @@ class SROSError(SRException):
@@ -87,5 +87,5 @@ index 3311e55..ad28649 100755
  def registerSR(SRClass):
      """Register SR with handler. All SR subclasses should call this in 
 -- 
-2.30.2
+2.41.0
 

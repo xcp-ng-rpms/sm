@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.0.10
-Release: 1.2%{?xsrel}%{?dist}
+Release: 1.3%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -67,6 +67,9 @@ Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
 Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
 Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
 Patch1022: 0022-Fix-vdi-ref-when-static-vdis-are-used.patch
+Patch1023: 0023-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
+Patch1024: 0024-Support-IPv6-for-NFS-ISO-SR.patch
+Patch1025: 0025-Support-IPv6-in-Ceph-Driver.patch
 
 %description
 This package contains storage backends used in XCP
@@ -292,6 +295,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 # XCP-ng
+/etc/systemd/system/drbd-reactor.service.d/override.conf
 /etc/systemd/system/linstor-satellite.service.d/override.conf
 /etc/systemd/system/var-lib-linstor.service
 /etc/xapi.d/plugins/linstor-manager
@@ -339,6 +343,26 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
+* Fri Jan 12 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.10-1.3
+- Add 0023-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
+- Add 0024-Support-IPv6-for-NFS-ISO-SR.patch
+- Add 0025-Support-IPv6-in-Ceph-Driver.patch
+- Import sm 8.2 LINSTOR fixes on 8.3:
+- Assume VDI is always a VHD when the info is missing during cleanup
+- Remove SR lock during thin attach/detach
+- Ensure database is mounted during scan
+- Restart drbd-reactor in case of failure
+- Retry in case of failure during mkfs call on database
+- Avoid diskless creation when a new resource is added
+- Remove diskless after VDI.detach calls
+- Ignore volumes marked with a DELETED flag in GC
+- Ensure detach never fails on plugin failure
+- Don't try to repair persistent volumes in GC
+- Wait for a "ready" state during attach to open the DRBD path
+- GC support resized volumes
+- Ensure we can deflate on any host after a journal rollback
+- Robustify SR destroy
+
 * Tue Sep 19 2023 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.10-1.2
 - Import sm 8.2 LINSTOR fixes on 8.3:
 - Ensure we always have a device path during leaf-coalesce calls

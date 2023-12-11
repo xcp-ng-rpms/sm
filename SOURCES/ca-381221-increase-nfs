@@ -1,0 +1,72 @@
+CA-381221: Increase NFS timeouts to the expected value
+
+From: Ross Lagerwall <ross.lagerwall@citrix.com>
+
+Newer kernels have more reliable NFS timeouts but they also do not
+behave quite like the manpage describes regarding major timeouts with
+soft TCP NFS mounts.
+
+From experimentation and reading the code, a major timeout occurs after
+min(600, (timeo/10) * (retrans + 1)) seconds.
+
+With the current defaults, that means 40 seconds. However, the intention
+with CA-302514 was to set it to 100 seconds so increase timeo and
+retrans accordingly.
+
+Signed-off-by: Ross Lagerwall <ross.lagerwall@citrix.com>
+---
+ drivers/nfs.py      |    4 ++--
+ tests/test_ISOSR.py |    4 ++--
+ tests/test_NFSSR.py |    4 ++--
+ 3 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/nfs.py b/drivers/nfs.py
+index a40b8ed..23dca28 100644
+--- a/drivers/nfs.py
++++ b/drivers/nfs.py
+@@ -273,7 +273,7 @@ def get_supported_nfs_versions(server):
+                            (server))
+ 
+ def get_nfs_timeout(other_config):
+-    nfs_timeout = 100
++    nfs_timeout = 200
+ 
+     if other_config.has_key('nfs-timeout'):
+         val = int(other_config['nfs-timeout'])
+@@ -285,7 +285,7 @@ def get_nfs_timeout(other_config):
+     return nfs_timeout
+ 
+ def get_nfs_retrans(other_config):
+-    nfs_retrans = 3
++    nfs_retrans = 4
+ 
+     if other_config.has_key('nfs-retrans'):
+         val = int(other_config['nfs-retrans']) 
+diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
+index ea2a275..7655f14 100644
+--- a/tests/test_ISOSR.py
++++ b/tests/test_ISOSR.py
+@@ -88,8 +88,8 @@ class TestISOSR_overNFS(unittest.TestCase):
+                                            'aServer',
+                                            '/aLocation',
+                                            'tcp',
+-                                           retrans=3,
+-                                           timeout=100,
++                                           retrans=4,
++                                           timeout=200,
+                                            useroptions='',
+                                            nfsversion='aNfsversionChanged')
+ 
+diff --git a/tests/test_NFSSR.py b/tests/test_NFSSR.py
+index e203140..c683634 100644
+--- a/tests/test_NFSSR.py
++++ b/tests/test_NFSSR.py
+@@ -128,6 +128,6 @@ class TestNFSSR(unittest.TestCase):
+                                            '/aServerpath/UUID',
+                                            'tcp',
+                                            useroptions='options',
+-                                           timeout=100,
++                                           timeout=200,
+                                            nfsversion='aNfsversionChanged',
+-                                           retrans=3)
++                                           retrans=4)

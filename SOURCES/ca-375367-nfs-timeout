@@ -1,0 +1,129 @@
+CA-375367 NFS timeout parameters not always set correctly
+
+From: Tim Smith <tim.smith@citrix.com>
+
+The NFS timeout and retrans configuration values whose defaults were
+altered in CA-302514 are only read during attach. There are some other
+places where the mount could be called from which would get some
+additional defaults hard-coded into the arguments for mount_remotepath()
+instead.
+
+Move the calls which extract the timeout and retrans configuration
+values down into the mount_remotepath() method and remove the ability to
+pass these values in (it was only ever used for passing in the values
+obtained from the config anyway). This will ensure that the correct
+defaults are always applied.
+
+Also, extract these defaults for when we're mounting an ISOSR if the
+protocol is 'nfs_iso', so as to avoid priming the kernel with the wrong
+values for the NFS server in question.
+---
+ drivers/ISOSR.py    |   13 ++++++++-----
+ drivers/NFSSR.py    |   17 +++++++----------
+ drivers/SR.py       |    1 +
+ tests/test_ISOSR.py |    3 +++
+ 4 files changed, 19 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
+index 5b12683..1094a71 100755
+--- a/drivers/ISOSR.py
++++ b/drivers/ISOSR.py
+@@ -314,9 +314,12 @@ class ISOSR(SR.SR):
+                 # to the process waiting.
+                 serv_path = location.split(':')
+                 util._testHost(serv_path[0], NFSPORT, 'NFSTarget')
++                # Extract timeout and retrans values, if any
++                io_timeout = nfs.get_nfs_timeout(self.other_config)
++                io_retrans = nfs.get_nfs_retrans(self.other_config)
+                 nfs.soft_mount(self.mountpoint, serv_path[0], serv_path[1],
+-                               'tcp', useroptions=options,
+-                               nfsversion=self.nfsversion)
++                               'tcp', useroptions=options, nfsversion=self.nfsversion,
++                               timeout=io_timeout, retrans=io_retrans)
+             else:
+                 smb3_fail_reason = None
+                 if self.smbversion in SMB_VERSION_3:
+@@ -482,10 +485,10 @@ class ISOSR(SR.SR):
+         self.physical_utilisation = util.get_fs_utilisation(self.path)
+         self.virtual_allocation = self.physical_size
+ 
+-        other_config = self.session.xenapi.SR.get_other_config(self.sr_ref)
++        self.other_config = self.session.xenapi.SR.get_other_config(self.sr_ref)
+ 
+-        if other_config.has_key('xenserver_tools_sr') and \
+-                other_config['xenserver_tools_sr'] == "true":
++        if 'xenserver_tools_sr' in self.other_config and \
++                self.other_config['xenserver_tools_sr'] == "true":
+             # Out of all the xs-tools ISOs which exist in this dom0, we mark
+             # only one as the official one.
+ 
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index 1fd32b4..8e8595e 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -135,25 +135,22 @@ class NFSSR(FileSR.SharedFileSR):
+         if not self._checkmount():
+             self.validate_remotepath(False)
+             util._testHost(self.dconf['server'], NFSPORT, 'NFSTarget')
+-            #Extract timeout and retrans values, if any
+-            io_timeout = nfs.get_nfs_timeout(self.other_config)
+-            io_retrans = nfs.get_nfs_retrans(self.other_config)
+-            self.mount_remotepath(sr_uuid, timeout=io_timeout, 
+-                                  retrans=io_retrans)
+-
++            self.mount_remotepath(sr_uuid)
+             self._check_hardlinks()
+         self.attached = True
+ 
+-
+-    def mount_remotepath(self, sr_uuid, timeout=5, retrans=5):
++    def mount_remotepath(self, sr_uuid):
+         if not self._checkmount():
+             # FIXME: What is the purpose of this check_server?
+             # It doesn't stop us from continuing if the server
+             # doesn't support the requested version. We fail 
+             # in mount instead
+             self.check_server()
+-            self.mount(self.path, self.remotepath, 
+-                       timeout=timeout, retrans=retrans)
++            # Extract timeout and retrans values, if any
++            io_timeout = nfs.get_nfs_timeout(self.other_config)
++            io_retrans = nfs.get_nfs_retrans(self.other_config)
++            self.mount(self.path, self.remotepath,
++                       timeout=io_timeout, retrans=io_retrans)
+ 
+ 
+     def probe(self):
+diff --git a/drivers/SR.py b/drivers/SR.py
+index 8cb516d..aa5a6b1 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -90,6 +90,7 @@ class SR(object):
+           srcmd: SRCommand instance, contains parsed arguments
+         """
+         try:
++            self.other_config = {}
+             self.srcmd = srcmd
+             self.dconf = srcmd.dconf
+             if srcmd.params.has_key('session_ref'):
+diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
+index 914b961..ea2a275 100644
+--- a/tests/test_ISOSR.py
++++ b/tests/test_ISOSR.py
+@@ -14,6 +14,7 @@ class FakeISOSR(ISOSR.ISOSR):
+     sr_ref = None
+     session = None
+     srcmd = None
++    other_config = {}
+ 
+     def __init__(self, srcmd, none):
+         self.dconf = srcmd.dconf
+@@ -87,6 +88,8 @@ class TestISOSR_overNFS(unittest.TestCase):
+                                            'aServer',
+                                            '/aLocation',
+                                            'tcp',
++                                           retrans=3,
++                                           timeout=100,
+                                            useroptions='',
+                                            nfsversion='aNfsversionChanged')
+ 

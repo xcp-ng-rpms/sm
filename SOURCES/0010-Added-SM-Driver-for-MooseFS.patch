@@ -1,4 +1,4 @@
-From 769a4b9d253cf14ed6f37ab06c77dcef5c22fd50 Mon Sep 17 00:00:00 2001
+From 48c2aaeca4175439773ca97a91c08c16e74c397a Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
 Subject: [PATCH 10/19] Added SM Driver for MooseFS
@@ -386,5 +386,5 @@ index 0000000..5a61cf5
 +        mfssr.detach('asr_uuid')
 +        self.assertTrue(mfssr.attached)
 -- 
-2.41.0
+2.42.0
 

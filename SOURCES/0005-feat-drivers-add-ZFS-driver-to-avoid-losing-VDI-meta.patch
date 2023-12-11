@@ -1,4 +1,4 @@
-From dbfbe5fb194286c502a2e40fe6d6f4a1eb82526e Mon Sep 17 00:00:00 2001
+From 5d3a638c94691eb2794bfb18d0904bf394ba5066 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
 Subject: [PATCH 05/19] feat(drivers): add ZFS driver to avoid losing VDI
@@ -25,10 +25,10 @@ index 0a10470..f93b7be 100755
  SM_LIBS := SR
  SM_LIBS += SRCommand
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 97236fe..1f58adc 100755
+index de074ce..0b4b250 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -887,5 +887,15 @@
+@@ -894,5 +894,15 @@
              <value>1200</value>
          </code>
  
@@ -201,5 +201,5 @@ index ad1ee86..327103f 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.41.0
+2.42.0
 

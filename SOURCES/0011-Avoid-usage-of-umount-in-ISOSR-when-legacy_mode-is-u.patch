@@ -1,4 +1,4 @@
-From b53271b52d8b940ed6cfdb341431d76947ade1ea Mon Sep 17 00:00:00 2001
+From cf1059305e6816d0ee5e21d80f8d2e34fae5a496 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Dec 2021 09:28:37 +0100
 Subject: [PATCH 11/19] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
@@ -15,10 +15,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 62 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
-index 5b12683..3508548 100755
+index 1094a71..0206ef9 100755
 --- a/drivers/ISOSR.py
 +++ b/drivers/ISOSR.py
-@@ -455,10 +455,9 @@ class ISOSR(SR.SR):
+@@ -458,10 +458,9 @@ class ISOSR(SR.SR):
  
      def detach(self, sr_uuid):
          """Std. detach"""
@@ -33,10 +33,10 @@ index 5b12683..3508548 100755
              util.pread(["umount", self.mountpoint]);
          except util.CommandException, inst:
 diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
-index 914b961..a5b3290 100644
+index 7655f14..03c8851 100644
 --- a/tests/test_ISOSR.py
 +++ b/tests/test_ISOSR.py
-@@ -19,6 +19,65 @@ class FakeISOSR(ISOSR.ISOSR):
+@@ -20,6 +20,65 @@ class FakeISOSR(ISOSR.ISOSR):
          self.dconf = srcmd.dconf
          self.srcmd = srcmd
  
@@ -103,5 +103,5 @@ index 914b961..a5b3290 100644
  class TestISOSR_overNFS(unittest.TestCase):
  
 -- 
-2.41.0
+2.42.0
 

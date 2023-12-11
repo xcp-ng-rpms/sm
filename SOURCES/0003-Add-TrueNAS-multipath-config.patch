@@ -1,4 +1,4 @@
-From a8168e152d830f4d0f7fd085d52eab2eceab6f0a Mon Sep 17 00:00:00 2001
+From cf4a8c985c21074b9fe6e145eeb444f58238e180 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 15:26:43 +0200
 Subject: [PATCH 03/19] Add TrueNAS multipath config
@@ -10,7 +10,7 @@ forked git repo for sm in the xcp-ng github organisation.
  1 file changed, 7 insertions(+)
 
 diff --git a/multipath/multipath.conf b/multipath/multipath.conf
-index aaf45e5..1073faa 100644
+index 8a46a19..5ce7e99 100644
 --- a/multipath/multipath.conf
 +++ b/multipath/multipath.conf
 @@ -103,4 +103,11 @@ devices {
@@ -26,5 +26,5 @@ index aaf45e5..1073faa 100644
 +	}
  }
 -- 
-2.41.0
+2.42.0
 

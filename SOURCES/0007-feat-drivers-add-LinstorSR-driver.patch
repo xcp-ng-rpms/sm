@@ -1,4 +1,4 @@
-From b06f04fcf8a8aefe69d4300cbaa3fc9821dd8100 Mon Sep 17 00:00:00 2001
+From 9b4b6a94c3936f53e6428e5992ce948745884533 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH 07/19] feat(drivers): add LinstorSR driver
@@ -2244,10 +2244,10 @@ index 0000000..8be1836
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 1f58adc..fa87109 100755
+index 0b4b250..2b63c35 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -898,4 +898,40 @@
+@@ -905,4 +905,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -5680,5 +5680,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.41.0
+2.42.0
 

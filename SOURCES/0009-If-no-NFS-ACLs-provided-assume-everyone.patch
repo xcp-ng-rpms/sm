@@ -1,4 +1,4 @@
-From 68e67e63a4f20f84a7482d0fea7d06bdfaa003b9 Mon Sep 17 00:00:00 2001
+From 9fe6a3df3676c9ab8587e8a77d4d28896dc65d07 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Thu, 25 Feb 2021 09:54:52 +0100
 Subject: [PATCH 09/19] If no NFS ACLs provided, assume everyone:
@@ -16,7 +16,7 @@ Relevant issues:
  2 files changed, 35 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/nfs.py b/drivers/nfs.py
-index a40b8ed..c06cfc4 100644
+index 23dca28..80b71a5 100644
 --- a/drivers/nfs.py
 +++ b/drivers/nfs.py
 @@ -202,7 +202,11 @@ def scan_exports(target):
@@ -71,5 +71,5 @@ index 71800ab..cef414f 100644
 +        self.assertEqual(len(pread2.mock_calls), 1)
 +        pread2.assert_called_with(['/usr/sbin/showmount', '--no-headers', '-e', 'aServer'])
 -- 
-2.41.0
+2.42.0
 

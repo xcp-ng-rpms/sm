@@ -1,4 +1,4 @@
-From b018cd292425214562687ce11e1cdaec05e0c838 Mon Sep 17 00:00:00 2001
+From 9f577219491e316ddd41a1671549a9a92e7a3dd8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
 Subject: [PATCH 13/19] Fix is_open call for many drivers (#25)
@@ -34,7 +34,7 @@ index a2f7484..323718d 100644
              self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
          else:
 diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
-index 1fd32b4..e3ab325 100755
+index 8e8595e..52fbc5f 100755
 --- a/drivers/NFSSR.py
 +++ b/drivers/NFSSR.py
 @@ -83,9 +83,12 @@ class NFSSR(FileSR.SharedFileSR):
@@ -104,5 +104,5 @@ index 0d60d96..534e6c9 100755
  
      driver = SR.driver(srType)
 -- 
-2.41.0
+2.42.0
 

@@ -1,6 +1,6 @@
-%global package_speccommit 9faa87ad6b5c28edf9354b9d89b4f3c9c7638e5e
+%global package_speccommit 46560dabc7321720d3fadd32f43d67677f88cfe5
 %global usver 2.30.8
-%global xsver 7
+%global xsver 9
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Series applies on top of v2.29.0 and includes all later tags to 2.30.7
 # after that tag the commits are in the patchqueue here.
@@ -50,6 +50,10 @@ Patch30: ca-372772-fix-miscalculation
 Patch31: ca-375968-multi-session-iscsi
 Patch32: ca-379329-check-for-missing
 Patch33: cp-45514-set-ownership-and
+Patch34: ca-379315-use-xe_sr_errorcodes
+Patch35: ca-375367-nfs-timeout
+Patch36: ca-381221-increase-nfs
+Patch37: cp-45927-change-equalogic-checker
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 Requires(post): systemd
 Requires(preun): systemd
@@ -401,6 +405,14 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Fri Oct 27 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-9
+- Backport fix for CP-45927, set Equalogic path checker
+
+* Thu Oct 19 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-8
+- Backport fix for CA-375367
+- Backport fix for CA-379315
+- Backport fix for CA-381221
+
 * Thu Sep 28 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-7
 - CP-45514: set ownership and perms on backeend device
 

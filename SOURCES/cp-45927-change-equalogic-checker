@@ -1,0 +1,22 @@
+CP-45927: set multipath checker for Equalogic 100E-00 to tur
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ multipath/multipath.conf |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/multipath/multipath.conf b/multipath/multipath.conf
+index aaf45e5..8a46a19 100644
+--- a/multipath/multipath.conf
++++ b/multipath/multipath.conf
+@@ -68,7 +68,7 @@ devices {
+ 		vendor			"EQLOGIC"
+ 		product			"100E-00"
+ 		path_grouping_policy	multibus
+-		path_checker		readsector0
++		path_checker		tur
+ 		failback		immediate
+ 		path_selector		"round-robin 0"
+ 		rr_min_io		3

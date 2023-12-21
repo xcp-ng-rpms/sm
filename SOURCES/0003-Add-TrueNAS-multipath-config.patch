@@ -1,7 +1,7 @@
 From cf4a8c985c21074b9fe6e145eeb444f58238e180 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 15:26:43 +0200
-Subject: [PATCH 03/19] Add TrueNAS multipath config
+Subject: [PATCH 03/21] Add TrueNAS multipath config
 
 This was a patch added to the sm RPM git repo before we had this
 forked git repo for sm in the xcp-ng github organisation.
@@ -26,5 +26,5 @@ index 8a46a19..5ce7e99 100644
 +	}
  }
 -- 
-2.42.0
+2.43.0
 

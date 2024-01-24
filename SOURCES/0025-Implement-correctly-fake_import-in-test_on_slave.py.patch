@@ -1,0 +1,35 @@
+From 1dde93cb983dfbefc1496827e8e43318ce54d978 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 23 Jan 2024 17:15:51 +0100
+Subject: [PATCH 25/25] Implement correctly fake_import in test_on_slave.py
+
+*args and **kwargs must be forwarded to __import__ otherwise
+the import context (global & local) can be incomplete to find
+local paths of external modules. In this situation,
+"ValueError: Empty module name" is thrown.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ tests/test_on_slave.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
+index 2095569..4b59f63 100644
+--- a/tests/test_on_slave.py
++++ b/tests/test_on_slave.py
+@@ -23,9 +23,9 @@ class Test_on_slave_is_open(unittest.TestCase):
+         'blktap2'
+     ]
+ 
+-    def fake_import(self, name, *args):
+-        print('Asked to import {}'.format(name))
+-        return self.mocks.get(name, self.real_import(name))
++    def fake_import(self, *args, **kwargs):
++        print('Asked to import {}'.format(args[0]))
++        return self.mocks.get(args[0], self.real_import(*args, **kwargs))
+ 
+     def setUp(self):
+         self.addCleanup(mock.patch.stopall)
+-- 
+2.43.0
+

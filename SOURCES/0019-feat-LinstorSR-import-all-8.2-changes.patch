@@ -1,4 +1,4 @@
-From d5207d60e872aa0be5c03be89d89310875700fd5 Mon Sep 17 00:00:00 2001
+From 600ee689dec6285e70d6288b00ffbc030782485b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
 Subject: [PATCH 19/25] feat(LinstorSR): import all 8.2 changes
@@ -6,26 +6,27 @@ Subject: [PATCH 19/25] feat(LinstorSR): import all 8.2 changes
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
  Makefile                                      |   13 +
- drivers/LinstorSR.py                          | 1440 ++++++++---
+ drivers/LinstorSR.py                          | 1453 ++++++++---
  drivers/blktap2.py                            |   23 +-
- drivers/cleanup.py                            |  341 ++-
- drivers/linstor-manager                       |  932 ++++++-
+ drivers/cleanup.py                            |  351 ++-
+ drivers/linstor-manager                       |  941 ++++++-
  drivers/linstorjournaler.py                   |   48 +-
- drivers/linstorvhdutil.py                     |  476 +++-
- drivers/linstorvolumemanager.py               | 2151 ++++++++++++++---
+ drivers/linstorvhdutil.py                     |  480 +++-
+ drivers/linstorvolumemanager.py               | 2244 +++++++++++++----
  drivers/on_slave.py                           |   23 +-
  drivers/tapdisk-pause                         |    8 +-
  drivers/util.py                               |  125 +-
  drivers/vhdutil.py                            |    5 +-
- .../drbd-reactor.service.d/override.conf      |    7 +
+ .../drbd-reactor.service.d/override.conf      |    6 +
  .../linstor-satellite.service.d/override.conf |    5 +
  etc/systemd/system/var-lib-linstor.service    |   21 +
  linstor/linstor-monitord.c                    |  199 +-
+ multipath/multipath.conf                      |    1 +
  scripts/fork-log-daemon                       |   36 +
  scripts/linstor-kv-tool                       |   84 +
  scripts/safe-umount                           |   39 +
  tests/test_on_slave.py                        |   10 +-
- 20 files changed, 5014 insertions(+), 972 deletions(-)
+ 21 files changed, 5054 insertions(+), 1061 deletions(-)
  create mode 100644 etc/systemd/system/drbd-reactor.service.d/override.conf
  create mode 100644 etc/systemd/system/linstor-satellite.service.d/override.conf
  create mode 100644 etc/systemd/system/var-lib-linstor.service
@@ -34,10 +35,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100755 scripts/safe-umount
 
 diff --git a/Makefile b/Makefile
-index 9cba307..cea5650 100755
+index 6f35949..701dd1f 100755
 --- a/Makefile
 +++ b/Makefile
-@@ -84,6 +84,7 @@ PLUGIN_SCRIPT_DEST := /etc/xapi.d/plugins/
+@@ -85,6 +85,7 @@ PLUGIN_SCRIPT_DEST := /etc/xapi.d/plugins/
  LIBEXEC := /opt/xensource/libexec/
  UDEV_RULES_DIR := /etc/udev/rules.d/
  UDEV_SCRIPTS_DIR := /etc/udev/scripts/
@@ -45,7 +46,7 @@ index 9cba307..cea5650 100755
  SYSTEMD_SERVICE_DIR := /usr/lib/systemd/system/
  INIT_DIR := /etc/rc.d/init.d/
  MPATH_CONF_DIR := /etc/multipath.xenserver/
-@@ -138,6 +139,9 @@ install: precheck
+@@ -140,6 +141,9 @@ install: precheck
  	mkdir -p $(SM_STAGING)$(UDEV_RULES_DIR)
  	mkdir -p $(SM_STAGING)$(UDEV_SCRIPTS_DIR)
  	mkdir -p $(SM_STAGING)$(INIT_DIR)
@@ -54,8 +55,8 @@ index 9cba307..cea5650 100755
 +	mkdir -p $(SM_STAGING)$(SYSTEMD_CONF_DIR)/linstor-satellite.service.d
  	mkdir -p $(SM_STAGING)$(SYSTEMD_SERVICE_DIR)
  	mkdir -p $(SM_STAGING)$(MPATH_CONF_DIR)
- 	mkdir -p $(SM_STAGING)$(MODPROBE_DIR)
-@@ -163,6 +167,12 @@ install: precheck
+ 	mkdir -p $(SM_STAGING)$(MPATH_CUSTOM_CONF_DIR)
+@@ -168,6 +172,12 @@ install: precheck
  	  $(SM_STAGING)/$(SM_DEST)
  	install -m 644 etc/logrotate.d/$(SMLOG_CONF) \
  	  $(SM_STAGING)/$(LOGROTATE_DIR)
@@ -68,7 +69,7 @@ index 9cba307..cea5650 100755
  	install -m 644 etc/make-dummy-sr.service \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
  	install -m 644 systemd/xs-sm.service \
-@@ -210,6 +220,9 @@ install: precheck
+@@ -215,6 +225,9 @@ install: precheck
  	install -m 755 drivers/iscsilib.py $(SM_STAGING)$(SM_DEST)
  	install -m 755 drivers/fcoelib.py $(SM_STAGING)$(SM_DEST)
  	mkdir -p $(SM_STAGING)$(LIBEXEC)
@@ -79,7 +80,7 @@ index 9cba307..cea5650 100755
  	install -m 755 scripts/check-device-sharing $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/usb_change $(SM_STAGING)$(LIBEXEC)
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index a72d43e..5f143e7 100755
+index a72d43e..c770dc7 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -19,25 +19,39 @@ from constants import CBTLOG_TAG
@@ -457,10 +458,10 @@ index a72d43e..5f143e7 100755
 -        self._master_uri = None
 -        self._vdi_shared_locked = False
 +        self._vdi_shared_time = 0
++
++        self._init_status = self.INIT_STATUS_NOT_SET
  
 -        self._initialized = False
-+        self._init_status = self.INIT_STATUS_NOT_SET
-+
 +        self._vdis_loaded = False
 +        self._all_volume_info_cache = None
 +        self._all_volume_metadata_cache = None
@@ -505,15 +506,15 @@ index a72d43e..5f143e7 100755
 +                            uri,
                              self._group_name,
 -                            logger=util.SMlog
--                        )
++                            logger=util.SMlog,
++                            attempt_count=attempt_count
+                         )
 -                        return
 -                    except Exception as e:
 -                        util.SMlog(
 -                            'Ignore exception. Failed to build LINSTOR '
 -                            'instance without session: {}'.format(e)
-+                            logger=util.SMlog,
-+                            attempt_count=attempt_count
-                         )
+-                        )
 -                return
 +                        # Only required if we are attaching from config using a non-special VDI.
 +                        # I.e. not an HA volume.
@@ -697,8 +698,14 @@ index a72d43e..5f143e7 100755
              raise xs_errors.XenError(
                  'LinstorSRCreate',
                  opterr='Redundancy greater than host count'
-@@ -472,15 +572,45 @@ class LinstorSR(SR.SR):
-                         opterr='group name must be unique'
+@@ -469,18 +569,50 @@ class LinstorSR(SR.SR):
+                 if group_name and group_name == self._group_name:
+                     raise xs_errors.XenError(
+                         'LinstorSRCreate',
+-                        opterr='group name must be unique'
++                        opterr='group name must be unique, already used by PBD {}'.format(
++                            xenapi.PBD.get_uuid(pbd)
++                        )
                      )
  
 +        if srs:
@@ -745,7 +752,7 @@ index a72d43e..5f143e7 100755
                  logger=util.SMlog
              )
              self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
-@@ -488,30 +618,83 @@ class LinstorSR(SR.SR):
+@@ -488,30 +620,83 @@ class LinstorSR(SR.SR):
              util.SMlog('Failed to create LINSTOR SR: {}'.format(e))
              raise xs_errors.XenError('LinstorSRCreate', opterr=str(e))
  
@@ -782,7 +789,9 @@ index a72d43e..5f143e7 100755
 +                'LinstorSRDelete',
 +                opterr='Cannot get controller node name'
 +            )
-+
+ 
+-            # TODO: Maybe remove all volumes unused by the SMAPI.
+-            # We must ensure it's a safe idea...
 +        host = None
 +        if node_name == 'localhost':
 +            host = util.get_this_host_ref(self.session)
@@ -792,7 +801,9 @@ index a72d43e..5f143e7 100755
 +                if r_name == node_name:
 +                    host = slave
 +                    break
-+
+ 
+-            self._linstor.destroy()
+-            Lock.cleanupAll(self.uuid)
 +        if not host:
 +            raise xs_errors.XenError(
 +                'LinstorSRDelete',
@@ -800,16 +811,12 @@ index a72d43e..5f143e7 100755
 +                    node_name
 +                )
 +            )
- 
--            # TODO: Maybe remove all volumes unused by the SMAPI.
--            # We must ensure it's a safe idea...
++
 +        try:
 +            self._update_drbd_reactor_on_all_hosts(
 +                controller_node_name=node_name, enabled=False
 +            )
- 
--            self._linstor.destroy()
--            Lock.cleanupAll(self.uuid)
++
 +            args = {
 +                'groupName': self._group_name,
 +            }
@@ -837,7 +844,7 @@ index a72d43e..5f143e7 100755
      @_locked_load
      def update(self, uuid):
          util.SMlog('LinstorSR.update for {}'.format(self.uuid))
-@@ -558,6 +741,9 @@ class LinstorSR(SR.SR):
+@@ -558,6 +743,9 @@ class LinstorSR(SR.SR):
  
      @_locked_load
      def scan(self, uuid):
@@ -847,7 +854,7 @@ index a72d43e..5f143e7 100755
          util.SMlog('LinstorSR.scan for {}'.format(self.uuid))
          if not self._linstor:
              raise xs_errors.XenError(
-@@ -565,12 +751,30 @@ class LinstorSR(SR.SR):
+@@ -565,12 +753,30 @@ class LinstorSR(SR.SR):
                  opterr='no such volume group: {}'.format(self._group_name)
              )
  
@@ -878,7 +885,7 @@ index a72d43e..5f143e7 100755
          # Update the database before the restart of the GC to avoid
          # bad sync in the process if new VDIs have been introduced.
          ret = super(LinstorSR, self).scan(self.uuid)
-@@ -588,10 +792,9 @@ class LinstorSR(SR.SR):
+@@ -588,10 +794,9 @@ class LinstorSR(SR.SR):
      # --------------------------------------------------------------------------
  
      def _shared_lock_vdi(self, vdi_uuid, locked=True):
@@ -891,7 +898,7 @@ index a72d43e..5f143e7 100755
          args = {
              'groupName': self._group_name,
              'srUuid': self.uuid,
-@@ -599,48 +802,128 @@ class LinstorSR(SR.SR):
+@@ -599,48 +804,128 @@ class LinstorSR(SR.SR):
              'locked': str(locked)
          }
  
@@ -1047,7 +1054,7 @@ index a72d43e..5f143e7 100755
  
      # --------------------------------------------------------------------------
      # Metadata.
-@@ -653,7 +936,7 @@ class LinstorSR(SR.SR):
+@@ -653,7 +938,7 @@ class LinstorSR(SR.SR):
  
              # Now update the VDI information in the metadata if required.
              xenapi = self.session.xenapi
@@ -1056,7 +1063,7 @@ index a72d43e..5f143e7 100755
              for vdi_uuid, volume_metadata in volumes_metadata.items():
                  try:
                      vdi_ref = xenapi.VDI.get_by_uuid(vdi_uuid)
-@@ -708,36 +991,43 @@ class LinstorSR(SR.SR):
+@@ -708,36 +993,43 @@ class LinstorSR(SR.SR):
          # Update size attributes of the SR parent class.
          self.virtual_allocation = valloc + virt_alloc_delta
  
@@ -1071,18 +1078,18 @@ index a72d43e..5f143e7 100755
 -        # Physical size contains the total physical size.
 -        # i.e. the sum of the sizes of all devices on all hosts, not the AVG.
 -        self.physical_size = self._linstor.physical_size
--
--        # `self._linstor.physical_free_size` contains the total physical free
--        # memory. If Thin provisioning is used we can't use it, we must use
--        # LINSTOR volume size to gives a good idea of the required
--        # usable memory to the users.
--        self.physical_utilisation = self._linstor.total_allocated_volume_size
 +        # We use the size of the smallest disk, this is an approximation that
 +        # ensures the displayed physical size is reachable by the user.
 +        (min_physical_size, pool_count) = self._linstor.get_min_physical_size()
 +        self.physical_size = min_physical_size * pool_count / \
 +            self._linstor.redundancy
  
+-        # `self._linstor.physical_free_size` contains the total physical free
+-        # memory. If Thin provisioning is used we can't use it, we must use
+-        # LINSTOR volume size to gives a good idea of the required
+-        # usable memory to the users.
+-        self.physical_utilisation = self._linstor.total_allocated_volume_size
+-
 -        # If Thick provisioning is used, we can use this line instead:
 -        # self.physical_utilisation = \
 -        #     self.physical_size - self._linstor.physical_free_size
@@ -1115,7 +1122,7 @@ index a72d43e..5f143e7 100755
          # 1. Get existing VDIs in XAPI.
          xenapi = self.session.xenapi
          xapi_vdi_uuids = set()
-@@ -745,8 +1035,8 @@ class LinstorSR(SR.SR):
+@@ -745,8 +1037,8 @@ class LinstorSR(SR.SR):
              xapi_vdi_uuids.add(xenapi.VDI.get_uuid(vdi))
  
          # 2. Get volumes info.
@@ -1126,7 +1133,7 @@ index a72d43e..5f143e7 100755
  
          # 3. Get CBT vdis.
          # See: https://support.citrix.com/article/CTX230619
-@@ -758,7 +1048,8 @@ class LinstorSR(SR.SR):
+@@ -758,7 +1050,8 @@ class LinstorSR(SR.SR):
  
          introduce = False
  
@@ -1136,7 +1143,7 @@ index a72d43e..5f143e7 100755
              has_clone_entries = list(self._journaler.get_all(
                  LinstorJournaler.CLONE
              ).items())
-@@ -782,6 +1073,9 @@ class LinstorSR(SR.SR):
+@@ -782,6 +1075,9 @@ class LinstorSR(SR.SR):
                  if not introduce:
                      continue
  
@@ -1146,7 +1153,7 @@ index a72d43e..5f143e7 100755
                  volume_metadata = volumes_metadata.get(vdi_uuid)
                  if not volume_metadata:
                      util.SMlog(
-@@ -836,10 +1130,10 @@ class LinstorSR(SR.SR):
+@@ -836,10 +1132,10 @@ class LinstorSR(SR.SR):
  
                  util.SMlog(
                      'Introducing VDI {} '.format(vdi_uuid) +
@@ -1159,7 +1166,7 @@ index a72d43e..5f143e7 100755
                      )
                  )
  
-@@ -857,7 +1151,7 @@ class LinstorSR(SR.SR):
+@@ -857,7 +1153,7 @@ class LinstorSR(SR.SR):
                      sm_config,
                      managed,
                      str(volume_info.virtual_size),
@@ -1168,7 +1175,7 @@ index a72d43e..5f143e7 100755
                  )
  
                  is_a_snapshot = volume_metadata.get(IS_A_SNAPSHOT_TAG)
-@@ -881,9 +1175,11 @@ class LinstorSR(SR.SR):
+@@ -881,9 +1177,11 @@ class LinstorSR(SR.SR):
              vdi = self.vdi(vdi_uuid)
              self.vdis[vdi_uuid] = vdi
  
@@ -1182,7 +1189,7 @@ index a72d43e..5f143e7 100755
  
              # 4.c. Update CBT status of disks either just added
              # or already in XAPI.
-@@ -940,7 +1236,7 @@ class LinstorSR(SR.SR):
+@@ -940,7 +1238,7 @@ class LinstorSR(SR.SR):
                  else:
                      geneology[vdi.parent] = [vdi_uuid]
              if not vdi.hidden:
@@ -1191,7 +1198,7 @@ index a72d43e..5f143e7 100755
  
          # 9. Remove all hidden leaf nodes to avoid introducing records that
          # will be GC'ed.
-@@ -1014,13 +1310,12 @@ class LinstorSR(SR.SR):
+@@ -1014,13 +1312,12 @@ class LinstorSR(SR.SR):
              util.SMlog('Cannot deflate missing VDI {}'.format(vdi_uuid))
              return
  
@@ -1211,7 +1218,7 @@ index a72d43e..5f143e7 100755
  
      def _handle_interrupted_clone(
          self, vdi_uuid, clone_info, force_undo=False
-@@ -1033,7 +1328,7 @@ class LinstorSR(SR.SR):
+@@ -1033,7 +1330,7 @@ class LinstorSR(SR.SR):
          base_uuid, snap_uuid = clone_info.split('_')
  
          # Use LINSTOR data because new VDIs may not be in the XAPI.
@@ -1220,7 +1227,7 @@ index a72d43e..5f143e7 100755
  
          # Check if we don't have a base VDI. (If clone failed at startup.)
          if base_uuid not in volume_names:
-@@ -1089,7 +1384,7 @@ class LinstorSR(SR.SR):
+@@ -1089,7 +1386,7 @@ class LinstorSR(SR.SR):
          if base_type == vhdutil.VDI_TYPE_VHD:
              vhd_info = self._vhdutil.get_vhd_info(base_uuid, False)
              if vhd_info.hidden:
@@ -1229,7 +1236,7 @@ index a72d43e..5f143e7 100755
          elif base_type == vhdutil.VDI_TYPE_RAW and \
                  base_metadata.get(HIDDEN_TAG):
              self._linstor.update_volume_metadata(
-@@ -1099,10 +1394,6 @@ class LinstorSR(SR.SR):
+@@ -1099,10 +1396,6 @@ class LinstorSR(SR.SR):
          # Remove the child nodes.
          if snap_uuid and snap_uuid in volume_names:
              util.SMlog('Destroying snap {}...'.format(snap_uuid))
@@ -1240,7 +1247,7 @@ index a72d43e..5f143e7 100755
  
              try:
                  self._linstor.destroy_volume(snap_uuid)
-@@ -1136,9 +1427,9 @@ class LinstorSR(SR.SR):
+@@ -1136,9 +1429,9 @@ class LinstorSR(SR.SR):
          # Inflate to the right size.
          if base_type == vhdutil.VDI_TYPE_VHD:
              vdi = self.vdi(vdi_uuid)
@@ -1253,7 +1260,7 @@ index a72d43e..5f143e7 100755
                  volume_size, vdi.capacity
              )
              self.vdis[vdi_uuid] = vdi
-@@ -1150,10 +1441,64 @@ class LinstorSR(SR.SR):
+@@ -1150,10 +1443,64 @@ class LinstorSR(SR.SR):
  
          util.SMlog('*** INTERRUPTED CLONE OP: rollback success')
  
@@ -1318,7 +1325,7 @@ index a72d43e..5f143e7 100755
      def _ensure_space_available(self, amount_needed):
          space_available = self._linstor.max_volume_size_allowed
          if (space_available < amount_needed):
-@@ -1199,8 +1544,6 @@ class LinstorVDI(VDI.VDI):
+@@ -1199,8 +1546,6 @@ class LinstorVDI(VDI.VDI):
      TYPE_RAW = 'raw'
      TYPE_VHD = 'vhd'
  
@@ -1327,7 +1334,7 @@ index a72d43e..5f143e7 100755
      # Metadata size given to the "S" param of vhd-util create.
      # "-S size (MB) for metadata preallocation".
      # Increase the performance when resize is called.
-@@ -1233,7 +1576,7 @@ class LinstorVDI(VDI.VDI):
+@@ -1233,7 +1578,7 @@ class LinstorVDI(VDI.VDI):
              if (
                  self.sr.srcmd.cmd == 'vdi_attach_from_config' or
                  self.sr.srcmd.cmd == 'vdi_detach_from_config'
@@ -1336,7 +1343,7 @@ index a72d43e..5f143e7 100755
                  self.vdi_type = vhdutil.VDI_TYPE_RAW
                  self.path = self.sr.srcmd.params['vdi_path']
              else:
-@@ -1297,11 +1640,11 @@ class LinstorVDI(VDI.VDI):
+@@ -1297,11 +1642,11 @@ class LinstorVDI(VDI.VDI):
  
          # 2. Compute size and check space available.
          size = vhdutil.validate_and_round_vhd_size(int(size))
@@ -1353,7 +1360,7 @@ index a72d43e..5f143e7 100755
          self.sr._ensure_space_available(volume_size)
  
          # 3. Set sm_config attribute of VDI parent class.
-@@ -1310,8 +1653,15 @@ class LinstorVDI(VDI.VDI):
+@@ -1310,8 +1655,15 @@ class LinstorVDI(VDI.VDI):
          # 4. Create!
          failed = False
          try:
@@ -1370,7 +1377,7 @@ index a72d43e..5f143e7 100755
              )
              volume_info = self._linstor.get_volume_info(self.uuid)
  
-@@ -1320,16 +1670,16 @@ class LinstorVDI(VDI.VDI):
+@@ -1320,16 +1672,16 @@ class LinstorVDI(VDI.VDI):
              if self.vdi_type == vhdutil.VDI_TYPE_RAW:
                  self.size = volume_info.virtual_size
              else:
@@ -1390,7 +1397,7 @@ index a72d43e..5f143e7 100755
              volume_info = self._linstor.get_volume_info(self.uuid)
  
              volume_metadata = {
-@@ -1344,6 +1694,13 @@ class LinstorVDI(VDI.VDI):
+@@ -1344,6 +1696,13 @@ class LinstorVDI(VDI.VDI):
                  METADATA_OF_POOL_TAG: ''
              }
              self._linstor.set_volume_metadata(self.uuid, volume_metadata)
@@ -1404,7 +1411,7 @@ index a72d43e..5f143e7 100755
              self._linstor.mark_volume_as_persistent(self.uuid)
          except util.CommandException as e:
              failed = True
-@@ -1364,11 +1721,11 @@ class LinstorVDI(VDI.VDI):
+@@ -1364,11 +1723,11 @@ class LinstorVDI(VDI.VDI):
                          '{}'.format(e)
                      )
  
@@ -1418,7 +1425,21 @@ index a72d43e..5f143e7 100755
  
          return VDI.VDI.get_params(self)
  
-@@ -1407,14 +1764,15 @@ class LinstorVDI(VDI.VDI):
+@@ -1401,20 +1760,28 @@ class LinstorVDI(VDI.VDI):
+                 'Failed to remove the volume (maybe is leaf coalescing) '
+                 'for {} err: {}'.format(self.uuid, e)
+             )
+-            raise xs_errors.XenError('VDIDelete', opterr=str(e))
++
++            try:
++                raise xs_errors.XenError('VDIDelete', opterr=str(e))
++            except LinstorVolumeManagerError as e:
++                if e.code != LinstorVolumeManagerError.ERR_VOLUME_DESTROY:
++                    raise xs_errors.XenError('VDIDelete', opterr=str(e))
++
++            return
+ 
+         if self.uuid in self.sr.vdis:
              del self.sr.vdis[self.uuid]
  
          # TODO: Check size after delete.
@@ -1436,13 +1457,16 @@ index a72d43e..5f143e7 100755
              self.sr.srcmd.params['vdi_uuid'] != self.uuid
          ) and self.sr._journaler.has_entries(self.uuid):
              raise xs_errors.XenError(
-@@ -1423,56 +1781,87 @@ class LinstorVDI(VDI.VDI):
+@@ -1423,56 +1790,87 @@ class LinstorVDI(VDI.VDI):
                  'scan SR first to trigger auto-repair'
              )
  
 -        writable = 'args' not in self.sr.srcmd.params or \
 -            self.sr.srcmd.params['args'][0] == 'true'
--
++        if not attach_from_config or self.sr._is_master:
++            writable = 'args' not in self.sr.srcmd.params or \
++                self.sr.srcmd.params['args'][0] == 'true'
+ 
 -        # We need to inflate the volume if we don't have enough place
 -        # to mount the VHD image. I.e. the volume capacity must be greater
 -        # than the VHD size + bitmap size.
@@ -1450,10 +1474,7 @@ index a72d43e..5f143e7 100755
 -        if self.vdi_type == vhdutil.VDI_TYPE_RAW or not writable or \
 -                self.capacity >= compute_volume_size(self.size, self.vdi_type):
 -            need_inflate = False
-+        if not attach_from_config or self.sr._is_master:
-+            writable = 'args' not in self.sr.srcmd.params or \
-+                self.sr.srcmd.params['args'][0] == 'true'
- 
+-
 -        if need_inflate:
 -            try:
 -                self._prepare_thin(True)
@@ -1554,7 +1575,7 @@ index a72d43e..5f143e7 100755
          already_deflated = self.capacity <= volume_size
  
          if already_deflated:
-@@ -1501,11 +1890,45 @@ class LinstorVDI(VDI.VDI):
+@@ -1501,11 +1899,45 @@ class LinstorVDI(VDI.VDI):
                      .format(e)
                  )
  
@@ -1600,7 +1621,7 @@ index a72d43e..5f143e7 100755
          if size < self.size:
              util.SMlog(
                  'vdi_resize: shrinking not supported: '
-@@ -1513,36 +1936,34 @@ class LinstorVDI(VDI.VDI):
+@@ -1513,36 +1945,34 @@ class LinstorVDI(VDI.VDI):
              )
              raise xs_errors.XenError('VDISize', opterr='shrinking not allowed')
  
@@ -1644,7 +1665,7 @@ index a72d43e..5f143e7 100755
  
          # Reload size attributes.
          self._load_this()
-@@ -1552,7 +1973,7 @@ class LinstorVDI(VDI.VDI):
+@@ -1552,7 +1982,7 @@ class LinstorVDI(VDI.VDI):
          self.session.xenapi.VDI.set_physical_utilisation(
              vdi_ref, str(self.utilisation)
          )
@@ -1653,7 +1674,7 @@ index a72d43e..5f143e7 100755
          return VDI.VDI.get_params(self)
  
      def clone(self, sr_uuid, vdi_uuid):
-@@ -1574,8 +1995,8 @@ class LinstorVDI(VDI.VDI):
+@@ -1574,8 +2004,8 @@ class LinstorVDI(VDI.VDI):
          if not blktap2.VDI.tap_pause(self.session, self.sr.uuid, self.uuid):
              raise util.SMException('Failed to pause VDI {}'.format(self.uuid))
          try:
@@ -1664,7 +1685,7 @@ index a72d43e..5f143e7 100755
              self.sr.session.xenapi.VDI.set_managed(
                  self.sr.srcmd.params['args'][0], False
              )
-@@ -1598,25 +2019,40 @@ class LinstorVDI(VDI.VDI):
+@@ -1598,25 +2028,40 @@ class LinstorVDI(VDI.VDI):
  
          util.SMlog('LinstorVDI.generate_config for {}'.format(self.uuid))
  
@@ -1717,7 +1738,7 @@ index a72d43e..5f143e7 100755
          config = xmlrpc.client.dumps(tuple([resp]), 'vdi_attach_from_config')
          return xmlrpc.client.dumps((config,), "", True)
  
-@@ -1652,19 +2088,28 @@ class LinstorVDI(VDI.VDI):
+@@ -1652,19 +2097,28 @@ class LinstorVDI(VDI.VDI):
                  .format(self.uuid)
              )
  
@@ -1751,7 +1772,7 @@ index a72d43e..5f143e7 100755
          self.capacity = volume_info.virtual_size
  
          if self.vdi_type == vhdutil.VDI_TYPE_RAW:
-@@ -1691,7 +2136,7 @@ class LinstorVDI(VDI.VDI):
+@@ -1691,7 +2145,7 @@ class LinstorVDI(VDI.VDI):
              return
  
          if self.vdi_type == vhdutil.VDI_TYPE_VHD:
@@ -1760,7 +1781,7 @@ index a72d43e..5f143e7 100755
          else:
              self._linstor.update_volume_metadata(self.uuid, {
                  HIDDEN_TAG: hidden
-@@ -1739,25 +2184,19 @@ class LinstorVDI(VDI.VDI):
+@@ -1739,25 +2193,19 @@ class LinstorVDI(VDI.VDI):
          else:
              fn = 'attach' if attach else 'detach'
  
@@ -1794,7 +1815,7 @@ index a72d43e..5f143e7 100755
  
          # Reload size attrs after inflate or deflate!
          self._load_this()
-@@ -1807,9 +2246,7 @@ class LinstorVDI(VDI.VDI):
+@@ -1807,9 +2255,7 @@ class LinstorVDI(VDI.VDI):
                  'VDIUnavailable',
                  opterr='failed to get vdi_type in metadata'
              )
@@ -1805,7 +1826,7 @@ index a72d43e..5f143e7 100755
  
      def _update_device_name(self, device_name):
          self._device_name = device_name
-@@ -1832,7 +2269,7 @@ class LinstorVDI(VDI.VDI):
+@@ -1832,7 +2278,7 @@ class LinstorVDI(VDI.VDI):
  
          # 2. Write the snapshot content.
          is_raw = (self.vdi_type == vhdutil.VDI_TYPE_RAW)
@@ -1814,7 +1835,7 @@ index a72d43e..5f143e7 100755
              snap_path, self.path, is_raw, self.MAX_METADATA_VIRT_SIZE
          )
  
-@@ -1862,7 +2299,7 @@ class LinstorVDI(VDI.VDI):
+@@ -1862,7 +2308,7 @@ class LinstorVDI(VDI.VDI):
          volume_info = self._linstor.get_volume_info(snap_uuid)
  
          snap_vdi.size = self.sr._vhdutil.get_size_virt(snap_uuid)
@@ -1823,7 +1844,7 @@ index a72d43e..5f143e7 100755
  
          # 6. Update sm config.
          snap_vdi.sm_config = {}
-@@ -1932,6 +2369,9 @@ class LinstorVDI(VDI.VDI):
+@@ -1932,6 +2378,9 @@ class LinstorVDI(VDI.VDI):
          elif depth >= vhdutil.MAX_CHAIN_SIZE:
              raise xs_errors.XenError('SnapshotChainTooLong')
  
@@ -1833,7 +1854,7 @@ index a72d43e..5f143e7 100755
          volume_path = self.path
          if not util.pathexists(volume_path):
              raise xs_errors.XenError(
-@@ -2057,7 +2497,7 @@ class LinstorVDI(VDI.VDI):
+@@ -2057,7 +2506,7 @@ class LinstorVDI(VDI.VDI):
                      raise
  
              if snap_type != VDI.SNAPSHOT_INTERNAL:
@@ -1842,7 +1863,7 @@ index a72d43e..5f143e7 100755
  
              # 10. Return info on the new user-visible leaf VDI.
              ret_vdi = snap_vdi
-@@ -2088,10 +2528,318 @@ class LinstorVDI(VDI.VDI):
+@@ -2088,10 +2537,318 @@ class LinstorVDI(VDI.VDI):
  
          return ret_vdi.get_params()
  
@@ -2163,10 +2184,10 @@ index a72d43e..5f143e7 100755
  else:
      SR.registerSR(LinstorSR)
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 2950ce2..3434a9f 100755
+index 6fda56a..e853c38 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
-@@ -49,6 +49,12 @@ import VDI as sm
+@@ -50,6 +50,12 @@ import VDI as sm
  from xmlrpc.client import ServerProxy, Transport
  from socket import socket, AF_UNIX, SOCK_STREAM
  
@@ -2179,7 +2200,7 @@ index 2950ce2..3434a9f 100755
  PLUGIN_TAP_PAUSE = "tapdisk-pause"
  
  SOCKPATH = "/var/xapi/xcp-rrdd"
-@@ -815,7 +821,22 @@ class Tapdisk(object):
+@@ -816,7 +822,22 @@ class Tapdisk(object):
                  TapCtl.attach(pid, minor)
  
                  try:
@@ -2204,7 +2225,7 @@ index 2950ce2..3434a9f 100755
                          tapdisk = cls.__from_blktap(blktap)
                          node = '/sys/dev/block/%d:%d' % (tapdisk.major(), tapdisk.minor)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index f190b1b..989068a 100755
+index 1d8da7b..1768e27 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -53,8 +53,11 @@ from time import monotonic as _time
@@ -2230,7 +2251,7 @@ index f190b1b..989068a 100755
      """Object representing a VDI of a VHD-based SR"""
  
      POLL_INTERVAL = 1
-@@ -760,6 +763,12 @@ class VDI:
+@@ -765,6 +768,12 @@ class VDI:
          lock.Lock.cleanupAll(self.uuid)
          self._clear()
  
@@ -2243,24 +2264,25 @@ index f190b1b..989068a 100755
      def __str__(self):
          strHidden = ""
          if self.hidden:
-@@ -874,12 +883,14 @@ class VDI:
+@@ -882,12 +891,15 @@ class VDI:
              xapi.message.create(msg_name, "3", "SR", vdi.sr.uuid, msg_body)
      _reportCoalesceError = staticmethod(_reportCoalesceError)
  
 +    def coalesce(self):
-+        vhdutil.coalesce(self.path)
++        # size is returned in sectors
++        return vhdutil.coalesce(self.path) * 512
 +
      def _doCoalesceVHD(vdi):
          try:
--
              startTime = time.time()
-             vhdSize = vdi.getSizeVHD()
--            vhdutil.coalesce(vdi.path)
-+            vdi.coalesce()
+             vhdSize = vdi.getAllocatedSize()
+-            # size is returned in sectors
+-            coalesced_size = vhdutil.coalesce(vdi.path) * 512
++            coalesced_size = vdi.coalesce()
              endTime = time.time()
-             vdi.sr.recordStorageSpeed(startTime, endTime, vhdSize)
+             vdi.sr.recordStorageSpeed(startTime, endTime, coalesced_size)
          except util.CommandException as ce:
-@@ -918,12 +929,12 @@ class VDI:
+@@ -926,12 +938,12 @@ class VDI:
              # Try a repair and reraise the exception
              parent = ""
              try:
@@ -2275,7 +2297,7 @@ index f190b1b..989068a 100755
              except Exception as e:
                  util.SMlog('(error ignored) Failed to repair parent %s ' \
                             'after failed coalesce on %s, err: %s' %
-@@ -1025,10 +1036,10 @@ class VDI:
+@@ -1033,10 +1045,10 @@ class VDI:
          self.hidden = hidden
  
      def _increaseSizeVirt(self, size, atomic=True):
@@ -2288,7 +2310,7 @@ index f190b1b..989068a 100755
          operations. If the caller is already in the atomic context, it must
          call with atomic = False"""
          if self.sizeVirt >= size:
-@@ -1456,8 +1467,6 @@ class LVHDVDI(VDI):
+@@ -1485,8 +1497,6 @@ class LVHDVDI(VDI):
  class LinstorVDI(VDI):
      """Object representing a VDI in a LINSTOR SR"""
  
@@ -2297,7 +2319,7 @@ index f190b1b..989068a 100755
      VOLUME_LOCK_TIMEOUT = 30
  
      def load(self, info=None):
-@@ -1468,11 +1477,6 @@ class LinstorVDI(VDI):
+@@ -1497,11 +1507,6 @@ class LinstorVDI(VDI):
  
          self.fileName = self.sr._linstor.get_volume_name(self.uuid)
          self.path = self.sr._linstor.build_device_path(self.fileName)
@@ -2309,12 +2331,13 @@ index f190b1b..989068a 100755
  
          if not info:
              try:
-@@ -1485,9 +1489,53 @@ class LinstorVDI(VDI):
+@@ -1514,9 +1519,62 @@ class LinstorVDI(VDI):
  
          self.parentUuid = info.parentUuid
          self.sizeVirt = info.sizeVirt
 -        self._sizeVHD = info.sizePhys
 +        self._sizeVHD = -1
++        self._sizeAllocated = -1
 +        self.drbd_size = -1
          self.hidden = info.hidden
          self.scanError = False
@@ -2330,6 +2353,12 @@ index f190b1b..989068a 100755
 +            self.drbd_size = self.sr._vhdutil.get_drbd_size(self.uuid)
 +        return self.drbd_size
 +
++    def getAllocatedSize(self):
++        if self._sizeAllocated == -1:
++            if not self.raw:
++                self._sizeAllocated = self.sr._vhdutil.get_allocated_size(self.uuid)
++        return self._sizeAllocated
++
 +    def inflate(self, size):
 +        if self.raw:
 +            return
@@ -2343,6 +2372,7 @@ index f190b1b..989068a 100755
 +            self.sr.unlock()
 +        self.drbd_size = -1
 +        self._sizeVHD = -1
++        self._sizeAllocated = -1
 +
 +    def deflate(self):
 +        if self.raw:
@@ -2357,6 +2387,7 @@ index f190b1b..989068a 100755
 +            self.sr.unlock()
 +        self.drbd_size = -1
 +        self._sizeVHD = -1
++        self._sizeAllocated = -1
 +
 +    def inflateFully(self):
 +        if not self.raw:
@@ -2364,7 +2395,7 @@ index f190b1b..989068a 100755
  
      def rename(self, uuid):
          Util.log('Renaming {} -> {} (path={})'.format(
-@@ -1509,17 +1557,30 @@ class LinstorVDI(VDI):
+@@ -1538,17 +1596,30 @@ class LinstorVDI(VDI):
              self.sr.unlock()
          VDI.delete(self)
  
@@ -2388,7 +2419,7 @@ index f190b1b..989068a 100755
 +    def coalesce(self):
 +        # Note: We raise `SMException` here to skip the current coalesce in case of failure.
 +        # Using another exception we can't execute the next coalesce calls.
-+        self.sr._vhdutil.force_coalesce(self.path)
++        return self.sr._vhdutil.force_coalesce(self.path) * 512
 +
 +    def getParent(self):
 +        return self.sr._vhdutil.get_parent(
@@ -2403,7 +2434,7 @@ index f190b1b..989068a 100755
  
      def _relinkSkip(self):
          abortFlag = IPCFlag(self.sr.uuid)
-@@ -1545,6 +1606,40 @@ class LinstorVDI(VDI):
+@@ -1574,6 +1645,40 @@ class LinstorVDI(VDI):
                  blktap2.VDI.tap_unpause(session, sr_uuid, vdi_uuid)
          self.children = []
  
@@ -2444,7 +2475,7 @@ index f190b1b..989068a 100755
      def _setHidden(self, hidden=True):
          HIDDEN_TAG = 'hidden'
  
-@@ -1556,14 +1651,57 @@ class LinstorVDI(VDI):
+@@ -1585,14 +1690,57 @@ class LinstorVDI(VDI):
          else:
              VDI._setHidden(self, hidden)
  
@@ -2503,7 +2534,7 @@ index f190b1b..989068a 100755
      class LogFilter:
          def __init__(self, sr):
              self.sr = sr
-@@ -2129,7 +2267,7 @@ class SR:
+@@ -2166,7 +2314,7 @@ class SR:
  
      def _coalesceLeaf(self, vdi):
          """Leaf-coalesce VDI vdi. Return true if we succeed, false if we cannot
@@ -2512,7 +2543,7 @@ index f190b1b..989068a 100755
          that alter leaf-coalescibility of vdi"""
          tracker = self.CoalesceTracker(self)
          while not vdi.canLiveCoalesce(self.getStorageSpeed()):
-@@ -2345,7 +2483,7 @@ class SR:
+@@ -2382,7 +2530,7 @@ class SR:
          self.forgetVDI(origParentUuid)
          self._finishCoalesceLeaf(parent)
          self._updateSlavesOnResize(parent)
@@ -2521,7 +2552,7 @@ index f190b1b..989068a 100755
      def _calcExtraSpaceNeeded(self, child, parent):
          assert(not parent.raw)  # raw parents not supported
          extra = child.getSizeVHD() - parent.getSizeVHD()
-@@ -2379,9 +2517,9 @@ class SR:
+@@ -2416,9 +2564,9 @@ class SR:
                  del self.vdis[uuid]
  
      def _handleInterruptedCoalesceLeaf(self):
@@ -2534,7 +2565,7 @@ index f190b1b..989068a 100755
          finish the operation"""
          # abstract
          pass
-@@ -2462,10 +2600,10 @@ class FileSR(SR):
+@@ -2499,10 +2647,10 @@ class FileSR(SR):
              self.xapi.markCacheSRsDirty()
  
      def cleanupCache(self, maxAge=-1):
@@ -2549,7 +2580,7 @@ index f190b1b..989068a 100755
          <maxAge> hours.
          Return number of caches removed.
          """
-@@ -2955,7 +3093,6 @@ class LinstorSR(SR):
+@@ -2992,7 +3140,6 @@ class LinstorSR(SR):
              )
  
          SR.__init__(self, uuid, xapi, createLock, force)
@@ -2557,7 +2588,7 @@ index f190b1b..989068a 100755
          self.path = LinstorVolumeManager.DEV_ROOT_PATH
          self._reloadLinstor()
  
-@@ -2982,6 +3119,12 @@ class LinstorSR(SR):
+@@ -3019,6 +3166,12 @@ class LinstorSR(SR):
          self.logFilter.logState()
          self._handleInterruptedCoalesceLeaf()
  
@@ -2570,7 +2601,7 @@ index f190b1b..989068a 100755
      def _reloadLinstor(self):
          session = self.xapi.session
          host_ref = util.get_this_host_ref(session)
-@@ -2994,12 +3137,13 @@ class LinstorSR(SR):
+@@ -3031,12 +3184,13 @@ class LinstorSR(SR):
          dconf = session.xenapi.PBD.get_device_config(pbd)
          group_name = dconf['group-name']
  
@@ -2586,7 +2617,7 @@ index f190b1b..989068a 100755
              group_name,
              repair=True,
              logger=util.SMlog
-@@ -3032,40 +3176,79 @@ class LinstorSR(SR):
+@@ -3069,40 +3223,79 @@ class LinstorSR(SR):
  
          # TODO: Ensure metadata contains the right info.
  
@@ -2683,7 +2714,7 @@ index f190b1b..989068a 100755
  
      def _hasValidDevicePath(self, uuid):
          try:
-@@ -3075,6 +3258,16 @@ class LinstorSR(SR):
+@@ -3112,6 +3305,16 @@ class LinstorSR(SR):
              return False
          return True
  
@@ -2700,7 +2731,7 @@ index f190b1b..989068a 100755
      def _handleInterruptedCoalesceLeaf(self):
          entries = self.journaler.get_all(VDI.JRN_LEAF)
          for uuid, parentUuid in entries.items():
-@@ -3101,7 +3294,6 @@ class LinstorSR(SR):
+@@ -3138,7 +3341,6 @@ class LinstorSR(SR):
                  'Renaming parent back: {} -> {}'.format(childUuid, parentUuid)
              )
              parent.rename(parentUuid)
@@ -2708,7 +2739,7 @@ index f190b1b..989068a 100755
  
          child = self.getVDI(childUuid)
          if not child:
-@@ -3117,9 +3309,6 @@ class LinstorSR(SR):
+@@ -3154,9 +3356,6 @@ class LinstorSR(SR):
              Util.log('Updating the VDI record')
              child.setConfig(VDI.DB_VHD_PARENT, parentUuid)
              child.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_VHD)
@@ -2718,7 +2749,7 @@ index f190b1b..989068a 100755
  
          # TODO: Maybe deflate here.
  
-@@ -3128,10 +3317,7 @@ class LinstorSR(SR):
+@@ -3165,10 +3364,7 @@ class LinstorSR(SR):
          if not parent.hidden:
              parent._setHidden(True)
          self._updateSlavesOnUndoLeafCoalesce(parent, child)
@@ -2729,7 +2760,7 @@ index f190b1b..989068a 100755
  
      def _finishInterruptedCoalesceLeaf(self, childUuid, parentUuid):
          Util.log('*** FINISH LEAF-COALESCE')
-@@ -3144,32 +3330,21 @@ class LinstorSR(SR):
+@@ -3181,32 +3377,21 @@ class LinstorSR(SR):
          except XenAPI.Failure:
              pass
          self._updateSlavesOnResize(vdi)
@@ -2769,7 +2800,7 @@ index f190b1b..989068a 100755
  
  ################################################################################
  #
-@@ -3465,9 +3640,9 @@ def abort(srUuid, soft=False):
+@@ -3502,9 +3687,9 @@ def abort(srUuid, soft=False):
  
  
  def gc(session, srUuid, inBackground, dryRun=False):
@@ -2783,7 +2814,7 @@ index f190b1b..989068a 100755
      1. If we are already GC'ing in this SR, return
      2. If we are already coalescing a VDI pair:
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index f7ce180..6b45875 100755
+index f7ce180..8a30834 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -14,32 +14,53 @@
@@ -2827,23 +2858,23 @@ index f7ce180..6b45875 100755
 +DRBD_PORTS = '7000:8000'
 +
 +DRBD_REACTOR_CONF = '/etc/drbd-reactor.d/sm-linstor.toml'
- 
++
 +DRBD_REACTOR_CONF_CONTENT = """[[promoter]]
  
--def get_linstor_uri(session):
--    return 'linstor://{}'.format(util.get_master_rec(session)['address'])
 +[promoter.resources.xcp-persistent-database]
 +start = [ "var-lib-linstor.service", "linstor-controller.service" ]
 +"""
  
+-def get_linstor_uri(session):
+-    return 'linstor://{}'.format(util.get_master_rec(session)['address'])
 +DRBD_REACTOR_DEPS = [
 +    '/run/systemd/system/linstor-controller.service.d/reactor.conf',
 +    '/run/systemd/system/var-lib-linstor.service.d/reactor.conf'
 +]
  
+ 
 -def update_port(port, open):
 -    fn = 'open' if open else 'close'
-+
 +def update_linstor_port(port, open_ports):
 +    fn = 'open' if open_ports else 'close'
      args = (
@@ -3005,10 +3036,11 @@ index f7ce180..6b45875 100755
 +                    'lv_name': THIN_POOL
 +                }
 +            )
-+
+ 
 +    # Create SR.
 +    master_ref = session.xenapi.pool.get_all_records().values()[0]['master']
-+
+ 
+-def enable(session, args):
 +    device_config = {
 +        'redundancy': str(redundancy),
 +        'provisioning': 'thin' if thin else 'thick',
@@ -3070,9 +3102,8 @@ index f7ce180..6b45875 100755
 +    return ip_addr
 +
 +# ------------------------------------------------------------------------------
- 
- 
--def enable(session, args):
++
++
 +def prepare_sr(session, args):
 +    try:
 +        LinstorSR.activate_lvm_group(args['groupName'])
@@ -3205,7 +3236,23 @@ index f7ce180..6b45875 100755
              group_name,
              logger=util.SMlog
          )
-@@ -228,6 +499,69 @@ def get_block_bitmap(session, args):
+@@ -201,6 +472,15 @@ def get_size_phys(session, args):
+         raise
+ 
+ 
++def get_allocated_size(session, args):
++    try:
++        device_path = args['devicePath']
++        return str(vhdutil.getAllocatedSize(device_path))
++    except Exception as e:
++        util.SMlog('linstor-manager:get_allocated_size error: {}'.format(e))
++        raise
++
++
+ def get_depth(session, args):
+     try:
+         device_path = args['devicePath']
+@@ -228,6 +508,68 @@ def get_block_bitmap(session, args):
          raise
  
  
@@ -3235,8 +3282,7 @@ index f7ce180..6b45875 100755
 +def coalesce(session, args):
 +    try:
 +        device_path = args['devicePath']
-+        vhdutil.coalesce(device_path)
-+        return ''
++        return str(vhdutil.coalesce(device_path))
 +    except Exception as e:
 +        util.SMlog('linstor-manager:coalesce error: {}'.format(e))
 +        raise
@@ -3275,7 +3321,7 @@ index f7ce180..6b45875 100755
  def lock_vdi(session, args):
      lock = None
      try:
-@@ -236,10 +570,13 @@ def lock_vdi(session, args):
+@@ -236,10 +578,13 @@ def lock_vdi(session, args):
          group_name = args['groupName']
          locked = distutils.util.strtobool(args['locked'])
  
@@ -3290,7 +3336,7 @@ index f7ce180..6b45875 100755
              group_name,
              logger=util.SMlog
          )
-@@ -249,16 +586,514 @@ def lock_vdi(session, args):
+@@ -249,24 +594,552 @@ def lock_vdi(session, args):
      except Exception as e:
          util.SMlog('linstor-manager:lock_vdi error: {}'.format(e))
      finally:
@@ -3807,7 +3853,10 @@ index f7ce180..6b45875 100755
          'check': check,
          'getVHDInfo': get_vhd_info,
          'hasParent': has_parent,
-@@ -268,5 +1103,34 @@ if __name__ == '__main__':
+         'getParent': get_parent,
+         'getSizeVirt': get_size_virt,
+         'getSizePhys': get_size_phys,
++        'getAllocatedSize': get_allocated_size,
          'getDepth': get_depth,
          'getKeyHash': get_key_hash,
          'getBlockBitmap': get_block_bitmap,
@@ -3925,7 +3974,7 @@ index bc7cff7..a61d9f1 100755
      def _get_key(type, identifier):
          return '{}/{}'.format(type, identifier)
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 7a13566..494b4b0 100644
+index 7a13566..836f4ce 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -14,6 +14,8 @@
@@ -4125,7 +4174,7 @@ index 7a13566..494b4b0 100644
  
          vhd_info = vhdutil.VHDInfo(vdi_uuid)
          vhd_info.sizeVirt = obj['sizeVirt']
-@@ -118,35 +181,180 @@ class LinstorVhdUtil:
+@@ -118,35 +181,184 @@ class LinstorVhdUtil:
          return vhd_info
  
      @linstorhostcall(vhdutil.hasParent, 'hasParent')
@@ -4153,6 +4202,10 @@ index 7a13566..494b4b0 100644
 -    def get_size_phys(self, vdi_uuid, **kwargs):
 -        return int(kwargs['response'])
 +    def get_size_phys(self, vdi_uuid, response):
++        return int(response)
++
++    @linstorhostcall(vhdutil.getAllocatedSize, 'getAllocatedSize')
++    def get_allocated_size(self, vdi_uuid, response):
 +        return int(response)
  
      @linstorhostcall(vhdutil.getDepth, 'getDepth')
@@ -4283,7 +4336,7 @@ index 7a13566..494b4b0 100644
 +
 +    @linstormodifier()
 +    def force_coalesce(self, path):
-+        return self._call_method(vhdutil.coalesce, 'coalesce', path, use_parent=True)
++        return int(self._call_method(vhdutil.coalesce, 'coalesce', path, use_parent=True))
 +
 +    @linstormodifier()
 +    def force_repair(self, path):
@@ -4320,7 +4373,7 @@ index 7a13566..494b4b0 100644
  
      # --------------------------------------------------------------------------
      # Helpers.
-@@ -161,7 +369,7 @@ class LinstorVhdUtil:
+@@ -161,7 +373,7 @@ class LinstorVhdUtil:
      def _get_readonly_host(self, vdi_uuid, device_path, node_names):
          """
          When vhd-util is called to fetch VDI info we must find a
@@ -4329,7 +4382,7 @@ index 7a13566..494b4b0 100644
          Why? Because when a VHD is open in RO mode, the LVM layer is used
          directly to bypass DRBD verifications (we can have only one process
          that reads/writes to disk with DRBD devices).
-@@ -170,7 +378,7 @@ class LinstorVhdUtil:
+@@ -170,7 +382,7 @@ class LinstorVhdUtil:
          if not node_names:
              raise xs_errors.XenError(
                  'VDIUnavailable',
@@ -4338,7 +4391,7 @@ index 7a13566..494b4b0 100644
                  .format(vdi_uuid, device_path)
              )
  
-@@ -184,3 +392,147 @@ class LinstorVhdUtil:
+@@ -184,3 +396,147 @@ class LinstorVhdUtil:
              opterr='Unable to find a valid host from VDI: {} (path={})'
              .format(vdi_uuid, device_path)
          )
@@ -4487,7 +4540,7 @@ index 7a13566..494b4b0 100644
 +                opterr='Failed to zero out VHD footer {}'.format(path)
 +            )
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 182b889..92fd028 100755
+index 182b889..dc810e5 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -16,14 +16,104 @@
@@ -4595,7 +4648,7 @@ index 182b889..92fd028 100755
  
  def round_up(value, divisor):
      assert divisor
-@@ -37,6 +127,148 @@ def round_down(value, divisor):
+@@ -37,10 +127,153 @@ def round_down(value, divisor):
      return value - (value % int(divisor))
  
  
@@ -4744,7 +4797,13 @@ index 182b889..92fd028 100755
  class LinstorVolumeManagerError(Exception):
      ERR_GENERIC = 0,
      ERR_VOLUME_EXISTS = 1,
-@@ -50,6 +282,7 @@ class LinstorVolumeManagerError(Exception):
+-    ERR_VOLUME_NOT_EXISTS = 2
++    ERR_VOLUME_NOT_EXISTS = 2,
++    ERR_VOLUME_DESTROY = 3
+ 
+     def __init__(self, message, code=ERR_GENERIC):
+         super(LinstorVolumeManagerError, self).__init__(message)
+@@ -50,6 +283,7 @@ class LinstorVolumeManagerError(Exception):
      def code(self):
          return self._code
  
@@ -4752,7 +4811,7 @@ index 182b889..92fd028 100755
  # ==============================================================================
  
  # Note:
-@@ -63,7 +296,17 @@ class LinstorVolumeManager(object):
+@@ -63,10 +297,20 @@ class LinstorVolumeManager(object):
      A volume in this context is a physical part of the storage layer.
      """
  
@@ -4766,12 +4825,17 @@ index 182b889..92fd028 100755
 +        '_kv_cache', '_resource_cache', '_volume_info_cache',
 +        '_kv_cache_dirty', '_resource_cache_dirty', '_volume_info_cache_dirty'
 +    )
-+
-+    DEV_ROOT_PATH = DRBD_BY_RES_PATH
  
-     # Default LVM extent size.
-     BLOCK_SIZE = 4 * 1024 * 1024
-@@ -90,7 +333,7 @@ class LinstorVolumeManager(object):
+-    # Default LVM extent size.
+-    BLOCK_SIZE = 4 * 1024 * 1024
++    DEV_ROOT_PATH = DRBD_BY_RES_PATH
++
++    # Default sector size.
++    BLOCK_SIZE = 512
+ 
+     # List of volume properties.
+     PROP_METADATA = 'metadata'
+@@ -90,7 +334,7 @@ class LinstorVolumeManager(object):
  
      # Property namespaces.
      NAMESPACE_SR = 'xcp/sr'
@@ -4780,7 +4844,7 @@ index 182b889..92fd028 100755
  
      # Regex to match properties.
      REG_PROP = '^([^/]+)/{}$'
-@@ -106,6 +349,10 @@ class LinstorVolumeManager(object):
+@@ -106,6 +350,10 @@ class LinstorVolumeManager(object):
      PREFIX_SR = 'xcp-sr-'
      PREFIX_VOLUME = 'xcp-volume-'
  
@@ -4791,7 +4855,7 @@ index 182b889..92fd028 100755
      @staticmethod
      def default_logger(*args):
          print(args)
-@@ -117,38 +364,43 @@ class LinstorVolumeManager(object):
+@@ -117,38 +365,43 @@ class LinstorVolumeManager(object):
      class VolumeInfo(object):
          __slots__ = (
              'name',
@@ -4846,7 +4910,7 @@ index 182b889..92fd028 100755
          self._base_group_name = group_name
  
          # Ensure group exists.
-@@ -164,6 +416,16 @@ class LinstorVolumeManager(object):
+@@ -164,6 +417,16 @@ class LinstorVolumeManager(object):
          self._logger = logger
          self._redundancy = groups[0].select_filter.place_count
          self._group_name = group_name
@@ -4863,7 +4927,7 @@ index 182b889..92fd028 100755
          self._build_volumes(repair=repair)
  
      @property
-@@ -175,6 +437,15 @@ class LinstorVolumeManager(object):
+@@ -175,6 +438,15 @@ class LinstorVolumeManager(object):
          """
          return self._base_group_name
  
@@ -4879,7 +4943,7 @@ index 182b889..92fd028 100755
      @property
      def volumes(self):
          """
-@@ -184,66 +455,6 @@ class LinstorVolumeManager(object):
+@@ -184,66 +456,6 @@ class LinstorVolumeManager(object):
          """
          return self._volumes
  
@@ -4946,7 +5010,7 @@ index 182b889..92fd028 100755
      @property
      def max_volume_size_allowed(self):
          """
-@@ -284,26 +495,67 @@ class LinstorVolumeManager(object):
+@@ -284,26 +496,67 @@ class LinstorVolumeManager(object):
          return self._compute_size('free_capacity')
  
      @property
@@ -5028,7 +5092,7 @@ index 182b889..92fd028 100755
  
      @property
      def metadata(self):
-@@ -346,12 +598,8 @@ class LinstorVolumeManager(object):
+@@ -346,12 +599,8 @@ class LinstorVolumeManager(object):
          :rtype: set(str)
          """
  
@@ -5042,7 +5106,7 @@ index 182b889..92fd028 100755
              for report in pool.reports:
                  if report.ret_code & linstor.consts.WARN_NOT_CONNECTED == \
                          linstor.consts.WARN_NOT_CONNECTED:
-@@ -367,23 +615,29 @@ class LinstorVolumeManager(object):
+@@ -367,23 +616,29 @@ class LinstorVolumeManager(object):
          """
          return volume_uuid in self._volumes
  
@@ -5074,7 +5138,7 @@ index 182b889..92fd028 100755
          try:
              self._logger(
                  'Find device path of LINSTOR volume {}...'.format(volume_uuid)
-@@ -396,8 +650,10 @@ class LinstorVolumeManager(object):
+@@ -396,8 +651,10 @@ class LinstorVolumeManager(object):
                  'LINSTOR volume {} created!'.format(volume_uuid)
              )
              return device_path
@@ -5087,16 +5151,24 @@ index 182b889..92fd028 100755
              raise
  
      def mark_volume_as_persistent(self, volume_uuid):
-@@ -426,7 +682,7 @@ class LinstorVolumeManager(object):
+@@ -425,8 +682,14 @@ class LinstorVolumeManager(object):
+         volume_properties = self._get_volume_properties(volume_uuid)
          volume_properties[self.PROP_NOT_EXISTS] = self.STATE_NOT_EXISTS
  
-         self._volumes.remove(volume_uuid)
+-        self._volumes.remove(volume_uuid)
 -        self._destroy_volume(volume_uuid, volume_properties)
-+        self._destroy_volume(volume_uuid)
++        try:
++            self._volumes.remove(volume_uuid)
++            self._destroy_volume(volume_uuid)
++        except Exception as e:
++            raise LinstorVolumeManagerError(
++                str(e),
++                LinstorVolumeManagerError.ERR_VOLUME_DESTROY
++            )
  
      def lock_volume(self, volume_uuid, locked=True):
          """
-@@ -476,12 +732,15 @@ class LinstorVolumeManager(object):
+@@ -476,12 +739,15 @@ class LinstorVolumeManager(object):
  
          waiting = False
  
@@ -5113,7 +5185,7 @@ index 182b889..92fd028 100755
                  timestamp = volume_properties.get(
                      self.PROP_IS_READONLY_TIMESTAMP
                  )
-@@ -519,10 +778,33 @@ class LinstorVolumeManager(object):
+@@ -519,10 +785,33 @@ class LinstorVolumeManager(object):
              # We must wait to use the volume. After that we can modify it
              # ONLY if the SR is locked to avoid bad reads on the slaves.
              time.sleep(1)
@@ -5147,7 +5219,7 @@ index 182b889..92fd028 100755
      def introduce_volume(self, volume_uuid):
          pass  # TODO: Implement me.
  
-@@ -542,6 +824,9 @@ class LinstorVolumeManager(object):
+@@ -542,6 +831,9 @@ class LinstorVolumeManager(object):
              volume_nr=0,
              size=new_size // 1024
          )
@@ -5157,7 +5229,7 @@ index 182b889..92fd028 100755
          error_str = self._get_error_str(result)
          if error_str:
              raise LinstorVolumeManagerError(
-@@ -587,6 +872,24 @@ class LinstorVolumeManager(object):
+@@ -587,6 +879,24 @@ class LinstorVolumeManager(object):
              )
          return size * 1024
  
@@ -5182,7 +5254,7 @@ index 182b889..92fd028 100755
      def get_volume_info(self, volume_uuid):
          """
          Get the volume info of a particular volume.
-@@ -596,11 +899,11 @@ class LinstorVolumeManager(object):
+@@ -596,11 +906,11 @@ class LinstorVolumeManager(object):
          """
  
          volume_name = self.get_volume_name(volume_uuid)
@@ -5196,7 +5268,7 @@ index 182b889..92fd028 100755
          :param str volume_uuid: The volume uuid to get the dev path.
          :return: The current device path of the volume.
          :rtype: str
-@@ -620,7 +923,7 @@ class LinstorVolumeManager(object):
+@@ -620,7 +930,7 @@ class LinstorVolumeManager(object):
          expected_volume_name = \
              self.get_volume_name_from_device_path(device_path)
  
@@ -5205,7 +5277,7 @@ index 182b889..92fd028 100755
          for volume_uuid, volume_name in volume_names.items():
              if volume_name == expected_volume_name:
                  return volume_uuid
-@@ -631,26 +934,24 @@ class LinstorVolumeManager(object):
+@@ -631,26 +941,24 @@ class LinstorVolumeManager(object):
  
      def get_volume_name_from_device_path(self, device_path):
          """
@@ -5245,7 +5317,7 @@ index 182b889..92fd028 100755
  
      def update_volume_uuid(self, volume_uuid, new_volume_uuid, force=False):
          """
-@@ -664,6 +965,8 @@ class LinstorVolumeManager(object):
+@@ -664,6 +972,8 @@ class LinstorVolumeManager(object):
          deleted VDI.
          """
  
@@ -5254,7 +5326,7 @@ index 182b889..92fd028 100755
          self._logger(
              'Trying to update volume UUID {} to {}...'
              .format(volume_uuid, new_volume_uuid)
-@@ -685,36 +988,45 @@ class LinstorVolumeManager(object):
+@@ -685,36 +995,45 @@ class LinstorVolumeManager(object):
                  .format(volume_uuid)
              )
  
@@ -5316,7 +5388,7 @@ index 182b889..92fd028 100755
              except Exception as e:
                  self._logger(
                      'Failed to clear new volume properties: {} (ignoring...)'
-@@ -725,11 +1037,21 @@ class LinstorVolumeManager(object):
+@@ -725,11 +1044,21 @@ class LinstorVolumeManager(object):
              )
  
          try:
@@ -5340,7 +5412,7 @@ index 182b889..92fd028 100755
          except Exception as e:
              raise LinstorVolumeManagerError(
                  'Failed to clear volume properties '
-@@ -743,7 +1065,7 @@ class LinstorVolumeManager(object):
+@@ -743,7 +1072,7 @@ class LinstorVolumeManager(object):
              'UUID update succeeded of {} to {}! (properties={})'
              .format(
                  volume_uuid, new_volume_uuid,
@@ -5349,7 +5421,7 @@ index 182b889..92fd028 100755
              )
          )
  
-@@ -788,6 +1110,72 @@ class LinstorVolumeManager(object):
+@@ -788,6 +1117,72 @@ class LinstorVolumeManager(object):
  
          return states
  
@@ -5422,66 +5494,118 @@ index 182b889..92fd028 100755
      def get_volume_metadata(self, volume_uuid):
          """
          Get the metadata of a volume.
-@@ -910,17 +1298,11 @@ class LinstorVolumeManager(object):
-                 rsc_name=clone_volume_name,
-                 storage_pool=self._group_name
-             ))
+@@ -850,8 +1245,7 @@ class LinstorVolumeManager(object):
+     def shallow_clone_volume(self, volume_uuid, clone_uuid, persistent=True):
+         """
+         Clone a volume. Do not copy the data, this method creates a new volume
+-        with the same size. It tries to create the volume on the same host
+-        than volume source.
++        with the same size.
+         :param str volume_uuid: The volume to clone.
+         :param str clone_uuid: The cloned volume.
+         :param bool persistent: If false the volume will be unavailable
+@@ -872,98 +1266,8 @@ class LinstorVolumeManager(object):
+                 'Invalid size of {} for volume `{}`'.format(size, volume_name)
+             )
+ 
+-        # 2. Find the node(s) with the maximum space.
+-        candidates = self._find_best_size_candidates()
+-        if not candidates:
+-            raise LinstorVolumeManagerError(
+-                'Unable to shallow clone volume `{}`, no free space found.'
+-            )
+-
+-        # 3. Compute node names and search if we can try to clone
+-        # on the same nodes than volume.
+-        def find_best_nodes():
+-            for candidate in candidates:
+-                for node_name in candidate.node_names:
+-                    if node_name in ideal_node_names:
+-                        return candidate.node_names
+-
+-        node_names = find_best_nodes()
+-        if not node_names:
+-            node_names = candidates[0].node_names
+-
+-        if len(node_names) < self._redundancy:
+-            raise LinstorVolumeManagerError(
+-                'Unable to shallow clone volume `{}`, '.format(volume_uuid) +
+-                '{} are required to clone, found: {}'.format(
+-                    self._redundancy, len(node_names)
+-                )
+-            )
+-
+-        # 4. Compute resources to create.
+-        clone_volume_name = self.build_volume_name(util.gen_uuid())
+-        diskless_node_names = self._get_node_names()
+-        resources = []
+-        for node_name in node_names:
+-            diskless_node_names.remove(node_name)
+-            resources.append(linstor.ResourceData(
+-                node_name=node_name,
+-                rsc_name=clone_volume_name,
+-                storage_pool=self._group_name
+-            ))
 -        for node_name in diskless_node_names:
 -            resources.append(linstor.ResourceData(
 -                node_name=node_name,
 -                rsc_name=clone_volume_name,
 -                diskless=True
 -            ))
- 
-         # 5. Create resources!
+-
+-        # 5. Create resources!
 -        def clean(properties):
-+        def clean():
-             try:
+-            try:
 -                self._destroy_volume(clone_uuid, properties)
-+                self._destroy_volume(clone_uuid, force=True)
-             except Exception as e:
-                 self._logger(
-                     'Unable to destroy volume {} after shallow clone fail: {}'
-@@ -928,12 +1310,15 @@ class LinstorVolumeManager(object):
-                 )
- 
-         def create():
+-            except Exception as e:
+-                self._logger(
+-                    'Unable to destroy volume {} after shallow clone fail: {}'
+-                    .format(clone_uuid, e)
+-                )
+-
+-        def create():
 -            try:
 -                volume_properties = self._create_volume_with_properties(
 -                    clone_uuid, clone_volume_name, size,
 -                    place_resources=False
 -                )
-+            # Note: placed outside try/except block because we create only definition first.
-+            # There is no reason to call `clean` before the real resource creation.
-+            volume_properties = self._create_volume_with_properties(
-+                clone_uuid, clone_volume_name, size, place_resources=False
-+            )
- 
-+            # After this point, `clean` can be called for any fail because the clone UUID
-+            # is really unique. No risk to remove existing data.
-+            try:
-                 result = self._linstor.resource_create(resources)
-                 error_str = self._get_error_str(result)
-                 if error_str:
-@@ -946,7 +1331,7 @@ class LinstorVolumeManager(object):
-                     )
-                 return volume_properties
-             except Exception:
+-
+-                result = self._linstor.resource_create(resources)
+-                error_str = self._get_error_str(result)
+-                if error_str:
+-                    raise LinstorVolumeManagerError(
+-                        'Could not create cloned volume `{}` of `{}` from '
+-                        'SR `{}`: {}'.format(
+-                            clone_uuid, volume_uuid, self._group_name,
+-                            error_str
+-                        )
+-                    )
+-                return volume_properties
+-            except Exception:
 -                clean(volume_properties)
-+                clean()
-                 raise
- 
-         # Retry because we can get errors like this:
-@@ -962,7 +1347,7 @@ class LinstorVolumeManager(object):
-             self._volumes.add(clone_uuid)
-             return device_path
-         except Exception as e:
+-                raise
+-
+-        # Retry because we can get errors like this:
+-        # "Resource disappeared while waiting for it to be ready" or
+-        # "Resource did not became ready on node 'XXX' within reasonable time, check Satellite for errors."
+-        # in the LINSTOR server.
+-        volume_properties = util.retry(create, maxretry=5)
+-
+-        try:
+-            device_path = self._find_device_path(clone_uuid, clone_volume_name)
+-            if persistent:
+-                volume_properties[self.PROP_NOT_EXISTS] = self.STATE_EXISTS
+-            self._volumes.add(clone_uuid)
+-            return device_path
+-        except Exception as e:
 -            clean(volume_properties)
-+            clean()
-             raise
+-            raise
++        # 2. Create clone!
++        return self.create_volume(clone_uuid, size, persistent)
  
      def remove_resourceless_volumes(self):
-@@ -974,83 +1359,461 @@ class LinstorVolumeManager(object):
+         """
+@@ -974,83 +1278,461 @@ class LinstorVolumeManager(object):
          """
  
          resource_names = self._fetch_resource_names()
@@ -5501,16 +5625,15 @@ index 182b889..92fd028 100755
 -        if (force):
 -            for volume_uuid in self._volumes:
 -                self.destroy_volume(volume_uuid)
--
--        # TODO: Throw exceptions in the helpers below if necessary.
--        # TODO: What's the required action if it exists remaining volumes?
 +        # 1. Ensure volume list is empty. No cost.
 +        if self._volumes:
 +            raise LinstorVolumeManagerError(
 +                'Cannot destroy LINSTOR volume manager: '
 +                'It exists remaining volumes'
 +            )
-+
+ 
+-        # TODO: Throw exceptions in the helpers below if necessary.
+-        # TODO: What's the required action if it exists remaining volumes?
 +        # 2. Fetch ALL resource names.
 +        # This list may therefore contain volumes created outside
 +        # the scope of the driver.
@@ -5778,7 +5901,8 @@ index 182b889..92fd028 100755
 +            raise LinstorVolumeManagerError(
 +                'Failed to get all nodes: `{}`'.format(e)
 +            )
-+
+ 
+-        return (node_names, in_use)
 +    def get_storage_pools_info(self):
 +        """
 +        Give all storage pools of current group name.
@@ -5856,8 +5980,7 @@ index 182b889..92fd028 100755
 +                'usable-size': usable_size,
 +                'allocated-size': allocated_size
 +            })
- 
--        return (node_names, in_use)
++
 +        for resource_state in resource_list.resource_states:
 +            resource = resources[resource_state.rsc_name][resource_state.node_name]
 +            resource['in-use'] = resource_state.in_use
@@ -5975,7 +6098,7 @@ index 182b889..92fd028 100755
          pools = pools.storage_pools
          if pools:
              existing_node_names = [pool.node_name for pool in pools]
-@@ -1062,10 +1825,18 @@ class LinstorVolumeManager(object):
+@@ -1062,10 +1744,18 @@ class LinstorVolumeManager(object):
          if lin.resource_group_list_raise(
              [group_name]
          ).resource_groups:
@@ -5998,7 +6121,7 @@ index 182b889..92fd028 100755
  
          if thin_provisioning:
              driver_pool_parts = driver_pool_name.split('/')
-@@ -1076,9 +1847,14 @@ class LinstorVolumeManager(object):
+@@ -1076,9 +1766,14 @@ class LinstorVolumeManager(object):
                  )
  
          # 2. Create storage pool on each node + resource group.
@@ -6013,7 +6136,7 @@ index 182b889..92fd028 100755
              while i < len(node_names):
                  node_name = node_names[i]
  
-@@ -1089,32 +1865,63 @@ class LinstorVolumeManager(object):
+@@ -1089,32 +1784,63 @@ class LinstorVolumeManager(object):
                      driver_pool_name=driver_pool_name
                  )
  
@@ -6096,7 +6219,7 @@ index 182b889..92fd028 100755
              # 2.c. Create volume group.
              result = lin.volume_group_create(group_name)
              error_str = cls._get_error_str(result)
-@@ -1125,30 +1932,78 @@ class LinstorVolumeManager(object):
+@@ -1125,30 +1851,78 @@ class LinstorVolumeManager(object):
                      )
                  )
  
@@ -6180,7 +6303,7 @@ index 182b889..92fd028 100755
          return instance
  
      @classmethod
-@@ -1196,6 +2051,32 @@ class LinstorVolumeManager(object):
+@@ -1196,6 +1970,32 @@ class LinstorVolumeManager(object):
      # Private helpers.
      # --------------------------------------------------------------------------
  
@@ -6213,7 +6336,7 @@ index 182b889..92fd028 100755
      def _ensure_volume_exists(self, volume_uuid):
          if volume_uuid not in self._volumes:
              raise LinstorVolumeManagerError(
-@@ -1215,21 +2096,24 @@ class LinstorVolumeManager(object):
+@@ -1215,21 +2015,24 @@ class LinstorVolumeManager(object):
              )
          return result[0].candidates
  
@@ -6246,7 +6369,7 @@ index 182b889..92fd028 100755
              if resource.name not in all_volume_info:
                  current = all_volume_info[resource.name] = self.VolumeInfo(
                      resource.name
-@@ -1237,6 +2121,9 @@ class LinstorVolumeManager(object):
+@@ -1237,6 +2040,9 @@ class LinstorVolumeManager(object):
              else:
                  current = all_volume_info[resource.name]
  
@@ -6256,7 +6379,7 @@ index 182b889..92fd028 100755
              for volume in resource.volumes:
                  # We ignore diskless pools of the form "DfltDisklessStorPool".
                  if volume.storage_pool_name == self._group_name:
-@@ -1245,22 +2132,32 @@ class LinstorVolumeManager(object):
+@@ -1245,22 +2051,32 @@ class LinstorVolumeManager(object):
                             'Failed to get allocated size of `{}` on `{}`'
                             .format(resource.name, volume.storage_pool_name)
                          )
@@ -6272,16 +6395,16 @@ index 182b889..92fd028 100755
 +                    current.allocated_size = current.allocated_size and \
 +                        max(current.allocated_size, allocated_size) or \
 +                        allocated_size
- 
--                    current.virtual_size = current.virtual_size and \
--                        min(current.virtual_size, virtual_size) or virtual_size
++
 +                    usable_size = volume.usable_size
 +                    if usable_size > 0 and (
 +                        usable_size < current.virtual_size or
 +                        not current.virtual_size
 +                    ):
 +                        current.virtual_size = usable_size
-+
+ 
+-                    current.virtual_size = current.virtual_size and \
+-                        min(current.virtual_size, virtual_size) or virtual_size
 +        if current.virtual_size <= 0:
 +            raise LinstorVolumeManagerError(
 +               'Failed to get usable size of `{}` on `{}`'
@@ -6299,7 +6422,7 @@ index 182b889..92fd028 100755
          return all_volume_info
  
      def _get_volume_node_names_and_size(self, volume_name):
-@@ -1289,12 +2186,8 @@ class LinstorVolumeManager(object):
+@@ -1289,12 +2105,8 @@ class LinstorVolumeManager(object):
          return (node_names, size * 1024)
  
      def _compute_size(self, attr):
@@ -6313,7 +6436,7 @@ index 182b889..92fd028 100755
              space = pool.free_space
              if space:
                  size = getattr(space, attr)
-@@ -1308,42 +2201,73 @@ class LinstorVolumeManager(object):
+@@ -1308,48 +2120,79 @@ class LinstorVolumeManager(object):
  
      def _get_node_names(self):
          node_names = set()
@@ -6334,21 +6457,42 @@ index 182b889..92fd028 100755
 -                'Failed to create volume `{}` from SR `{}`, it already exists'
 -                .format(volume_uuid, self._group_name),
 -                LinstorVolumeManagerError.ERR_VOLUME_EXISTS
+-            )
+-
+-        if errors:
+-            raise LinstorVolumeManagerError(
+-                'Failed to create volume `{}` from SR `{}`: {}'.format(
+-                    volume_uuid,
+-                    self._group_name,
+-                    self._get_error_str(errors)
+-                )
+-            )
 +    def _get_storage_pools(self, force=False):
 +        cur_time = time.time()
 +        elsaped_time = cur_time - self._storage_pools_time
-+
+ 
+-    def _create_volume(self, volume_uuid, volume_name, size, place_resources):
+-        size = self.round_up_volume_size(size)
 +        if force or elsaped_time >= self.STORAGE_POOLS_FETCH_INTERVAL:
 +            self._storage_pools = self._linstor.storage_pool_list_raise(
 +                filter_by_stor_pools=[self._group_name]
 +            ).storage_pools
 +            self._storage_pools_time = time.time()
-+
+ 
+-        self._check_volume_creation_errors(self._linstor.resource_group_spawn(
+-            rsc_grp_name=self._group_name,
+-            rsc_dfn_name=volume_name,
+-            vlm_sizes=['{}B'.format(size)],
+-            definitions_only=not place_resources
+-        ), volume_uuid)
 +        return self._storage_pools
-+
+ 
+-    def _create_volume_with_properties(
 +    def _create_volume(
-+        self, volume_uuid, volume_name, size, place_resources
-+    ):
+         self, volume_uuid, volume_name, size, place_resources
+     ):
+-        if self.check_volume_exists(volume_uuid):
+-            raise LinstorVolumeManagerError(
 +        size = self.round_up_volume_size(size)
 +        self._mark_resource_cache_as_dirty()
 +
@@ -6362,15 +6506,9 @@ index 182b889..92fd028 100755
 +                ),
 +                volume_uuid,
 +                self._group_name
-             )
++            )
 +            self._configure_volume_peer_slots(self._linstor, volume_name)
- 
--        if errors:
--            raise LinstorVolumeManagerError(
--                'Failed to create volume `{}` from SR `{}`: {}'.format(
--                    volume_uuid,
--                    self._group_name,
--                    self._get_error_str(errors)
++
 +        def clean():
 +            try:
 +                self._destroy_volume(volume_uuid, force=True)
@@ -6378,11 +6516,8 @@ index 182b889..92fd028 100755
 +                self._logger(
 +                    'Unable to destroy volume {} after creation fail: {}'
 +                    .format(volume_uuid, e)
-                 )
--            )
- 
--    def _create_volume(self, volume_uuid, volume_name, size, place_resources):
--        size = self.round_up_volume_size(size)
++                )
++
 +        def create():
 +            try:
 +                create_definition()
@@ -6404,18 +6539,18 @@ index 182b889..92fd028 100755
 +            except Exception:
 +                clean()
 +                raise
- 
--        self._check_volume_creation_errors(self._linstor.resource_group_spawn(
--            rsc_grp_name=self._group_name,
--            rsc_dfn_name=volume_name,
--            vlm_sizes=['{}B'.format(size)],
--            definitions_only=not place_resources
--        ), volume_uuid)
++
 +        util.retry(create, maxretry=5)
- 
-     def _create_volume_with_properties(
-         self, volume_uuid, volume_name, size, place_resources
-@@ -1378,6 +2302,8 @@ class LinstorVolumeManager(object):
++
++    def _create_volume_with_properties(
++        self, volume_uuid, volume_name, size, place_resources
++    ):
++        if self.check_volume_exists(volume_uuid):
++            raise LinstorVolumeManagerError(
+                 'Could not create volume `{}` from SR `{}`, it already exists'
+                 .format(volume_uuid, self._group_name) + ' in properties',
+                 LinstorVolumeManagerError.ERR_VOLUME_EXISTS
+@@ -1378,6 +2221,8 @@ class LinstorVolumeManager(object):
                  volume_uuid, volume_name, size, place_resources
              )
  
@@ -6424,7 +6559,7 @@ index 182b889..92fd028 100755
              return volume_properties
          except LinstorVolumeManagerError as e:
              # Do not destroy existing resource!
-@@ -1385,12 +2311,8 @@ class LinstorVolumeManager(object):
+@@ -1385,12 +2230,8 @@ class LinstorVolumeManager(object):
              # before the `self._create_volume` case.
              # It can only happen if the same volume uuid is used in the same
              # call in another host.
@@ -6439,7 +6574,7 @@ index 182b889..92fd028 100755
              raise
  
      def _find_device_path(self, volume_uuid, volume_name):
-@@ -1417,68 +2339,73 @@ class LinstorVolumeManager(object):
+@@ -1417,68 +2258,73 @@ class LinstorVolumeManager(object):
  
      def _request_device_path(self, volume_uuid, volume_name, activate=False):
          node_name = socket.gethostname()
@@ -6454,64 +6589,36 @@ index 182b889..92fd028 100755
          )
  
 -        if not resources or not resources[0]:
-+        if not resources:
-+            if activate:
-+                self._mark_resource_cache_as_dirty()
-+                self._activate_device_path(
-+                    self._linstor, node_name, volume_name
-+                )
-+                return self._request_device_path(volume_uuid, volume_name)
-+            raise LinstorVolumeManagerError(
-+                'Empty dev path for `{}`, but definition "seems" to exist'
-+                .format(volume_uuid)
-+            )
-+        # Contains a path of the /dev/drbd<id> form.
-+        return resources[0].volumes[0].device_path
-+
-+    def _destroy_resource(self, resource_name, force=False):
-+        result = self._linstor.resource_dfn_delete(resource_name)
-+        error_str = self._get_error_str(result)
-+        if not error_str:
-+            self._mark_resource_cache_as_dirty()
-+            return
-+
-+        if not force:
-+            self._mark_resource_cache_as_dirty()
-             raise LinstorVolumeManagerError(
+-            raise LinstorVolumeManagerError(
 -                'No response list for dev path of `{}`'.format(volume_uuid)
-+               'Could not destroy resource `{}` from SR `{}`: {}'
-+                .format(resource_name, self._group_name, error_str)
-             )
+-            )
 -        if isinstance(resources[0], linstor.responses.ResourceResponse):
 -            if not resources[0].resources:
 -                if activate:
 -                    self._activate_device_path(node_name, volume_name)
 -                    return self._request_device_path(volume_uuid, volume_name)
-+
-+        # If force is used, ensure there is no opener.
-+        all_openers = get_all_volume_openers(resource_name, '0')
-+        for openers in all_openers.itervalues():
-+            if openers:
-+                self._mark_resource_cache_as_dirty()
-                 raise LinstorVolumeManagerError(
+-                raise LinstorVolumeManagerError(
 -                    'Empty dev path for `{}`, but definition "seems" to exist'
 -                    .format(volume_uuid)
-+                    'Could not force destroy resource `{}` from SR `{}`: {} (openers=`{}`)'
-+                    .format(resource_name, self._group_name, error_str, all_openers)
++        if not resources:
++            if activate:
++                self._mark_resource_cache_as_dirty()
++                self._activate_device_path(
++                    self._linstor, node_name, volume_name
                  )
 -            # Contains a path of the /dev/drbd<id> form.
 -            return resources[0].resources[0].volumes[0].device_path
- 
+-
 -        raise LinstorVolumeManagerError(
 -            'Unable to get volume dev path `{}`: {}'.format(
 -                volume_uuid, str(resources[0])
--            )
-+        # Maybe the resource is blocked in primary mode. DRBD/LINSTOR issue?
-+        resource_states = filter(
-+            lambda resource_state: resource_state.name == resource_name,
-+            self._get_resource_cache().resource_states
-         )
- 
++                return self._request_device_path(volume_uuid, volume_name)
++            raise LinstorVolumeManagerError(
++                'Empty dev path for `{}`, but definition "seems" to exist'
++                .format(volume_uuid)
+             )
+-        )
+-
 -    def _activate_device_path(self, node_name, volume_name):
 -        result = self._linstor.resource_create([
 -            linstor.ResourceData(node_name, volume_name, diskless=True)
@@ -6529,28 +6636,55 @@ index 182b889..92fd028 100755
 -            .format(volume_name, node_name, ', '.join(
 -                [str(x) for x in result]))
 -        )
--
++        # Contains a path of the /dev/drbd<id> form.
++        return resources[0].volumes[0].device_path
+ 
 -    def _destroy_resource(self, resource_name):
--        result = self._linstor.resource_dfn_delete(resource_name)
--        error_str = self._get_error_str(result)
++    def _destroy_resource(self, resource_name, force=False):
+         result = self._linstor.resource_dfn_delete(resource_name)
+         error_str = self._get_error_str(result)
 -        if error_str:
--            raise LinstorVolumeManagerError(
++        if not error_str:
++            self._mark_resource_cache_as_dirty()
++            return
++
++        if not force:
++            self._mark_resource_cache_as_dirty()
+             raise LinstorVolumeManagerError(
 -                'Could not destroy resource `{}` from SR `{}`: {}'
--                .format(resource_name, self._group_name, error_str)
--            )
-+        # Mark only after computation of states.
-+        self._mark_resource_cache_as_dirty()
++               'Could not destroy resource `{}` from SR `{}`: {}'
+                 .format(resource_name, self._group_name, error_str)
+             )
  
 -    def _destroy_volume(self, volume_uuid, volume_properties):
 -        assert volume_properties.namespace == \
 -            self._build_volume_namespace(volume_uuid)
++        # If force is used, ensure there is no opener.
++        all_openers = get_all_volume_openers(resource_name, '0')
++        for openers in all_openers.itervalues():
++            if openers:
++                self._mark_resource_cache_as_dirty()
++                raise LinstorVolumeManagerError(
++                    'Could not force destroy resource `{}` from SR `{}`: {} (openers=`{}`)'
++                    .format(resource_name, self._group_name, error_str, all_openers)
++                )
+ 
++        # Maybe the resource is blocked in primary mode. DRBD/LINSTOR issue?
++        resource_states = filter(
++            lambda resource_state: resource_state.name == resource_name,
++            self._get_resource_cache().resource_states
++        )
++
++        # Mark only after computation of states.
++        self._mark_resource_cache_as_dirty()
++
 +        for resource_state in resource_states:
 +            volume_state = resource_state.volume_states[0]
 +            if resource_state.in_use:
 +                demote_drbd_resource(resource_state.node_name, resource_name)
 +                break
 +        self._destroy_resource(resource_name)
- 
++
 +    def _destroy_volume(self, volume_uuid, force=False):
 +        volume_properties = self._get_volume_properties(volume_uuid)
          try:
@@ -6561,7 +6695,7 @@ index 182b889..92fd028 100755
  
              # Assume this call is atomic.
              volume_properties.clear()
-@@ -1487,19 +2414,8 @@ class LinstorVolumeManager(object):
+@@ -1487,19 +2333,8 @@ class LinstorVolumeManager(object):
                  'Cannot destroy volume `{}`: {}'.format(volume_uuid, e)
              )
  
@@ -6582,7 +6716,7 @@ index 182b889..92fd028 100755
          resource_names = self._fetch_resource_names()
  
          self._volumes = set()
-@@ -1517,9 +2433,7 @@ class LinstorVolumeManager(object):
+@@ -1517,9 +2352,7 @@ class LinstorVolumeManager(object):
              self.REG_NOT_EXISTS, ignore_inexisting_volumes=False
          )
          for volume_uuid, not_exists in existing_volumes.items():
@@ -6593,7 +6727,7 @@ index 182b889..92fd028 100755
  
              src_uuid = properties.get(self.PROP_UPDATING_UUID_SRC)
              if src_uuid:
-@@ -1569,7 +2483,7 @@ class LinstorVolumeManager(object):
+@@ -1569,7 +2402,7 @@ class LinstorVolumeManager(object):
                  # Little optimization, don't call `self._destroy_volume`,
                  # we already have resource name list.
                  if volume_name in resource_names:
@@ -6602,7 +6736,7 @@ index 182b889..92fd028 100755
  
                  # Assume this call is atomic.
                  properties.clear()
-@@ -1579,37 +2493,42 @@ class LinstorVolumeManager(object):
+@@ -1579,37 +2412,42 @@ class LinstorVolumeManager(object):
                      'Cannot clean volume {}: {}'.format(volume_uuid, e)
                  )
  
@@ -6662,7 +6796,7 @@ index 182b889..92fd028 100755
  
          volume_properties = {}
          for volume_uuid in self._volumes:
-@@ -1625,15 +2544,17 @@ class LinstorVolumeManager(object):
+@@ -1625,15 +2463,17 @@ class LinstorVolumeManager(object):
  
          return volume_properties
  
@@ -6686,7 +6820,7 @@ index 182b889..92fd028 100755
  
      @classmethod
      def _build_sr_namespace(cls):
-@@ -1653,46 +2574,433 @@ class LinstorVolumeManager(object):
+@@ -1653,46 +2493,433 @@ class LinstorVolumeManager(object):
          ])
  
      @classmethod
@@ -6782,10 +6916,10 @@ index 182b889..92fd028 100755
 +            if activate:
 +                cls._activate_device_path(
 +                    lin, node_name, DATABASE_VOLUME_NAME
-                 )
++                )
 +                return cls._request_database_path(
 +                    DATABASE_VOLUME_NAME, DATABASE_VOLUME_NAME
-+                )
+                 )
 +            raise LinstorVolumeManagerError(
 +                'Empty dev path for `{}`, but definition "seems" to exist'
 +                .format(DATABASE_PATH)
@@ -6880,8 +7014,8 @@ index 182b889..92fd028 100755
 +                'Could not create database volume from SR `{}`: {}'.format(
 +                    group_name, error_str
 +                )
-             )
- 
++            )
++
 +        # We must modify the quorum. Otherwise we can't use correctly the
 +        # drbd-reactor daemon.
 +        if auto_quorum:
@@ -6943,8 +7077,8 @@ index 182b889..92fd028 100755
 +            raise LinstorVolumeManagerError(
 +                'Could not destroy resource `{}` from SR `{}`: {}'
 +                .format(DATABASE_VOLUME_NAME, group_name, error_str)
-+            )
-+
+             )
+ 
 +    @classmethod
 +    def _mount_database_volume(cls, volume_path, mount=True, force=False):
 +        try:
@@ -7134,7 +7268,7 @@ index 182b889..92fd028 100755
      @staticmethod
      def _get_filtered_properties(properties):
          return dict(properties.items())
-@@ -1711,3 +3019,110 @@ class LinstorVolumeManager(object):
+@@ -1711,3 +2938,110 @@ class LinstorVolumeManager(object):
                  if err.is_error(code):
                      return True
          return False
@@ -7321,7 +7455,7 @@ index 932fc3c..7532875 100755
                  logger=util.SMlog
              ).get_device_path(self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 1621be9..c6bb8d0 100755
+index 5594f71..374b7d4 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -698,32 +698,10 @@ def get_master_ref(session):
@@ -7375,7 +7509,7 @@ index 1621be9..c6bb8d0 100755
  
  def get_this_host_ref(session):
      host_uuid = get_this_host()
-@@ -1962,3 +1951,95 @@ def sessions_less_than_targets(other_config, device_config):
+@@ -1972,3 +1961,95 @@ def sessions_less_than_targets(other_config, device_config):
          return (sessions < targets)
      else:
          return False
@@ -7472,10 +7606,10 @@ index 1621be9..c6bb8d0 100755
 +    finally:
 +        SMlog('* End profiling of {} ({}) *'.format(name, filename))
 diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
-index 3a3027e..279786e 100755
+index 40807e8..723f3af 100755
 --- a/drivers/vhdutil.py
 +++ b/drivers/vhdutil.py
-@@ -93,13 +93,16 @@ def ioretry(cmd, text=True):
+@@ -94,13 +94,16 @@ def ioretry(cmd, text=True):
                          errlist=[errno.EIO, errno.EAGAIN])
  
  
@@ -7484,7 +7618,7 @@ index 3a3027e..279786e 100755
      """Get the VHD info. The parent info may optionally be omitted: vhd-util
      tries to verify the parent by opening it, which results in error if the VHD
      resides on an inactive LV"""
-     opts = "-vsf"
+     opts = "-vsaf"
      if includeParent:
          opts += "p"
 +        if not resolveParent:
@@ -7495,15 +7629,14 @@ index 3a3027e..279786e 100755
      fields = ret.strip().split('\n')
 diff --git a/etc/systemd/system/drbd-reactor.service.d/override.conf b/etc/systemd/system/drbd-reactor.service.d/override.conf
 new file mode 100644
-index 0000000..c079ab6
+index 0000000..2f99a46
 --- /dev/null
 +++ b/etc/systemd/system/drbd-reactor.service.d/override.conf
-@@ -0,0 +1,7 @@
-+[Unit]
+@@ -0,0 +1,6 @@
++[Service]
 +StartLimitInterval=60
 +StartLimitBurst=10
 +
-+[Service]
 +Restart=always
 +RestartSec=2
 diff --git a/etc/systemd/system/linstor-satellite.service.d/override.conf b/etc/systemd/system/linstor-satellite.service.d/override.conf
@@ -7863,6 +7996,18 @@ index 8161813..4774059 100644
    };
  
    const int inotifyFd = createInotifyInstance();
+diff --git a/multipath/multipath.conf b/multipath/multipath.conf
+index 51aa139..6ed830e 100644
+--- a/multipath/multipath.conf
++++ b/multipath/multipath.conf
+@@ -23,6 +23,7 @@ blacklist {
+     devnode "scini*"
+     devnode "^rbd[0-9]*"
+     devnode "^nbd[0-9]*"
++    devnode "^drbd[0-9]*"
+ }
+ # Leave this section in place even if empty
+ blacklist_exceptions {
 diff --git a/scripts/fork-log-daemon b/scripts/fork-log-daemon
 new file mode 100755
 index 0000000..665a60b
@@ -8041,7 +8186,7 @@ index 0000000..9c1dcc4
 +    args = parser.parse_args()
 +    sys.exit(safe_umount(args.path))
 diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
-index 1aad363..d6f5713 100644
+index 42cf9eb..2095569 100644
 --- a/tests/test_on_slave.py
 +++ b/tests/test_on_slave.py
 @@ -13,7 +13,15 @@ import on_slave

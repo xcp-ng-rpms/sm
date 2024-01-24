@@ -61,7 +61,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.0.3..3.0.3-8.3
+# git format-patch v3.0.12-6-xcpng..3.0.12-8.3
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -83,10 +83,10 @@ Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
 Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
 Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
 Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
-Patch1022: 0022-Fix-vdi-ref-when-static-vdis-are-used.patch
-Patch1023: 0023-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
-Patch1024: 0024-Support-IPv6-for-NFS-ISO-SR.patch
-Patch1025: 0025-Support-IPv6-in-Ceph-Driver.patch
+Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
+Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
+Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
+Patch1025: 0025-Implement-correctly-fake_import-in-test_on_slave.py.patch
 
 %description
 This package contains storage backends used in XCP
@@ -362,7 +362,13 @@ The package contains a fake key lookup plugin for system tests
 %changelog
 * Wed Jan 24 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.12-6.1
 - Rebase on 3.0.12-6
-- TODO: rebase our patches
+- Drop 0022-Fix-vdi-ref-when-static-vdis-are-used.patch
+- Drop 0024-Support-IPv6-for-NFS-ISO-SR.patch
+- Import sm 8.2 LINSTOR fixes on 8.3:
+- Make sure VDI.delete doesn't throw under specific conditions
+- Add drbd in the blacklist of multipath.conf
+- Autoselect destination host for clone 
+- Clone/snapshot without increasing volume size
 - *** Upstream changelog ***
 - * Wed Nov 22 2023 Tim Smith <tim.smith@citrix.com> - 3.0.12-6
 - - Backport fix for CA-384030 from upstream

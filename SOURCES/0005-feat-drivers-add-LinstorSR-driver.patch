@@ -1,4 +1,4 @@
-From 9cbec26536ced42c7284652057855d17049dec33 Mon Sep 17 00:00:00 2001
+From 56716b3adaee8c1aab9790beec224ce597347cf6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH 05/25] feat(drivers): add LinstorSR driver
@@ -78,7 +78,7 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index 8bf6250..05a78a2 100755
+index 752a9ce..752fb95 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -8,6 +8,7 @@ SM_DRIVERS += Dummy
@@ -99,7 +99,7 @@ index 8bf6250..05a78a2 100755
  SM_LIBS += lvhdutil
  SM_LIBS += cifutils
  SM_LIBS += xs_errors
-@@ -93,7 +97,8 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
+@@ -95,7 +99,8 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
  
  .PHONY: build
  build:
@@ -109,7 +109,7 @@ index 8bf6250..05a78a2 100755
  
  .PHONY: precommit
  precommit: build
-@@ -173,6 +178,8 @@ install: precheck
+@@ -178,6 +183,8 @@ install: precheck
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
  	install -m 644 systemd/sr_health_check.timer \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
@@ -118,7 +118,7 @@ index 8bf6250..05a78a2 100755
  	for i in $(UDEV_RULES); do \
  	  install -m 644 udev/$$i.rules \
  	    $(SM_STAGING)$(UDEV_RULES_DIR); done
-@@ -190,6 +197,7 @@ install: precheck
+@@ -195,6 +202,7 @@ install: precheck
  	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoFCoESR && ln -sf LVHDoFCoESR.py LVMoFCoESR
  	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
  	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
@@ -126,7 +126,7 @@ index 8bf6250..05a78a2 100755
  	install -m 755 drivers/lvhd-thin $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
  	install -m 755 drivers/on_slave.py $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)/on-slave
  	install -m 755 drivers/testing-hooks $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
-@@ -207,6 +215,7 @@ install: precheck
+@@ -212,6 +220,7 @@ install: precheck
  	install -m 755 scripts/kickpipe $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/set-iscsi-initiator $(SM_STAGING)$(LIBEXEC)
  	$(MAKE) -C dcopy install DESTDIR=$(SM_STAGING)
@@ -134,7 +134,7 @@ index 8bf6250..05a78a2 100755
  	ln -sf $(SM_DEST)blktap2.py $(SM_STAGING)$(BIN_DEST)/blktap2
  	ln -sf $(SM_DEST)lcache.py $(SM_STAGING)$(BIN_DEST)tapdisk-cache-stats
  	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
-@@ -219,4 +228,3 @@ install: precheck
+@@ -222,4 +231,3 @@ install: precheck
  .PHONY: clean
  clean:
  	rm -rf $(SM_STAGING)
@@ -2246,10 +2246,10 @@ index 0000000..8be1836
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 1f58adc..e846666 100755
+index 0b4b250..293ec6e 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -898,4 +898,40 @@
+@@ -905,4 +905,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -2291,7 +2291,7 @@ index 1f58adc..e846666 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index ef72ab5..be67a8c 100755
+index b732a33..ecdf9ee 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -2315,7 +2315,7 @@ index ef72ab5..be67a8c 100755
  # Disable automatic leaf-coalescing. Online leaf-coalesce is currently not
  # possible due to lvhd_stop_using_() not working correctly. However, we leave
  # this option available through the explicit LEAFCLSC_FORCE flag in the VDI
-@@ -680,7 +689,19 @@ class VDI:
+@@ -682,7 +691,19 @@ class VDI:
              if child not in childList:
                  thisPrunable = False
  
@@ -2336,7 +2336,7 @@ index ef72ab5..be67a8c 100755
              vdiList.append(self)
          return vdiList
  
-@@ -1432,6 +1453,112 @@ class LVHDVDI(VDI):
+@@ -1461,6 +1482,112 @@ class LVHDVDI(VDI):
                  lvhdutil.calcSizeLV(self.getSizeVHD())
  
  
@@ -2449,7 +2449,7 @@ index ef72ab5..be67a8c 100755
  ################################################################################
  #
  # SR
-@@ -1486,7 +1613,8 @@ class SR:
+@@ -1515,7 +1642,8 @@ class SR:
  
      TYPE_FILE = "file"
      TYPE_LVHD = "lvhd"
@@ -2459,7 +2459,7 @@ index ef72ab5..be67a8c 100755
  
      LOCK_RETRY_INTERVAL = 3
      LOCK_RETRY_ATTEMPTS = 20
-@@ -1507,6 +1635,8 @@ class SR:
+@@ -1536,6 +1664,8 @@ class SR:
              return FileSR(uuid, xapi, createLock, force)
          elif type == SR.TYPE_LVHD:
              return LVHDSR(uuid, xapi, createLock, force)
@@ -2468,7 +2468,7 @@ index ef72ab5..be67a8c 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2815,6 +2945,232 @@ class LVHDSR(SR):
+@@ -2852,6 +2982,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2701,7 +2701,7 @@ index ef72ab5..be67a8c 100755
  ################################################################################
  #
  #  Helpers
-@@ -2856,7 +3212,9 @@ def normalizeType(type):
+@@ -2893,7 +3249,9 @@ def normalizeType(type):
          "xfs", "zfs"
      ]:
          type = SR.TYPE_FILE
@@ -5133,7 +5133,7 @@ index 6b7fc09..932fc3c 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 50c9a5a..1621be9 100755
+index ea5f89d..5594f71 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -693,10 +693,35 @@ def get_this_host():
@@ -5175,7 +5175,7 @@ index 50c9a5a..1621be9 100755
  
  
  def get_localhost_ref(session):
-@@ -1514,13 +1539,21 @@ def get_connected_sockets(pid):
+@@ -1510,13 +1535,21 @@ def get_connected_sockets(pid):
      return sockets
  
  

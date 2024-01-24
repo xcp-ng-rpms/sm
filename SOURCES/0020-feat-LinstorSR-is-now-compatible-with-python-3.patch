@@ -1,4 +1,4 @@
-From 71aa8bf0a3f3ff0087df9aa4dfca5f4508aa7a75 Mon Sep 17 00:00:00 2001
+From d2dbdb19c1f89b59187cfe89501f8e3232f1042d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
 Subject: [PATCH 20/25] feat(LinstorSR): is now compatible with python 3
@@ -17,10 +17,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  9 files changed, 36 insertions(+), 40 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 5f143e7..b5bcc39 100755
+index c770dc7..a396aee 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
-@@ -756,7 +756,7 @@ class LinstorSR(SR.SR):
+@@ -758,7 +758,7 @@ class LinstorSR(SR.SR):
          self._load_vdis()
          self._update_physical_size()
  
@@ -29,7 +29,7 @@ index 5f143e7..b5bcc39 100755
              if self.vdis[vdi_uuid].deleted:
                  del self.vdis[vdi_uuid]
  
-@@ -889,7 +889,7 @@ class LinstorSR(SR.SR):
+@@ -891,7 +891,7 @@ class LinstorSR(SR.SR):
          secondary_hosts = []
  
          hosts = self.session.xenapi.host.get_all_records()
@@ -38,7 +38,7 @@ index 5f143e7..b5bcc39 100755
              hostname = host_rec['hostname']
              if controller_node_name == hostname:
                  controller_host = host_ref
-@@ -1000,7 +1000,7 @@ class LinstorSR(SR.SR):
+@@ -1002,7 +1002,7 @@ class LinstorSR(SR.SR):
          # We use the size of the smallest disk, this is an approximation that
          # ensures the displayed physical size is reachable by the user.
          (min_physical_size, pool_count) = self._linstor.get_min_physical_size()
@@ -47,7 +47,7 @@ index 5f143e7..b5bcc39 100755
              self._linstor.redundancy
  
          self.physical_utilisation = self._linstor.allocated_volume_size
-@@ -1240,7 +1240,7 @@ class LinstorSR(SR.SR):
+@@ -1242,7 +1242,7 @@ class LinstorSR(SR.SR):
  
          # 9. Remove all hidden leaf nodes to avoid introducing records that
          # will be GC'ed.
@@ -56,7 +56,7 @@ index 5f143e7..b5bcc39 100755
              if vdi_uuid not in geneology and self.vdis[vdi_uuid].hidden:
                  util.SMlog(
                      'Scan found hidden leaf ({}), ignoring'.format(vdi_uuid)
-@@ -1446,17 +1446,16 @@ class LinstorSR(SR.SR):
+@@ -1448,17 +1448,16 @@ class LinstorSR(SR.SR):
      # --------------------------------------------------------------------------
  
      def _create_linstor_cache(self):
@@ -78,7 +78,7 @@ index 5f143e7..b5bcc39 100755
                  raise e
  
          self._all_volume_metadata_cache = \
-@@ -2643,7 +2642,7 @@ class LinstorVDI(VDI.VDI):
+@@ -2652,7 +2651,7 @@ class LinstorVDI(VDI.VDI):
                  '--nbd-name',
                  volume_name,
                  '--urls',
@@ -88,10 +88,10 @@ index 5f143e7..b5bcc39 100755
                  str(device_size)
              ]
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 989068a..0a890d2 100755
+index 1768e27..e51fa8d 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3335,7 +3335,7 @@ class LinstorSR(SR):
+@@ -3382,7 +3382,7 @@ class LinstorSR(SR):
      def _checkSlaves(self, vdi):
          try:
              all_openers = self._linstor.get_volume_openers(vdi.uuid)
@@ -101,7 +101,7 @@ index 989068a..0a890d2 100755
                      if opener['process-name'] != 'tapdisk':
                          raise util.SMException(
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 6b45875..71e2e90 100755
+index 8a30834..8d313ec 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -1,4 +1,4 @@
@@ -110,7 +110,7 @@ index 6b45875..71e2e90 100755
  #
  # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
  #
-@@ -493,7 +493,7 @@ def get_key_hash(session, args):
+@@ -502,7 +502,7 @@ def get_key_hash(session, args):
  def get_block_bitmap(session, args):
      try:
          device_path = args['devicePath']
@@ -120,7 +120,7 @@ index 6b45875..71e2e90 100755
          util.SMlog('linstor-manager:get_block_bitmap error: {}'.format(e))
          raise
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 494b4b0..eb8d285 100644
+index 836f4ce..13e1bb0 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -27,9 +27,6 @@ import xs_errors
@@ -142,7 +142,7 @@ index 494b4b0..eb8d285 100644
  
              try:
                  def remote_call():
-@@ -426,7 +423,7 @@ class LinstorVhdUtil:
+@@ -430,7 +427,7 @@ class LinstorVhdUtil:
                  try:
                      return local_method(device_path, *args, **kwargs)
                  except util.CommandException as e:
@@ -151,7 +151,7 @@ index 494b4b0..eb8d285 100644
                          raise ErofsLinstorCallException(e)  # Break retry calls.
                      if e.code == errno.ENOENT:
                          raise NoPathLinstorCallException(e)
-@@ -478,7 +475,7 @@ class LinstorVhdUtil:
+@@ -482,7 +479,7 @@ class LinstorVhdUtil:
              'groupName': self._linstor.group_name
          }
          remote_args.update(**kwargs)
@@ -160,7 +160,7 @@ index 494b4b0..eb8d285 100644
  
          volume_uuid = self._linstor.get_volume_uuid_from_device_path(
              device_path
-@@ -501,12 +498,12 @@ class LinstorVhdUtil:
+@@ -505,12 +502,12 @@ class LinstorVhdUtil:
                  )
  
              no_host_found = True
@@ -176,10 +176,10 @@ index 494b4b0..eb8d285 100644
                      continue
  
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 92fd028..629bc52 100755
+index dc810e5..4da34b5 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
-@@ -528,8 +528,8 @@ class LinstorVolumeManager(object):
+@@ -529,8 +529,8 @@ class LinstorVolumeManager(object):
                  current[volume.number] = max(current_size, current.get(volume.number) or 0)
  
          total_size = 0
@@ -190,7 +190,7 @@ index 92fd028..629bc52 100755
                  total_size += size
  
          return total_size * 1024
-@@ -1779,8 +1779,8 @@ class LinstorVolumeManager(object):
+@@ -1698,8 +1698,8 @@ class LinstorVolumeManager(object):
  
          lin = cls._create_linstor_instance(uri, keep_uri_unmodified=True)
  
@@ -201,7 +201,7 @@ index 92fd028..629bc52 100755
              while True:
                  # Try to create node.
                  result = lin.node_create(
-@@ -2340,13 +2340,13 @@ class LinstorVolumeManager(object):
+@@ -2259,13 +2259,13 @@ class LinstorVolumeManager(object):
      def _request_device_path(self, volume_uuid, volume_name, activate=False):
          node_name = socket.gethostname()
  
@@ -218,7 +218,7 @@ index 92fd028..629bc52 100755
              if activate:
                  self._mark_resource_cache_as_dirty()
                  self._activate_device_path(
-@@ -2358,7 +2358,7 @@ class LinstorVolumeManager(object):
+@@ -2277,7 +2277,7 @@ class LinstorVolumeManager(object):
                  .format(volume_uuid)
              )
          # Contains a path of the /dev/drbd<id> form.
@@ -227,7 +227,7 @@ index 92fd028..629bc52 100755
  
      def _destroy_resource(self, resource_name, force=False):
          result = self._linstor.resource_dfn_delete(resource_name)
-@@ -2376,7 +2376,7 @@ class LinstorVolumeManager(object):
+@@ -2295,7 +2295,7 @@ class LinstorVolumeManager(object):
  
          # If force is used, ensure there is no opener.
          all_openers = get_all_volume_openers(resource_name, '0')
@@ -236,7 +236,7 @@ index 92fd028..629bc52 100755
              if openers:
                  self._mark_resource_cache_as_dirty()
                  raise LinstorVolumeManagerError(
-@@ -2640,18 +2640,18 @@ class LinstorVolumeManager(object):
+@@ -2559,18 +2559,18 @@ class LinstorVolumeManager(object):
          node_name = socket.gethostname()
  
          try:
@@ -258,7 +258,7 @@ index 92fd028..629bc52 100755
              if activate:
                  cls._activate_device_path(
                      lin, node_name, DATABASE_VOLUME_NAME
-@@ -2664,7 +2664,7 @@ class LinstorVolumeManager(object):
+@@ -2583,7 +2583,7 @@ class LinstorVolumeManager(object):
                  .format(DATABASE_PATH)
              )
          # Contains a path of the /dev/drbd<id> form.
@@ -267,7 +267,7 @@ index 92fd028..629bc52 100755
  
      @classmethod
      def _create_database_volume(
-@@ -2699,7 +2699,7 @@ class LinstorVolumeManager(object):
+@@ -2618,7 +2618,7 @@ class LinstorVolumeManager(object):
              )
  
          # Ensure we have a correct list of storage pools.
@@ -276,7 +276,7 @@ index 92fd028..629bc52 100755
          assert nodes_with_pool  # We must have at least one storage pool!
          for node_name in nodes_with_pool:
              assert node_name in node_names
-@@ -2943,7 +2943,7 @@ class LinstorVolumeManager(object):
+@@ -2862,7 +2862,7 @@ class LinstorVolumeManager(object):
      def _move_files(cls, src_dir, dest_dir, force=False):
          def listdir(dir):
              ignored = ['lost+found']
@@ -286,7 +286,7 @@ index 92fd028..629bc52 100755
          try:
              if not force:
 diff --git a/drivers/util.py b/drivers/util.py
-index c6bb8d0..8c5bd37 100755
+index 374b7d4..0760637 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -750,7 +750,7 @@ def get_this_host_address(session):

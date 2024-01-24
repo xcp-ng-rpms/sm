@@ -1,7 +1,7 @@
-From 22464ff6666c7ca6cb89e3d34b3071e7843ffb9f Mon Sep 17 00:00:00 2001
+From efa113931be9a101a6a9789610d7de0b860b55c8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 22 Sep 2023 11:11:27 +0200
-Subject: [PATCH 23/25] Repair coverage to be compatible with 8.3 test env
+Subject: [PATCH 22/25] Repair coverage to be compatible with 8.3 test env
 
 Impacted drivers: LINSTOR, MooseFS and ZFS.
 - Ignore all linstor.* members during coverage,
@@ -18,10 +18,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  4 files changed, 8 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index b5bcc39..859d42d 100755
+index a396aee..b9ab37d 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
-@@ -777,9 +777,8 @@ class LinstorSR(SR.SR):
+@@ -779,9 +779,8 @@ class LinstorSR(SR.SR):
  
          # Update the database before the restart of the GC to avoid
          # bad sync in the process if new VDIs have been introduced.

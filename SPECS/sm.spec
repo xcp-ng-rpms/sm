@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.0.10
-Release: 1.3%{?xsrel}%{?dist}
+Release: 1.4%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -343,7 +343,7 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
-* Fri Jan 12 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.10-1.3
+* Fri Jan 12 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.10-1.4
 - Add 0023-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
 - Add 0024-Support-IPv6-for-NFS-ISO-SR.patch
 - Add 0025-Support-IPv6-in-Ceph-Driver.patch

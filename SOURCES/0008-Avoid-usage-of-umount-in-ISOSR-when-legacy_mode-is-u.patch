@@ -1,7 +1,7 @@
 From 0cce6d8161d7e5af5ba04396175671afdfb7bfa8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Dec 2021 09:28:37 +0100
-Subject: [PATCH 08/22] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
+Subject: [PATCH 08/25] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
  is used
 
 `umount` should not be called when `legacy_mode` is enabled, otherwise a mounted dir
@@ -99,5 +99,5 @@ index db72e39..38f97c0 100644
  class TestISOSR_overNFS(unittest.TestCase):
  
 -- 
-2.41.0
+2.43.0
 

@@ -1,7 +1,7 @@
 From 402bd56c7c3af5ba90a9ad472ee760fd83d87366 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 02/22] feat(drivers): add CephFS and GlusterFS drivers
+Subject: [PATCH 02/25] feat(drivers): add CephFS and GlusterFS drivers
 
 ---
  Makefile               |   2 +
@@ -636,5 +636,5 @@ index a4a5d01..f26c0bd 100755
      if not type in SR.TYPES:
          raise util.SMException("Unsupported SR type: %s" % type)
 -- 
-2.41.0
+2.43.0
 

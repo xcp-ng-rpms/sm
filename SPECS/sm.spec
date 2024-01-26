@@ -1,16 +1,33 @@
-%global package_speccommit 6ea36e7be2614635a7f63ea2972737623ad89fc7
-%global package_srccommit v3.0.10
+%global package_speccommit d6933df59571ee3471f10f184c8b73427daa56ed
+%global usver 3.0.12
+%global xsver 6
+%global xsrel %{xsver}.1%{?xscount}%{?xshash}
+%global package_srccommit v3.0.12
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.0.10
-Release: 1.4%{?xsrel}%{?dist}
+Version: 3.0.12
+Release: %{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.0.10.tar.gz
+Source0: sm-3.0.12.tar.gz
+Patch0: fix_pylint_checking_issues.patch
+Patch1: cp-44484__fix_test_coverage_99%_issue.patch
+Patch2: cp-44484__generate_debugging_information.patch
+Patch3: remove_unused_scripts_and_code.patch
+Patch4: ca-379287_cope_with_fs-encoded_xmlrpc_request_on_command_line.patch
+Patch5: cp-383791_add_unit_test_coverage_for_srmetadata.py.patch
+Patch6: cp-383791_tidy_up_srmetadata.py_prior_to_fixing_utf-8_handling.patch
+Patch7: cp-383791_fix_handling_of_utf-8_in_srmetadata.py.patch
+Patch8: cp-45514__set_ownership_and_permissions_on_backend.patch
+Patch9: ca-371791__fix_world_readable_permissions_on_extsr.patch
+Patch10: ca-384030_ignore_awkardly_named_images_in_iso_srs.patch
+Patch11: ca-377454__ensure_iscsiadm_lock
+Patch12: cp-45927__change_equalogic_checker
+Patch13: ca-384783_probe_for_nfs4_when_rpcinfo_does_not_include_it.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 %define __python python3.6
@@ -188,8 +205,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 /etc/xensource/master.d/02-vhdcleanup
 /opt/xensource/bin/blktap2
 /opt/xensource/bin/tapdisk-cache-stats
-/opt/xensource/bin/xe-getarrayidentifier
-/opt/xensource/bin/xe-getlunidentifier
 /opt/xensource/debug/tp
 /opt/xensource/libexec/check-device-sharing
 /opt/xensource/libexec/dcopy
@@ -290,6 +305,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
 %config /etc/udev/rules.d/58-xapi.rules
 %config /etc/multipath.xenserver/multipath.conf
+%dir /etc/multipath/conf.d
+%config(noreplace) /etc/multipath/conf.d/custom.conf
 %config /etc/udev/rules.d/69-dm-lvm-metad.rules
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
@@ -343,6 +360,39 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
+* Wed Jan 24 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.12-6.1
+- Rebase on 3.0.12-6
+- TODO: rebase our patches
+- *** Upstream changelog ***
+- * Wed Nov 22 2023 Tim Smith <tim.smith@citrix.com> - 3.0.12-6
+- - Backport fix for CA-384030 from upstream
+- - CA-377454: ensure iscsiadm lock file is present
+- - CP-45927: Change the pathselector used on Equalogic 100E-00
+- - CA-384783 Probe for NFS4 when rpcinfo does not include it
+- * Mon Oct 30 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-5
+- - rebuild
+- * Wed Oct 18 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-4
+- - CA-379287 Cope with fs-encoded XMLRPC request on command line
+- - CA-383791 fix LVM SR issues with wide character names
+- - CA-371791: ensure that file SR mounts are not world readable
+- * Fri Sep 29 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-3
+- - rebuild
+- * Fri Sep 29 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-2
+- - CP-45514: set ownership and perms on backend device
+- * Tue Sep 26 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-1
+- - Support IPv6 for NFS ISO SR
+- - CA-339581: Report NFS version incompatibilities for ISO SRs
+- - CA-381221: Increase NFS timeouts to the expected value
+- * Wed Sep 06 2023 Mark Syms <mark.syms@citrix.com> - 3.0.11-1
+- - CA-282738: fix bad exception thrown in mountOverSMB
+- - CA-372064: storage-init don't try to make Local storage if it already exists.
+- - CA-355289: if the SR is not plugged on GC startup wait a little while
+- - CP-40871: use returned sector count to calculate GC speed
+- - CP-40871: use VHD allocation size in checking canLiveCoalesce
+- - CA-379315 Use XE_SR_ERRORCODES in the LVM journaller
+- - Update multipath.conf with support for HP/HPE MSA storage appliances
+- - Fix use of vdi-ref when static vdis are used
+
 * Fri Jan 12 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.10-1.4
 - Add 0023-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
 - Add 0024-Support-IPv6-for-NFS-ISO-SR.patch

@@ -1,0 +1,166 @@
+Remove unused scripts and code
+
+From: Qin Zhang <qin.zhang@citrix.com>
+
+Signed-off-by: Qin Zhang <qin.zhang@citrix.com>
+
+diff --git a/Makefile b/Makefile
+index 3e06e51..1583a03 100755
+--- a/Makefile
++++ b/Makefile
+@@ -212,8 +212,6 @@ install: precheck
+ 	ln -sf $(SM_DEST)lcache.py $(SM_STAGING)$(BIN_DEST)tapdisk-cache-stats
+ 	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
+ 	install -m 755 scripts/xs-mpath-scsidev.sh $(SM_STAGING)$(UDEV_SCRIPTS_DIR)
+-	install -m 755 scripts/xe-getarrayidentifier $(SM_STAGING)$(BIN_DEST)
+-	install -m 755 scripts/xe-getlunidentifier $(SM_STAGING)$(BIN_DEST)
+ 	install -m 755 scripts/make-dummy-sr $(SM_STAGING)$(LIBEXEC)
+ 	install -m 755 scripts/storage-init $(SM_STAGING)$(LIBEXEC)
+ 
+diff --git a/drivers/scsiutil.py b/drivers/scsiutil.py
+index b2ff0f9..0138a09 100755
+--- a/drivers/scsiutil.py
++++ b/drivers/scsiutil.py
+@@ -357,16 +357,6 @@ def rescan(ids, fullrescan=True):
+         refresh_HostID(id, fullrescan)
+ 
+ 
+-def _genArrayIdentifier(dev):
+-    try:
+-        cmd = ["sg_inq", "--page=0xc8", "-r", dev]
+-        id = util.pread2(cmd)
+-        #pylint: disable=no-member
+-        return id.encode("hex")[180:212]
+-    except:
+-        return ""
+-
+-
+ def _genHostList(procname):
+     # loop through and check all adapters
+     ids = []
+diff --git a/drivers/util.py b/drivers/util.py
+index 1e13f79..eb7698b 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -1232,16 +1232,6 @@ def daemon():
+     os.open('/dev/null', os.O_RDWR)
+     os.dup2(0, 1)
+     os.dup2(0, 2)
+-#########################
+-
+-if __debug__:
+-    try:
+-        #pylint: disable=used-before-assignment
+-        XE_IOFI_IORETRY
+-    except NameError:
+-        XE_IOFI_IORETRY = os.environ.get('XE_IOFI_IORETRY', None)
+-    if __name__ == 'util' and XE_IOFI_IORETRY is not None:
+-        __import__('iofi')
+ 
+ ################################################################################
+ #
+@@ -1777,7 +1767,7 @@ DEFAULT_SEGMENT_LEN = 950
+ 
+ def hidePasswdInConfig(config):
+     """
+-    Function to hide passwd values in a simple prop map, 
++    Function to hide passwd values in a simple prop map,
+     for example "device_config"
+     """
+     return hideValuesInPropMap(config, PASSWD_PROP_KEYS)
+@@ -1785,10 +1775,10 @@ def hidePasswdInConfig(config):
+ 
+ def hidePasswdInParams(params, configProp):
+     """
+-    Function to hide password values in a specified property which 
++    Function to hide password values in a specified property which
+     is a simple map of prop name/values, and is itself an prop entry
+     in a larger property map.
+-    For example, param maps containing "device_config", or 
++    For example, param maps containing "device_config", or
+     "sm_config", etc
+     """
+     params[configProp] = hideValuesInPropMap(params[configProp], PASSWD_PROP_KEYS)
+@@ -1797,11 +1787,11 @@ def hidePasswdInParams(params, configProp):
+ 
+ def hideMemberValuesInXmlParams(xmlParams, propnames=PASSWD_PROP_KEYS):
+     """
+-    Function to hide password values in XML params, specifically 
++    Function to hide password values in XML params, specifically
+     for the XML format of incoming params to SR modules.
+-    Uses text parsing: loop through the list of specific propnames 
++    Uses text parsing: loop through the list of specific propnames
+     whose values we want to hide, and:
+-    - Assemble a full "prefix" containing each property name, e.g., 
++    - Assemble a full "prefix" containing each property name, e.g.,
+         "<member><name>password</name><value>"
+     - Test the XML if it contains that string, save the index.
+     - If found, get the index of the ending tag
+diff --git a/mk/sm.spec.in b/mk/sm.spec.in
+index 119e22b..33457d0 100755
+--- a/mk/sm.spec.in
++++ b/mk/sm.spec.in
+@@ -118,8 +118,6 @@ tests/run_python_unittests.sh
+ /etc/xensource/master.d/02-vhdcleanup
+ /opt/xensource/bin/blktap2
+ /opt/xensource/bin/tapdisk-cache-stats
+-/opt/xensource/bin/xe-getarrayidentifier
+-/opt/xensource/bin/xe-getlunidentifier
+ /opt/xensource/debug/tp
+ /opt/xensource/libexec/check-device-sharing
+ /opt/xensource/libexec/dcopy
+diff --git a/scripts/xe-getarrayidentifier b/scripts/xe-getarrayidentifier
+deleted file mode 100755
+index bef1843..0000000
+--- a/scripts/xe-getarrayidentifier
++++ /dev/null
+@@ -1,21 +0,0 @@
+-#!/usr/bin/python3
+-
+-import sys
+-import os
+-import subprocess
+-import base64
+-
+-def doexec(args, inputtext=None):
+-    """Execute a subprocess, then return its return code, stdout and stderr"""
+-    proc = subprocess.Popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,close_fds=True)
+-    (stdout,stderr) = proc.communicate(inputtext)
+-    rc = proc.returncode
+-    return (rc,stdout,stderr)
+-
+-try:
+-	cmd = ["/usr/bin/sg_inq", "--page=0xc8", "-r", sys.argv[1]]
+-	(rc, stdout, stderr) = doexec(cmd)
+-        if rc == 0:
+-	    print stdout.encode("hex")[180:212]	
+-except:
+-        sys.exit(1)
+diff --git a/scripts/xe-getlunidentifier b/scripts/xe-getlunidentifier
+deleted file mode 100755
+index d50891e..0000000
+--- a/scripts/xe-getlunidentifier
++++ /dev/null
+@@ -1,22 +0,0 @@
+-#!/usr/bin/python3
+-
+-import sys
+-import os
+-import subprocess
+-import base64
+-
+-def doexec(args, inputtext=None):
+-    """Execute a subprocess, then return its return code, stdout and stderr"""
+-    proc = subprocess.Popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,close_fds=True)
+-    (stdout,stderr) = proc.communicate(inputtext)
+-    rc = proc.returncode
+-    return (rc,stdout,stderr)
+-
+-try:
+-	cmd = ["/usr/bin/sg_inq", "--page=0xc8", "-r", sys.argv[1]]
+-	(rc, stdout, stderr) = doexec(cmd)
+-        if rc == 0:
+-            len = int(stdout.encode("hex")[22:24], 16)
+-	    print stdout.encode("hex")[24:(24 + (len * 2))]
+-except:
+-        sys.exit(1)

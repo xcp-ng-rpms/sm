@@ -1,0 +1,39 @@
+From 4d463d3686ed6384c1e293681d11aa9094300ce7 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@citrix.com>
+Date: Thu, 26 Oct 2023 11:20:19 +0100
+Subject: [PATCH 2/2] CA-377454: ensure that the iscsiadm running lock exists
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ scripts/set-iscsi-initiator | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/set-iscsi-initiator b/scripts/set-iscsi-initiator
+index 144b91a..739c80f 100644
+--- a/scripts/set-iscsi-initiator
++++ b/scripts/set-iscsi-initiator
+@@ -33,10 +33,15 @@ trap ecleanup TERM
+ mkdir -p /var/lock/sm/iscsiadm
+ 
+ INITIATORFILE=/etc/iscsi/initiatorname.iscsi
++RUNNING_LOCK=/run/lock/sm/iscsiadm/running
+ 
+ INITIATORNAME=$1
+ INITIATORALIAS=$2
+ 
++# Ensure the lock is created
++mkdir -p $(dirname $RUNNING_LOCK)
++touch $RUNNING_LOCK
++
+ (
+         flock -s 200
+ 
+@@ -66,4 +71,4 @@ INITIATORALIAS=$2
+             systemctl restart iscsid
+         fi
+ 
+-) 200>/var/lock/sm/iscsiadm/running
++) 200>$RUNNING_LOCK
+-- 
+2.41.0
+

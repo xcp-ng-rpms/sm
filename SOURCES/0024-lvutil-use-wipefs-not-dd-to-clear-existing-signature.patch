@@ -1,0 +1,82 @@
+From 70e81bf8fdd19e880c028a8bf83634bb90880456 Mon Sep 17 00:00:00 2001
+From: Yann Dirson <yann.dirson@vates.fr>
+Date: Wed, 5 Jul 2023 16:57:26 +0200
+Subject: [PATCH 24/25] lvutil: use wipefs not dd to clear existing signatures
+ (xapi-project#624)
+
+Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
+---
+ drivers/XE_SR_ERRORCODES.xml |  6 ++++++
+ drivers/lvutil.py            | 20 ++++----------------
+ drivers/util.py              |  5 +++++
+ 3 files changed, 15 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
+index 293ec6e..0dac061 100755
+--- a/drivers/XE_SR_ERRORCODES.xml
++++ b/drivers/XE_SR_ERRORCODES.xml
+@@ -888,6 +888,12 @@
+             <value>460</value>
+         </code>
+ 
++        <code>
++            <name>WipefsFailure</name>
++            <description>Failed to wipe pre-existing filesystem signature.</description>
++            <value>461</value>
++        </code>
++
+         <code>
+             <name>GenericException</name>
+             <description>SM has thrown a generic python exception</description>
+diff --git a/drivers/lvutil.py b/drivers/lvutil.py
+index e0fc0d7..f1d1c5b 100755
+--- a/drivers/lvutil.py
++++ b/drivers/lvutil.py
+@@ -503,24 +503,12 @@ def createVG(root, vgname):
+ 
+         f = _openExclusive(dev, True)
+         os.close(f)
++
++        # Wipe any fs signature
+         try:
+-            # Overwrite the disk header, try direct IO first
+-            cmd = [util.CMD_DD, "if=/dev/zero", "of=%s" % dev, "bs=1M",
+-                    "count=10", "oflag=direct"]
+-            util.pread2(cmd)
++            util.wipefs(dev)
+         except util.CommandException as inst:
+-            if inst.code == errno.EPERM:
+-                try:
+-                    # Overwrite the disk header, try normal IO
+-                    cmd = [util.CMD_DD, "if=/dev/zero", "of=%s" % dev,
+-                            "bs=1M", "count=10"]
+-                    util.pread2(cmd)
+-                except util.CommandException as inst:
+-                    raise xs_errors.XenError('LVMWrite', \
+-                          opterr='device %s' % dev)
+-            else:
+-                raise xs_errors.XenError('LVMWrite', \
+-                      opterr='device %s' % dev)
++            raise xs_errors.XenError('WipefsFailure', opterr='device %s' % dev) # from inst
+ 
+         if not (dev == rootdev):
+             try:
+diff --git a/drivers/util.py b/drivers/util.py
+index 0760637..364bb8c 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -637,6 +637,11 @@ def zeroOut(path, fromByte, bytes):
+     return True
+ 
+ 
++def wipefs(blockdev):
++    "Wipe filesystem signatures from `blockdev`"
++    pread2(["/usr/sbin/wipefs", "-a", blockdev])
++
++
+ def match_rootdev(s):
+     regex = re.compile("^PRIMARY_DISK")
+     return regex.search(s, 0)
+-- 
+2.43.0
+

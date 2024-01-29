@@ -1,0 +1,19 @@
+CP-44484: Generate debugging information
+
+From: Qin Zhang <qin.zhang@citrix.com>
+
+Signed-off-by: Qin Zhang <qin.zhang@citrix.com>
+
+diff --git a/dcopy/Makefile b/dcopy/Makefile
+index 11ac607..15d8717 100644
+--- a/dcopy/Makefile
++++ b/dcopy/Makefile
+@@ -3,7 +3,7 @@ DESTDIR ?=
+ DEBUGDIR ?= /opt/xensource/debug
+ 
+ 
+-OPTS := -D _GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -Wall
++OPTS := -D _GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -g -Wall
+ 
+ SRC := dcopy.c
+ SRC += atomicio.c

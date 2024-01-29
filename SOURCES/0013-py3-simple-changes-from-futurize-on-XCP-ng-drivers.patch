@@ -1,4 +1,4 @@
-From 6b9512386d1d54f2915749c58f66380f62145c3d Mon Sep 17 00:00:00 2001
+From 884fb8f43566e4ba4a8379d5e42215c748fa7f8f Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:13:18 +0100
 Subject: [PATCH 13/25] py3: simple changes from futurize on XCP-ng drivers
@@ -283,10 +283,10 @@ index 212f1ad..8860fdf 100755
              if inst.code != errno.ENOENT:
                  raise SR.SROSError(114, "Failed to remove MooseFS mount point")
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e32ea63..f190b1b 100755
+index f11ec53..1d8da7b 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2968,7 +2968,7 @@ class LinstorSR(SR):
+@@ -3005,7 +3005,7 @@ class LinstorSR(SR):
  
      def scan(self, force=False):
          all_vdi_info = self._scan(force)
@@ -295,7 +295,7 @@ index e32ea63..f190b1b 100755
              # When vdiInfo is None, the VDI is RAW.
              vdi = self.getVDI(uuid)
              if not vdi:
-@@ -3012,7 +3012,7 @@ class LinstorSR(SR):
+@@ -3049,7 +3049,7 @@ class LinstorSR(SR):
              error = False
              try:
                  all_vdi_info = self._load_vdi_info()
@@ -304,7 +304,7 @@ index e32ea63..f190b1b 100755
                      if vdiInfo and vdiInfo.error:
                          error = True
                          break
-@@ -3077,7 +3077,7 @@ class LinstorSR(SR):
+@@ -3114,7 +3114,7 @@ class LinstorSR(SR):
  
      def _handleInterruptedCoalesceLeaf(self):
          entries = self.journaler.get_all(VDI.JRN_LEAF)

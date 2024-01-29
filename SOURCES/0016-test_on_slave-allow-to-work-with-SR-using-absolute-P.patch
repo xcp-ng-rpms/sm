@@ -1,4 +1,4 @@
-From b26bacc1229bcd1aba0ba3d8133909d5fba91841 Mon Sep 17 00:00:00 2001
+From 625f31df8829632549002c4a7ad9d012e9389523 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 13:53:21 +0100
 Subject: [PATCH 16/25] test_on_slave: allow to work with SR using absolute
@@ -36,10 +36,10 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  1 file changed, 1 insertion(+)
 
 diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
-index 5d5bc60..1aad363 100644
+index 806fd63..42cf9eb 100644
 --- a/tests/test_on_slave.py
 +++ b/tests/test_on_slave.py
-@@ -36,6 +36,7 @@ class Test_on_slave_is_open(unittest.TestCase):
+@@ -30,6 +30,7 @@ class Test_on_slave_is_open(unittest.TestCase):
          self.mock_import.side_effect = self.fake_import
  
          self.mock_sr = mock.MagicMock()

@@ -1,4 +1,4 @@
-From 66ded63ca8dc481991e151c49bb1cb9564b2ffdb Mon Sep 17 00:00:00 2001
+From db32b49b94fd70a2faa65b2895537eb0435c9aa3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
 Subject: [PATCH 04/25] feat(drivers): add ZFS driver to avoid losing VDI
@@ -13,7 +13,7 @@ Subject: [PATCH 04/25] feat(drivers): add ZFS driver to avoid losing VDI
  create mode 100644 drivers/ZFSSR.py
 
 diff --git a/Makefile b/Makefile
-index 75230b6..8bf6250 100755
+index cb8a53e..752a9ce 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -17,6 +17,7 @@ SM_DRIVERS += LVHDoFCoE
@@ -25,10 +25,10 @@ index 75230b6..8bf6250 100755
  SM_LIBS := SR
  SM_LIBS += SRCommand
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 97236fe..1f58adc 100755
+index de074ce..0b4b250 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -887,5 +887,15 @@
+@@ -894,5 +894,15 @@
              <value>1200</value>
          </code>
  
@@ -188,10 +188,10 @@ index 0000000..1b2f398
 +else:
 +    SR.registerSR(ZFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 9e2353f..ef72ab5 100755
+index 622ffb2..b732a33 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2853,7 +2853,7 @@ def normalizeType(type):
+@@ -2890,7 +2890,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

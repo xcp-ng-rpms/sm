@@ -1,6 +1,6 @@
-%global package_speccommit 46560dabc7321720d3fadd32f43d67677f88cfe5
+%global package_speccommit 9ec3f2b3dbb24dfa6ac77cfa09120e39b777ceaf
 %global usver 2.30.8
-%global xsver 9
+%global xsver 10
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Series applies on top of v2.29.0 and includes all later tags to 2.30.7
 # after that tag the commits are in the patchqueue here.
@@ -53,7 +53,11 @@ Patch33: cp-45514-set-ownership-and
 Patch34: ca-379315-use-xe_sr_errorcodes
 Patch35: ca-375367-nfs-timeout
 Patch36: ca-381221-increase-nfs
-Patch37: cp-45927-change-equalogic-checker
+Patch37: cp-45927-change-equalogic
+Patch38: run_unittests_directly
+Patch39: ca-380360-report-error
+Patch40: add-unittests-for-multisession
+Patch41: ca-386479-ensure-we-login-to
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 Requires(post): systemd
 Requires(preun): systemd
@@ -405,6 +409,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Fri Jan 19 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-10
+- Backport fix for CA-386479, log into all iSCSI targets
+
 * Fri Oct 27 2023 Mark Syms <mark.syms@citrix.com> - 2.30.8-9
 - Backport fix for CP-45927, set Equalogic path checker
 

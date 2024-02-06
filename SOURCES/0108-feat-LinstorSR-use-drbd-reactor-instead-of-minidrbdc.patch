@@ -1,0 +1,621 @@
+From 6ba5f31ef3b8aff96c02cbcfd7bcb4229ed577cc Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 24 Feb 2023 14:28:29 +0100
+Subject: [PATCH 108/162] feat(LinstorSR): use drbd-reactor instead of
+ minidrbdcluster
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ Makefile                        |   7 --
+ drivers/LinstorSR.py            |  37 +++---
+ drivers/linstor-manager         |  67 +++++++++--
+ drivers/linstorvolumemanager.py |   4 +-
+ etc/minidrbdcluster.ini         |  14 ---
+ scripts/minidrbdcluster         | 203 --------------------------------
+ systemd/minidrbdcluster.service |  19 ---
+ 7 files changed, 76 insertions(+), 275 deletions(-)
+ delete mode 100644 etc/minidrbdcluster.ini
+ delete mode 100755 scripts/minidrbdcluster
+ delete mode 100644 systemd/minidrbdcluster.service
+
+diff --git a/Makefile b/Makefile
+index e6ea5ce..f8196cb 100755
+--- a/Makefile
++++ b/Makefile
+@@ -99,7 +99,6 @@ MPATH_CUSTOM_CONF_DIR := /etc/multipath/conf.d/
+ MODPROBE_DIR := /etc/modprobe.d/
+ EXTENSION_SCRIPT_DEST := /etc/xapi.d/extensions/
+ LOGROTATE_DIR := /etc/logrotate.d/
+-MINI_DRBD_CLUSTER_CONF_DIR := /etc/
+ 
+ SM_STAGING := $(DESTDIR)
+ SM_STAMP := $(MY_OBJ_DIR)/.staging_stamp
+@@ -155,7 +154,6 @@ install: precheck
+ 	mkdir -p $(SM_STAGING)$(MPATH_CUSTOM_CONF_DIR)
+ 	mkdir -p $(SM_STAGING)$(MODPROBE_DIR)
+ 	mkdir -p $(SM_STAGING)$(LOGROTATE_DIR)
+-	mkdir -p $(SM_STAGING)$(MINI_DRBD_CLUSTER_CONF_DIR)
+ 	mkdir -p $(SM_STAGING)$(DEBUG_DEST)
+ 	mkdir -p $(SM_STAGING)$(BIN_DEST)
+ 	mkdir -p $(SM_STAGING)$(MASTER_SCRIPT_DEST)
+@@ -183,8 +181,6 @@ install: precheck
+ 	  $(SM_STAGING)/$(SYSTEMD_CONF_DIR)/linstor-satellite.service.d/
+ 	install -m 644 etc/systemd/system/var-lib-linstor.service \
+ 	  $(SM_STAGING)/$(SYSTEMD_CONF_DIR)
+-	install -m 644 etc/minidrbdcluster.ini \
+-	  $(SM_STAGING)/$(MINI_DRBD_CLUSTER_CONF_DIR)
+ 	install -m 644 etc/make-dummy-sr.service \
+ 	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
+ 	install -m 644 systemd/xs-sm.service \
+@@ -203,8 +199,6 @@ install: precheck
+ 	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
+ 	install -m 644 systemd/linstor-monitor.service \
+ 	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
+-	install -m 644 systemd/minidrbdcluster.service \
+-	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
+ 	for i in $(UDEV_RULES); do \
+ 	  install -m 644 udev/$$i.rules \
+ 	    $(SM_STAGING)$(UDEV_RULES_DIR); done
+@@ -257,7 +251,6 @@ install: precheck
+ 	install -m 755 scripts/xe-getlunidentifier $(SM_STAGING)$(BIN_DEST)
+ 	install -m 755 scripts/make-dummy-sr $(SM_STAGING)$(LIBEXEC)
+ 	install -m 755 scripts/storage-init $(SM_STAGING)$(LIBEXEC)
+-	install -m 755 scripts/minidrbdcluster $(SM_STAGING)$(LIBEXEC)
+ 
+ .PHONY: clean
+ clean:
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 94cf1b7..a3da28e 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -461,6 +461,10 @@ class LinstorSR(SR.SR):
+             return method(self, *args, **kwargs)
+ 
+         def load(self, *args, **kwargs):
++            # Activate all LVMs to make drbd-reactor happy.
++            if self.srcmd.cmd == 'sr_attach':
++                activate_lvm_group(self._group_name)
++
+             if not self._has_session:
+                 if self.srcmd.cmd in (
+                     'vdi_attach_from_config',
+@@ -707,7 +711,7 @@ class LinstorSR(SR.SR):
+             )
+ 
+         # Ensure ports are opened and LINSTOR satellites
+-        # are activated. In the same time the minidrbdcluster instances
++        # are activated. In the same time the drbd-reactor instances
+         # must be stopped.
+         self._prepare_sr_on_all_hosts(self._group_name, enabled=True)
+ 
+@@ -730,9 +734,9 @@ class LinstorSR(SR.SR):
+ 
+         try:
+             util.SMlog(
+-                "Finishing SR creation, enable minidrbdcluster on all hosts..."
++                "Finishing SR creation, enable drbd-reactor on all hosts..."
+             )
+-            self._update_minidrbdcluster_on_all_hosts(enabled=True)
++            self._update_drbd_reactor_on_all_hosts(enabled=True)
+         except Exception as e:
+             try:
+                 self._linstor.destroy()
+@@ -777,7 +781,7 @@ class LinstorSR(SR.SR):
+             )
+ 
+         try:
+-            self._update_minidrbdcluster_on_all_hosts(
++            self._update_drbd_reactor_on_all_hosts(
+                 controller_node_name=node_name, enabled=False
+             )
+ 
+@@ -789,12 +793,12 @@ class LinstorSR(SR.SR):
+             )
+         except Exception as e:
+             try:
+-                self._update_minidrbdcluster_on_all_hosts(
++                self._update_drbd_reactor_on_all_hosts(
+                     controller_node_name=node_name, enabled=True
+                 )
+             except Exception as e2:
+                 util.SMlog(
+-                    'Failed to restart minidrbdcluster after destroy fail: {}'
++                    'Failed to restart drbd-reactor after destroy fail: {}'
+                     .format(e2)
+                 )
+             util.SMlog('Failed to delete LINSTOR SR: {}'.format(e))
+@@ -838,7 +842,6 @@ class LinstorSR(SR.SR):
+                 'SRUnavailable',
+                 opterr='no such group: {}'.format(self._group_name)
+             )
+-        activate_lvm_group(self._group_name)
+ 
+     @_locked_load
+     def detach(self, uuid):
+@@ -963,15 +966,15 @@ class LinstorSR(SR.SR):
+         for slave in util.get_all_slaves(self.session):
+             self._prepare_sr(slave, group_name, enabled)
+ 
+-    def _update_minidrbdcluster(self, host, enabled):
++    def _update_drbd_reactor(self, host, enabled):
+         self._exec_manager_command(
+             host,
+-            'updateMinidrbdcluster',
++            'updateDrbdReactor',
+             {'enabled': str(enabled)},
+             'SRUnavailable'
+         )
+ 
+-    def _update_minidrbdcluster_on_all_hosts(
++    def _update_drbd_reactor_on_all_hosts(
+         self, enabled, controller_node_name=None
+     ):
+         if controller_node_name == 'localhost':
+@@ -999,27 +1002,27 @@ class LinstorSR(SR.SR):
+             ))
+ 
+         if enabled and controller_host:
+-            util.SMlog('{} minidrbdcluster on controller host `{}`...'.format(
++            util.SMlog('{} drbd-reactor on controller host `{}`...'.format(
+                 action_name, controller_node_name
+             ))
+             # If enabled is true, we try to start the controller on the desired
+             # node name first.
+-            self._update_minidrbdcluster(controller_host, enabled)
++            self._update_drbd_reactor(controller_host, enabled)
+ 
+         for host_ref, hostname in secondary_hosts:
+-            util.SMlog('{} minidrbdcluster on host {}...'.format(
++            util.SMlog('{} drbd-reactor on host {}...'.format(
+                 action_name, hostname
+             ))
+-            self._update_minidrbdcluster(host_ref, enabled)
++            self._update_drbd_reactor(host_ref, enabled)
+ 
+         if not enabled and controller_host:
+-            util.SMlog('{} minidrbdcluster on controller host `{}`...'.format(
++            util.SMlog('{} drbd-reactor on controller host `{}`...'.format(
+                 action_name, controller_node_name
+             ))
+-            # If enabled is false, we disable the minidrbdcluster service of
++            # If enabled is false, we disable the drbd-reactor service of
+             # the controller host last. Why? Otherwise the linstor-controller
+             # of other nodes can be started, and we don't want that.
+-            self._update_minidrbdcluster(controller_host, enabled)
++            self._update_drbd_reactor(controller_host, enabled)
+ 
+     # --------------------------------------------------------------------------
+     # Metadata.
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index 6ee435c..7e34b5f 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -22,6 +22,7 @@ sys.path[0] = '/opt/xensource/sm/'
+ 
+ import base64
+ import distutils.util
++import os
+ import socket
+ import XenAPI
+ import XenAPIPlugin
+@@ -43,6 +44,19 @@ FIREWALL_PORT_SCRIPT = '/etc/xapi.d/plugins/firewall-port'
+ LINSTOR_PORTS = [3366, 3370, 3376, 3377, 8076, 8077]
+ DRBD_PORTS = '7000:8000'
+ 
++DRBD_REACTOR_CONF = '/etc/drbd-reactor.d/sm-linstor.toml'
++
++DRBD_REACTOR_CONF_CONTENT = """[[promoter]]
++
++[promoter.resources.xcp-persistent-database]
++start = [ "var-lib-linstor.service", "linstor-controller.service" ]
++"""
++
++DRBD_REACTOR_DEPS = [
++    '/run/systemd/system/linstor-controller.service.d/reactor.conf',
++    '/run/systemd/system/var-lib-linstor.service.d/reactor.conf'
++]
++
+ 
+ def update_linstor_port(port, open_ports):
+     fn = 'open' if open_ports else 'close'
+@@ -101,8 +115,35 @@ def update_linstor_satellite_service(start):
+         util.enable_and_start_service(service, True)
+ 
+ 
+-def update_minidrbdcluster_service(start):
+-    util.enable_and_start_service('minidrbdcluster', start)
++def update_drbd_reactor_service(start):
++    if start:
++        util.atomicFileWrite(DRBD_REACTOR_CONF, None, DRBD_REACTOR_CONF_CONTENT)
++    else:
++        try:
++            os.remove(DRBD_REACTOR_CONF)
++        except Exception:
++            pass
++
++        util.stop_service('drbd-reactor')
++
++        try:
++            util.stop_service('drbd-promote@xcp\x2dpersistent\x2ddatabase.service')
++        except Exception as e:
++            if str(e).rstrip().endswith(' not loaded.'):
++                pass
++            raise e
++
++        util.stop_service('linstor-controller')
++        util.stop_service('var-lib-linstor.service')
++
++        for dep in DRBD_REACTOR_DEPS:
++            try:
++                os.remove(dep)
++            except Exception:
++                pass
++
++    util.doexec(['systemctl', 'daemon-reload'])
++    util.enable_and_start_service('drbd-reactor', start)
+ 
+ 
+ def exec_create_sr(session, name, description, disks, volume_group, redundancy, provisioning, force):
+@@ -231,9 +272,9 @@ def prepare_sr(session, args):
+         LinstorSR.activate_lvm_group(args['groupName'])
+ 
+         update_all_ports(open_ports=True)
+-        # We don't want to enable and start minidrbdcluster daemon during
++        # We don't want to enable and start drbd-reactor daemon during
+         # SR creation.
+-        update_minidrbdcluster_service(start=False)
++        update_drbd_reactor_service(start=False)
+         update_linstor_satellite_service(start=True)
+         return str(True)
+     except Exception as e:
+@@ -244,7 +285,7 @@ def prepare_sr(session, args):
+ def release_sr(session, args):
+     try:
+         update_linstor_satellite_service(start=False)
+-        update_minidrbdcluster_service(start=False)
++        update_drbd_reactor_service(start=False)
+         update_all_ports(open_ports=False)
+         return str(True)
+     except Exception as e:
+@@ -252,14 +293,14 @@ def release_sr(session, args):
+     return str(False)
+ 
+ 
+-def update_minidrbdcluster(session, args):
++def update_drbd_reactor(session, args):
+     try:
+         enabled = distutils.util.strtobool(args['enabled'])
+-        update_minidrbdcluster_service(start=enabled)
++        update_drbd_reactor_service(start=enabled)
+         return str(True)
+     except Exception as e:
+         util.SMlog(
+-            'linstor-manager:update_minidrbdcluster error: {}'.format(e)
++            'linstor-manager:update_drbd_reactor error: {}'.format(e)
+         )
+     return str(False)
+ 
+@@ -308,7 +349,7 @@ def destroy(session, args):
+     try:
+         group_name = args['groupName']
+ 
+-        # When destroy is called, there are no running minidrbdcluster daemons.
++        # When destroy is called, there are no running drbd-reactor daemons.
+         # So the controllers are stopped too, we must start an instance.
+         util.restart_service('var-lib-linstor.service')
+         util.restart_service('linstor-controller')
+@@ -562,7 +603,7 @@ def add_host(session, args):
+     try:
+         # 4. Enable services.
+         update_all_ports(open_ports=True)
+-        update_minidrbdcluster_service(start=True)
++        update_drbd_reactor_service(start=True)
+         update_linstor_satellite_service(start=True)
+ 
+         # 5. Try to create local node.
+@@ -691,7 +732,7 @@ def add_host(session, args):
+             # If we failed to remove the node, we don't stop services.
+             if stop_services and not linstor.has_node(node_name):
+                 update_linstor_satellite_service(start=False)
+-                update_minidrbdcluster_service(start=False)
++                update_drbd_reactor_service(start=False)
+                 update_all_ports(open_ports=False)
+         except Exception:
+             pass
+@@ -774,7 +815,7 @@ def remove_host(session, args):
+     # 3. Stop services.
+     try:
+         update_linstor_satellite_service(start=False)
+-        update_minidrbdcluster_service(start=False)
++        update_drbd_reactor_service(start=False)
+         update_all_ports(open_ports=False)
+     except Exception as e:
+         util.SMlog('Error while stopping services: {}'.format(e))
+@@ -1005,7 +1046,7 @@ if __name__ == '__main__':
+     XenAPIPlugin.dispatch({
+         'prepareSr': prepare_sr,
+         'releaseSr': release_sr,
+-        'updateMinidrbdcluster': update_minidrbdcluster,
++        'updateDrbdReactor': update_drbd_reactor,
+         'attach': attach,
+         'detach': detach,
+         'destroy': destroy,
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index e0f39e7..4662043 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1622,7 +1622,7 @@ class LinstorVolumeManager(object):
+             )
+         finally:
+             # Controller must be stopped and volume unmounted because
+-            # it is the role of the minidrbdcluster daemon to do the right
++            # it is the role of the drbd-reactor daemon to do the right
+             # actions.
+             cls._start_controller(start=False)
+             cls._mount_volume(
+@@ -2625,7 +2625,7 @@ class LinstorVolumeManager(object):
+             )
+ 
+         # We must modify the quorum. Otherwise we can't use correctly the
+-        # minidrbdcluster daemon.
++        # drbd-reactor daemon.
+         if auto_quorum:
+             result = lin.resource_dfn_modify(DATABASE_VOLUME_NAME, {
+                 'DrbdOptions/auto-quorum': 'disabled',
+diff --git a/etc/minidrbdcluster.ini b/etc/minidrbdcluster.ini
+deleted file mode 100644
+index 9e52342..0000000
+--- a/etc/minidrbdcluster.ini
++++ /dev/null
+@@ -1,14 +0,0 @@
+-# minidrbdcluster keeps a service running on one of the nodes.
+-# Quorum must be enabled in the DRBD resource!
+-#
+-# The section names are the names of DRBD resources. Within a
+-# section name the systemd-units to activate on one of the nodes.
+-
+-[xcp-persistent-database]
+-systemd-units=var-lib-linstor.service,linstor-controller.service
+-
+-[xcp-persistent-ha-statefile]
+-systemd-units=
+-
+-[xcp-persistent-redo-log]
+-systemd-units=
+diff --git a/scripts/minidrbdcluster b/scripts/minidrbdcluster
+deleted file mode 100755
+index 03d6b01..0000000
+--- a/scripts/minidrbdcluster
++++ /dev/null
+@@ -1,203 +0,0 @@
+-#! /usr/bin/env python2
+-
+-import configparser
+-import re
+-import signal
+-import subprocess
+-
+-DRBDADM_OPEN_FAILED_RE = re.compile(
+-    'open\\((.*)\\) failed: No such file or directory'
+-)
+-MAY_PROMOT_RE = re.compile(
+-    '(?:exists|change) resource name:((?:\\w|-)+) '
+-    '(?:(?:\\w|-)+\\:(?:\\w|-)+ )*may_promote:(yes|no) promotion_score:(\\d+)'
+-)
+-PEER_ROLE_RE = re.compile(
+-    '(?:exists|change) connection name:((?:\\w|-)+) peer-node-id:(?:\\d+) '
+-    'conn-name:((?:\\w|-)+) (?:(?:\\w|-)+\\:(?:\\w|-)+ )*role:(Primary|Secondary|Unknown)'
+-)
+-HAVE_QUORUM_RE = re.compile(
+-    '(?:exists|change) device name:((?:\\w|-)+) '
+-    '(?:(?:\\w|-)+\\:(?:\\w|-)+ )*quorum:(yes|no)'
+-)
+-
+-
+-class SigHupException(Exception):
+-    pass
+-
+-
+-def sig_handler(sig, frame):
+-    raise SigHupException(
+-        'Received signal ' + str(sig) +
+-        ' on line ' + str(frame.f_lineno) +
+-        ' in ' + frame.f_code.co_filename
+-    )
+-
+-
+-def preexec_subprocess():
+-    signal.signal(signal.SIGINT, signal.SIG_IGN)
+-
+-
+-def exec_subprocess(args):
+-    proc = subprocess.Popen(args, preexec_fn=preexec_subprocess)
+-    raise_sigint = False
+-    while True:
+-        try:
+-            proc.wait()
+-            break
+-        except KeyboardInterrupt:
+-            raise_sigint = True
+-        except:  # noqa: E722
+-            pass
+-
+-    if raise_sigint:
+-        raise KeyboardInterrupt
+-
+-    return proc.returncode
+-
+-
+-def call_systemd(operation, service):
+-    verbose = operation in ('start', 'stop')
+-    if verbose:
+-        print('Trying to %s %s' % (operation, service))
+-    ret = exec_subprocess(['systemctl', operation, service])
+-    if verbose:
+-        print('%s for %s %s' % (
+-            'success' if ret == 0 else 'failure', operation, service
+-        ))
+-    return ret == 0
+-
+-
+-def ensure_systemd_started(service):
+-    if not exec_subprocess(['systemctl', 'is-active', '--quiet', service]):
+-        return True  # Already active.
+-
+-    return call_systemd('start', service)
+-
+-
+-def show_status(services, status):
+-    print('status:')
+-    for systemd_unit in services:
+-        call_systemd('status', systemd_unit)
+-    for res_name in status:
+-        print('%s is %s' % (res_name, status[res_name]))
+-
+-
+-def stop_services(services):
+-    for systemd_unit in reversed(services):
+-        call_systemd('stop', systemd_unit)
+-
+-
+-def get_systemd_units(systemd_units_str):
+-    systemd_units = []
+-    for systemd_unit in systemd_units_str.split(','):
+-        systemd_unit = systemd_unit.strip()
+-        if systemd_unit:
+-            systemd_units.append(systemd_unit)
+-    return systemd_units
+-
+-
+-def process(events2, resources, running_services, status):
+-    line = events2.stdout.readline()
+-    m = MAY_PROMOT_RE.match(line)
+-    if m:
+-        res_name, may_promote, promotion_score = m.groups()
+-        if res_name in resources and may_promote == 'yes':
+-            for systemd_unit in resources[res_name]['systemd-units']:
+-                if systemd_unit not in running_services:
+-                    running_services.append(systemd_unit)
+-                if not ensure_systemd_started(systemd_unit):
+-                    running_services.pop()
+-                    break
+-    m = PEER_ROLE_RE.match(line)
+-    if m:
+-        res_name, conn_name, role = m.groups()
+-        if res_name in status:
+-            status[res_name][conn_name] = role
+-    m = HAVE_QUORUM_RE.match(line)
+-    if m:
+-        res_name, have_quorum = m.groups()
+-        if res_name in resources and have_quorum == 'no':
+-            systemd_units = resources[res_name]['systemd-units']
+-            to_stop = [x for x in systemd_units if x in running_services]
+-            if to_stop:
+-                print('Lost quorum on %s' % (res_name))
+-            for systemd_unit in reversed(to_stop):
+-                r = call_systemd('stop', systemd_unit)
+-                if r:
+-                    running_services.remove(systemd_unit)
+-
+-
+-def active_drbd_volume(res_name):
+-    retry = True
+-    args = ['drbdadm', 'adjust', res_name]
+-    while True:
+-        proc = subprocess.Popen(args, stderr=subprocess.PIPE)
+-        (stdout, stderr) = proc.communicate()
+-        if not proc.returncode:
+-            return  # Success. \o/
+-
+-        if not retry:
+-            break
+-
+-        m = DRBDADM_OPEN_FAILED_RE.match(stderr)
+-        if m and subprocess.call(['lvchange', '-ay', m.groups()[0]]) == 0:
+-            retry = False
+-        else:
+-            break
+-
+-    print('Failed to execute `{}`: {}'.format(args, stderr))
+-
+-
+-def main():
+-    # 1. Load minidrbdcluster config.
+-    config = configparser.ConfigParser()
+-    config.read('/etc/minidrbdcluster.ini')
+-    resources = config._sections
+-    if not resources:
+-        raise Exception(
+-            'No resources to watch, maybe /etc/minidrbdcluster.ini missing'
+-        )
+-    print('Managing DRBD resources: %s' % (' '.join(resources)))
+-
+-    # 2. Prepare resources.
+-    status = dict()
+-    all_services = []  # Contains common services between each DRBD volumes.
+-    for res_name, resource in resources.iteritems():
+-        status[res_name] = dict()
+-        active_drbd_volume(res_name)
+-        systemd_units = get_systemd_units(resource['systemd-units'])
+-        resource['systemd-units'] = systemd_units
+-
+-        for systemd_unit in systemd_units:
+-            if systemd_unit not in all_services:
+-                all_services.append(systemd_unit)
+-
+-    # 3. Ensure all services are stopped.
+-    stop_services(all_services)
+-
+-    # 4. Run!
+-    signal.signal(signal.SIGHUP, sig_handler)
+-
+-    running_services = []
+-
+-    print('Starting process...')
+-    events2 = subprocess.Popen(
+-        ['drbdsetup', 'events2'], stdout=subprocess.PIPE
+-    )
+-    run = True
+-    while run:
+-        try:
+-            process(events2, resources, running_services, status)
+-        except KeyboardInterrupt:
+-            run = False
+-        except SigHupException:
+-            show_status(running_services, status)
+-        except Exception:
+-            print('Unhandled exception: %s' % str(e))
+-
+-    print('Exiting...')
+-    stop_services(running_services)
+-
+-if __name__ == '__main__':
+-    main()
+diff --git a/systemd/minidrbdcluster.service b/systemd/minidrbdcluster.service
+deleted file mode 100644
+index 1ddf91f..0000000
+--- a/systemd/minidrbdcluster.service
++++ /dev/null
+@@ -1,19 +0,0 @@
+-[Unit]
+-Description=Minimalistic high-availability cluster resource manager
+-Before=xs-sm.service
+-Wants=network-online.target
+-After=network-online.target
+-
+-[Service]
+-Type=simple
+-Environment=PYTHONUNBUFFERED=1
+-ExecStart=/opt/xensource/libexec/minidrbdcluster
+-KillMode=process
+-KillSignal=SIGINT
+-SendSIGKILL=no
+-StandardOutput=journal
+-StandardError=journal
+-SyslogIdentifier=minidrbdcluster
+-
+-[Install]
+-WantedBy=multi-user.target
+-- 
+2.43.0
+

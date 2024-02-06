@@ -1,0 +1,38 @@
+From dadcfdc954c4f00d5a15dd0abb787d1fd80e1f32 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 13 Feb 2023 17:24:16 +0100
+Subject: [PATCH 103/162] fix(LinstorSR): don't check VDI metadata while
+ listing VDIs if it's deleted
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 31f4505..41ece82 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1169,6 +1169,9 @@ class LinstorSR(SR.SR):
+                 if not introduce:
+                     continue
+ 
++                if vdi_uuid.startswith('DELETED_'):
++                    continue
++
+                 volume_metadata = volumes_metadata.get(vdi_uuid)
+                 if not volume_metadata:
+                     util.SMlog(
+@@ -1177,9 +1180,6 @@ class LinstorSR(SR.SR):
+                     )
+                     continue
+ 
+-                if vdi_uuid.startswith('DELETED_'):
+-                    continue
+-
+                 util.SMlog(
+                     'Trying to introduce VDI {} as it is present in '
+                     'LINSTOR and not in XAPI...'
+-- 
+2.43.0
+

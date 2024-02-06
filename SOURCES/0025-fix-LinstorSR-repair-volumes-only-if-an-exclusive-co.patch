@@ -1,0 +1,36 @@
+From 7855c8d7601747187cdfc7b6d1a4321751c108e3 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 20 Nov 2020 16:42:52 +0100
+Subject: [PATCH 025/162] fix(LinstorSR): repair volumes only if an exclusive
+ command is executed
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 8be1836..a5bf5ab 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -388,10 +388,16 @@ class LinstorSR(SR.SR):
+ 
+             try:
+                 # Try to open SR if exists.
++                # We can repair only if we are on the master AND if
++                # we are trying to execute an exclusive operation.
++                # Otherwise we could try to delete a VDI being created or
++                # during a snapshot. An exclusive op is the guarantee that the
++                # SR is locked.
+                 self._linstor = LinstorVolumeManager(
+                     self._master_uri,
+                     self._group_name,
+-                    repair=self._is_master,
++                    repair=self._is_master and
++                            self.srcmd.cmd in self.ops_exclusive,
+                     logger=util.SMlog
+                 )
+                 self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
+-- 
+2.43.0
+

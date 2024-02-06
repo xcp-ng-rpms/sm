@@ -1,0 +1,361 @@
+From d3553ff5a9afdd77a644c0fe90b8b4f014b2cc78 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 23 Sep 2022 17:45:08 +0200
+Subject: [PATCH 078/162] feat(linstor-manager): add new `healthCheck` function
+ to monitor pool (#26)
+
+Print a JSON output to monitor state of LINSTOR SRs:
+  - Display nodes, storage pool and resources
+  - Print human readable warns and errors
+
+Usage example:
+
+```
+xe host-call-plugin host-uuid=c96ec4dd-28ac-4df4-b73c-4371bd202728 plugin=linstor-manager fn=healthCheck args:groupName=linstor_group
+{
+  "errors": [],
+  "warns": [],
+  "controller-uri": "linstor://172.16.210.14",
+  "storage-pools": {
+    "r620-s1": [
+      {
+        "free-size": 999125155840,
+        "storage-pool-name": "xcp-sr-linstor_group",
+        "capacity": 1000203091968,
+        "uuid": "994a5c45-ba52-4f17-8e46-74c7dec0a1e7"
+      }
+    ],
+    "r620-s3": [
+      {
+        "free-size": 999125155840,
+        "storage-pool-name": "xcp-sr-linstor_group",
+        "capacity": 1000203091968,
+        "uuid": "ad78adad-a9f6-4513-9f96-e8eb8fe716dc"
+      }
+    ],
+    "r620-s2": [
+      {
+        "free-size": 999125155840,
+        "storage-pool-name": "xcp-sr-linstor_group",
+        "capacity": 1000203091968,
+        "uuid": "f76048f9-8821-484b-9a51-670a49df7a6e"
+      }
+    ]
+  },
+  "nodes": {
+    "r620-s1": "ONLINE",
+    "r620-s3": "ONLINE",
+    "r620-s2": "ONLINE"
+  },
+  "resources": {
+    "xcp-persistent-database": {
+      "r620-s1": {
+        "tie-breaker": false,
+        "in-use": true,
+        "volumes": [
+          {
+            "storage-pool-name": "xcp-sr-linstor_group",
+            "uuid": "1a436f23-eb81-4a8f-8ab6-de317282b5d5",
+            "device-path": "/dev/drbd1000",
+            "number": 0,
+            "disk-state": "UpToDate",
+            "allocated-size": 1077936128,
+            "usable-size": 1073741824
+          }
+        ],
+        "diskful": true
+      },
+      "r620-s3": {
+        "tie-breaker": false,
+        "in-use": false,
+        "volumes": [
+          {
+            "storage-pool-name": "xcp-sr-linstor_group",
+            "uuid": "31a05bd1-20b6-471a-86b9-bbcdccfaab96",
+            "device-path": "/dev/drbd1000",
+            "number": 0,
+            "disk-state": "UpToDate",
+            "allocated-size": 1077936128,
+            "usable-size": 1073741824
+          }
+        ],
+        "diskful": true
+      },
+      "r620-s2": {
+        "tie-breaker": false,
+        "in-use": false,
+        "volumes": [
+          {
+            "storage-pool-name": "xcp-sr-linstor_group",
+            "uuid": "0420f252-9762-4063-bdd4-732e40373ffb",
+            "device-path": "/dev/drbd1000",
+            "number": 0,
+            "disk-state": "UpToDate",
+            "allocated-size": 1077936128,
+            "usable-size": 1073741824
+          }
+        ],
+        "diskful": true
+      }
+    }
+  }
+}
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstor-manager         | 116 +++++++++++++++++++++++++++++++-
+ drivers/linstorvolumemanager.py | 105 +++++++++++++++++++++++++++++
+ 2 files changed, 220 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index 5485b90..7abc105 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -848,6 +848,119 @@ def get_drbd_openers(session, args):
+         raise
+ 
+ 
++def health_check(session, args):
++    group_name = args['groupName']
++
++    result = {
++       'controller-uri': '',
++       'nodes': {},
++       'storage-pools': {},
++       'warnings': [],
++       'errors': []
++    }
++
++    def format_result():
++        return json.dumps(result)
++
++    # 1. Get controller.
++    try:
++        controller_uri = get_controller_uri()
++
++        result['controller-uri'] = controller_uri
++        try:
++            if controller_uri == 'linstor://localhost':
++                # Replace `localhost` with IP to give a better info for users.
++                result['controller-uri'] = 'linstor://' + util.get_this_host_address(session)
++        except Exception:
++            # Ignore error: can be a XAPI restart or something else.
++            pass
++
++        linstor = LinstorVolumeManager(
++            controller_uri,
++            group_name,
++            logger=util.SMlog
++        )
++    except Exception as e:
++        # Probably a network issue, or offline controller.
++        result['errors'].append('Cannot join SR: `{}`.'.format(e))
++        return format_result()
++
++    try:
++        # 2. Check node statuses.
++        nodes = linstor.get_nodes_info()
++        result['nodes'] = nodes
++        for node_name, status in nodes.items():
++            if status != 'ONLINE':
++                result['warnings'].append('Node `{}` is {}.'.format(node_name, status))
++
++        # 3. Check storage pool statuses.
++        storage_pools_per_node = linstor.get_storage_pools_info()
++        result['storage-pools'] = storage_pools_per_node
++        for node_name, storage_pools in storage_pools_per_node.items():
++            for storage_pool in storage_pools:
++                free_size = storage_pool['free-size']
++                capacity = storage_pool['capacity']
++                if free_size < 0 or capacity <= 0:
++                    result['errors'].append(
++                        'Cannot get free size and/or capacity of storage pool `{}`.'
++                        .format(storage_pool['uuid'])
++                    )
++                elif free_size > capacity:
++                    result['errors'].append(
++                        'Free size of storage pool `{}` is greater than capacity.'
++                        .format(storage_pool['uuid'])
++                    )
++                else:
++                    remaining_percent = free_size / float(capacity) * 100.0
++                    threshold = 10.0
++                    if remaining_percent < threshold:
++                        result['warnings'].append(
++                            'Remaining size of storage pool `{}` is below {}% of its capacity.'
++                            .format(storage_pool['uuid'], threshold)
++                        )
++
++        # 4. Check resource statuses.
++        all_resources = linstor.get_resources_info()
++        result['resources'] = all_resources
++
++        for resource_name, resource_by_node in all_resources.items():
++            for node_name, resource in resource_by_node.items():
++                for volume_index, volume in enumerate(resource['volumes']):
++                    disk_state = volume['disk-state']
++                    if disk_state in ['UpToDate', 'Created', 'Attached']:
++                        continue
++                    if disk_state == 'DUnknown':
++                        result['warnings'].append(
++                            'Unknown state for volume `{}` at index {} for resource `{}` on node `{}`'
++                            .format(volume['device-path'], volume_index, resource_name, node_name)
++                        )
++                        continue
++                    if disk_state in ['Inconsistent', 'Failed', 'To: Creating', 'To: Attachable', 'To: Attaching']:
++                        result['errors'].append(
++                            'Invalid state `{}` for volume `{}` at index {} for resource `{}` on node `{}`'
++                            .format(disk_state, volume['device-path'], volume_index, resource_name, node_name)
++                        )
++                        continue
++                    if disk_state == 'Diskless':
++                        if resource['diskful']:
++                            result['errors'].append(
++                                'Unintentional diskless state detected for volume `{}` at index {} for resource `{}` on node `{}`'
++                                .format(volume['device-path'], volume_index, resource_name, node_name)
++                            )
++                        elif resource['tie-breaker']:
++                            volume['disk-state'] = 'TieBreaker'
++                        continue
++                    result['warnings'].append(
++                        'Unhandled state `{}` for volume `{}` at index {} for resource `{}` on node `{}`'
++                        .format(disk_state, volume['device-path'], volume_index, resource_name, node_name)
++                    )
++
++    except Exception as e:
++        result['errors'].append('Unexpected error: `{}`'.format(e))
++
++    return format_result()
++
++
+ if __name__ == '__main__':
+     XenAPIPlugin.dispatch({
+         'prepareSr': prepare_sr,
+@@ -887,5 +1000,6 @@ if __name__ == '__main__':
+         'listDrbdVolumes': list_drbd_volumes,
+         'destroyDrbdVolume': destroy_drbd_volume,
+         'destroyDrbdVolumes': destroy_drbd_volumes,
+-        'getDrbdOpeners': get_drbd_openers
++        'getDrbdOpeners': get_drbd_openers,
++        'healthCheck': health_check
+     })
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 3ee5d24..efe5d53 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1402,6 +1402,111 @@ class LinstorVolumeManager(object):
+                 'Failed to destroy node `{}`: {}'.format(node_name, error_str)
+             )
+ 
++    def get_nodes_info(self):
++        """
++        Get all nodes + statuses, used or not by the pool.
++        :rtype: dict(str, dict)
++        """
++        try:
++            nodes = {}
++            for node in self._linstor.node_list_raise().nodes:
++                nodes[node.name] = node.connection_status
++            return nodes
++        except Exception as e:
++            raise LinstorVolumeManagerError(
++                'Failed to get all nodes: `{}`'.format(e)
++            )
++
++    def get_storage_pools_info(self):
++        """
++        Give all storage pools of current group name.
++        :rtype: dict(str, list)
++        """
++        storage_pools = {}
++        for pool in self._get_storage_pools(force=True):
++            if pool.node_name not in storage_pools:
++                storage_pools[pool.node_name] = []
++
++            size = -1
++            capacity = -1
++
++            space = pool.free_space
++            if space:
++                size = space.free_capacity
++                if size < 0:
++                    size = -1
++                else:
++                    size *= 1024
++                capacity = space.total_capacity
++                if capacity <= 0:
++                    capacity = -1
++                else:
++                    capacity *= 1024
++
++            storage_pools[pool.node_name].append({
++                'storage-pool-name': pool.name,
++                'uuid': pool.uuid,
++                'free-size': size,
++                'capacity': capacity
++            })
++
++        return storage_pools
++
++    def get_resources_info(self):
++        """
++        Give all resources of current group name.
++        :rtype: dict(str, list)
++        """
++        resources = {}
++        resource_list = self._linstor.resource_list_raise()
++        for resource in resource_list.resources:
++            if resource.name not in resources:
++                resources[resource.name] = {}
++
++            resources[resource.name][resource.node_name] = {
++                'volumes': [],
++                'diskful': linstor.consts.FLAG_DISKLESS not in resource.flags,
++                'tie-breaker': linstor.consts.FLAG_TIE_BREAKER in resource.flags
++            }
++
++            for volume in resource.volumes:
++                # We ignore diskless pools of the form "DfltDisklessStorPool".
++                if volume.storage_pool_name != self._group_name:
++                    continue
++
++                usable_size = volume.usable_size
++                if usable_size < 0:
++                    usable_size = -1
++                else:
++                    usable_size *= 1024
++
++                allocated_size = volume.allocated_size
++                if allocated_size < 0:
++                    allocated_size = -1
++                else:
++                    allocated_size *= 1024
++
++            resources[resource.name][resource.node_name]['volumes'].append({
++                'storage-pool-name': volume.storage_pool_name,
++                'uuid': volume.uuid,
++                'number': volume.number,
++                'device-path': volume.device_path,
++                'usable-size': usable_size,
++                'allocated-size': allocated_size
++            })
++
++        for resource_state in resource_list.resource_states:
++            resource = resources[resource_state.rsc_name][resource_state.node_name]
++            resource['in-use'] = resource_state.in_use
++
++            volumes = resource['volumes']
++            for volume_state in resource_state.volume_states:
++                volume = next((x for x in volumes if x['number'] == volume_state.number), None)
++                if volume:
++                    volume['disk-state'] = volume_state.disk_state
++
++        return resources
++
+     @classmethod
+     def create_sr(
+         cls, group_name, node_names, ips, redundancy,
+-- 
+2.43.0
+

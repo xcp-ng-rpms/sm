@@ -1,7 +1,7 @@
 From 4122b2496fa3ee45122b94f443aa9be20363cc4d Mon Sep 17 00:00:00 2001
 From: Guillaume <guillaume.thouvenin@vates.tech>
 Date: Wed, 16 Aug 2023 13:42:21 +0200
-Subject: [PATCH 16/21] Fix vdi-ref when static vdis are used
+Subject: [PATCH 016/162] Fix vdi-ref when static vdis are used
 
 When static vdis are used there is no snapshots and we don't want to
 call method from XAPI.

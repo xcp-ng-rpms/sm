@@ -1,7 +1,7 @@
 From f2d0f0428ff4f3bf90da88ca8a6c8d3ad4419689 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
-Subject: [PATCH 05/21] feat(drivers): add ZFS driver to avoid losing VDI
+Subject: [PATCH 005/162] feat(drivers): add ZFS driver to avoid losing VDI
  metadata (xcp-ng/xcp#401)
 
 ---

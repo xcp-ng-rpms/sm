@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.1.0.linstor.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -73,6 +73,9 @@ Conflicts: kernel < 4.19.19-5.0.0
 
 Obsoletes: sm-additional-drivers
 
+# To remove after stable release of LINSTOR.
+Provides: sm-linstor
+
 # XCP-ng patches
 # Generated from our sm repository
 # git format-patch v2.30.8-10-xcpng..2.30.8-8.2
@@ -106,6 +109,147 @@ Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
 Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
 Patch1020: 0020-Backport-NFS4-only-support.patch
 Patch1021: 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch
+Patch1022: 0022-Fix-timeout_call-alarm-must-be-reset-in-case-of-succ.patch
+Patch1023: 0023-timeout_call-returns-the-result-of-user-function-now.patch
+Patch1024: 0024-Always-remove-the-pause-tag-from-VDIs-in-case-of-fai.patch
+Patch1025: 0025-fix-LinstorSR-repair-volumes-only-if-an-exclusive-co.patch
+Patch1026: 0026-feat-LinstorSR-Improve-LINSTOR-performance.patch
+Patch1027: 0027-feat-LinstorSR-robustify-scan-to-avoid-losing-VDIs-i.patch
+Patch1028: 0028-feat-LinstorSR-display-a-correctly-readable-size-for.patch
+Patch1029: 0029-feat-linstor-monitord-scan-all-LINSTOR-SRs-every-12-.patch
+Patch1030: 0030-fix-LinstorSR-call-correctly-method-in-_locked_load-.patch
+Patch1031: 0031-feat-LinstorSR-integrate-minidrbdcluster-daemon.patch
+Patch1032: 0032-feat-LinstorSR-ensure-heartbeat-and-redo_log-VDIs-ar.patch
+Patch1033: 0033-feat-LinstorSR-protect-sr-commands-to-avoid-forgetti.patch
+Patch1034: 0034-fix-LinstorJournaler-ensure-uri-is-not-None-during-l.patch
+Patch1035: 0035-feat-LinstorSR-add-an-option-to-disable-auto-quorum-.patch
+Patch1036: 0036-fix-LinstorVolumeManager-add-a-workaround-to-create-.patch
+Patch1037: 0037-feat-LinstorSR-add-optional-ips-parameter.patch
+Patch1038: 0038-feat-LinstorSR-add-a-helper-log_drbd_erofs-to-trace-.patch
+Patch1039: 0039-fix-LinstorSR-try-to-restart-the-services-again-if-t.patch
+Patch1040: 0040-fix-LinstorSR-robustify-linstor-manager-to-never-inc.patch
+Patch1041: 0041-fix-LinstorSR-prevent-starting-controller-during-fai.patch
+Patch1042: 0042-feat-LinstorVolumeManager-increase-peer-slots-limit-.patch
+Patch1043: 0043-feat-LinstorVolumeManager-add-a-fallback-to-find-con.patch
+Patch1044: 0044-fix-var-lib-linstor.mount-ensure-we-always-mount-dat.patch
+Patch1045: 0045-feat-LinstorVolumeManager-add-a-fallback-to-find-nod.patch
+Patch1046: 0046-feat-LinstorSR-explain-on-which-host-plugins-command.patch
+Patch1047: 0047-fix-LinstorSR-create-diskless-path-if-necessary-duri.patch
+Patch1048: 0048-feat-LinstorSR-use-HTTP-NBD-instead-of-DRBD-directly.patch
+Patch1049: 0049-fix-LinstorSR-find-controller-when-XAPI-unreachable-.patch
+Patch1050: 0050-fix-LinstorSR-use-IPs-instead-of-hostnames-in-NBD-se.patch
+Patch1051: 0051-fix-LinstorVolumeManager-ensure-we-always-use-IPs-in.patch
+Patch1052: 0052-feat-linstor-manager-add-methods-to-add-remove-host-.patch
+Patch1053: 0053-feat-LinstorVolumeManager-support-SR-creation-with-d.patch
+Patch1054: 0054-feat-LinstorSR-add-a-config-var-to-disable-HTTP-NBD-.patch
+Patch1055: 0055-feat-LinstorSr-ensure-LVM-group-is-activated-during-.patch
+Patch1056: 0056-feat-linstor-manager-add-method-to-create-LinstorSR-.patch
+Patch1057: 0057-fix-LinstorSR-always-set-vdi_path-in-generate_config.patch
+Patch1058: 0058-fix-minidrbdcluster-supports-new-properties-like-for.patch
+Patch1059: 0059-fix-LinstorSR-enabled-disable-minidrbcluster-with-fi.patch
+Patch1060: 0060-fix-linstor-manager-change-linstor-satellite-start-b.patch
+Patch1061: 0061-Fix-is_open-call-for-LinstorSR.patch
+Patch1062: 0062-fix-linstorvhdutil-fix-boolean-params-of-check-call.patch
+Patch1063: 0063-feat-linstor-manager-robustify-exec_create_sr.patch
+Patch1064: 0064-fix-cleanup-print-LINSTOR-VDI-UUID-if-error-during-i.patch
+Patch1065: 0065-feat-cleanup-raise-and-dump-DRBD-openers-in-case-of-.patch
+Patch1066: 0066-feat-linstorvhdutil-trace-DRBD-openers-in-case-of-ER.patch
+Patch1067: 0067-fix-linstorvolumemanager-compute-correctly-size-in-a.patch
+Patch1068: 0068-feat-LinstorSR-use-DRBD-openers-instead-of-lsof-to-l.patch
+Patch1069: 0069-feat-LinstorSR-support-cProfile-to-trace-calls-when-.patch
+Patch1070: 0070-fix-LinstorJournaler-reset-namespace-when-get-is-cal.patch
+Patch1071: 0071-fix-linstorvhdutil-fix-coalesce-with-VM-running-unde.patch
+Patch1072: 0072-fix-linstorvolumemanager-_get_volumes_info-doesn-t-r.patch
+Patch1073: 0073-fix-linstorvolumemanager-remove-double-prefix-on-kv-.patch
+Patch1074: 0074-feat-LinstorSR-add-linstor-kv-dump-helper-to-print-k.patch
+Patch1075: 0075-fix-LinstorSR-disable-VHD-key-hash-usage-to-limit-ex.patch
+Patch1076: 0076-fix-minidrbdcluster-ensure-SIGINT-is-handled-correct.patch
+Patch1077: 0077-feat-minidrbdcluster-stop-resource-services-at-start.patch
+Patch1078: 0078-feat-linstor-manager-add-new-healthCheck-function-to.patch
+Patch1079: 0079-fix-LinstorSR-fix-xha-conf-parsing-return-host-ip-no.patch
+Patch1080: 0080-fix-LinstorSR-start-correctly-HA-servers-HTTP-NBD-af.patch
+Patch1081: 0081-fix-linstorvolumemanager-use-an-array-to-store-diskf.patch
+Patch1082: 0082-feat-linstorvolumemanager-support-snaps-when-a-host-.patch
+Patch1083: 0083-fix-linstorvolumemanager-support-offline-hosts-when-.patch
+Patch1084: 0084-fix-linstorvolumemanager-define-_base_group_name-mem.patch
+Patch1085: 0085-feat-linstorvhdutil-modify-logic-of-local-vhdutil-ca.patch
+Patch1086: 0086-fix-linstorvolumemanager-robustify-failed-snapshots.patch
+Patch1087: 0087-fix-linstorvolumemanager-use-a-namespace-for-volumes.patch
+Patch1088: 0088-feat-linstor-kv-dump-rename-to-linstor-kv-tool-add-r.patch
+Patch1089: 0089-fix-LinstorSR-handle-correctly-localhost-during-star.patch
+Patch1090: 0090-fix-cleanup.py-call-repair-on-another-host-when-EROF.patch
+Patch1091: 0091-fix-LinstorSR-avoid-introduction-of-DELETED-volumes.patch
+Patch1092: 0092-feat-linstor-kv-tool-remove-all-volumes-supports-jou.patch
+Patch1093: 0093-fix-linstorvhdutil-due-to-bad-refactoring-check-call.patch
+Patch1094: 0094-feat-linstorvhdutil-ensure-we-use-VHD-parent-to-find.patch
+Patch1095: 0095-feat-linstorvolumemanager-force-DRBD-demote-after-fa.patch
+Patch1096: 0096-fix-linstorvhdutil-ensure-we-retry-creation-in-all-s.patch
+Patch1097: 0097-fix-linstorvhdutil-don-t-retry-local-vhdutil-call-wh.patch
+Patch1098: 0098-feat-fork-log-daemon-ignore-SIGTERM.patch
+Patch1099: 0099-feat-LinstorSR-wait-for-http-disk-server-startup.patch
+Patch1100: 0100-fix-LinstorSR-handle-inflate-resize-actions-correctl.patch
+Patch1101: 0101-fix-linstor-manager-add-a-static-iptables-rule-for-D.patch
+Patch1102: 0102-feat-LinstorSR-sync-with-last-http-nbd-transfer-vers.patch
+Patch1103: 0103-fix-LinstorSR-don-t-check-VDI-metadata-while-listing.patch
+Patch1104: 0104-fix-LinstorSR-don-t-check-metadata-when-destroying-s.patch
+Patch1105: 0105-fix-linstorvhdutil-handle-correctly-generic-exceptio.patch
+Patch1106: 0106-fix-minidrbdcluster-robustify-to-unmount-correctly-L.patch
+Patch1107: 0107-fix-minidrbdcluster-handle-correctly-KeyboardInterru.patch
+Patch1108: 0108-feat-LinstorSR-use-drbd-reactor-instead-of-minidrbdc.patch
+Patch1109: 0109-fix-LinstorSR-ensure-vhdutil-calls-are-correctly-exe.patch
+Patch1110: 0110-fix-LinstorSR-replace-bad-param-in-detach_thin-impl.patch
+Patch1111: 0111-fix-linstorvolumemanager-remove-usage-of-realpath.patch
+Patch1112: 0112-fix-linstorvhdutil-avoid-parent-path-resolution.patch
+Patch1113: 0113-fix-LinstorSR-create-parent-path-during-attach.patch
+Patch1114: 0114-fix-LinstorSR-retry-if-we-can-t-build-volume-cache.patch
+Patch1115: 0115-fix-linstorvolumemanager-reduce-peer-slots-param-to-.patch
+Patch1116: 0116-fix-LinstorSR-attach-a-valid-XAPI-session-is_open-is.patch
+Patch1117: 0117-fix-LinstorSR-ensure-we-always-have-a-DRBD-path-to-s.patch
+Patch1118: 0118-fix-LinstorSR-remove-hosts-ips-param.patch
+Patch1119: 0119-fix-LinstorSR-compute-correctly-SR-size-using-pool-c.patch
+Patch1120: 0120-fix-blktap2-ensure-we-can-import-this-module-when-LI.patch
+Patch1121: 0121-fix-LinstorSR-ensure-volume-cache-can-be-recreated.patch
+Patch1122: 0122-fix-linstor-manager-remove-dead-useless-code-in-add-.patch
+Patch1123: 0123-fix-LinstorSR-Ensure-we-always-have-a-device-path-du.patch
+Patch1124: 0124-fix-LinstorSR-always-use-lock.acquire-during-attach-.patch
+Patch1125: 0125-fix-LinstorSR-mare-sure-hostnames-are-unique-at-SR-c.patch
+Patch1126: 0126-fix-LinstorSR-ensure-we-can-attach-non-special-stati.patch
+Patch1127: 0127-fix-LinstorSR-ensure-we-can-detach-when-deflate-call.patch
+Patch1128: 0128-fix-LinstorSR-assume-VDI-is-always-a-VHD-when-the-in.patch
+Patch1129: 0129-fix-LinstorSR-remove-SR-lock-during-thin-attach-deta.patch
+Patch1130: 0130-fix-LinstorSR-ensure-database-is-mounted-during-scan.patch
+Patch1131: 0131-fix-LinstorSR-restart-drbd-reactor-in-case-of-failur.patch
+Patch1132: 0132-fix-linstorvolumemanager-retry-in-case-of-failure-du.patch
+Patch1133: 0133-fix-linstorvolumemanager-avoid-diskless-creation-whe.patch
+Patch1134: 0134-fix-LinstorSR-remove-diskless-after-VDI.detach-calls.patch
+Patch1135: 0135-fix-LinstorSR-robustify-_load_vdi_info-in-cleanup.py.patch
+Patch1136: 0136-fix-LinstorSR-ensure-detach-never-fails-on-plugin-fa.patch
+Patch1137: 0137-fix-LinstorSR-ensure-we-coalesce-only-volumes-with-a.patch
+Patch1138: 0138-fix-LinstorSR-don-t-try-to-repair-persistent-volumes.patch
+Patch1139: 0139-fix-linstorvhdutil-format-correctly-message-if-vhd-u.patch
+Patch1140: 0140-fix-LinstorSR-wait-during-attach-to-open-DRBD-path.patch
+Patch1141: 0141-fix-LinstorSR-support-different-volume-sizes-in-clea.patch
+Patch1142: 0142-fix-LinstorSR-remove-useless-IPS_XHA_CACHE-var.patch
+Patch1143: 0143-fix-LinstorSR-ensure-we-can-deflate-on-any-host-afte.patch
+Patch1144: 0144-fix-LinstorSR-ensure-we-always-use-real-DRBD-VHD-siz.patch
+Patch1145: 0145-feat-linstor-kv-tool-If-no-controller-uri-option-is-.patch
+Patch1146: 0146-fix-linstorvolumemanager-robustify-SR-destroy-46.patch
+Patch1147: 0147-feat-linstor-manager-extend-API-with-createNodeInter.patch
+Patch1148: 0148-fix-LinstorSR-support-VDI.resize-on-thick-volumes.patch
+Patch1149: 0149-fix-linstorvolumemanager-format-correctly-exception-.patch
+Patch1150: 0150-fix-LinstorSR-ensure-we-can-skip-coalesces-if-device.patch
+Patch1151: 0151-feat-linstor-manager-add-methods-to-modify-destroy-l.patch
+Patch1152: 0152-fix-LinstorSR-force-a-defined-volume-prefix-if-we-ca.patch
+Patch1153: 0153-fix-LinstorSR-explicit-error-message-when-a-group-is.patch
+Patch1154: 0154-fix-LinstorSR-make-sure-VDI.delete-doesn-t-throw-und.patch
+Patch1155: 0155-fix-LinstorSR-add-drbd-in-the-blacklist-of-multipath.patch
+Patch1156: 0156-fix-linstorvolumemanager-create-cloned-volumes-on-ho.patch
+Patch1157: 0157-fix-linstorvolumemanager-don-t-align-volumes-on-LVM-.patch
+Patch1158: 0158-fix-linstorvolumemanager-assert-with-message-after-l.patch
+Patch1159: 0159-fix-linstorvolumemanager-retry-resize-if-volume-is-n.patch
+Patch1160: 0160-fix-LinstorSR-create-DRBD-diskless-if-necessary-for-.patch
+Patch1161: 0161-fix-LinstorSR-fix-bad-call-to-vhdutil.inflate-bad-ex.patch
+Patch1162: 0162-fix-LinstorSR-activate-VG-if-attach-from-config-is-a.patch
 
 %description
 This package contains storage backends used in XCP
@@ -207,6 +351,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
+/etc/systemd/system/drbd-reactor.service.d/override.conf
+/etc/systemd/system/linstor-satellite.service.d/override.conf
+/etc/systemd/system/var-lib-linstor.service
 /etc/udev/scripts/xs-mpath-scsidev.sh
 /etc/xapi.d/plugins/coalesce-leaf
 /etc/xapi.d/plugins/lvhd-thin
@@ -218,6 +365,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /etc/xapi.d/plugins/trim
 /etc/xensource/master.d/02-vhdcleanup
 /opt/xensource/bin/blktap2
+/opt/xensource/bin/linstor-kv-tool
 /opt/xensource/bin/tapdisk-cache-stats
 /opt/xensource/bin/xe-getarrayidentifier
 /opt/xensource/bin/xe-get-arrayid-lunnum
@@ -227,6 +375,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/dcopy
 /opt/xensource/libexec/local-device-change
 /opt/xensource/libexec/make-dummy-sr
+/opt/xensource/libexec/safe-umount
 /opt/xensource/libexec/usb_change
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
@@ -500,10 +649,15 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/linstorvolumemanager.pyc
 /opt/xensource/sm/linstorvolumemanager.pyo
+/opt/xensource/libexec/fork-log-daemon
 /opt/xensource/libexec/linstor-monitord
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue Feb 06 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.1.0.linstor.1
+- Add "Provides": sm-linstor (necessary for the "Requires" of xcp-ng-linstor)
+- Add LINSTOR patches
+
 * Tue Feb 06 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.1
 - Sync with hotfix XS82ECU1060
 - Sync patches with our latest 2.30.8-8.2 branch

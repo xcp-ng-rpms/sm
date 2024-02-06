@@ -1,4 +1,4 @@
-From 3b5d6c5847b203e7111ab6a5c1a10a016042edde Mon Sep 17 00:00:00 2001
+From 1c46a4afa57cf16b74553e5359b4acff0ec7b489 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
 Subject: [PATCH 06/21] Re-add the ext4 driver for users who need to transition

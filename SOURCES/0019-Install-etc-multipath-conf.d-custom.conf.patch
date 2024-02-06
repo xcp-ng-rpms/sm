@@ -1,4 +1,4 @@
-From e44d1944c1cb041a6abf9f1b357bfd90ee3904de Mon Sep 17 00:00:00 2001
+From f20c924d7de6277b1359a92180d4e5021afdef4d Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 25 Aug 2023 17:47:34 +0200
 Subject: [PATCH 19/21] Install /etc/multipath/conf.d/custom.conf

@@ -1,4 +1,4 @@
-From 60851ed893f348792b01694febd6bab245a436e6 Mon Sep 17 00:00:00 2001
+From 3e4a5e0b1c206a307530c989ede8010163579207 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 27 Jan 2023 12:03:15 +0100
 Subject: [PATCH 17/21] Tell users not to edit multipath.conf directly

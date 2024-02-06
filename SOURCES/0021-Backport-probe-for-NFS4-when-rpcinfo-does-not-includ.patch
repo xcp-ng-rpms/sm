@@ -1,4 +1,4 @@
-From 9ec032b42ff55c9f62fa0564f1efe10bb193c40e Mon Sep 17 00:00:00 2001
+From a25b42e0f7d4fad119418bd9532a84d1f69d0f16 Mon Sep 17 00:00:00 2001
 From: Benjamin Reis <benjamin.reis@vates.tech>
 Date: Mon, 18 Dec 2023 10:35:46 +0100
 Subject: [PATCH 21/21] Backport probe for NFS4 when rpcinfo does not include

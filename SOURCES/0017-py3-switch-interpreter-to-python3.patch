@@ -1,7 +1,7 @@
 From 2a1076fecd826da3a62e051e3b20bd792cc7cb9a Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Mon, 27 Mar 2023 15:30:46 +0200
-Subject: [PATCH 17/25] py3: switch interpreter to python3
+Subject: [PATCH 17/26] py3: switch interpreter to python3
 
 ---
  drivers/CephFSSR.py             | 2 +-

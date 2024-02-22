@@ -1,7 +1,7 @@
 From 15a733cdd0cdce2d3932c54d93c7f7369f78285a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 02/25] feat(drivers): add CephFS and GlusterFS drivers
+Subject: [PATCH 02/26] feat(drivers): add CephFS and GlusterFS drivers
 
 ---
  Makefile               |   2 +

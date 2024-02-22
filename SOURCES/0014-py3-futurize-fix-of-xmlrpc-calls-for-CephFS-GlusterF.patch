@@ -1,7 +1,7 @@
 From 732a4b6e07758c4692f8c6580f06ccd29b5c88f5 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:28:10 +0100
-Subject: [PATCH 14/25] py3: futurize fix of xmlrpc calls for CephFS,
+Subject: [PATCH 14/26] py3: futurize fix of xmlrpc calls for CephFS,
  GlusterFS, MooseFS, Linstore
 
 Signed-off-by: Yann Dirson <yann.dirson@vates.fr>

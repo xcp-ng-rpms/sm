@@ -1,7 +1,7 @@
 From 213f754c4d8050fe2ea9de5fdb4fd945e256b9ed Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Dec 2021 09:28:37 +0100
-Subject: [PATCH 08/25] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
+Subject: [PATCH 08/26] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
  is used
 
 `umount` should not be called when `legacy_mode` is enabled, otherwise a mounted dir

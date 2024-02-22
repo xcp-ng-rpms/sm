@@ -1,7 +1,7 @@
 %global package_speccommit d6933df59571ee3471f10f184c8b73427daa56ed
 %global usver 3.0.12
 %global xsver 6
-%global xsrel %{xsver}.1%{?xscount}%{?xshash}
+%global xsrel %{xsver}.2%{?xscount}%{?xshash}
 %global package_srccommit v3.0.12
 
 # -*- rpm-spec -*-
@@ -360,6 +360,12 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
+* Thu Feb 22 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.12-6.2
+- Ensure we can always attach NFS SR during attach_from_config call
+- Always activate LVs for LINSTOR if attach from config is asked
+- Create VHD diskless chain for LINSTOR during snapshots
+- Robustify LINSTOR resize when a volume has just been created
+
 * Wed Jan 24 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.12-6.1
 - Rebase on 3.0.12-6
 - Drop 0022-Fix-vdi-ref-when-static-vdis-are-used.patch

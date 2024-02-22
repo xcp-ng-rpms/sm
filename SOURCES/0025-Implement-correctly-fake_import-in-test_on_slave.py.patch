@@ -1,7 +1,7 @@
-From 1dde93cb983dfbefc1496827e8e43318ce54d978 Mon Sep 17 00:00:00 2001
+From 079107836f10f21ea47be4eabc62245129391292 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 23 Jan 2024 17:15:51 +0100
-Subject: [PATCH 25/25] Implement correctly fake_import in test_on_slave.py
+Subject: [PATCH 25/26] Implement correctly fake_import in test_on_slave.py
 
 *args and **kwargs must be forwarded to __import__ otherwise
 the import context (global & local) can be incomplete to find

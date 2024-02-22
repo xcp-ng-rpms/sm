@@ -1,7 +1,7 @@
-From d2dbdb19c1f89b59187cfe89501f8e3232f1042d Mon Sep 17 00:00:00 2001
+From 04184ed2c8daa62e188ec97311eb6e999da8f4ea Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
-Subject: [PATCH 20/25] feat(LinstorSR): is now compatible with python 3
+Subject: [PATCH 20/26] feat(LinstorSR): is now compatible with python 3
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  9 files changed, 36 insertions(+), 40 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index c770dc7..a396aee 100755
+index 94591f0..7a34521 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -758,7 +758,7 @@ class LinstorSR(SR.SR):
@@ -78,7 +78,7 @@ index c770dc7..a396aee 100755
                  raise e
  
          self._all_volume_metadata_cache = \
-@@ -2652,7 +2651,7 @@ class LinstorVDI(VDI.VDI):
+@@ -2627,7 +2626,7 @@ class LinstorVDI(VDI.VDI):
                  '--nbd-name',
                  volume_name,
                  '--urls',
@@ -176,7 +176,7 @@ index 836f4ce..13e1bb0 100644
                      continue
  
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index dc810e5..4da34b5 100755
+index 5e5bcd5..dbca3b4 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -529,8 +529,8 @@ class LinstorVolumeManager(object):
@@ -190,7 +190,7 @@ index dc810e5..4da34b5 100755
                  total_size += size
  
          return total_size * 1024
-@@ -1698,8 +1698,8 @@ class LinstorVolumeManager(object):
+@@ -1710,8 +1710,8 @@ class LinstorVolumeManager(object):
  
          lin = cls._create_linstor_instance(uri, keep_uri_unmodified=True)
  
@@ -201,7 +201,7 @@ index dc810e5..4da34b5 100755
              while True:
                  # Try to create node.
                  result = lin.node_create(
-@@ -2259,13 +2259,13 @@ class LinstorVolumeManager(object):
+@@ -2271,13 +2271,13 @@ class LinstorVolumeManager(object):
      def _request_device_path(self, volume_uuid, volume_name, activate=False):
          node_name = socket.gethostname()
  
@@ -218,7 +218,7 @@ index dc810e5..4da34b5 100755
              if activate:
                  self._mark_resource_cache_as_dirty()
                  self._activate_device_path(
-@@ -2277,7 +2277,7 @@ class LinstorVolumeManager(object):
+@@ -2289,7 +2289,7 @@ class LinstorVolumeManager(object):
                  .format(volume_uuid)
              )
          # Contains a path of the /dev/drbd<id> form.
@@ -227,7 +227,7 @@ index dc810e5..4da34b5 100755
  
      def _destroy_resource(self, resource_name, force=False):
          result = self._linstor.resource_dfn_delete(resource_name)
-@@ -2295,7 +2295,7 @@ class LinstorVolumeManager(object):
+@@ -2307,7 +2307,7 @@ class LinstorVolumeManager(object):
  
          # If force is used, ensure there is no opener.
          all_openers = get_all_volume_openers(resource_name, '0')
@@ -236,7 +236,7 @@ index dc810e5..4da34b5 100755
              if openers:
                  self._mark_resource_cache_as_dirty()
                  raise LinstorVolumeManagerError(
-@@ -2559,18 +2559,18 @@ class LinstorVolumeManager(object):
+@@ -2571,18 +2571,18 @@ class LinstorVolumeManager(object):
          node_name = socket.gethostname()
  
          try:
@@ -258,7 +258,7 @@ index dc810e5..4da34b5 100755
              if activate:
                  cls._activate_device_path(
                      lin, node_name, DATABASE_VOLUME_NAME
-@@ -2583,7 +2583,7 @@ class LinstorVolumeManager(object):
+@@ -2595,7 +2595,7 @@ class LinstorVolumeManager(object):
                  .format(DATABASE_PATH)
              )
          # Contains a path of the /dev/drbd<id> form.
@@ -267,7 +267,7 @@ index dc810e5..4da34b5 100755
  
      @classmethod
      def _create_database_volume(
-@@ -2618,7 +2618,7 @@ class LinstorVolumeManager(object):
+@@ -2630,7 +2630,7 @@ class LinstorVolumeManager(object):
              )
  
          # Ensure we have a correct list of storage pools.
@@ -276,7 +276,7 @@ index dc810e5..4da34b5 100755
          assert nodes_with_pool  # We must have at least one storage pool!
          for node_name in nodes_with_pool:
              assert node_name in node_names
-@@ -2862,7 +2862,7 @@ class LinstorVolumeManager(object):
+@@ -2874,7 +2874,7 @@ class LinstorVolumeManager(object):
      def _move_files(cls, src_dir, dest_dir, force=False):
          def listdir(dir):
              ignored = ['lost+found']

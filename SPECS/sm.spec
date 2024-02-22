@@ -1,6 +1,6 @@
-%global package_speccommit 46560dabc7321720d3fadd32f43d67677f88cfe5
+%global package_speccommit 9ec3f2b3dbb24dfa6ac77cfa09120e39b777ceaf
 %global usver 2.30.8
-%global xsver 9
+%global xsver 10
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Series applies on top of v2.29.0 and includes all later tags to 2.30.7
 # after that tag the commits are in the patchqueue here.
@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -53,7 +53,11 @@ Patch33: cp-45514-set-ownership-and
 Patch34: ca-379315-use-xe_sr_errorcodes
 Patch35: ca-375367-nfs-timeout
 Patch36: ca-381221-increase-nfs
-Patch37: cp-45927-change-equalogic-checker
+Patch37: cp-45927-change-equalogic
+Patch38: run_unittests_directly
+Patch39: ca-380360-report-error
+Patch40: add-unittests-for-multisession
+Patch41: ca-386479-ensure-we-login-to
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 BuildRequires: gcc
 Requires(post): systemd
@@ -71,15 +75,15 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.8-9-xcpng..2.30.8-8.2
-# Note: the v2.30.8-9-xcpng tag was manually created by us on our fork because
+# git format-patch v2.30.8-10-xcpng..2.30.8-8.2
+# Note: the v2.30.8-10-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
 # To create this tag in the sources, you must create a 2.30.8-8.2 branch from the
 # previous -xcpng tag then cherry pick each upstream commit referenced in the changelog
 # of the upstream spec file.
 # To ensure you have all changes, you can use:
 # `diff -urq <sources> <upstream sources>`.
-# After that we can create the tag: `git tag -a v2.30.8-9-xcpng -m "v2.30.8-9-xcpng"`,
+# After that we can create the tag: `git tag -a v2.30.8-10-xcpng -m "v2.30.8-10-xcpng"`,
 # push the commits and tag.
 Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
 Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
@@ -500,6 +504,13 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue Feb 06 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.1
+- Sync with hotfix XS82ECU1060
+- Sync patches with our latest 2.30.8-8.2 branch
+- - *** Upstream changelog ***
+- * Fri Jan 19 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-10
+- - Backport fix for CA-386479, log into all iSCSI targets
+
 * Tue Dec 19 2023 Benjamin Reis <benjamin.reis@vates.fr> - 2.30.8-9.2
 - Add 0020-Backport-NFS4-only-support.patch
 - Add 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch

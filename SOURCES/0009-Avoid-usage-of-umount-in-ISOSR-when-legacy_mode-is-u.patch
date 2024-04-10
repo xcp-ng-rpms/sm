@@ -1,7 +1,7 @@
-From 213f754c4d8050fe2ea9de5fdb4fd945e256b9ed Mon Sep 17 00:00:00 2001
+From 12f7ebd441ef9ef1057cc240f35be493c098c028 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Dec 2021 09:28:37 +0100
-Subject: [PATCH 08/26] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
+Subject: [PATCH 09/27] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
  is used
 
 `umount` should not be called when `legacy_mode` is enabled, otherwise a mounted dir
@@ -15,10 +15,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 60 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
-index f5ed929..be1ce42 100755
+index d244b5d..c4e07fb 100755
 --- a/drivers/ISOSR.py
 +++ b/drivers/ISOSR.py
-@@ -565,8 +565,7 @@ class ISOSR(SR.SR):
+@@ -564,8 +564,7 @@ class ISOSR(SR.SR):
  
      def detach(self, sr_uuid):
          """Std. detach"""
@@ -29,7 +29,7 @@ index f5ed929..be1ce42 100755
  
          try:
 diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
-index 03a4961..3d3f15a 100644
+index 456e5ca..1fe50c6 100644
 --- a/tests/test_ISOSR.py
 +++ b/tests/test_ISOSR.py
 @@ -23,6 +23,65 @@ class FakeISOSR(ISOSR.ISOSR):
@@ -99,5 +99,5 @@ index 03a4961..3d3f15a 100644
  class TestISOSR_overNFS(unittest.TestCase):
  
 -- 
-2.43.0
+2.44.0
 

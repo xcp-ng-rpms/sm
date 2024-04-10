@@ -1,7 +1,7 @@
-From 4bd1b328c5e8f30d879acdb4e7ded8d6be31332b Mon Sep 17 00:00:00 2001
+From 20cc32a2b52d56992d962a5eb459e7ed93a5f79c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 03/26] feat(drivers): add XFS driver
+Subject: [PATCH 04/27] feat(drivers): add XFS driver
 
 Originally-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 
@@ -288,7 +288,7 @@ index 0000000..1dfde09
 +else:
 +    SR.registerSR(XFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e9e5866..622ffb2 100755
+index 4045386..0deb52e 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2890,6 +2890,7 @@ def normalizeType(type):
@@ -300,5 +300,5 @@ index e9e5866..622ffb2 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.43.0
+2.44.0
 

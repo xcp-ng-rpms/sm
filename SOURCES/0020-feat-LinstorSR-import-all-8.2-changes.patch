@@ -1,7 +1,7 @@
-From 7eca02d94205d85bc4ff4b8a9a5b56ec51ef5539 Mon Sep 17 00:00:00 2001
+From 77029a0902615e094d988baf7c9af07a3a2b003a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
-Subject: [PATCH 19/26] feat(LinstorSR): import all 8.2 changes
+Subject: [PATCH 20/27] feat(LinstorSR): import all 8.2 changes
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -2275,7 +2275,7 @@ index 6fda56a..4896a1f 100755
                      "blktap_activate_inject_failure",
                      lambda: util.inject_failure())
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 1d8da7b..1768e27 100755
+index 18bc985..e5a77ff 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -53,8 +53,11 @@ from time import monotonic as _time
@@ -2850,7 +2850,7 @@ index 1d8da7b..1768e27 100755
  
  ################################################################################
  #
-@@ -3502,9 +3687,9 @@ def abort(srUuid, soft=False):
+@@ -3527,9 +3712,9 @@ def abort(srUuid, soft=False):
  
  
  def gc(session, srUuid, inBackground, dryRun=False):
@@ -7609,10 +7609,10 @@ index 932fc3c..7532875 100755
                  logger=util.SMlog
              ).get_device_path(self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 5594f71..374b7d4 100755
+index 9dc2478..2085563 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -698,32 +698,10 @@ def get_master_ref(session):
+@@ -699,32 +699,10 @@ def get_master_ref(session):
      return session.xenapi.pool.get_master(pools[0])
  
  
@@ -7645,7 +7645,7 @@ index 5594f71..374b7d4 100755
  def get_localhost_ref(session):
      filename = '/etc/xensource-inventory'
      try:
-@@ -764,6 +742,17 @@ def get_hosts_attached_on(session, vdi_uuids):
+@@ -765,6 +743,17 @@ def get_hosts_attached_on(session, vdi_uuids):
              host_refs[key[len('host_'):]] = True
      return host_refs.keys()
  
@@ -7663,7 +7663,7 @@ index 5594f71..374b7d4 100755
  
  def get_this_host_ref(session):
      host_uuid = get_this_host()
-@@ -1972,3 +1961,95 @@ def sessions_less_than_targets(other_config, device_config):
+@@ -2005,3 +1994,95 @@ def sessions_less_than_targets(other_config, device_config):
          return (sessions < targets)
      else:
          return False
@@ -8151,7 +8151,7 @@ index 8161813..4774059 100644
  
    const int inotifyFd = createInotifyInstance();
 diff --git a/multipath/multipath.conf b/multipath/multipath.conf
-index 51aa139..6ed830e 100644
+index 744b646..00a8f48 100644
 --- a/multipath/multipath.conf
 +++ b/multipath/multipath.conf
 @@ -23,6 +23,7 @@ blacklist {
@@ -8361,5 +8361,5 @@ index 42cf9eb..2095569 100644
      def fake_import(self, name, *args):
          print('Asked to import {}'.format(name))
 -- 
-2.43.0
+2.44.0
 

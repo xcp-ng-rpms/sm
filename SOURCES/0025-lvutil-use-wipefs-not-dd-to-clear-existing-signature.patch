@@ -1,7 +1,7 @@
-From 03b2c031754578d9ab6875d9154aec21203c66f3 Mon Sep 17 00:00:00 2001
+From 99ea7217d75b0211c51830048ea6d3a244df1561 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 5 Jul 2023 16:57:26 +0200
-Subject: [PATCH 24/26] lvutil: use wipefs not dd to clear existing signatures
+Subject: [PATCH 25/27] lvutil: use wipefs not dd to clear existing signatures
  (xapi-project#624)
 
 Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
@@ -12,17 +12,17 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  3 files changed, 15 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 293ec6e..0dac061 100755
+index de73968..224ea23 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -888,6 +888,12 @@
-             <value>460</value>
+@@ -894,6 +894,12 @@
+             <value>461</value>
          </code>
  
 +        <code>
 +            <name>WipefsFailure</name>
 +            <description>Failed to wipe pre-existing filesystem signature.</description>
-+            <value>461</value>
++            <value>462</value>
 +        </code>
 +
          <code>
@@ -62,10 +62,10 @@ index e0fc0d7..f1d1c5b 100755
          if not (dev == rootdev):
              try:
 diff --git a/drivers/util.py b/drivers/util.py
-index 0760637..364bb8c 100755
+index de964b2..1facba7 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -637,6 +637,11 @@ def zeroOut(path, fromByte, bytes):
+@@ -638,6 +638,11 @@ def zeroOut(path, fromByte, bytes):
      return True
  
  
@@ -78,5 +78,5 @@ index 0760637..364bb8c 100755
      regex = re.compile("^PRIMARY_DISK")
      return regex.search(s, 0)
 -- 
-2.43.0
+2.44.0
 

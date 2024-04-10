@@ -1,7 +1,7 @@
-From 56716b3adaee8c1aab9790beec224ce597347cf6 Mon Sep 17 00:00:00 2001
+From 7039fd4e5a89a3387006f1afc9bdb798dde18f86 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 05/26] feat(drivers): add LinstorSR driver
+Subject: [PATCH 06/27] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -2246,10 +2246,10 @@ index 0000000..8be1836
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 0b4b250..293ec6e 100755
+index 535c9dc..de73968 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -905,4 +905,40 @@
+@@ -911,4 +911,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -2291,7 +2291,7 @@ index 0b4b250..293ec6e 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index b732a33..ecdf9ee 100755
+index cdb37c6..e93ff18 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -5133,10 +5133,10 @@ index 6b7fc09..932fc3c 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index ea5f89d..5594f71 100755
+index f6b9ba8..9dc2478 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -693,10 +693,35 @@ def get_this_host():
+@@ -694,10 +694,35 @@ def get_this_host():
      return uuid
  
  
@@ -5175,7 +5175,7 @@ index ea5f89d..5594f71 100755
  
  
  def get_localhost_ref(session):
-@@ -1510,13 +1535,21 @@ def get_connected_sockets(pid):
+@@ -1543,13 +1568,21 @@ def get_connected_sockets(pid):
      return sockets
  
  
@@ -5658,5 +5658,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.43.0
+2.44.0
 

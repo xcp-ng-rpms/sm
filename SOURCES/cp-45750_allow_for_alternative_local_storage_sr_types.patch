@@ -1,0 +1,115 @@
+CP-45750 Allow for alternative local storage SR types
+
+From: Robin Newton <robin.newton@cloud.com>
+
+storage-init no longer silently ignores unrecognized SR types, but
+instead handles them in the same way as 'lvm' and 'ext' (the handling of
+which has now been unified).
+
+This presupposes that an SR type specified in first-boot configuration
+will take a single configuration parameter - 'device' - which is a
+comma-separated list of partitions - which is what 'lvm' and 'ext' do.
+
+Signed-off-by: Robin Newton <robin.newton@cloud.com>
+
+diff --git a/scripts/storage-init b/scripts/storage-init
+index 0f1cf36..4619afa 100755
+--- a/scripts/storage-init
++++ b/scripts/storage-init
+@@ -167,33 +167,17 @@ mk_non_spanning_local_srs()
+     done
+ }
+ 
+-
+-mk_ext_sr()
+-{
+-    local partitions="$1"
+-
+-    for p in $partitions
+-    do
+-        diskprep "$p"
+-    done
+-
+-    local partitions_cs=$(echo "$partitions" | sed "s/ /,/g")
+-    sr_create "Local storage" "" "ext" "user" "local-storage" "" \
+-        "device-config:device=$partitions_cs"
+-}
+-
+-
+-##
+-# mk_lvm_sr partitions
++# mk_local_sr_from_partitions type partitions
+ #
+ # Create a single "Local storage" SR, with a single LVM volume spanning
+ # the given partitions.
+ #
+ # partitions should be an IFS-separated string of partition names.
+ #
+-mk_lvm_sr()
++mk_local_sr_from_partitions()
+ {
+-    local partitions="$1"
++    local type="$1"
++    local partitions="$2"
+ 
+     for p in $partitions
+     do
+@@ -201,7 +185,7 @@ mk_lvm_sr()
+     done
+ 
+     local partitions_cs=$(echo "$partitions" | sed "s/ /,/g")
+-    sr_create "Local storage" "" "lvm" "user" "local-storage" "" \
++    sr_create "Local storage" "" "$type" "user" "local-storage" "" \
+         "device-config:device=$partitions_cs"
+ }
+ 
+@@ -212,10 +196,7 @@ create_local_sr() {
+         # the configuration file exists - load it and create storage
+         # as required:
+         source "$CONFIGURATION"
+-        case "$TYPE" in
+-            ext)    mk_ext_sr "$PARTITIONS" ;;
+-            lvm)    mk_lvm_sr "$PARTITIONS" ;;
+-        esac
++        mk_local_sr_from_partitions "$TYPE" "$PARTITIONS"
+     else
+         # CA-13146: upgrade Rio local storage
+         uuid=`xe sr-list name-label="Local storage on $(hostname)" | sed -ne 's/^uuid .*: //p'`
+diff --git a/tests/test_storage_init.py b/tests/test_storage_init.py
+index 0d59ae4..e2f9b26 100644
+--- a/tests/test_storage_init.py
++++ b/tests/test_storage_init.py
+@@ -287,6 +287,33 @@ sys.exit(resp.get("returncode", 0))
+         self.assertListEqual([" ".join(call) for call in self.misc_xe_calls],
+                              expected_xe_calls)
+ 
++    def test_install_with_other_sr_type(self):
++        with open(self.storage_config, "wt") as f:
++            f.write("TYPE=wtf\n")
++            f.write("PARTITIONS='/dev/sda4 /dev/sdb /dev/sdc'")
++
++        p = subprocess.Popen(["/bin/sh", self.script_path],
++                             env=self.make_env())
++
++        self.run_script_commands()
++
++        returncode = p.wait()
++
++        self.assertListEqual(self.unanticipated_xe_calls, [])
++        self.assertTrue(os.path.isfile(os.path.join(self.test_dir.name,
++                                                    "ran-storage-init")))
++        self.assertEqual(returncode, 0)
++
++        self.assertEqual(self.created_srs.keys(), {"wtf", "udev"})
++        self.assertEqual(1, len(self.created_srs["wtf"]))
++        self.assertEqual(self.created_srs["wtf"][0], {
++            "content-type": "user",
++            "device-config:device": "/dev/sda4,/dev/sdb,/dev/sdc",
++            "host-uuid": INSTALLATION_UUID,
++            "name-label": "Local storage",
++            "type": "wtf"
++        })
++
+     def run_script_commands(self):
+         while not self.script_exited:
+             c, _ = self.socket.accept()

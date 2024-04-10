@@ -1,0 +1,35 @@
+CP-46807: reduce logs from scheduler set errors
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Only log errors if all attempts to set the block device elevator
+scheduler fail, to reduce noise in the logs which look like errors and
+are not.
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+
+diff --git a/drivers/util.py b/drivers/util.py
+index ea5f89d..29d9144 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -1108,6 +1108,8 @@ def set_scheduler_sysfs_node(node, scheds):
+     if not os.path.exists(path):
+         SMlog("no path %s" % path)
+         return
++
++    stored_error = None
+     for sched in scheds:
+         try:
+             with open(path, 'w') as file:
+@@ -1115,8 +1117,9 @@ def set_scheduler_sysfs_node(node, scheds):
+             SMlog("Set scheduler to [%s] on [%s]" % (sched, node))
+             return
+         except (OSError, IOError) as err:
+-            SMlog("Setting scheduler to [%s] on [%s] failed with [%s]" % (sched, node, str(err)))
+-    SMlog("Error setting schedulers to [%s] on [%s]" % (scheds, node))
++            stored_error = err
++
++    SMlog("Error setting schedulers to [%s] on [%s], %s" % (scheds, node, str(stored_error)))
+ 
+ 
+ def set_scheduler(dev, schedulers=None):

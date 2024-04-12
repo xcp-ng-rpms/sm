@@ -1,0 +1,266 @@
+From 5d9fc23e329db0fe2751061f71cd496d457859e3 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 11 Oct 2023 15:14:08 +0200
+Subject: [PATCH 27/27] fix(NFSSR): ensure we can attach SR during
+ attach_from_config call
+
+We can get a trace like that if the SR is not attached:
+```
+2170:Oct 10 16:02:59 xcp4 SM: [2564] ***** NFSFileVDI.attach_from_config: EXCEPTION <type 'exceptions.AttributeError'>, 'NoneType' object has no attribute 'xenapi'
+2329-Oct 10 16:02:59 xcp4 SM: [2564]   File "/opt/xensource/sm/NFSSR", line 296, in attach_from_config
+2427-Oct 10 16:02:59 xcp4 SM: [2564]     self.sr.attach(sr_uuid)
+2487-Oct 10 16:02:59 xcp4 SM: [2564]   File "/opt/xensource/sm/NFSSR", line 148, in attach
+2573-Oct 10 16:02:59 xcp4 SM: [2564]     self._check_hardlinks()
+2633-Oct 10 16:02:59 xcp4 SM: [2564]   File "/opt/xensource/sm/FileSR.py", line 1122, in _check_hardlinks
+2734-Oct 10 16:02:59 xcp4 SM: [2564]     self.session.xenapi.SR.remove_from_sm_config(
+2816-Oct 10 16:02:59 xcp4 SM: [2564]
+```
+
+Because the session is not set during this call.
+So instead of using the XenAPI to store hardlink support, use a file on the storage itself.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/FileSR.py    | 53 ++++++++++++++++++++++++++++++--------
+ tests/test_FileSR.py | 60 +++-----------------------------------------
+ 2 files changed, 47 insertions(+), 66 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 1313c8c..bc4425f 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -419,6 +419,9 @@ class FileSR(SR.SR):
+                                 (util.ismount(mount_path) or \
+                                  util.pathexists(self.remotepath) and self._isbind()))
+ 
++    # Override in SharedFileSR.
++    def _check_hardlinks(self):
++        return True
+ 
+ class FileVDI(VDI.VDI):
+     PARAM_VHD = "vhd"
+@@ -762,11 +765,10 @@ class FileVDI(VDI.VDI):
+         os.unlink(path)
+ 
+     def _create_new_parent(self, src, newsrc):
+-        sr_sm_config = self.session.xenapi.SR.get_sm_config(self.sr.sr_ref)
+-        if SharedFileSR.NO_HARDLINK_SUPPORT in sr_sm_config:
+-            self._rename(src, newsrc)
+-        else:
++        if self.sr._check_hardlinks():
+             self._link(src, newsrc)
++        else:
++            self._rename(src, newsrc)
+ 
+     def __fist_enospace(self):
+         raise util.CommandException(28, "vhd-util snapshot", reason="No space")
+@@ -1072,7 +1074,6 @@ class SharedFileSR(FileSR):
+     """
+     FileSR subclass for SRs that use shared network storage
+     """
+-    NO_HARDLINK_SUPPORT = "no_hardlinks"
+ 
+     def _check_writable(self):
+         """
+@@ -1092,6 +1093,10 @@ class SharedFileSR(FileSR):
+         raise OSError(524, "Unknown error 524")
+ 
+     def _check_hardlinks(self):
++        hardlink_conf = self._read_hardlink_conf()
++        if hardlink_conf is not None:
++            return hardlink_conf
++
+         test_name = os.path.join(self.path, str(uuid4()))
+         open(test_name, 'ab').close()
+ 
+@@ -1103,17 +1108,17 @@ class SharedFileSR(FileSR):
+                 self._raise_hardlink_error)
+ 
+             os.link(test_name, link_name)
+-            if self.session:
+-                self.session.xenapi.SR.remove_from_sm_config(
+-                    self.sr_ref, SharedFileSR.NO_HARDLINK_SUPPORT)
++            self._write_hardlink_conf(supported=True)
++            return True
+         except OSError:
++            self._write_hardlink_conf(supported=False)
++
+             msg = "File system for SR %s does not support hardlinks, crash " \
+                 "consistency of snapshots cannot be assured" % self.uuid
+             util.SMlog(msg, priority=util.LOG_WARNING)
++            # Note: session can be not set during attach/detach_from_config calls.
+             if self.session:
+                 try:
+-                    self.session.xenapi.SR.add_to_sm_config(
+-                        self.sr_ref, SharedFileSR.NO_HARDLINK_SUPPORT, 'True')
+                     self.session.xenapi.message.create(
+                         "sr_does_not_support_hardlinks", 2, "SR", self.uuid,
+                         msg)
+@@ -1124,6 +1129,34 @@ class SharedFileSR(FileSR):
+             util.force_unlink(link_name)
+             util.force_unlink(test_name)
+ 
++        return False
++
++    def _get_hardlink_conf_path(self):
++        return os.path.join(self.path, 'sm-hardlink.conf')
++
++    def _read_hardlink_conf(self):
++        try:
++            with open(self._get_hardlink_conf_path(), 'r') as f:
++                try:
++                    return bool(int(f.read()))
++                except Exception as e:
++                    # If we can't read, assume the file is empty and test for hardlink support.
++                    return None
++        except IOError as e:
++            if e.errno == errno.ENOENT:
++                # If the config file doesn't exist, assume we want to support hardlinks.
++                return None
++            util.SMlog('Failed to read hardlink conf: {}'.format(e))
++            # Can be caused by a concurrent access, not a major issue.
++            return None
++
++    def _write_hardlink_conf(self, supported):
++        try:
++            with open(self._get_hardlink_conf_path(), 'w') as f:
++                f.write('1' if supported else '0')
++        except Exception as e:
++            # Can be caused by a concurrent access, not a major issue.
++            util.SMlog('Failed to write hardlink conf: {}'.format(e))
+ 
+ if __name__ == '__main__':
+     SRCommand.run(FileSR, DRIVER_INFO)
+diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
+index a98b8c2..efd96e4 100644
+--- a/tests/test_FileSR.py
++++ b/tests/test_FileSR.py
+@@ -15,7 +15,6 @@ import SRCommand
+ import testlib
+ import util
+ import vhdutil
+-from XenAPI import Failure
+ 
+ 
+ class FakeFileVDI(FileSR.FileVDI):
+@@ -193,6 +192,7 @@ class TestFileVDI(unittest.TestCase):
+         vdi_uuid = str(uuid.uuid4())
+         sr = mock.MagicMock()
+         sr.path = "sr_path"
++        sr._check_hardlinks.return_value = False
+         vdi = FakeFileVDI(sr, vdi_uuid)
+         vdi.sr = sr
+ 
+@@ -205,9 +205,6 @@ class TestFileVDI(unittest.TestCase):
+ 
+         mock_query_p_uuid.side_effect = [new_vdi_uuid, new_vdi_uuid, grandp_uuid]
+ 
+-        sr.session.xenapi.SR.get_sm_config.return_value = {
+-            "no_hardlinks": "True"}
+-
+         # Act
+         clone_xml = vdi.clone(sr_uuid, vdi_uuid)
+ 
+@@ -432,6 +429,8 @@ class FakeSharedFileSR(FileSR.SharedFileSR):
+         self._check_writable()
+         self._check_hardlinks()
+ 
++    def _read_hardlink_conf(self):
++        return None
+ 
+ class TestShareFileSR(unittest.TestCase):
+     """
+@@ -439,7 +438,6 @@ class TestShareFileSR(unittest.TestCase):
+     """
+     TEST_SR_REF = "test_sr_ref"
+     ERROR_524 = "Unknown error 524"
+-    NO_HARDLINKS = "no_hardlinks"
+ 
+     def setUp(self):
+         util_patcher = mock.patch('FileSR.util', autospec=True)
+@@ -478,13 +476,6 @@ class TestShareFileSR(unittest.TestCase):
+                         'sr_ref': TestShareFileSR.TEST_SR_REF}
+         return FakeSharedFileSR(srcmd, self.sr_uuid)
+ 
+-    def create_sessionless_test_sr(self):
+-        srcmd = mock.Mock()
+-        srcmd.dconf = {}
+-        srcmd.params = {'command': "some_command",
+-                        'sr_ref': TestShareFileSR.TEST_SR_REF}
+-        return FakeSharedFileSR(srcmd, self.sr_uuid)
+-
+     def test_attach_success(self):
+         """
+         Attach SR on FS with expected features
+@@ -495,8 +486,7 @@ class TestShareFileSR(unittest.TestCase):
+             test_sr.attach(self.sr_uuid)
+ 
+         # Assert
+-        self.mock_session.xenapi.SR.remove_from_sm_config.assert_called_with(
+-            TestShareFileSR.TEST_SR_REF, TestShareFileSR.NO_HARDLINKS)
++        self.assertEqual(0, self.mock_session.xenapi.message.create.call_count)
+ 
+     def test_attach_link_fail(self):
+         """
+@@ -511,49 +501,9 @@ class TestShareFileSR(unittest.TestCase):
+             test_sr.attach(self.sr_uuid)
+ 
+         # Assert
+-        self.mock_session.xenapi.SR.add_to_sm_config.assert_called_with(
+-            TestShareFileSR.TEST_SR_REF, TestShareFileSR.NO_HARDLINKS, 'True')
+         self.mock_session.xenapi.message.create.assert_called_with(
+             'sr_does_not_support_hardlinks', 2, "SR", self.sr_uuid, mock.ANY)
+ 
+-    def test_attach_link_fail_already_set(self):
+-        """
+-        Attach SR on FS with no hardlinks with config set
+-        """
+-        test_sr = self.create_test_sr()
+-
+-        self.mock_link.side_effect = OSError(524, TestShareFileSR.ERROR_524)
+-        self.mock_session.xenapi.SR.add_to_sm_config.side_effect = Failure(
+-            ['MAP_DUPLICATE_KEY', 'SR', 'sm_config',
+-            'OpaqueRef:be8cc595-4924-4946-9082-59aef531daae',
+-             TestShareFileSR.NO_HARDLINKS])
+-
+-        # Act
+-        with mock.patch('FileSR.open'):
+-            test_sr.attach(self.sr_uuid)
+-
+-        # Assert
+-        self.mock_session.xenapi.SR.add_to_sm_config.assert_called_with(
+-            TestShareFileSR.TEST_SR_REF, TestShareFileSR.NO_HARDLINKS, 'True')
+-
+-    def test_attach_success_no_session(self):
+-        test_sr = self.create_sessionless_test_sr()
+-
+-        with mock.patch('FileSR.open'):
+-            test_sr.attach(self.sr_uuid)
+-
+-        self.mock_session.xenapi.SR.remove_from_sm_config.assert_not_called()
+-
+-    def test_attach_link_fail_no_session(self):
+-        test_sr = self.create_sessionless_test_sr()
+-        self.mock_link.side_effect = OSError(524, TestShareFileSR.ERROR_524)
+-
+-        with mock.patch('FileSR.open'):
+-            test_sr.attach(self.sr_uuid)
+-
+-        self.mock_session.xenapi.SR.add_to_sm_config.assert_not_called()
+-        self.mock_session.xenapi.message.create.assert_not_called()
+-
+     def test_attach_fist_active(self):
+         """
+         Attach SR with FIST point active to set no hardlinks
+@@ -567,8 +517,6 @@ class TestShareFileSR(unittest.TestCase):
+             test_sr.attach(self.sr_uuid)
+ 
+         # Assert
+-        self.mock_session.xenapi.SR.add_to_sm_config.assert_called_with(
+-            TestShareFileSR.TEST_SR_REF, TestShareFileSR.NO_HARDLINKS, 'True')
+         self.mock_session.xenapi.message.create.assert_called_with(
+             'sr_does_not_support_hardlinks', 2, "SR", self.sr_uuid, mock.ANY)
+ 
+-- 
+2.44.0
+

@@ -1,0 +1,78 @@
+From 4d59edb0f20caddac3e594b667f4ee5a35c68b23 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 22 Sep 2023 11:11:27 +0200
+Subject: [PATCH 23/27] Repair coverage to be compatible with 8.3 test env
+
+Impacted drivers: LINSTOR, MooseFS and ZFS.
+- Ignore all linstor.* members during coverage,
+  the module is not installed in github runner.
+- Use mock from unittest, the old one is not found now.
+- Remove useless return from LinstorSR scan method.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py    | 3 +--
+ tests/pylintrc          | 2 +-
+ tests/test_MooseFSSR.py | 4 +++-
+ tests/test_ZFSSR.py     | 5 +++--
+ 4 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 7a34521..c8aa56b 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -779,9 +779,8 @@ class LinstorSR(SR.SR):
+ 
+         # Update the database before the restart of the GC to avoid
+         # bad sync in the process if new VDIs have been introduced.
+-        ret = super(LinstorSR, self).scan(self.uuid)
++        super(LinstorSR, self).scan(self.uuid)
+         self._kick_gc()
+-        return ret
+ 
+     @_locked_load
+     def vdi(self, uuid):
+diff --git a/tests/pylintrc b/tests/pylintrc
+index a982913..4588675 100644
+--- a/tests/pylintrc
++++ b/tests/pylintrc
+@@ -84,7 +84,7 @@ ignored-classes=SQLObject
+ 
+ # List of members which are set dynamically and missed by pylint inference
+ # system, and so shouldn't trigger E0201 when accessed.
+-generated-members=REQUEST,acl_users,aq_parent
++generated-members=REQUEST,acl_users,aq_parent,linstor.*
+ 
+ # List of module names for which member attributes should not be checked
+ # # (useful for modules/projects where namespaces are manipulated during runtime
+diff --git a/tests/test_MooseFSSR.py b/tests/test_MooseFSSR.py
+index feaac62..f4e0a85 100644
+--- a/tests/test_MooseFSSR.py
++++ b/tests/test_MooseFSSR.py
+@@ -1,4 +1,6 @@
+-import mock
++from unittest import mock
++import unittest
++
+ import MooseFSSR
+ import unittest
+ 
+diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
+index e95ab7e..ac2c6eb 100644
+--- a/tests/test_ZFSSR.py
++++ b/tests/test_ZFSSR.py
+@@ -1,8 +1,9 @@
++from unittest import mock
++import unittest
++
+ import FileSR
+-import mock
+ import os
+ import SR
+-import unittest
+ import ZFSSR
+ 
+ 
+-- 
+2.44.0
+

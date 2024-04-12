@@ -1,0 +1,122 @@
+From 8e05bb9b0f4bf637c49dd1e036ea5ddfd81f946a Mon Sep 17 00:00:00 2001
+From: Yann Dirson <yann.dirson@vates.fr>
+Date: Wed, 8 Mar 2023 10:28:10 +0100
+Subject: [PATCH 15/27] py3: futurize fix of xmlrpc calls for CephFS,
+ GlusterFS, MooseFS, Linstore
+
+Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
+---
+ drivers/CephFSSR.py    | 6 +++---
+ drivers/GlusterFSSR.py | 6 +++---
+ drivers/LinstorSR.py   | 8 ++++----
+ drivers/MooseFSSR.py   | 6 +++---
+ 4 files changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
+index 528cd3b..3575ade 100644
+--- a/drivers/CephFSSR.py
++++ b/drivers/CephFSSR.py
+@@ -21,7 +21,7 @@
+ import errno
+ import os
+ import syslog as _syslog
+-import xmlrpclib
++import xmlrpc.client
+ from syslog import syslog
+ 
+ # careful with the import order here
+@@ -277,8 +277,8 @@ class CephFSFileVDI(FileSR.FileVDI):
+                 'command': 'vdi_attach_from_config'}
+         # Return the 'config' encoded within a normal XMLRPC response so that
+         # we can use the regular response/error parsing code.
+-        config = xmlrpclib.dumps(tuple([resp]), "vdi_attach_from_config")
+-        return xmlrpclib.dumps((config,), "", True)
++        config = xmlrpc.client.dumps(tuple([resp]), "vdi_attach_from_config")
++        return xmlrpc.client.dumps((config,), "", True)
+ 
+     def attach_from_config(self, sr_uuid, vdi_uuid):
+         try:
+diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
+index 0d9d4e1..367a5b5 100644
+--- a/drivers/GlusterFSSR.py
++++ b/drivers/GlusterFSSR.py
+@@ -19,7 +19,7 @@
+ import errno
+ import os
+ import syslog as _syslog
+-import xmlrpclib
++import xmlrpc.client
+ from syslog import syslog
+ 
+ # careful with the import order here
+@@ -269,8 +269,8 @@ class GlusterFSFileVDI(FileSR.FileVDI):
+                 'command': 'vdi_attach_from_config'}
+         # Return the 'config' encoded within a normal XMLRPC response so that
+         # we can use the regular response/error parsing code.
+-        config = xmlrpclib.dumps(tuple([resp]), "vdi_attach_from_config")
+-        return xmlrpclib.dumps((config,), "", True)
++        config = xmlrpc.client.dumps(tuple([resp]), "vdi_attach_from_config")
++        return xmlrpc.client.dumps((config,), "", True)
+ 
+     def attach_from_config(self, sr_uuid, vdi_uuid):
+         try:
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index ab1b958..8eb9e5c 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -38,7 +38,7 @@ import traceback
+ import util
+ import VDI
+ import vhdutil
+-import xmlrpclib
++import xmlrpc.client
+ import xs_errors
+ 
+ from srmetadata import \
+@@ -865,7 +865,7 @@ class LinstorSR(SR.SR):
+                 if is_a_snapshot:
+                     xenapi.VDI.set_snapshot_time(
+                         vdi_ref,
+-                        xmlrpclib.DateTime(
++                        xmlrpc.client.DateTime(
+                             volume_metadata[SNAPSHOT_TIME_TAG] or
+                             '19700101T00:00:00Z'
+                         )
+@@ -1617,8 +1617,8 @@ class LinstorVDI(VDI.VDI):
+         resp['vdi_path'] = self.path
+         resp['command'] = 'vdi_attach_from_config'
+ 
+-        config = xmlrpclib.dumps(tuple([resp]), 'vdi_attach_from_config')
+-        return xmlrpclib.dumps((config,), "", True)
++        config = xmlrpc.client.dumps(tuple([resp]), 'vdi_attach_from_config')
++        return xmlrpc.client.dumps((config,), "", True)
+ 
+     def attach_from_config(self, sr_uuid, vdi_uuid):
+         """
+diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
+index 8860fdf..febb559 100755
+--- a/drivers/MooseFSSR.py
++++ b/drivers/MooseFSSR.py
+@@ -22,7 +22,7 @@ import distutils.util
+ import errno
+ import os
+ import syslog as _syslog
+-import xmlrpclib
++import xmlrpc.client
+ from syslog import syslog
+ 
+ # careful with the import order here
+@@ -300,8 +300,8 @@ class MooseFSFileVDI(FileSR.FileVDI):
+                 'command': 'vdi_attach_from_config'}
+         # Return the 'config' encoded within a normal XMLRPC response so that
+         # we can use the regular response/error parsing code.
+-        config = xmlrpclib.dumps(tuple([resp]), "vdi_attach_from_config")
+-        return xmlrpclib.dumps((config,), "", True)
++        config = xmlrpc.client.dumps(tuple([resp]), "vdi_attach_from_config")
++        return xmlrpc.client.dumps((config,), "", True)
+ 
+     def attach_from_config(self, sr_uuid, vdi_uuid):
+         try:
+-- 
+2.44.0
+

@@ -1,7 +1,7 @@
-%global package_speccommit d6933df59571ee3471f10f184c8b73427daa56ed
+%global package_speccommit 1aed0a89775649c36c126242fe693c8ec8b7c018
 %global usver 3.0.12
-%global xsver 6
-%global xsrel %{xsver}.2%{?xscount}%{?xshash}
+%global xsver 12
+%global xsrel %{xsver}.1%{?xscount}%{?xshash}
 %global package_srccommit v3.0.12
 
 # -*- rpm-spec -*-
@@ -28,6 +28,21 @@ Patch10: ca-384030_ignore_awkardly_named_images_in_iso_srs.patch
 Patch11: ca-377454__ensure_iscsiadm_lock
 Patch12: cp-45927__change_equalogic_checker
 Patch13: ca-384783_probe_for_nfs4_when_rpcinfo_does_not_include_it.patch
+Patch14: ca-386281_cifs_username_can_be_omitted_in_ISO_SR
+Patch15: cp-46863_dump_multipath_status_from_storage_manager.patch
+Patch16: add_unittests_for_multisession_lvhdoiscsi_attach.patch
+Patch17: ca-386479__ensure_we_login_to_all_iscsi_target_portal_groups.patch
+Patch18: cp-46807__reduce_logs_from_scheduler_set_errors.patch
+Patch19: ca-387770_improve_error_message_for_readonly_shares.patch
+Patch20: ca-388451__ensure_that_xapi_sessions_are_logged_out.patch
+Patch21: ca_383076_proc_read.patch
+Patch22: add_unittests_to_exercise_xapi_session_handling.patch
+Patch23: ca-387770_increase_nfssr_and_smbsr_test_coverage.patch
+Patch24: cp-45750_add_unit_test_for_storage-init.patch
+Patch25: cp-45750_allow_for_alternative_local_storage_sr_types.patch
+Patch26: ca-386316_fix_race_condition_between_sr_detach_and_gc.patch
+Patch27: ca-388811_check_hardlinks_with_no_session.patch
+Patch28: cp-47841__update_multipath_configuration_for_pure_storage.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 %define __python python3.6
@@ -61,32 +76,34 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.0.12-6-xcpng..3.0.12-8.3
-Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
-Patch1003: 0003-feat-drivers-add-XFS-driver.patch
-Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
-Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
-Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
-Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
-Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
-Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
-Patch1015: 0015-py3-use-of-integer-division-operator.patch
-Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
-Patch1017: 0017-py3-switch-interpreter-to-python3.patch
-Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
-Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
-Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
-Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
-Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
-Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
-Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
-Patch1025: 0025-Implement-correctly-fake_import-in-test_on_slave.py.patch
+# git format-patch v3.0.12-12-xcpng..3.0.12-8.3
+Patch1001: 0001-XCP-ng-cherry-pick-of-CP-45750-get-storage-init-test.patch
+Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1003: 0003-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
+Patch1004: 0004-feat-drivers-add-XFS-driver.patch
+Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
+Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1008: 0008-Added-SM-Driver-for-MooseFS.patch
+Patch1009: 0009-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+Patch1010: 0010-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1011: 0011-Fix-is_open-call-for-many-drivers-25.patch
+Patch1012: 0012-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+Patch1013: 0013-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
+Patch1014: 0014-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
+Patch1015: 0015-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
+Patch1016: 0016-py3-use-of-integer-division-operator.patch
+Patch1017: 0017-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
+Patch1018: 0018-py3-switch-interpreter-to-python3.patch
+Patch1019: 0019-Support-recent-version-of-coverage-tool.patch
+Patch1020: 0020-feat-LinstorSR-import-all-8.2-changes.patch
+Patch1021: 0021-feat-LinstorSR-is-now-compatible-with-python-3.patch
+Patch1022: 0022-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
+Patch1023: 0023-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
+Patch1024: 0024-Support-IPv6-in-Ceph-Driver.patch
+Patch1025: 0025-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
+Patch1026: 0026-Implement-correctly-fake_import-in-test_on_slave.py.patch
+Patch1027: 0027-fix-NFSSR-ensure-we-can-attach-SR-during-attach_from.patch
 
 %description
 This package contains storage backends used in XCP
@@ -102,15 +119,15 @@ DESTDIR=$RPM_BUILD_ROOT make install
 
 # Mark processes that should be moved to the data path
 %triggerin -- libcgroup-tools
-( patch -tsN -r - -d / -p1 || : )>/dev/null << 'EOF'
---- /etc/cgrules.conf
-+++ /etc/cgrules.conf
+( grep "tapdisk" /etc/cgrules.conf > /dev/null || patch -tsN -r - -d / -p0 )>/dev/null << 'EOF'
+--- /etc/cgrules.conf	2018-04-11 02:33:52.000000000 +0000
++++ /tmp/cgrules.conf	2024-01-26 17:30:29.204242549 +0000
 @@ -7,4 +7,6 @@
- #@student    cpu,memory    usergroup/student/
- #peter        cpu        test1/
- #%        memory        test2/
-+*:tapdisk    cpu,cpuacct    vm.slice/
-+%        blkio        vm.slice/
+ #@student	cpu,memory	usergroup/student/
+ #peter		cpu		test1/
+ #%		memory		test2/
++*:tapdisk	cpu,cpuacct	vm.slice/
++%		blkio		vm.slice/
  # End of file
 EOF
 
@@ -360,6 +377,33 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
+
+* Wed Apr 10 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.12-12.1
+- Rebase on 3.0.12-12
+- Add 0001-XCP-ng-cherry-pick-of-CP-45750-get-storage-init-test.patch
+- Apply correctly: 0027-fix-NFSSR-ensure-we-can-attach-SR-during-attach_from.patch
+- *** Upstream changelog ***
+- * Fri Feb 16 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-12
+- - CA-386316 Fix race condition between sr_detach and GC
+- - CA-388808: only patch cgrules if our setting is missing
+- - CA-388811 Don't tell xapi whether SR supports hard links when there's no session
+- - CP-47841: update multipath configuration for PURE Storage
+- * Tue Feb 13 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-11
+- - CP-45750 Allow for alternative local storage SR types
+- * Thu Feb 08 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-10
+- - CA-387770 increase NFSSR and SMBSR test coverage
+- - CA-383076 Before returning open files from /proc ensure PIDs are alive
+- * Tue Feb 06 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-9
+- - CA-387770 Improve error message for readonly shares
+- - CA-388451: Ensure that xapi sessions are logged out
+- * Mon Jan 29 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-8
+- - CA-388353: fix patch context for cgrules.conf triggerin script
+- - CP-46807: reduce logs from scheduler set errors
+- * Mon Jan 15 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-7
+- - CA-386281 CIFS username can be omitted in ISO SR
+- - CA-386479: ensure we login to all iSCSI Target Portal Groups
+- - CP-46863 Dump Multipath Status from Storage Manager
+
 * Thu Feb 22 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.12-6.2
 - Ensure we can always attach NFS SR during attach_from_config call
 - Always activate LVs for LINSTOR if attach from config is asked
@@ -965,4 +1009,3 @@ The package contains a fake key lookup plugin for system tests
 - CP-24566: Change export_changed_blocks to list_changed_blocks
 - CP-24593: Remove changes unrelated to CBT from patch introduced for CP-23919
 - CP-24592: Resize in VDI should remain unimplemented
-

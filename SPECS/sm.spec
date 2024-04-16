@@ -1,7 +1,7 @@
 %global package_speccommit 1aed0a89775649c36c126242fe693c8ec8b7c018
 %global usver 3.0.12
 %global xsver 12
-%global xsrel %{xsver}.1%{?xscount}%{?xshash}
+%global xsrel %{xsver}.2%{?xscount}%{?xshash}
 %global package_srccommit v3.0.12
 
 # -*- rpm-spec -*-
@@ -104,6 +104,7 @@ Patch1024: 0024-Support-IPv6-in-Ceph-Driver.patch
 Patch1025: 0025-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
 Patch1026: 0026-Implement-correctly-fake_import-in-test_on_slave.py.patch
 Patch1027: 0027-fix-NFSSR-ensure-we-can-attach-SR-during-attach_from.patch
+Patch1028: 0028-feat-LargeBlock-introduce-largeblocksr-51.patch
 
 %description
 This package contains storage backends used in XCP
@@ -352,6 +353,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/XFSSR.py
 /opt/xensource/sm/ZFSSR
 /opt/xensource/sm/ZFSSR.py
+/opt/xensource/sm/LargeBlockSR
+/opt/xensource/sm/LargeBlockSR.py
 %{_unitdir}/linstor-monitor.service
 
 %package testresults
@@ -377,6 +380,9 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
+
+* Fri Apr 12 2024 Damien Thenot <damien.thenot@vates.tech> 3.0.12-12.2
+- Add 0028-feat-LargeBlock-introduce-largeblocksr-51.patch
 
 * Wed Apr 10 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.12-12.1
 - Rebase on 3.0.12-12

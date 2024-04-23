@@ -1,4 +1,4 @@
-From 0ffc775515124bc6e82ed0dfc2ea9b42475e0cd3 Mon Sep 17 00:00:00 2001
+From fb9461cef1d49c9b6c35c8b9598040d585701d69 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 12 Apr 2024 15:08:59 +0200
 Subject: [PATCH 28/28] feat(LargeBlock): introduce largeblocksr (#51)
@@ -24,7 +24,13 @@ The SR artificially limits the creation to disk not being 512b.
 It will throw an error if a disk whose blocksize is 512 is given.
 
 We currently don't support multi devices, it fails at the EXTSR creation.
-
+We added an error to explicitly say that multi devices SR is not supported
+on the driver.
+Before that, it would make another error:
+```
+Error code: SR_BACKEND_FAILURE_77
+Error parameters: , Logical Volume group creation failed,
+```
 Sometimes the pvremove from EXTSR using the loop device fails.
 In this case, we need to remove the real device from PV list ourself in
 the error handling.
@@ -32,12 +38,12 @@ the error handling.
 Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
 ---
  Makefile                     |   1 +
- drivers/LargeBlockSR.py      | 246 +++++++++++++++++++++++++++++++++++
+ drivers/LargeBlockSR.py      | 249 +++++++++++++++++++++++++++++++++++
  drivers/XE_SR_ERRORCODES.xml |  22 ++++
  drivers/cleanup.py           |   2 +-
  drivers/lvutil.py            |   8 +-
  drivers/on_slave.py          |   1 +
- 6 files changed, 277 insertions(+), 3 deletions(-)
+ 6 files changed, 280 insertions(+), 3 deletions(-)
  create mode 100644 drivers/LargeBlockSR.py
 
 diff --git a/Makefile b/Makefile
@@ -54,10 +60,10 @@ index 701dd1f..24ba532 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
 new file mode 100644
-index 0000000..8fe42b4
+index 0000000..624379b
 --- /dev/null
 +++ b/drivers/LargeBlockSR.py
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,249 @@
 +#!/usr/bin/env python3
 +#
 +# Copyright (C) 2024  Vates SAS - damien.thenot@vates.tech
@@ -142,6 +148,9 @@ index 0000000..8fe42b4
 +    @deviceCheck
 +    def create(self, sr_uuid, size):
 +        base_devices = self.dconf["device"].split(",")
++        if len(base_devices) > 1:
++            raise xs_errors.XenError("ConfigDeviceInvalid", opterr="Multiple devices configuration is not supported")
++
 +        for dev in base_devices:
 +            logical_blocksize = util.pread2(["blockdev", "--getss", dev]).strip()
 +            if logical_blocksize == "512":

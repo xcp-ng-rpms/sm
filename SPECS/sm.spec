@@ -1,7 +1,7 @@
 %global package_speccommit 1aed0a89775649c36c126242fe693c8ec8b7c018
 %global usver 3.0.12
 %global xsver 12
-%global xsrel %{xsver}.2%{?xscount}%{?xshash}
+%global xsrel %{xsver}.3%{?xscount}%{?xshash}
 %global package_srccommit v3.0.12
 
 # -*- rpm-spec -*-
@@ -380,6 +380,10 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
+
+* Tue Apr 23 2024 Damien Thenot <damien.thenot@vates.tech> 3.0.12-12.3
+- Updated 0028-feat-LargeBlock-introduce-largeblocksr-51.patch
+- Add a clearer error message for multidevices config not being accepted
 
 * Fri Apr 12 2024 Damien Thenot <damien.thenot@vates.tech> 3.0.12-12.2
 - Add 0028-feat-LargeBlock-introduce-largeblocksr-51.patch

@@ -1,7 +1,7 @@
 From e6ffd5e9de53116d69fa2b3511166fc71954e6d4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 26 Sep 2023 11:48:38 +0200
-Subject: [PATCH 133/162] fix(linstorvolumemanager): avoid diskless creation
+Subject: [PATCH 133/170] fix(linstorvolumemanager): avoid diskless creation
  when a new resource is added
 
 Like said in this discussion https://github.com/xcp-ng/sm/pull/34 :
@@ -142,5 +142,5 @@ index 23e80d9..49ca83c 100755
  
              assert volume_properties.namespace == \
 -- 
-2.43.0
+2.44.0
 

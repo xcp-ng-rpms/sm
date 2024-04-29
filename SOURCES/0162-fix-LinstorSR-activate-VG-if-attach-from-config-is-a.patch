@@ -1,7 +1,7 @@
 From f87c3eb6a386cb50d6474dc83fad5e95d865beb9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 12 Feb 2024 20:54:06 +0100
-Subject: [PATCH 162/162] fix(LinstorSR): activate VG if attach from config is
+Subject: [PATCH 162/170] fix(LinstorSR): activate VG if attach from config is
  asked
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -23,5 +23,5 @@ index de10f42..b6b1529 100755
  
              if not self._has_session:
 -- 
-2.43.0
+2.44.0
 

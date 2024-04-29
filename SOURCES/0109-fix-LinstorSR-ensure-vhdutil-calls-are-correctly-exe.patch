@@ -1,7 +1,7 @@
 From a5dd1819ece48085aae5394ecc7ca5946e81465b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 1 Mar 2023 10:56:43 +0100
-Subject: [PATCH 109/162] fix(LinstorSR): ensure vhdutil calls are correctly
+Subject: [PATCH 109/170] fix(LinstorSR): ensure vhdutil calls are correctly
  executed on pools with > 3 hosts
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -143,5 +143,5 @@ index 4662043..5ab83c4 100755
      def invalidate_resource_cache(self):
          """
 -- 
-2.43.0
+2.44.0
 

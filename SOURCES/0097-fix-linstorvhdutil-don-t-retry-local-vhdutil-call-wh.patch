@@ -1,7 +1,7 @@
 From e9946a400b74208d598e8536edc83c548b5e284b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 7 Dec 2022 17:56:39 +0100
-Subject: [PATCH 097/162] fix(linstorvhdutil): don't retry local vhdutil call
+Subject: [PATCH 097/170] fix(linstorvhdutil): don't retry local vhdutil call
  when EROFS is detected
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -154,5 +154,5 @@ index c2e9665..63d59ab 100644
          # B. Execute the command on another host.
          # B.1. Get host list.
 -- 
-2.43.0
+2.44.0
 

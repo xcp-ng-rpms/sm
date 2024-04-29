@@ -1,7 +1,7 @@
 From a5579f097a3c5a52553667a25fc0d8d7a934c74b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 23 Nov 2022 15:26:51 +0100
-Subject: [PATCH 093/162] fix(linstorvhdutil): due to bad refactoring, check
+Subject: [PATCH 093/170] fix(linstorvhdutil): due to bad refactoring, check
  call was broken
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -29,5 +29,5 @@ index 2687cad..a883ca4 100644
      def get_vhd_info(self, vdi_uuid, include_parent=True):
          kwargs = {'includeParent': str(include_parent)}
 -- 
-2.43.0
+2.44.0
 

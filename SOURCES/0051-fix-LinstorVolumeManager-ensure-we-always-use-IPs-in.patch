@@ -1,7 +1,7 @@
 From bb98f089065ee36bc0c244bd02015f7583a306c6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 31 Mar 2022 11:21:19 +0200
-Subject: [PATCH 051/162] fix(LinstorVolumeManager): ensure we always use IPs
+Subject: [PATCH 051/170] fix(LinstorVolumeManager): ensure we always use IPs
  in _get_controller_uri
 
 Otherwise if a hostname is returned, we can't use it if the XCP-ng pool
@@ -26,5 +26,5 @@ index b4ee783..2d5c63e 100755
          # Not found, maybe we are trying to create the SR...
          pass
 -- 
-2.43.0
+2.44.0
 

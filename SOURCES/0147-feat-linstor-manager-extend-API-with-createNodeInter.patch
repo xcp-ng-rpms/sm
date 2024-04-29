@@ -1,7 +1,7 @@
 From b9c0e4371154a918c5da5cff034abb679137b35a Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.tech>
 Date: Wed, 29 Nov 2023 16:54:30 +0100
-Subject: [PATCH 147/162] feat(linstor-manager): extend API with
+Subject: [PATCH 147/170] feat(linstor-manager): extend API with
  createNodeInterface and setNodePreferredInterface (#47)
 
 Signed-off-by: BenjiReis <benjamin.reis@vates.fr>
@@ -104,5 +104,5 @@ index d27c84e..fef34d3 100755
          """
          Get all nodes + statuses, used or not by the pool.
 -- 
-2.43.0
+2.44.0
 

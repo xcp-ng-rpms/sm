@@ -1,7 +1,7 @@
 From 594aaa43b1e7cf6d067635f195ab9a40f304b041 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 26 Aug 2021 15:26:11 +0200
-Subject: [PATCH 040/162] fix(LinstorSR): robustify linstor-manager to never
+Subject: [PATCH 040/170] fix(LinstorSR): robustify linstor-manager to never
  include from plugins path
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -35,5 +35,5 @@ index dcd4bc6..f12747f 100755
  from linstorvolumemanager import get_controller_uri, LinstorVolumeManager
  from lock import Lock
 -- 
-2.43.0
+2.44.0
 

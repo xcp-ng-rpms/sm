@@ -1,7 +1,7 @@
 From 361eb6950cd4ca68666877ef583f55be610eed72 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 25 Apr 2023 11:20:55 +0200
-Subject: [PATCH 116/162] fix(LinstorSR): attach a valid XAPI session is_open
+Subject: [PATCH 116/170] fix(LinstorSR): attach a valid XAPI session is_open
  is called
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -27,5 +27,5 @@ index 0633cff..7b8c55d 100755
      tapdisk = blktap2.Tapdisk.find_by_path(vdi.path)
      util.SMlog("Tapdisk for %s: %s" % (vdi.path, tapdisk))
 -- 
-2.43.0
+2.44.0
 

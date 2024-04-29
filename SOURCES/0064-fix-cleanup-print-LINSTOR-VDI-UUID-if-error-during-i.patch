@@ -1,7 +1,7 @@
 From 1e33439ce7625c6a15135c033496b06592b99df7 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Jul 2022 14:52:25 +0200
-Subject: [PATCH 064/162] fix(cleanup): print LINSTOR VDI UUID if error during
+Subject: [PATCH 064/170] fix(cleanup): print LINSTOR VDI UUID if error during
  info loading (not SR UUID)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -23,5 +23,5 @@ index 0399389..77b38c2 100755
                  info = vhdutil.VHDInfo(vdi_uuid)
                  info.error = 1
 -- 
-2.43.0
+2.44.0
 

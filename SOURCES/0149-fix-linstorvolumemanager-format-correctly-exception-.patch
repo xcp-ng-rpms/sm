@@ -1,7 +1,7 @@
 From b71fcdebe016048cb9486a81cb121246c73f04b8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 4 Dec 2023 16:36:55 +0100
-Subject: [PATCH 149/162] fix(linstorvolumemanager): format correctly exception
+Subject: [PATCH 149/170] fix(linstorvolumemanager): format correctly exception
  during db mount
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -26,5 +26,5 @@ index fef34d3..a41314e 100755
                      )
          except Exception as e:
 -- 
-2.43.0
+2.44.0
 

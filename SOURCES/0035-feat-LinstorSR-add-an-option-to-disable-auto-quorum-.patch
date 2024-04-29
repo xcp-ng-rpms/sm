@@ -1,7 +1,7 @@
 From 3fe4841a4e7df555e34d2b1d130df29ab5431d2e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 22 Mar 2021 17:32:26 +0100
-Subject: [PATCH 035/162] feat(LinstorSR): add an option to disable auto-quorum
+Subject: [PATCH 035/170] feat(LinstorSR): add an option to disable auto-quorum
  on volume DB + fix doc
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -141,5 +141,5 @@ index d8d64b4..27c8df5 100755
          current_device_path = cls._request_database_path(lin, activate=True)
  
 -- 
-2.43.0
+2.44.0
 

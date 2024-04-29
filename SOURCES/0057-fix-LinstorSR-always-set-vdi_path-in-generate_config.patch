@@ -1,7 +1,7 @@
 From d582f1c81851ed7985def8b5d7e3e273f1a38f80 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 26 Apr 2022 11:20:08 +0200
-Subject: [PATCH 057/162] fix(LinstorSR): always set vdi_path in
+Subject: [PATCH 057/170] fix(LinstorSR): always set vdi_path in
  generate_config
 
 If the volume of a generated config is not related to HTTP/NBD
@@ -27,5 +27,5 @@ index e2d3d78..1855e3d 100755
              # Axiom: DRBD device is present on at least one host.
              resp['vdi_path'] = '/dev/http-nbd/' + volume_name
 -- 
-2.43.0
+2.44.0
 

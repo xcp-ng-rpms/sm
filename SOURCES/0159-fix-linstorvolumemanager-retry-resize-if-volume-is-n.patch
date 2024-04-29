@@ -1,7 +1,7 @@
 From 381fa788e5c2a00b1f022f88ace8b053b569f55b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Feb 2024 23:13:06 +0100
-Subject: [PATCH 159/162] fix(linstorvolumemanager): retry resize if volume is
+Subject: [PATCH 159/170] fix(linstorvolumemanager): retry resize if volume is
  not up to date
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -54,5 +54,5 @@ index 5f2e06e..79ac84a 100755
                  'Could not resize volume `{}` from SR `{}`: {}'
                  .format(volume_uuid, self._group_name, error_str)
 -- 
-2.43.0
+2.44.0
 

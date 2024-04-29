@@ -1,7 +1,7 @@
 From 8e5d0c2536c72cf8c8f0d5a8d41dc515be4a1558 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 27 Oct 2020 15:04:36 +0100
-Subject: [PATCH 008/162] feat(tests): add unit tests concerning ZFS (close
+Subject: [PATCH 008/170] feat(tests): add unit tests concerning ZFS (close
  xcp-ng/xcp#425)
 
 - Check if "create" doesn't succeed without zfs packages
@@ -205,5 +205,5 @@ index 0000000..6f8040d
 +            failed = True
 +        self.assertTrue(failed)
 -- 
-2.43.0
+2.44.0
 

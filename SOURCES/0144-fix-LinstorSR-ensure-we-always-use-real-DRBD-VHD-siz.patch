@@ -1,7 +1,7 @@
 From 06ad18c8f252200ddc148e10b77e720894fb61df Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 27 Nov 2023 12:15:43 +0100
-Subject: [PATCH 144/162] fix(LinstorSR): ensure we always use real DRBD/VHD
+Subject: [PATCH 144/170] fix(LinstorSR): ensure we always use real DRBD/VHD
  sizes in inflate/deflate GC calls
 
 ---
@@ -145,5 +145,5 @@ index d6c68a1..8ac06eb 100755
          entries = self.journaler.get_all(VDI.JRN_LEAF)
          for uuid, parentUuid in entries.iteritems():
 -- 
-2.43.0
+2.44.0
 

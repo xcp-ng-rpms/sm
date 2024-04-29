@@ -1,7 +1,7 @@
 From bd232eb6a18840c9b68697f6206f0473304564c1 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 14 Apr 2022 15:45:20 +0200
-Subject: [PATCH 055/162] feat(LinstorSr): ensure LVM group is activated during
+Subject: [PATCH 055/170] feat(LinstorSr): ensure LVM group is activated during
  SR.attach/create
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -95,5 +95,5 @@ index 7e34ce6..91731b1 100755
          # We don't want to enable and start minidrbdcluster daemon during
          # SR creation.
 -- 
-2.43.0
+2.44.0
 

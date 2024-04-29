@@ -1,7 +1,7 @@
 From c81193a7faefc8f38c25d362b975de1a0c5057d2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 10 Oct 2022 14:33:24 +0200
-Subject: [PATCH 085/162] feat(linstorvhdutil): modify logic of local vhdutil
+Subject: [PATCH 085/170] feat(linstorvhdutil): modify logic of local vhdutil
  calls
 
 - Always log openers when we can't call vhdutil locally
@@ -144,5 +144,5 @@ index 4d031e1..2687cad 100644
              )
          return util.retry(remote_call, 5, 2)
 -- 
-2.43.0
+2.44.0
 

@@ -1,7 +1,7 @@
 From 0dc3ed803da3d4c3a6f17c5c5257293220f6ea07 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 18 Jan 2024 11:18:11 +0100
-Subject: [PATCH 154/162] fix(LinstorSR): make sure VDI.delete doesn't throw
+Subject: [PATCH 154/170] fix(LinstorSR): make sure VDI.delete doesn't throw
  under specific conditions
 
 If we can update the volume state in the KV-store, there is no reason to raise
@@ -66,5 +66,5 @@ index 32d1533..97e5372 100755
      def lock_volume(self, volume_uuid, locked=True):
          """
 -- 
-2.43.0
+2.44.0
 

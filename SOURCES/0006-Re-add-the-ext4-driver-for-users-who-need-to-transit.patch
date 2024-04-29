@@ -1,7 +1,7 @@
 From 1c46a4afa57cf16b74553e5359b4acff0ec7b489 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
-Subject: [PATCH 006/162] Re-add the ext4 driver for users who need to
+Subject: [PATCH 006/170] Re-add the ext4 driver for users who need to
  transition
 
 The driver is needed to transition to the ext driver.
@@ -288,5 +288,5 @@ index 327103f..867c789 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.43.0
+2.44.0
 

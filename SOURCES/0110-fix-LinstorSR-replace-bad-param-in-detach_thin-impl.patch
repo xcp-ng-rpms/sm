@@ -1,7 +1,7 @@
 From ebac41980ca0dd876a318078b64c00be2742b1dc Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 9 Mar 2023 17:06:59 +0100
-Subject: [PATCH 110/162] fix(LinstorSR): replace bad param in detach_thin impl
+Subject: [PATCH 110/170] fix(LinstorSR): replace bad param in detach_thin impl
 
 To get the physical size, the volume UUID must be used, not the path.
 
@@ -24,5 +24,5 @@ index 10e0f54..c42f07d 100755
  
          volume_info = linstor.get_volume_info(vdi_uuid)
 -- 
-2.43.0
+2.44.0
 

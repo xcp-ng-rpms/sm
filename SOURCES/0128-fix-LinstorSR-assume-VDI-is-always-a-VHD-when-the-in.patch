@@ -1,7 +1,7 @@
 From 02914524b9044070023e55a1aa6c60dc3569ae9a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 28 Sep 2023 16:00:02 +0200
-Subject: [PATCH 128/162] fix(LinstorSR): assume VDI is always a VHD when the
+Subject: [PATCH 128/170] fix(LinstorSR): assume VDI is always a VHD when the
  info is missing during cleanup
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -30,5 +30,5 @@ index 8f40d45..be61bfe 100755
                  Util.log(
                      ' [VDI {}: failed to load VDI info]: {}'
 -- 
-2.43.0
+2.44.0
 

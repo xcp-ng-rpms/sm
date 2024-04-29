@@ -1,7 +1,7 @@
 From 9890e5f200aac7f995460df1b28d7916c2bfa762 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 25 Aug 2022 10:54:56 +0200
-Subject: [PATCH 071/162] fix(linstorvhdutil): fix coalesce with VM running
+Subject: [PATCH 071/170] fix(linstorvhdutil): fix coalesce with VM running
  under specific scenario:
 
 When a VM is running, we can't coalesce without this patch with a long chain
@@ -550,5 +550,5 @@ index 0a8fe91..d75edb1 100755
  def getVHDInfo(path, extractUuidFunction, includeParent = True):
      """Get the VHD info. The parent info may optionally be omitted: vhd-util
 -- 
-2.43.0
+2.44.0
 

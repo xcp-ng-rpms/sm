@@ -1,7 +1,7 @@
 From 2e4f6a944581917c4185b9711ef21ac05aa07eaf Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 4 Dec 2023 18:57:08 +0100
-Subject: [PATCH 150/162] fix(LinstorSR): ensure we can skip coalesces if
+Subject: [PATCH 150/170] fix(LinstorSR): ensure we can skip coalesces if
  device path can't be fetched
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -28,5 +28,5 @@ index 8ac06eb..b958599 100755
  
      def _setHidden(self, hidden=True):
 -- 
-2.43.0
+2.44.0
 

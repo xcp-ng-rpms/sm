@@ -1,7 +1,7 @@
 From 2d4eb5c04cd238ce94a1bb43ef8cd92c43f6e7fb Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Jan 2023 17:58:51 +0100
-Subject: [PATCH 100/162] fix(LinstorSR): handle inflate + resize actions
+Subject: [PATCH 100/170] fix(LinstorSR): handle inflate + resize actions
  correctly
 
 - Ensure LINSTOR set the expected new volume size when inflate is executed,
@@ -130,5 +130,5 @@ index f336534..72ec9de 100755
                  # VDI is currently deflated, so keep it deflated.
                  new_volume_size = old_volume_size
 -- 
-2.43.0
+2.44.0
 

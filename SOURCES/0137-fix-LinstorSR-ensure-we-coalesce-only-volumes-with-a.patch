@@ -1,7 +1,7 @@
 From 0c6aafb0f77e909ec94234e8b17756851bf6ddaf Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 23 Oct 2023 15:52:23 +0200
-Subject: [PATCH 137/162] fix(LinstorSR): ensure we coalesce only volumes with
+Subject: [PATCH 137/170] fix(LinstorSR): ensure we coalesce only volumes with
  a valid size
 
 ---
@@ -136,5 +136,5 @@ index 8b6985d..5f3ae08 100644
          try:
              return self._call_local_vhd_util(local_method, device_path, *args, **kwargs)
 -- 
-2.43.0
+2.44.0
 

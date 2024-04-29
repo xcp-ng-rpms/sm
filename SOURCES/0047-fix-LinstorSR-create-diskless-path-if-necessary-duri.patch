@@ -1,7 +1,7 @@
 From 737859bcdbe9eda64059e53de554c4f8b1d7588f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 3 Nov 2021 14:59:31 +0100
-Subject: [PATCH 047/162] fix(LinstorSR): create diskless path if necessary
+Subject: [PATCH 047/170] fix(LinstorSR): create diskless path if necessary
  during VDI loading
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -32,5 +32,5 @@ index 519afb2..15b9dda 100755
              self.size = vhd_info.sizeVirt
              self.parent = vhd_info.parentUuid
 -- 
-2.43.0
+2.44.0
 

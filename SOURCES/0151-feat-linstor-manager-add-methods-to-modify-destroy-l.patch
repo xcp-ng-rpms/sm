@@ -1,7 +1,7 @@
 From d761397eddfd9692a6ff624034774f55a63e5523 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 19 Dec 2023 14:49:33 +0100
-Subject: [PATCH 151/162] feat(linstor-manager): add methods to
+Subject: [PATCH 151/170] feat(linstor-manager): add methods to
  modify/destroy/list net interfaces
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -251,5 +251,5 @@ index a41314e..32d1533 100755
      def get_nodes_info(self):
          """
 -- 
-2.43.0
+2.44.0
 

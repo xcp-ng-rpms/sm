@@ -1,7 +1,7 @@
 From ba8f53b3bfac780be0a7b6bfec960d50fc29cdee Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 18 Aug 2023 11:06:56 +0200
-Subject: [PATCH 126/162] fix(LinstorSR): ensure we can attach non-special
+Subject: [PATCH 126/170] fix(LinstorSR): ensure we can attach non-special
  static VDIs
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -24,5 +24,5 @@ index e512487..1708370 100755
                      controller_uri = get_controller_uri()
                      if controller_uri:
 -- 
-2.43.0
+2.44.0
 

@@ -1,7 +1,7 @@
 From 8e655c6b51a7d4b16381b63deb08cb2c63137fbb Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 6 Oct 2022 17:54:10 +0200
-Subject: [PATCH 082/162] feat(linstorvolumemanager): support snaps when a host
+Subject: [PATCH 082/170] feat(linstorvolumemanager): support snaps when a host
  is offline
 
 - Don't create diskless volumes during clone, delay it.
@@ -29,5 +29,5 @@ index e577f63..09aad42 100755
          # 5. Create resources!
          def clean():
 -- 
-2.43.0
+2.44.0
 

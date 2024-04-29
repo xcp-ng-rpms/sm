@@ -1,7 +1,7 @@
 From ae050ecd790f256a63d3d69e8be22b4d664c207b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 24 Mar 2021 10:06:58 +0100
-Subject: [PATCH 037/162] feat(LinstorSR): add optional ips parameter
+Subject: [PATCH 037/170] feat(LinstorSR): add optional ips parameter
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -119,5 +119,5 @@ index 3aaffdf..5c04d02 100755
          group_name = cls._build_group_name(group_name)
          pools = lin.storage_pool_list_raise(filter_by_stor_pools=[group_name])
 -- 
-2.43.0
+2.44.0
 

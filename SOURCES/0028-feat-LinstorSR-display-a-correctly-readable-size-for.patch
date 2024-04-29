@@ -1,7 +1,7 @@
 From 0969b9faa09ea40c547512045014bd7d716df1a6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Jan 2021 16:12:15 +0100
-Subject: [PATCH 028/162] feat(LinstorSR): display a correctly readable size
+Subject: [PATCH 028/170] feat(LinstorSR): display a correctly readable size
  for the user
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -277,5 +277,5 @@ index d617655..a6f67d8 100755
  
          self._volume_info_cache_dirty = False
 -- 
-2.43.0
+2.44.0
 

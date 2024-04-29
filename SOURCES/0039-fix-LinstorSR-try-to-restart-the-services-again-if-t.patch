@@ -1,7 +1,7 @@
 From 9cbd9bdae07b620f87b9392e781909b2d5446b39 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 28 Apr 2021 15:15:58 +0200
-Subject: [PATCH 039/162] fix(LinstorSR): try to restart the services again if
+Subject: [PATCH 039/170] fix(LinstorSR): try to restart the services again if
  there is a failure in linstor-manager
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -70,5 +70,5 @@ index a06ed20..dcd4bc6 100755
  
  def stop_service(name):
 -- 
-2.43.0
+2.44.0
 

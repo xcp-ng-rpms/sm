@@ -1,7 +1,7 @@
 From 80a155ededcf8753c355e7c2348a103a20ba28b3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 29 Jul 2022 17:25:48 +0200
-Subject: [PATCH 067/162] fix(linstorvolumemanager): compute correctly size in
+Subject: [PATCH 067/170] fix(linstorvolumemanager): compute correctly size in
  allocated_volume_size
 
 Remove replication count in computation.
@@ -94,5 +94,5 @@ index d17845b..3806cc9 100755
      @property
      def metadata(self):
 -- 
-2.43.0
+2.44.0
 

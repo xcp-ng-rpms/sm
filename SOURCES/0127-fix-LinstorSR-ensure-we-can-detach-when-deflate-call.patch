@@ -1,7 +1,7 @@
 From 90c8eaff529e4d5bfeec0aedf78c40dd8f72506c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 31 Aug 2023 18:00:27 +0200
-Subject: [PATCH 127/162] fix(LinstorSR): ensure we can detach when deflate
+Subject: [PATCH 127/170] fix(LinstorSR): ensure we can detach when deflate
  call is not possible
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -81,5 +81,5 @@ index 1708370..a6ca884 100755
      # Only inflate if the LINSTOR volume capacity is not enough.
      new_size = LinstorVolumeManager.round_up_volume_size(new_size)
 -- 
-2.43.0
+2.44.0
 

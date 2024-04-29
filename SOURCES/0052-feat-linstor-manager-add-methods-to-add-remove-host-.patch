@@ -1,7 +1,7 @@
 From 05f5f38bd8d15bdfc8d54edae2277f8d65c8be00 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 6 Apr 2022 17:53:02 +0200
-Subject: [PATCH 052/162] feat(linstor-manager): add methods to add remove/host
+Subject: [PATCH 052/170] feat(linstor-manager): add methods to add remove/host
  from LINSTOR SR
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -421,5 +421,5 @@ index 2d5c63e..6c0d5aa 100755
      def create_sr(
          cls, group_name, node_names, ips, redundancy,
 -- 
-2.43.0
+2.44.0
 

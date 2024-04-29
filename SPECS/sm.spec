@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.1.0.linstor.1%{?dist}
+Release: %{?xsrel}.1.0.linstor.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -250,6 +250,14 @@ Patch1159: 0159-fix-linstorvolumemanager-retry-resize-if-volume-is-n.patch
 Patch1160: 0160-fix-LinstorSR-create-DRBD-diskless-if-necessary-for-.patch
 Patch1161: 0161-fix-LinstorSR-fix-bad-call-to-vhdutil.inflate-bad-ex.patch
 Patch1162: 0162-fix-LinstorSR-activate-VG-if-attach-from-config-is-a.patch
+Patch1163: 0163-feat-LinstorSR-use-a-specific-resource-group-for-DB-.patch
+Patch1164: 0164-feat-linstor-manager-add-getNodePreferredInterface-h.patch
+Patch1165: 0165-fix-linstorvolumemanager-blocks-deletion-of-default-.patch
+Patch1166: 0166-feat-linstorvolumemanager-change-logic-of-get_resour.patch
+Patch1167: 0167-feat-linstor-manager-add-error-codes-to-healthCheck-.patch
+Patch1168: 0168-fix-LinstorSR-fix-bad-exception-reference-during-sna.patch
+Patch1169: 0169-fix-tapdisk-pause-ensure-LINSTOR-VHD-chain-is-availa.patch
+Patch1170: 0170-fix-LVHDoISCSISR-disable-restart-of-ISCSI-daemon.patch
 
 %description
 This package contains storage backends used in XCP
@@ -654,6 +662,16 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Mon Apr 29 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.1.0.linstor.2
+- Add 0163-feat-LinstorSR-use-a-specific-resource-group-for-DB-.patch
+- Add 0164-feat-linstor-manager-add-getNodePreferredInterface-h.patch
+- Add 0165-fix-linstorvolumemanager-blocks-deletion-of-default-.patch
+- Add 0166-feat-linstorvolumemanager-change-logic-of-get_resour.patch
+- Add 0167-feat-linstor-manager-add-error-codes-to-healthCheck-.patch
+- Add 0168-fix-LinstorSR-fix-bad-exception-reference-during-sna.patch
+- Add 0169-fix-tapdisk-pause-ensure-LINSTOR-VHD-chain-is-availa.patch
+- Add 0170-fix-LVHDoISCSISR-disable-restart-of-ISCSI-daemon.patch
+
 * Tue Feb 06 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.1.0.linstor.1
 - Add "Provides": sm-linstor (necessary for the "Requires" of xcp-ng-linstor)
 - Add LINSTOR patches

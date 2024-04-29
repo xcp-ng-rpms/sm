@@ -1,7 +1,7 @@
 From 51928b8d3ae2b35402e49eee9a0b3fb68f11de60 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 23 Nov 2022 15:28:23 +0100
-Subject: [PATCH 094/162] feat(linstorvhdutil): ensure we use VHD parent to
+Subject: [PATCH 094/170] feat(linstorvhdutil): ensure we use VHD parent to
  find host where to coalesce
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -65,5 +65,5 @@ index a883ca4..c2e9665 100644
                  raise xs_errors.XenError(
                      'VDIUnavailable',
 -- 
-2.43.0
+2.44.0
 

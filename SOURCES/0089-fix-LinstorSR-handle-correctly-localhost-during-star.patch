@@ -1,7 +1,7 @@
 From 494d9c43eca674e1ace0d024762edd0a8ccb2db3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Nov 2022 12:12:12 +0100
-Subject: [PATCH 089/162] fix(LinstorSR): handle correctly localhost during
+Subject: [PATCH 089/170] fix(LinstorSR): handle correctly localhost during
  start/stop of minidrbdcluster
 
 Otherwise another controller can be started during `xe sr-destroy` call.
@@ -71,5 +71,5 @@ index b855807..ba28452 100755
              # the controller host last. Why? Otherwise the linstor-controller
              # of other nodes can be started, and we don't want that.
 -- 
-2.43.0
+2.44.0
 

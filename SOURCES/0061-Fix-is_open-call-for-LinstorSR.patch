@@ -1,7 +1,7 @@
 From 2b9b22437dbcbf2bf8019537c9ecb6430e4e1b23 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Jun 2022 09:04:28 +0200
-Subject: [PATCH 061/162] Fix is_open call for LinstorSR
+Subject: [PATCH 061/170] Fix is_open call for LinstorSR
 
 1. Ensure LinstorSR driver is imported in `_is_open` definition to register it in the driver list.
 Otherwise this function always fails with a SRUnknownType exception.
@@ -102,5 +102,5 @@ index 54ebcd3..4c12d90 100644
      def fake_import(self, name, *args):
          print 'Asked to import {}'.format(name)
 -- 
-2.43.0
+2.44.0
 

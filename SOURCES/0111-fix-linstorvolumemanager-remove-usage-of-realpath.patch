@@ -1,7 +1,7 @@
 From a3a50de6f06d3fbd94726de54a3bfefc4534d791 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 10 Mar 2023 18:11:10 +0100
-Subject: [PATCH 111/162] fix(linstorvolumemanager): remove usage of realpath
+Subject: [PATCH 111/170] fix(linstorvolumemanager): remove usage of realpath
 
 Because a diskless DRBD path not always exist, get_volume_name_from_device_path can fail.
 It's easy to reproduce using > 4 hosts and with a call to linstorvhdutil.get_vhd_info:
@@ -52,5 +52,5 @@ index 5ab83c4..8befb33 100755
      def update_volume_uuid(self, volume_uuid, new_volume_uuid, force=False):
          """
 -- 
-2.43.0
+2.44.0
 

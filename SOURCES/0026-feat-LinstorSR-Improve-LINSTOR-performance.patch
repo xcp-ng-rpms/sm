@@ -1,7 +1,7 @@
 From 51af0e8914046285c81fb806849682f5e71af3ac Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 10 Dec 2020 17:56:15 +0100
-Subject: [PATCH 026/162] feat(LinstorSR): Improve LINSTOR performance
+Subject: [PATCH 026/170] feat(LinstorSR): Improve LINSTOR performance
 
 Details:
 - vdi_attach and vdi_detach are now exclusive
@@ -1417,5 +1417,5 @@ index d400421..d617655 100755
          return 'xcp-sr-{}'.format(self._group_name)
  
 -- 
-2.43.0
+2.44.0
 

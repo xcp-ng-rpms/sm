@@ -1,7 +1,7 @@
 From a25b42e0f7d4fad119418bd9532a84d1f69d0f16 Mon Sep 17 00:00:00 2001
 From: Benjamin Reis <benjamin.reis@vates.tech>
 Date: Mon, 18 Dec 2023 10:35:46 +0100
-Subject: [PATCH 021/162] Backport probe for NFS4 when rpcinfo does not include
+Subject: [PATCH 021/170] Backport probe for NFS4 when rpcinfo does not include
  it
 
 See: https://github.com/xapi-project/sm/pull/655
@@ -164,5 +164,5 @@ index 9ea807f..3874d8e 100644
          return ([binary, 'remoteserver:remotepath', 'mountpoint', '-o',
                   'soft,proto=transport,vers=%s,acdirmin=0,acdirmax=0' % vers])
 -- 
-2.43.0
+2.44.0
 

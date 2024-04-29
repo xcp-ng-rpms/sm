@@ -1,7 +1,7 @@
 From e3b307674995e6fee6999ee60830b2595ea45ca4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 5 Oct 2022 10:45:50 +0200
-Subject: [PATCH 081/162] fix(linstorvolumemanager): use an array to store
+Subject: [PATCH 081/170] fix(linstorvolumemanager): use an array to store
  diskful volumes info
 
 Otherwise the `is_diskful` attr only reflects the info of one host
@@ -74,5 +74,5 @@ index efe5d53..e577f63 100755
              for volume in resource.volumes:
                  # We ignore diskless pools of the form "DfltDisklessStorPool".
 -- 
-2.43.0
+2.44.0
 

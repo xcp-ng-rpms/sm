@@ -1,7 +1,7 @@
 From 15af209d89a9157c62a31a67a24afa4b4c2b8317 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 31 May 2022 14:01:45 +0200
-Subject: [PATCH 060/162] fix(linstor-manager): change linstor satellite start
+Subject: [PATCH 060/170] fix(linstor-manager): change linstor satellite start
  behavior
 
 Ensure we don't have an invalid cache used by a satellite:
@@ -37,5 +37,5 @@ index 7893ebc..c6d622f 100755
  
  def update_minidrbdcluster_service(start):
 -- 
-2.43.0
+2.44.0
 

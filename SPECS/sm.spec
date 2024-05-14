@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -106,6 +106,7 @@ Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
 Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
 Patch1020: 0020-Backport-NFS4-only-support.patch
 Patch1021: 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch
+Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51.patch
 
 %description
 This package contains storage backends used in XCP
@@ -475,6 +476,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/GlusterFSSR.py
 /opt/xensource/sm/GlusterFSSR.pyc
 /opt/xensource/sm/GlusterFSSR.pyo
+/opt/xensource/sm/LargeBlockSR
+/opt/xensource/sm/LargeBlockSR.py
+/opt/xensource/sm/LargeBlockSR.pyc
+/opt/xensource/sm/LargeBlockSR.pyo
 /opt/xensource/sm/LinstorSR
 /opt/xensource/sm/LinstorSR.py
 /opt/xensource/sm/LinstorSR.pyc
@@ -504,6 +509,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Mon May 06 2024 Damien Thenot <damien.thenot@vates.tech> - 2.30.8-10.2
+- Add LargeBlockSR for 8.2
+
 * Tue Feb 06 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.1
 - Sync with hotfix XS82ECU1060
 - Sync patches with our latest 2.30.8-8.2 branch

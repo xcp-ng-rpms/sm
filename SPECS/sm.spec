@@ -7,11 +7,10 @@
 %global package_srccommit v2.29.0
 # -*- rpm-spec -*-
 
-
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.2.0.lvmconf.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -106,7 +105,8 @@ Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
 Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
 Patch1020: 0020-Backport-NFS4-only-support.patch
 Patch1021: 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch
-Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51.patch
+Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51-55.patch
+Patch1023: 0023-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs.patch
 
 %description
 This package contains storage backends used in XCP
@@ -509,6 +509,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue May 28 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.2.0.lvmconf.1
+- Support custom LVM conf using other_config
+
 * Mon May 06 2024 Damien Thenot <damien.thenot@vates.tech> - 2.30.8-10.2
 - Add LargeBlockSR for 8.2
 

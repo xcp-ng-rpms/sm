@@ -1,0 +1,31 @@
+From 54dddb6b5f5a4eca78bb728605cb8485dee6ccf9 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 20 Nov 2023 10:52:27 +0100
+Subject: [PATCH 143/171] fix(LinstorSR): remove useless IPS_XHA_CACHE var
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 6802f49..c570925 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -210,13 +210,7 @@ def detach_thin(session, linstor, sr_uuid, vdi_uuid):
+         util.SMlog('Failed to detach properly VDI {}: {}'.format(vdi_uuid, e))
+ 
+ 
+-IPS_XHA_CACHE = None
+-
+-
+ def get_ips_from_xha_config_file():
+-    if IPS_XHA_CACHE:
+-        return IPS_XHA_CACHE
+-
+     ips = dict()
+     host_id = None
+     try:
+-- 
+2.44.0
+

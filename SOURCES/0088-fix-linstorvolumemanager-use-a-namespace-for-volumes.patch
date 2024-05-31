@@ -1,0 +1,29 @@
+From d1d11ecba9d223f1f91020f77f75ad20abc98d69 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 8 Nov 2022 17:31:45 +0100
+Subject: [PATCH 088/171] fix(linstorvolumemanager): use a namespace for
+ volumes
+
+- This change is not compatible with existing LINSTOR SR instances!
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvolumemanager.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 44b247e..8c253d4 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -308,7 +308,7 @@ class LinstorVolumeManager(object):
+ 
+     # Property namespaces.
+     NAMESPACE_SR = 'xcp/sr'
+-    NAMESPACE_VOLUME = 'volume'
++    NAMESPACE_VOLUME = 'xcp/volume'
+ 
+     # Regex to match properties.
+     REG_PROP = '^([^/]+)/{}$'
+-- 
+2.44.0
+

@@ -1,0 +1,37 @@
+From 82a634935d0f871c8ffd652b1313d7d20aa220f4 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 20 Feb 2023 19:30:18 +0100
+Subject: [PATCH 108/171] fix(minidrbdcluster): handle correctly
+ KeyboardInterrupt with systemd units
+
+It's necessary to always add systemd services in the running list before
+trying to start a service, because if a KeyboardInterrupt is sent, we can have
+a running LINSTOR controller not present in the list, and then we can no longer
+unmount /var/lib/linstor because the controller is never stopped...
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ scripts/minidrbdcluster | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/scripts/minidrbdcluster b/scripts/minidrbdcluster
+index eae7cbf..03d6b01 100755
+--- a/scripts/minidrbdcluster
++++ b/scripts/minidrbdcluster
+@@ -104,10 +104,11 @@ def process(events2, resources, running_services, status):
+         res_name, may_promote, promotion_score = m.groups()
+         if res_name in resources and may_promote == 'yes':
+             for systemd_unit in resources[res_name]['systemd-units']:
+-                if not ensure_systemd_started(systemd_unit):
+-                    break
+                 if systemd_unit not in running_services:
+                     running_services.append(systemd_unit)
++                if not ensure_systemd_started(systemd_unit):
++                    running_services.pop()
++                    break
+     m = PEER_ROLE_RE.match(line)
+     if m:
+         res_name, conn_name, role = m.groups()
+-- 
+2.44.0
+

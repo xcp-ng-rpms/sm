@@ -1,0 +1,93 @@
+From 1f72edb437c8292b8240769d6bc94f3acd86a8ab Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 1 Jun 2023 17:40:37 +0200
+Subject: [PATCH 120/171] fix(LinstorSR): compute correctly SR size using pool
+ count
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py            |  4 +--
+ drivers/linstorvolumemanager.py | 45 +++++++++++++++++----------------
+ 2 files changed, 25 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 7a9cbac..f6c4356 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1065,8 +1065,8 @@ class LinstorSR(SR.SR):
+     def _update_physical_size(self):
+         # We use the size of the smallest disk, this is an approximation that
+         # ensures the displayed physical size is reachable by the user.
+-        self.physical_size = \
+-            self._linstor.min_physical_size * len(self._hosts) / \
++        (min_physical_size, pool_count) = self._linstor.get_min_physical_size()
++        self.physical_size = min_physical_size * pool_count / \
+             self._linstor.redundancy
+ 
+         self.physical_utilisation = self._linstor.allocated_volume_size
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 464ab2c..ee637ae 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -492,28 +492,6 @@ class LinstorVolumeManager(object):
+         """
+         return self._compute_size('free_capacity')
+ 
+-    @property
+-    def min_physical_size(self):
+-        """
+-        Give the minimum physical size of the SR.
+-        I.e. the size of the smallest disk.
+-        :return: The physical min size.
+-        :rtype: int
+-        """
+-        size = None
+-        for pool in self._get_storage_pools(force=True):
+-            space = pool.free_space
+-            if space:
+-                current_size = space.total_capacity
+-                if current_size < 0:
+-                    raise LinstorVolumeManagerError(
+-                        'Failed to get pool total_capacity attr of `{}`'
+-                        .format(pool.node_name)
+-                    )
+-                if size is None or current_size < size:
+-                    size = current_size
+-        return (size or 0) * 1024
+-
+     @property
+     def allocated_volume_size(self):
+         """
+@@ -554,6 +532,29 @@ class LinstorVolumeManager(object):
+ 
+         return total_size * 1024
+ 
++    def get_min_physical_size(self):
++        """
++        Give the minimum physical size of the SR.
++        I.e. the size of the smallest disk + the number of pools.
++        :return: The physical min size.
++        :rtype: tuple(int, int)
++        """
++        size = None
++        pool_count = 0
++        for pool in self._get_storage_pools(force=True):
++            space = pool.free_space
++            if space:
++                pool_count += 1
++                current_size = space.total_capacity
++                if current_size < 0:
++                    raise LinstorVolumeManagerError(
++                        'Failed to get pool total_capacity attr of `{}`'
++                        .format(pool.node_name)
++                    )
++                if size is None or current_size < size:
++                    size = current_size
++        return (pool_count, (size or 0) * 1024)
++
+     @property
+     def metadata(self):
+         """
+-- 
+2.44.0
+

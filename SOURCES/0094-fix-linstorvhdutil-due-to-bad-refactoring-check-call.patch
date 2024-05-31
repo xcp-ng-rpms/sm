@@ -1,0 +1,33 @@
+From b5cf51fde3608756abefe999a033471a7de5b532 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 23 Nov 2022 15:26:51 +0100
+Subject: [PATCH 094/171] fix(linstorvhdutil): due to bad refactoring, check
+ call was broken
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvhdutil.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index 2687cad..a883ca4 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -124,11 +124,11 @@ class LinstorVhdUtil:
+             'ignoreMissingFooter': str(ignore_missing_footer),
+             'fast': str(fast)
+         }
+-        return self._check(vdi_uuid, **kwargs)
++        return self._check(vdi_uuid, **kwargs)  # pylint: disable = E1123
+ 
+     @linstorhostcall(vhdutil.check, 'check')
+-    def _check(self, vdi_uuid, **kwargs):
+-        return distutils.util.strtobool(kwargs['response'])
++    def _check(self, vdi_uuid, response):
++        return distutils.util.strtobool(response)
+ 
+     def get_vhd_info(self, vdi_uuid, include_parent=True):
+         kwargs = {'includeParent': str(include_parent)}
+-- 
+2.44.0
+

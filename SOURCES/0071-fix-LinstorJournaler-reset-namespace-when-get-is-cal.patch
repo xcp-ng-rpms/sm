@@ -1,0 +1,26 @@
+From d63aad060ff0073cb5f547c3fc46ba47c103ba2f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 24 Aug 2022 17:09:11 +0200
+Subject: [PATCH 071/171] fix(LinstorJournaler): reset namespace when `get` is
+ called
+
+Otherwise, we can be in the wrong namespace and the key to find will be inaccessible.
+---
+ drivers/linstorjournaler.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
+index 3993f60..1e85ec9 100755
+--- a/drivers/linstorjournaler.py
++++ b/drivers/linstorjournaler.py
+@@ -107,6 +107,7 @@ class LinstorJournaler:
+             )
+ 
+     def get(self, type, identifier):
++        self._reset_namespace()
+         return self._journal.get(self._get_key(type, identifier))
+ 
+     def get_all(self, type):
+-- 
+2.44.0
+

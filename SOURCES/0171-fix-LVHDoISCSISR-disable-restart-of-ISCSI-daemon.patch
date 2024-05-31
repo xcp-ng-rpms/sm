@@ -1,0 +1,96 @@
+From 2b01dd1cdc1661c8241ef57c379cf0001b6fd92e Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 26 Apr 2024 14:20:04 +0200
+Subject: [PATCH 171/171] fix(LVHDoISCSISR): disable restart of ISCSI daemon
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LVHDoISCSISR.py    |  2 ++
+ tests/test_LVHDoISCSISR.py | 51 --------------------------------------
+ 2 files changed, 2 insertions(+), 51 deletions(-)
+
+diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
+index 1fa6f6f..da2c9ed 100755
+--- a/drivers/LVHDoISCSISR.py
++++ b/drivers/LVHDoISCSISR.py
+@@ -553,6 +553,8 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         return out
+ 
+     def check_sr(self, sr_uuid):
++        # Disable to prevent daemon restart.
++        return
+         """Hook to check SR health"""
+         pbdref = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
+         if pbdref:
+diff --git a/tests/test_LVHDoISCSISR.py b/tests/test_LVHDoISCSISR.py
+index ba668d0..c876ed8 100644
+--- a/tests/test_LVHDoISCSISR.py
++++ b/tests/test_LVHDoISCSISR.py
+@@ -167,15 +167,6 @@ class TestLVHDoISCSISR(ISCSITestCase):
+ 
+         super(TestLVHDoISCSISR, self).setUp()
+ 
+-    @property
+-    def mock_baseiscsi(self):
+-        assert len(self.base_srs) == 1
+-        single_sr = None
+-        for sr in self.base_srs:
+-            single_sr = sr
+-
+-        return single_sr
+-
+     def baseiscsi(self, srcmd, sr_uuid):
+         new_baseiscsi = mock.create_autospec(BaseISCSISR)
+         local_iqn = srcmd.dconf['localIQN']
+@@ -199,48 +190,6 @@ class TestLVHDoISCSISR(ISCSITestCase):
+         self.subject = LVHDoISCSISR.LVHDoISCSISR(
+             sr_cmd, self.sr_uuid)
+ 
+-    def test_check_sr_pbd_not_found(self):
+-        # Arrange
+-        self.mock_util.find_my_pbd.return_value = None
+-        self.create_test_sr(self.create_sr_command())
+-
+-        # Act
+-        self.subject.check_sr(TEST_SR_UUID)
+-
+-        # Assert
+-        self.mock_util.find_my_pbd.assert_called_with(
+-            self.mock_session, 'test_host', 'sr_ref')
+-
+-    def test_check_sr_correct_sessions_count(self):
+-        # Arrange
+-        self.mock_util.find_my_pbd.return_value = 'my_pbd'
+-        self.mock_session.xenapi.PBD.get_other_config.return_value = {
+-            'iscsi_sessions': 2
+-        }
+-        self.create_test_sr(self.create_sr_command())
+-
+-        # Act
+-        self.subject.check_sr(TEST_SR_UUID)
+-
+-        # Assert
+-        self.mock_session.xenapi.PBD.get_other_config.assert_called_with('my_pbd')
+-
+-    def test_check_sr_not_enough_sessions(self):
+-        # Arrange
+-        self.mock_util.find_my_pbd.return_value = 'my_pbd'
+-        self.mock_session.xenapi.PBD.get_other_config.return_value = {
+-            'iscsi_sessions': 1
+-        }
+-        self.create_test_sr(self.create_sr_command())
+-
+-        # Act
+-        self.subject.check_sr(TEST_SR_UUID)
+-
+-        # Assert
+-        self.mock_baseiscsi.attach.assert_called_with(
+-            TEST_SR_UUID
+-        )
+-
+     def test_sr_attach_multi_session(self):
+         # Arrange
+         self.mock_util.find_my_pbd.return_value = 'my_pbd'
+-- 
+2.44.0
+

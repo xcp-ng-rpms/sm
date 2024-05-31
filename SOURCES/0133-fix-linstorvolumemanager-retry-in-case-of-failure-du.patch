@@ -1,0 +1,33 @@
+From 6d3af6cb6033502e4a9b59338e967ba1d8aa3519 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 9 Oct 2023 10:37:32 +0200
+Subject: [PATCH 133/171] fix(linstorvolumemanager): retry in case of failure
+ during mkfs call on database
+
+The device is not always ready after creation.
+So we must retry the mkfs call in case of failure.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvolumemanager.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index f1f3bce..23e80d9 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -2666,7 +2666,10 @@ class LinstorVolumeManager(object):
+             )
+ 
+         try:
+-            util.pread2([DATABASE_MKFS, expected_device_path])
++            util.retry(
++                lambda: util.pread2([DATABASE_MKFS, expected_device_path]),
++                maxretry=5
++            )
+         except Exception as e:
+             raise LinstorVolumeManagerError(
+                'Failed to execute {} on database volume: {}'
+-- 
+2.44.0
+

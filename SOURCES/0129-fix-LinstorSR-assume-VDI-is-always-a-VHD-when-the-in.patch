@@ -1,0 +1,34 @@
+From f6c052092defbdf9781ae2056680a14b5f228930 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 28 Sep 2023 16:00:02 +0200
+Subject: [PATCH 129/171] fix(LinstorSR): assume VDI is always a VHD when the
+ info is missing during cleanup
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 5912c3a..2b47d0f 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2990,11 +2990,11 @@ class LinstorSR(SR):
+                         not list(volumes_metadata[vdi_uuid].items()):
+                     continue  # Ignore it, probably deleted.
+ 
+-                vdi_type = volumes_metadata[vdi_uuid][VDI_TYPE_TAG]
+-                if vdi_type == vhdutil.VDI_TYPE_VHD:
+-                    info = self._vhdutil.get_vhd_info(vdi_uuid)
+-                else:
++                vdi_type = volumes_metadata[vdi_uuid].get(VDI_TYPE_TAG)
++                if vdi_type == vhdutil.VDI_TYPE_RAW:
+                     info = None
++                else:
++                    info = self._vhdutil.get_vhd_info(vdi_uuid)
+             except Exception as e:
+                 Util.log(
+                     ' [VDI {}: failed to load VDI info]: {}'
+-- 
+2.44.0
+

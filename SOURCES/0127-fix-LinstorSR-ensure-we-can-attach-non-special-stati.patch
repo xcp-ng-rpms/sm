@@ -1,0 +1,28 @@
+From a1a5c8f4cba929de83f302127c8796436ac4b56b Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 18 Aug 2023 11:06:56 +0200
+Subject: [PATCH 127/171] fix(LinstorSR): ensure we can attach non-special
+ static VDIs
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index e512487..1708370 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -461,6 +461,9 @@ class LinstorSR(SR.SR):
+                             logger=util.SMlog,
+                             attempt_count=attempt_count
+                         )
++                        # Only required if we are attaching from config using a non-special VDI.
++                        # I.e. not an HA volume.
++                        self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
+ 
+                     controller_uri = get_controller_uri()
+                     if controller_uri:
+-- 
+2.44.0
+

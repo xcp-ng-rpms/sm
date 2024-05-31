@@ -1,0 +1,56 @@
+From 1bc8da4f00ce41199b51e9fc38bb7831c6999029 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 10 Mar 2023 18:11:10 +0100
+Subject: [PATCH 112/171] fix(linstorvolumemanager): remove usage of realpath
+
+Because a diskless DRBD path not always exist, get_volume_name_from_device_path can fail.
+It's easy to reproduce using > 4 hosts and with a call to linstorvhdutil.get_vhd_info:
+This problem can occur if the parent of a VHD is not on the same machine and if this parent doesn't have a DRBD path locally.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvolumemanager.py | 23 ++++++-----------------
+ 1 file changed, 6 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 5ab83c4..8befb33 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -914,28 +914,17 @@ class LinstorVolumeManager(object):
+ 
+     def get_volume_name_from_device_path(self, device_path):
+         """
+-        Get the volume name of a device_path on the current host.
++        Get the volume name of a device_path.
+         :param str device_path: The dev path to find the volume name.
+-        :return: The volume name of the local device path.
++        :return: The volume name of the device path.
+         :rtype: str
+         """
+ 
+-        node_name = socket.gethostname()
+-
+-        resources = filter(
+-            lambda resource: resource.node_name == node_name,
+-            self._get_resource_cache().resources
+-        )
+-
+-        real_device_path = os.path.realpath(device_path)
+-        for resource in resources:
+-            if resource.volumes[0].device_path == real_device_path:
+-                return resource.name
++        assert device_path.startswith(DRBD_BY_RES_PATH)
+ 
+-        raise LinstorVolumeManagerError(
+-            'Unable to find volume name from dev path `{}`'
+-            .format(device_path)
+-        )
++        res_name_end = device_path.find('/', len(DRBD_BY_RES_PATH))
++        assert res_name_end != -1
++        return device_path[len(DRBD_BY_RES_PATH):res_name_end]
+ 
+     def update_volume_uuid(self, volume_uuid, new_volume_uuid, force=False):
+         """
+-- 
+2.44.0
+

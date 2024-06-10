@@ -1,7 +1,7 @@
 From b5cf51fde3608756abefe999a033471a7de5b532 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 23 Nov 2022 15:26:51 +0100
-Subject: [PATCH 094/171] fix(linstorvhdutil): due to bad refactoring, check
+Subject: [PATCH 094/173] fix(linstorvhdutil): due to bad refactoring, check
  call was broken
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

@@ -1,7 +1,7 @@
 From b27d1c97760fdb531711363c6b9427f147fb1476 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 25 Aug 2022 10:54:56 +0200
-Subject: [PATCH 072/171] fix(linstorvhdutil): fix coalesce with VM running
+Subject: [PATCH 072/173] fix(linstorvhdutil): fix coalesce with VM running
  under specific scenario:
 
 When a VM is running, we can't coalesce without this patch with a long chain

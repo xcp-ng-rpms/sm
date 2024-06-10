@@ -1,7 +1,7 @@
 From d63aad060ff0073cb5f547c3fc46ba47c103ba2f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 24 Aug 2022 17:09:11 +0200
-Subject: [PATCH 071/171] fix(LinstorJournaler): reset namespace when `get` is
+Subject: [PATCH 071/173] fix(LinstorJournaler): reset namespace when `get` is
  called
 
 Otherwise, we can be in the wrong namespace and the key to find will be inaccessible.

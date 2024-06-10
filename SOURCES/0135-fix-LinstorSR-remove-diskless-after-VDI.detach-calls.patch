@@ -1,7 +1,7 @@
 From ee688d61bb62a42ee8b23a25fa1953bf07cf8e38 Mon Sep 17 00:00:00 2001
 From: Rene Peinthor <rene.peinthor@linbit.com>
 Date: Tue, 25 Jul 2023 11:19:39 +0200
-Subject: [PATCH 135/171] fix(LinstorSR): remove diskless after VDI.detach
+Subject: [PATCH 135/173] fix(LinstorSR): remove diskless after VDI.detach
  calls
 
 Signed-off-by: Rene Peinthor <rene.peinthor@linbit.com>

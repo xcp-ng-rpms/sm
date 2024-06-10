@@ -1,7 +1,7 @@
 From 09b07ff8729c1919ebd7b1b074747937ab2f4a54 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 18 Nov 2022 10:40:58 +0100
-Subject: [PATCH 093/171] feat(linstor-kv-tool): remove-all-volumes supports
+Subject: [PATCH 093/173] feat(linstor-kv-tool): remove-all-volumes supports
  journals now
 
 Not yet supported for remove-volume, not sure about the consequences

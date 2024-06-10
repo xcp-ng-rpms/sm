@@ -1,7 +1,7 @@
 From 6c8809fb2833669a17d35ee34050f0c664a5527f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 4 Oct 2023 14:30:36 +0200
-Subject: [PATCH 132/171] fix(LinstorSR): restart drbd-reactor in case of
+Subject: [PATCH 132/173] fix(LinstorSR): restart drbd-reactor in case of
  failure
 
 Otherwise we can have all hosts unusable after a massive reboot:

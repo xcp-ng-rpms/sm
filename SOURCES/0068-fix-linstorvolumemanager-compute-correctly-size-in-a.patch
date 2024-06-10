@@ -1,7 +1,7 @@
 From 643b23fcbc68fbac38d8ede813b8992197fbeef3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 29 Jul 2022 17:25:48 +0200
-Subject: [PATCH 068/171] fix(linstorvolumemanager): compute correctly size in
+Subject: [PATCH 068/173] fix(linstorvolumemanager): compute correctly size in
  allocated_volume_size
 
 Remove replication count in computation.

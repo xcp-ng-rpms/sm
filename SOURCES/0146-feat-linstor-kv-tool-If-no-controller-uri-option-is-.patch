@@ -1,7 +1,7 @@
 From 1e895b9162c1628fe70eddbf38bdf8ba28099eb9 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.tech>
 Date: Mon, 27 Nov 2023 14:23:57 +0100
-Subject: [PATCH 146/171] feat(linstor-kv-tool): If no controller uri option is
+Subject: [PATCH 146/173] feat(linstor-kv-tool): If no controller uri option is
  provided fetch it (#48)
 
 Signed-off-by: BenjiReis <benjamin.reis@vates.fr>

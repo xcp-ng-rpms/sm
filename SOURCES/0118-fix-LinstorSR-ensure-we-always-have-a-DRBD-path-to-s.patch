@@ -1,7 +1,7 @@
 From 255f9893e6c9006822be200285bbf0f567210f3b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 28 Apr 2023 10:43:27 +0200
-Subject: [PATCH 118/171] fix(LinstorSR): ensure we always have a DRBD path to
+Subject: [PATCH 118/173] fix(LinstorSR): ensure we always have a DRBD path to
  snap
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

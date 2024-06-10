@@ -1,7 +1,7 @@
 From cc3bfe59887cf783c6e083731ea0945ba6d53d21 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 19 Mar 2024 23:09:54 +0100
-Subject: [PATCH 164/171] feat(LinstorSR): use a specific resource group for DB
+Subject: [PATCH 164/173] feat(LinstorSR): use a specific resource group for DB
  and HA
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

@@ -1,7 +1,7 @@
 From 54dddb6b5f5a4eca78bb728605cb8485dee6ccf9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Nov 2023 10:52:27 +0100
-Subject: [PATCH 143/171] fix(LinstorSR): remove useless IPS_XHA_CACHE var
+Subject: [PATCH 143/173] fix(LinstorSR): remove useless IPS_XHA_CACHE var
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

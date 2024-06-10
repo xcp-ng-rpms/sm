@@ -1,7 +1,7 @@
 From 1675d081ccfbd67eef0398d62f6e21b25006d2a9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 3 Nov 2021 14:59:31 +0100
-Subject: [PATCH 048/171] fix(LinstorSR): create diskless path if necessary
+Subject: [PATCH 048/173] fix(LinstorSR): create diskless path if necessary
  during VDI loading
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

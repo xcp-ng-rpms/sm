@@ -1,7 +1,7 @@
 From 8757ee78d23b41e6c3506161e46696b5c4bba23e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 18 May 2022 17:28:33 +0200
-Subject: [PATCH 060/171] fix(LinstorSR): enabled/disable minidrbcluster with
+Subject: [PATCH 060/173] fix(LinstorSR): enabled/disable minidrbcluster with
  fixed order
 
 Ensure we disable minidrbdcluster during SR destruction on all hosts

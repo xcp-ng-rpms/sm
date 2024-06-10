@@ -1,7 +1,7 @@
 From 6c1942c02a3bb0849fe2efb7ce37f20fe92602c7 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Jan 2023 17:58:51 +0100
-Subject: [PATCH 101/171] fix(LinstorSR): handle inflate + resize actions
+Subject: [PATCH 101/173] fix(LinstorSR): handle inflate + resize actions
  correctly
 
 - Ensure LINSTOR set the expected new volume size when inflate is executed,

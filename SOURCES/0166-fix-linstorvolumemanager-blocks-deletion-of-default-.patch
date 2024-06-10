@@ -1,7 +1,7 @@
 From 57b641381067e86caa165df4a6c5de2187e49756 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 15 Apr 2024 11:26:00 +0200
-Subject: [PATCH 166/171] fix(linstorvolumemanager): blocks deletion of default
+Subject: [PATCH 166/173] fix(linstorvolumemanager): blocks deletion of default
  network interface
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

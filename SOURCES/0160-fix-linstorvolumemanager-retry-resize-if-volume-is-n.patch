@@ -1,7 +1,7 @@
 From 69bc98d322095c53dc5e85d3b6b55d559bbf721f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Feb 2024 23:13:06 +0100
-Subject: [PATCH 160/171] fix(linstorvolumemanager): retry resize if volume is
+Subject: [PATCH 160/173] fix(linstorvolumemanager): retry resize if volume is
  not up to date
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

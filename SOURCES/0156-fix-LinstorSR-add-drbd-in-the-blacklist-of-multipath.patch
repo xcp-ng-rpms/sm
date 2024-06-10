@@ -1,7 +1,7 @@
 From 106fc9e3a130d84a78e86b5e4eff54e702abeae6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 19 Jan 2024 14:39:17 +0100
-Subject: [PATCH 156/171] fix(LinstorSR): add drbd in the blacklist of
+Subject: [PATCH 156/173] fix(LinstorSR): add drbd in the blacklist of
  multipath.conf
 
 If DRBD is installed for the first time, and if the multipathd

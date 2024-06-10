@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.1.0.linstor.3%{?dist}
+Release: %{?xsrel}.1.0.linstor.4%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -259,6 +259,8 @@ Patch1168: 0168-feat-linstor-manager-add-error-codes-to-healthCheck-.patch
 Patch1169: 0169-fix-LinstorSR-fix-bad-exception-reference-during-sna.patch
 Patch1170: 0170-fix-tapdisk-pause-ensure-LINSTOR-VHD-chain-is-availa.patch
 Patch1171: 0171-fix-LVHDoISCSISR-disable-restart-of-ISCSI-daemon.patch
+Patch1172: 0172-Linstor-Fix-on-destroy.patch
+Patch1173: 0173-feat-Linstor-rewrite-linstorhostcall-logic.patch
 
 %description
 This package contains storage backends used in XCP
@@ -667,6 +669,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Mon Jun 10 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.1.0.linstor.4
+- Add 0172-Linstor-Fix-on-destroy.patch
+- Add 0173-feat-Linstor-rewrite-linstorhostcall-logic.patch
+
 * Fri May 31 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-10.1.0.linstor.3
 - Add 0022-feat-LargeBlock-backport-of-largeblocksr-51-55.patch
 - Fix LINSTOR HA activation (for fresh install bad HA group name was used)

@@ -1,7 +1,7 @@
 From c2f835d2501c33433946169be0486563dc279a2f Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.tech>
 Date: Wed, 29 Nov 2023 16:54:30 +0100
-Subject: [PATCH 148/171] feat(linstor-manager): extend API with
+Subject: [PATCH 148/173] feat(linstor-manager): extend API with
  createNodeInterface and setNodePreferredInterface (#47)
 
 Signed-off-by: BenjiReis <benjamin.reis@vates.fr>

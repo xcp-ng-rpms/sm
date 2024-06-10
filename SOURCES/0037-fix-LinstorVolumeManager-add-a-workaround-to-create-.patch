@@ -1,7 +1,7 @@
 From f6e29def03bd7e015175ac885000749c87913fb2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 23 Mar 2021 14:49:39 +0100
-Subject: [PATCH 037/171] fix(LinstorVolumeManager): add a workaround to create
+Subject: [PATCH 037/173] fix(LinstorVolumeManager): add a workaround to create
  properly SR with thin LVM
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

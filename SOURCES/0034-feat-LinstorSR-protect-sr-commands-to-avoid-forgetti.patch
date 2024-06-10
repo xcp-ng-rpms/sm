@@ -1,7 +1,7 @@
 From 400a9959832b5760dc56efdc7a294b370ba8dc84 Mon Sep 17 00:00:00 2001
 From: Wescoeur <ronan.abhamon@vates.fr>
 Date: Thu, 25 Feb 2021 17:52:57 +0100
-Subject: [PATCH 034/171] feat(LinstorSR): protect sr commands to avoid
+Subject: [PATCH 034/173] feat(LinstorSR): protect sr commands to avoid
  forgetting LINSTOR volumes when master satellite is down
 
 Steps to reproduce:

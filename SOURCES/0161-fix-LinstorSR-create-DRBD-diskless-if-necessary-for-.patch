@@ -1,7 +1,7 @@
 From baad37c6824121b56fc999de1b309e526fec6bcd Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Feb 2024 00:10:32 +0100
-Subject: [PATCH 161/171] fix(LinstorSR): create DRBD diskless if necessary for
+Subject: [PATCH 161/173] fix(LinstorSR): create DRBD diskless if necessary for
  each VHD parent
 
 It's necessary to have all parents during snapshot to create a new VHD child.

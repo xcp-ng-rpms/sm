@@ -1,7 +1,7 @@
 From 6bafd151c9d0b62d9cec71ec66fe82fbc8a47e78 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 17 Nov 2022 15:46:02 +0100
-Subject: [PATCH 092/171] fix(LinstorSR): avoid introduction of DELETED volumes
+Subject: [PATCH 092/173] fix(LinstorSR): avoid introduction of DELETED volumes
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

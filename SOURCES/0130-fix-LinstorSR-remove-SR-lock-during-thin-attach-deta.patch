@@ -1,7 +1,7 @@
 From 77720299baa7a70e0c3dd3d3f761e71d275d29c2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 2 Oct 2023 16:48:49 +0200
-Subject: [PATCH 130/171] fix(LinstorSR): remove SR lock during thin
+Subject: [PATCH 130/173] fix(LinstorSR): remove SR lock during thin
  attach/detach
 
 This lock is normally useless and can create a dead lock when thin mode is activated:

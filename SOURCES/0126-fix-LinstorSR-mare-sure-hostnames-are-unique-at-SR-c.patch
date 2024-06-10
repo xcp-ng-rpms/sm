@@ -1,7 +1,7 @@
 From c2844cd532537063e4145fca3cb9120f677dd123 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 17 Aug 2023 14:52:13 +0200
-Subject: [PATCH 126/171] fix(LinstorSR): mare sure hostnames are unique at SR
+Subject: [PATCH 126/173] fix(LinstorSR): mare sure hostnames are unique at SR
  creation
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

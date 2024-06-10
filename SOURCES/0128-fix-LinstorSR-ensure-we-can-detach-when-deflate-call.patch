@@ -1,7 +1,7 @@
 From 9e7bb534d05910011af283efae28b77c5008539e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 31 Aug 2023 18:00:27 +0200
-Subject: [PATCH 128/171] fix(LinstorSR): ensure we can detach when deflate
+Subject: [PATCH 128/173] fix(LinstorSR): ensure we can detach when deflate
  call is not possible
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

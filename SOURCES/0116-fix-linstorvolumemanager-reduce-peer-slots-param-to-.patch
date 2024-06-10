@@ -1,7 +1,7 @@
 From 6bf6bae4d26393451cfd180c81c9c92d377176b4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 25 Apr 2023 10:46:00 +0200
-Subject: [PATCH 116/171] fix(linstorvolumemanager): reduce peer-slots param to
+Subject: [PATCH 116/173] fix(linstorvolumemanager): reduce peer-slots param to
  3
 
 Because we use 3 backing disks at most, it's useless to increase the default linstor limit (8).

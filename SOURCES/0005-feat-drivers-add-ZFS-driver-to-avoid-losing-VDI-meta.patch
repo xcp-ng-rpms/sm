@@ -1,7 +1,7 @@
-From f2d0f0428ff4f3bf90da88ca8a6c8d3ad4419689 Mon Sep 17 00:00:00 2001
+From 4525a55b84eb46f4c67797da6eaf61a329dac9d7 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
-Subject: [PATCH 05/21] feat(drivers): add ZFS driver to avoid losing VDI
+Subject: [PATCH 05/23] feat(drivers): add ZFS driver to avoid losing VDI
  metadata (xcp-ng/xcp#401)
 
 ---
@@ -25,10 +25,10 @@ index 0a10470..f93b7be 100755
  SM_LIBS := SR
  SM_LIBS += SRCommand
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index de074ce..0b4b250 100755
+index 7ab7bc1..535c9dc 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -894,5 +894,15 @@
+@@ -900,5 +900,15 @@
              <value>1200</value>
          </code>
  
@@ -188,7 +188,7 @@ index 0000000..1b2f398
 +else:
 +    SR.registerSR(ZFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index ad1ee86..327103f 100755
+index aff51ae..feb7c18 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2767,7 +2767,7 @@ def normalizeType(type):
@@ -201,5 +201,5 @@ index ad1ee86..327103f 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.43.0
+2.44.0
 

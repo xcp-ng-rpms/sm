@@ -82,17 +82,39 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.8-10-xcpng..2.30.8-8.2
-# Note: the v2.30.8-10-xcpng tag was manually created by us on our fork because
+# git format-patch v2.30.8-12-xcpng..2.30.8-8.2
+# Note: the v2.30.8-12-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
 # To create this tag in the sources, you must create a 2.30.8-8.2 branch from the
 # previous -xcpng tag then cherry pick each upstream commit referenced in the changelog
 # of the upstream spec file.
 # To ensure you have all changes, you can use:
 # `diff -urq <sources> <upstream sources>`.
-# After that we can create the tag: `git tag -a v2.30.8-10-xcpng -m "v2.30.8-10-xcpng"`,
+# After that we can create the tag: `git tag -a v2.30.8-12-xcpng -m "v2.30.8-12-xcpng"`,
 # push the commits and tag.
-TODO
+Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
+Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1003: 0003-Add-TrueNAS-multipath-config.patch
+Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
+Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
+Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
+Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
+Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
+Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
+Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+Patch1015: 0015-Remove-SR_PROBE-from-ZFS-capabilities-37.patch
+Patch1016: 0016-Fix-vdi-ref-when-static-vdis-are-used.patch
+Patch1017: 0017-Tell-users-not-to-edit-multipath.conf-directly.patch
+Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
+Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
+Patch1020: 0020-Backport-NFS4-only-support.patch
+Patch1021: 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch
+Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51-55.patch
+Patch1023: 0023-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-56.patch
 
 %description
 This package contains storage backends used in XCP
@@ -497,8 +519,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %changelog
 
 * Wed Jun 12 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-12.1
-- Sync with hotfix XS82ECU1056
-- TODO: Update XCP-ng patches
+- Add 0023-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-56.patch
+- Sync with hotfix XS82ECU1065
+- Sync patches with our latest 2.30.8-8.2 branch
 - - *** Upstream changelog ***
 - * Wed Mar 13 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-12
 - - CA-389576: in Python 2.7 IOError is not a subclass of OSError

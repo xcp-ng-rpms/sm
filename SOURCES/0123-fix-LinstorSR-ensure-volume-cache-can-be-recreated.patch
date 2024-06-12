@@ -1,0 +1,112 @@
+From 87042f09234e5887abc071ea581d052c7451948f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 21 Jun 2023 14:10:18 +0200
+Subject: [PATCH 123/175] fix(LinstorSR): ensure volume cache can be recreated
+
+After SR creation we may fail to load volumes with this exception:
+"Failed to get usable size of..." and so we can't plug the master PBD.
+
+Regardless of the retry timeout, the only solution to fetch the usable
+size of the DB is to recreate the connection to the LINSTOR API.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 64 +++++++++++++++++++++++++++-----------------
+ 1 file changed, 40 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index f6c4356..0bccc16 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -523,28 +523,7 @@ class LinstorSR(SR.SR):
+ 
+             if self.srcmd.cmd != 'sr_create' and self.srcmd.cmd != 'sr_detach':
+                 try:
+-                    controller_uri = get_controller_uri()
+-
+-                    self._journaler = LinstorJournaler(
+-                        controller_uri, self._group_name, logger=util.SMlog
+-                    )
+-
+-                    # Try to open SR if exists.
+-                    # We can repair only if we are on the master AND if
+-                    # we are trying to execute an exclusive operation.
+-                    # Otherwise we could try to delete a VDI being created or
+-                    # during a snapshot. An exclusive op is the guarantee that
+-                    # the SR is locked.
+-                    self._linstor = LinstorVolumeManager(
+-                        controller_uri,
+-                        self._group_name,
+-                        repair=(
+-                            self._is_master and
+-                            self.srcmd.cmd in self.ops_exclusive
+-                        ),
+-                        logger=util.SMlog
+-                    )
+-                    self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
++                    self._reconnect()
+                 except Exception as e:
+                     raise xs_errors.XenError('SRUnavailable', opterr=str(e))
+ 
+@@ -1518,12 +1497,25 @@ class LinstorSR(SR.SR):
+     # --------------------------------------------------------------------------
+ 
+     def _create_linstor_cache(self):
++        # TODO: use a nonlocal with python3.
++        class context:
++            reconnect = False
++
++        def create_cache():
++            try:
++                if context.reconnect:
++                    self._reconnect()
++                return self._linstor.get_volumes_with_info()
++            except Exception as e:
++                context.reconnect = True
++                raise e
++
+         self._all_volume_metadata_cache = \
+             self._linstor.get_volumes_with_metadata()
+         self._all_volume_info_cache = util.retry(
+-            self._linstor.get_volumes_with_info,
++            create_cache,
+             maxretry=10,
+-            period=1
++            period=3
+         )
+ 
+     def _destroy_linstor_cache(self):
+@@ -1534,6 +1526,30 @@ class LinstorSR(SR.SR):
+     # Misc.
+     # --------------------------------------------------------------------------
+ 
++    def _reconnect(self):
++        controller_uri = get_controller_uri()
++
++        self._journaler = LinstorJournaler(
++            controller_uri, self._group_name, logger=util.SMlog
++        )
++
++        # Try to open SR if exists.
++        # We can repair only if we are on the master AND if
++        # we are trying to execute an exclusive operation.
++        # Otherwise we could try to delete a VDI being created or
++        # during a snapshot. An exclusive op is the guarantee that
++        # the SR is locked.
++        self._linstor = LinstorVolumeManager(
++            controller_uri,
++            self._group_name,
++            repair=(
++                self._is_master and
++                self.srcmd.cmd in self.ops_exclusive
++            ),
++            logger=util.SMlog
++        )
++        self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
++
+     def _ensure_space_available(self, amount_needed):
+         space_available = self._linstor.max_volume_size_allowed
+         if (space_available < amount_needed):
+-- 
+2.45.2
+

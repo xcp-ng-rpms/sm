@@ -1,0 +1,32 @@
+From eb696a5641d88d6b07579c58a95514fe7cb2812a Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 26 Jan 2024 15:29:21 +0100
+Subject: [PATCH 159/175] fix(linstorvolumemanager): don't align volumes on LVM
+ sector size
+
+It's the goal of the LINSTOR stack to align properly on the LVM layer.
+Otherwise without this patch we get an increase in snapshots and clones with a size of 4MiB.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvolumemanager.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 5de86a1..7410fd7 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -309,8 +309,8 @@ class LinstorVolumeManager(object):
+ 
+     DEV_ROOT_PATH = DRBD_BY_RES_PATH
+ 
+-    # Default LVM extent size.
+-    BLOCK_SIZE = 4 * 1024 * 1024
++    # Default sector size.
++    BLOCK_SIZE = 512
+ 
+     # List of volume properties.
+     PROP_METADATA = 'metadata'
+-- 
+2.45.2
+

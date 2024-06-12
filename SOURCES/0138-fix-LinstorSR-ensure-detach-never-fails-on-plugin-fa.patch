@@ -1,0 +1,32 @@
+From 7eaa9c4c8f1053c1fed35e0c42d7783b3064fdd2 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 23 Oct 2023 14:31:27 +0200
+Subject: [PATCH 138/175] fix(LinstorSR): ensure detach never fails on plugin
+ failure
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 7b9a8e5..d0fc421 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -2241,7 +2241,12 @@ class LinstorVDI(VDI.VDI):
+                 'srUuid': self.sr.uuid,
+                 'vdiUuid': self.uuid
+             }
+-            self.sr._exec_manager_command(master, fn, args, 'VDIUnavailable')
++
++            try:
++                self.sr._exec_manager_command(master, fn, args, 'VDIUnavailable')
++            except Exception:
++                if fn != 'detach':
++                    raise
+ 
+         # Reload size attrs after inflate or deflate!
+         self._load_this()
+-- 
+2.45.2
+

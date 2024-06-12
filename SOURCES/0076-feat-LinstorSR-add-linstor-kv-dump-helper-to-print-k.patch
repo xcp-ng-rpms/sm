@@ -1,0 +1,72 @@
+From 1e50208fdab9c0e695b85220d92f36f88eafca13 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 12 Sep 2022 17:54:57 +0200
+Subject: [PATCH 076/175] feat(LinstorSR): add linstor-kv-dump helper to print
+ kv store
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ Makefile                |  1 +
+ scripts/linstor-kv-dump | 38 ++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 39 insertions(+)
+ create mode 100755 scripts/linstor-kv-dump
+
+diff --git a/Makefile b/Makefile
+index af1011a..aa71f80 100755
+--- a/Makefile
++++ b/Makefile
+@@ -240,6 +240,7 @@ install: precheck
+ 	install -m 755 drivers/fcoelib.py $(SM_STAGING)$(SM_DEST)
+ 	mkdir -p $(SM_STAGING)$(LIBEXEC)
+ 	install -m 755 scripts/fork-log-daemon $(SM_STAGING)$(LIBEXEC)
++	install -m 755 scripts/linstor-kv-dump $(SM_STAGING)$(BIN_DEST)
+ 	install -m 755 scripts/local-device-change $(SM_STAGING)$(LIBEXEC)
+ 	install -m 755 scripts/check-device-sharing $(SM_STAGING)$(LIBEXEC)
+ 	install -m 755 scripts/usb_change $(SM_STAGING)$(LIBEXEC)
+diff --git a/scripts/linstor-kv-dump b/scripts/linstor-kv-dump
+new file mode 100755
+index 0000000..93598d7
+--- /dev/null
++++ b/scripts/linstor-kv-dump
+@@ -0,0 +1,38 @@
++#!/usr/bin/env python
++#
++# Copyright (C) 2022  Vates SAS
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++
++import argparse
++import json
++import linstor
++
++def dump_kv(controller_uri, group_name, namespace):
++    kv = linstor.KV(
++        group_name,
++        uri=controller_uri,
++        namespace=namespace
++    )
++    print(json.dumps(kv, sort_keys=True, indent=2))
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument('-u', '--uri', required=True)
++    parser.add_argument('-g', '--group-name', required=True)
++    parser.add_argument('-n', '--namespace', default='/')
++    args = parser.parse_args()
++    dump_kv(args.uri, args.group_name, args.namespace)
++
++if __name__ == '__main__':
++    main()
+-- 
+2.45.2
+

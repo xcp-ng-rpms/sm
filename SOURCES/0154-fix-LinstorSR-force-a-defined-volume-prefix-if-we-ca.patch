@@ -1,0 +1,27 @@
+From 41187ef7c58496dd3cccce223730edf5f4706d46 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 12 Jan 2024 10:28:20 +0100
+Subject: [PATCH 154/175] fix(LinstorSR): force a defined volume prefix if we
+ can't import libs
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index a524338..a73ae5a 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -27,6 +27,8 @@ try:
+ 
+     LINSTOR_AVAILABLE = True
+ except ImportError:
++    PERSISTENT_PREFIX = 'unknown'
++
+     LINSTOR_AVAILABLE = False
+ 
+ from lock import Lock
+-- 
+2.45.2
+

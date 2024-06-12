@@ -1,0 +1,33 @@
+From 574d72fc61a205b0a037cfe6a0002f2602f8e99d Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 6 Feb 2024 00:14:11 +0100
+Subject: [PATCH 163/177] fix(LinstorSR): fix bad call to vhdutil.inflate + bad
+ exception
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 53afbefe..de10f423 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1944,7 +1944,7 @@ class LinstorVDI(VDI.VDI):
+         else:
+             if new_volume_size != old_volume_size:
+                 self.sr._vhdutil.inflate(
+-                    self.sr._journaler, self._linstor, self.uuid, self.path,
++                    self.sr._journaler, self.uuid, self.path,
+                     new_volume_size, old_volume_size
+                 )
+             self.sr._vhdutil.set_size_virt_fast(self.path, size)
+@@ -2497,7 +2497,7 @@ class LinstorVDI(VDI.VDI):
+             self.session.xenapi.VDI.set_sm_config(
+                 vdi_ref, active_vdi.sm_config
+             )
+-        except Exception as e:
++        except Exception:
+             util.logException('Failed to snapshot!')
+             try:
+                 self.sr._handle_interrupted_clone(

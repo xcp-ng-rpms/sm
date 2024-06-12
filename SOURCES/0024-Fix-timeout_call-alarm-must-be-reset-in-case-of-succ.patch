@@ -1,0 +1,29 @@
+From f76ccb66f769ca352bf1dea9abdaaea5ec1b7942 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 16 Feb 2022 18:24:56 +0100
+Subject: [PATCH 024/177] Fix timeout_call: alarm must be reset in case of
+ success
+
+Otherwise the SIGALRM signal can be emitted after the execution
+of the given user function.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/util.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/util.py b/drivers/util.py
+index 8bd36351..77f3f190 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -852,9 +852,8 @@ def timeout_call(timeoutseconds, function, *arguments):
+     signal.alarm(timeoutseconds)
+     try:
+         function(*arguments)
+-    except:
++    finally:
+         signal.alarm(0)
+-        raise
+ 
+ 
+ def _incr_iscsiSR_refcount(targetIQN, uuid):

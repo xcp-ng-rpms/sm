@@ -1,0 +1,103 @@
+From 4ee79f2016b9816380baaba51b75c4b35830ab5f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 2 Jun 2022 09:04:28 +0200
+Subject: [PATCH 063/177] Fix is_open call for LinstorSR
+
+1. Ensure LinstorSR driver is imported in `_is_open` definition to register it in the driver list.
+Otherwise this function always fails with a SRUnknownType exception.
+
+2. Fetch the dconf of the target SR to retrieve VDI path, i.e. we can't use fake params like
+other drivers, we must have a real LINSTOR connection to read in the DB the volume location.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py   | 10 +++++++++-
+ drivers/on_slave.py    | 17 ++++++++++++++++-
+ tests/test_on_slave.py | 10 +++++++++-
+ 3 files changed, 34 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 57280e36..e5f6f85c 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -445,7 +445,11 @@ class LinstorSR(SR.SR):
+         def load(self, *args, **kwargs):
+             if not self._has_session:
+                 if self.srcmd.cmd in (
+-                    'vdi_attach_from_config', 'vdi_detach_from_config'
++                    'vdi_attach_from_config',
++                    'vdi_detach_from_config',
++                    # When on-slave (is_open) is executed we have an
++                    # empty command.
++                    None
+                 ):
+                     def create_linstor(uri, attempt_count=30):
+                         self._linstor = LinstorVolumeManager(
+@@ -482,6 +486,10 @@ class LinstorSR(SR.SR):
+                         controller_uri, self._group_name, logger=util.SMlog
+                     )
+ 
++                if self.srcmd.cmd is None:
++                    # Only useful on on-slave plugin (is_open).
++                    self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
++
+                 return wrapped_method(self, *args, **kwargs)
+ 
+             if not self._is_master:
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index 3c7bd340..bbef4f7f 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -78,6 +78,7 @@ def _is_open(session, args):
+     import EXTSR
+     import LargeBlockSR
+     import GlusterFSSR
++    import LinstorSR
+     import LVHDSR
+     import MooseFSSR
+     import NFSSR
+@@ -108,8 +109,22 @@ def _is_open(session, args):
+     }
+     cmd.params = {"command": None}
+ 
++    sr_uuid = srRec["uuid"]
++
++    # Another ugly piece of code to load a real Linstor SR, otherwise
++    # we can't fetch the VDI path.
++    if srType == 'linstor':
++        host_ref = util.get_this_host_ref(session)
++        sr_ref = session.xenapi.SR.get_by_uuid(sr_uuid)
++
++        pbd = util.find_my_pbd(session, host_ref, sr_ref)
++        if pbd is None:
++            raise util.SMException('Failed to find Linstor PBD')
++
++        cmd.dconf = session.xenapi.PBD.get_device_config(pbd)
++
+     driver = SR.driver(srType)
+-    sr = driver(cmd, srRec["uuid"])
++    sr = driver(cmd, sr_uuid)
+     vdi = sr.vdi(vdiUuid)
+     tapdisk = blktap2.Tapdisk.find_by_path(vdi.path)
+     util.SMlog("Tapdisk for %s: %s" % (vdi.path, tapdisk))
+diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
+index 54ebcd38..4c12d903 100644
+--- a/tests/test_on_slave.py
++++ b/tests/test_on_slave.py
+@@ -13,7 +13,15 @@ import on_slave
+ 
+ class Test_on_slave_is_open(unittest.TestCase):
+ 
+-    MOCK_IMPORTS = ['SRCommand', 'SR', 'NFSSR', 'EXTSR', 'LVHDSR', 'blktap2']
++    MOCK_IMPORTS = [
++        'SRCommand',
++        'SR',
++        'NFSSR',
++        'EXTSR',
++        'LVHDSR',
++        'LinstorSR',
++        'blktap2'
++    ]
+ 
+     def fake_import(self, name, *args):
+         print 'Asked to import {}'.format(name)

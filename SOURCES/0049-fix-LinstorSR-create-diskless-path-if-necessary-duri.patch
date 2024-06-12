@@ -1,0 +1,33 @@
+From 0125298399ffa92e214ed3b059d3f7cb5443e08b Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 3 Nov 2021 14:59:31 +0100
+Subject: [PATCH 049/177] fix(LinstorSR): create diskless path if necessary
+ during VDI loading
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 519afb29..15b9dda3 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1899,7 +1899,16 @@ class LinstorVDI(VDI.VDI):
+             self.size = volume_info.virtual_size
+             self.parent = ''
+         else:
+-            vhd_info = self.sr._vhdutil.get_vhd_info(self.uuid)
++            try:
++                vhd_info = self.sr._vhdutil.get_vhd_info(self.uuid)
++            except util.CommandException as e:
++                if e.code != errno.ENOENT:
++                    raise
++                # Path doesn't exist. Probably a diskless without local path.
++                # Force creation and retry.
++                self._linstor.get_device_path(self.uuid)
++                vhd_info = self.sr._vhdutil.get_vhd_info(self.uuid)
++
+             self.hidden = vhd_info.hidden
+             self.size = vhd_info.sizeVirt
+             self.parent = vhd_info.parentUuid

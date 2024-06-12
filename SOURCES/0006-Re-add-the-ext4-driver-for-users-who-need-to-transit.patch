@@ -1,7 +1,8 @@
 From 8b1962f5d6d8b092525e94241df033e4a78872b1 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
-Subject: [PATCH 06/23] Re-add the ext4 driver for users who need to transition
+Subject: [PATCH 006/177] Re-add the ext4 driver for users who need to
+ transition
 
 The driver is needed to transition to the ext driver.
 Users who upgrade from XCP-ng <= 8.0 need a working driver so that they

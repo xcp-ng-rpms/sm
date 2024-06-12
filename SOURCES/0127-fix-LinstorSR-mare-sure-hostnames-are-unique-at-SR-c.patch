@@ -1,0 +1,28 @@
+From a7c3c1602e8210ebd74741d5c8ec2f1ef474918b Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 17 Aug 2023 14:52:13 +0200
+Subject: [PATCH 127/177] fix(LinstorSR): mare sure hostnames are unique at SR
+ creation
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 98919a48..e512487c 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -649,6 +649,12 @@ class LinstorSR(SR.SR):
+             hostname = record['hostname']
+             ips[hostname] = record['address']
+ 
++        if len(ips) != len(online_hosts):
++            raise xs_errors.XenError(
++                'LinstorSRCreate',
++                opterr='Multiple hosts with same hostname'
++            )
++
+         # Ensure ports are opened and LINSTOR satellites
+         # are activated. In the same time the drbd-reactor instances
+         # must be stopped.

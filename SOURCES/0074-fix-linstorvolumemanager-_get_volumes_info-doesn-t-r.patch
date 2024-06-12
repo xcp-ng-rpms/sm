@@ -1,0 +1,47 @@
+From 94ede43831ca0996b88a27626a9559d3f6b1f403 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 5 Sep 2022 15:09:17 +0200
+Subject: [PATCH 074/177] fix(linstorvolumemanager): `_get_volumes_info`
+ doesn't raise with offline host
+
+Ensure this method doesn't raise an exception when a host is offline.
+Otherwise we can't use properly the HA when a host is unreachable and it's a
+problem to restart VMs on a valid host.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvolumemanager.py | 21 ++++++++++++---------
+ 1 file changed, 12 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 6f4c5900..a1bc151e 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1789,15 +1789,18 @@ class LinstorVolumeManager(object):
+                         max(current.allocated_size, allocated_size) or \
+                         allocated_size
+ 
+-                    if volume.usable_size < 0:
+-                        raise LinstorVolumeManagerError(
+-                           'Failed to get usable size of `{}` on `{}`'
+-                           .format(resource.name, volume.storage_pool_name)
+-                        )
+-                    virtual_size = volume.usable_size
+-
+-                    current.virtual_size = current.virtual_size and \
+-                        min(current.virtual_size, virtual_size) or virtual_size
++                    usable_size = volume.usable_size
++                    if usable_size > 0 and (
++                        usable_size < current.virtual_size or
++                        not current.virtual_size
++                    ):
++                        current.virtual_size = usable_size
++
++        if current.virtual_size <= 0:
++            raise LinstorVolumeManagerError(
++               'Failed to get usable size of `{}` on `{}`'
++               .format(resource.name, volume.storage_pool_name)
++            )
+ 
+         for current in all_volume_info.values():
+             current.allocated_size *= 1024

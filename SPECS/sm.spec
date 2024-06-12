@@ -1,6 +1,6 @@
-%global package_speccommit 9ec3f2b3dbb24dfa6ac77cfa09120e39b777ceaf
+%global package_speccommit 634fbf9dda9f0157f2fdac9867484d76b2fd9a08
 %global usver 2.30.8
-%global xsver 10
+%global xsver 12
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Series applies on top of v2.29.0 and includes all later tags to 2.30.7
 # after that tag the commits are in the patchqueue here.
@@ -58,6 +58,13 @@ Patch38: run_unittests_directly
 Patch39: ca-380360-report-error
 Patch40: add-unittests-for-multisession
 Patch41: ca-386479-ensure-we-login-to
+Patch42: ca-387770-improve-error
+Patch43: ca-388451-ensure-that-xapi
+Patch44: cp-47841-update-multipath
+Patch45: move_mocks_dir
+Patch46: fix-nfssr-ensure-we-can-attach
+Patch47: ca-387770-check-for-read-only
+Patch48: ca-389576_handle_ioerror
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 Requires(post): systemd
 Requires(preun): systemd
@@ -409,6 +416,16 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Wed Mar 13 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-12
+- CA-389576: in Python 2.7 IOError is not a subclass of OSError
+
+* Mon Feb 26 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-11
+- CA-387770 Improve error message for readonly shares
+- CA-388451: Ensure that xapi sessions are logged out
+- CP-47841: update multipath confiugration for PURE FlashArray
+- Backport fix for NFS attach from config
+- CA-387770: Backport Check for R/O FS at create
+
 * Fri Jan 19 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-10
 - Backport fix for CA-386479, log into all iSCSI targets
 

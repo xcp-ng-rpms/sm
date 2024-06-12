@@ -1,0 +1,22 @@
+CA-389576: in Python 2.7 IOError is not a subclass of OSError
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Handle both error types.
+---
+ drivers/FileSR.py |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 021069a..910cd45 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -1113,7 +1113,7 @@ class SharedFileSR(FileSR):
+         test_name = os.path.join(self.path, str(uuid4()))
+         try:
+             open(test_name, 'ab').close()
+-        except OSError as e:
++        except (OSError, IOError) as e:
+             util.SMlog("Cannot write to SR file system: %s" % e)
+             raise xs_errors.XenError('SharedFileSystemNoWrite')
+         finally:

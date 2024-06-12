@@ -1,7 +1,7 @@
-From 70ec54d7979c4072d7a645f92ccb5d4b28167b34 Mon Sep 17 00:00:00 2001
+From 2c71c3ce33cd02573824a57bd4b3917b45c890b0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 07/21] feat(drivers): add LinstorSR driver
+Subject: [PATCH 07/23] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -2244,10 +2244,10 @@ index 0000000..8be1836
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 0b4b250..2b63c35 100755
+index 535c9dc..6bbb817 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -905,4 +905,40 @@
+@@ -911,4 +911,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -2289,7 +2289,7 @@ index 0b4b250..2b63c35 100755
 +       </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 867c789..a60c987 100755
+index 12e4428..af2f316 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -47,7 +47,17 @@ import xs_errors
@@ -5153,10 +5153,10 @@ index 5936869..ed6abed 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 2353f4b..f673937 100755
+index 4f9fa9d..8bd3635 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -651,10 +651,36 @@ def get_this_host():
+@@ -653,10 +653,36 @@ def get_this_host():
      f.close()
      return uuid
  
@@ -5196,7 +5196,7 @@ index 2353f4b..f673937 100755
  
  # XXX: this function doesn't do what it claims to do
  def get_localhost_uuid(session):
-@@ -1384,13 +1410,21 @@ def findRunningProcessOrOpenFile(name, process = True):
+@@ -1389,13 +1415,21 @@ def findRunningProcessOrOpenFile(name, process = True):
      else:
          return (retVal, processandpids)
  
@@ -5680,5 +5680,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.43.0
+2.44.0
 

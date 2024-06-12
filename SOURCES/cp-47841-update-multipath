@@ -1,0 +1,31 @@
+CP-47841: update multipath configuration for PURE Storage
+
+From: Mark Syms <mark.syms@citrix.com>
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ multipath/multipath.conf |   13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/multipath/multipath.conf b/multipath/multipath.conf
+index 8a46a19..9f3dfa7 100644
+--- a/multipath/multipath.conf
++++ b/multipath/multipath.conf
+@@ -103,4 +103,17 @@ devices {
+ 		prio		        alua
+ 		uid_attribute		ID_SERIAL
+ 	}
++    device {
++        vendor                      "PURE"
++        product                     "FlashArray"
++        path_selector               "queue-length 0"
++        path_grouping_policy        group_by_prio
++        path_checker                tur
++        fast_io_fail_tmo            10
++        dev_loss_tmo                60
++        no_path_retry               0
++        hardware_handler            "1 alua"
++        prio                        alua
++        failback                    immediate
++    }
+ }

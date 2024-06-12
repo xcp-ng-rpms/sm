@@ -1,6 +1,6 @@
-%global package_speccommit 9ec3f2b3dbb24dfa6ac77cfa09120e39b777ceaf
+%global package_speccommit 634fbf9dda9f0157f2fdac9867484d76b2fd9a08
 %global usver 2.30.8
-%global xsver 10
+%global xsver 12
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Series applies on top of v2.29.0 and includes all later tags to 2.30.7
 # after that tag the commits are in the patchqueue here.
@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -58,6 +58,13 @@ Patch38: run_unittests_directly
 Patch39: ca-380360-report-error
 Patch40: add-unittests-for-multisession
 Patch41: ca-386479-ensure-we-login-to
+Patch42: ca-387770-improve-error
+Patch43: ca-388451-ensure-that-xapi
+Patch44: cp-47841-update-multipath
+Patch45: move_mocks_dir
+Patch46: fix-nfssr-ensure-we-can-attach
+Patch47: ca-387770-check-for-read-only
+Patch48: ca-389576_handle_ioerror
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 BuildRequires: gcc
 Requires(post): systemd
@@ -75,15 +82,15 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.8-10-xcpng..2.30.8-8.2
-# Note: the v2.30.8-10-xcpng tag was manually created by us on our fork because
+# git format-patch v2.30.8-12-xcpng..2.30.8-8.2
+# Note: the v2.30.8-12-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
 # To create this tag in the sources, you must create a 2.30.8-8.2 branch from the
 # previous -xcpng tag then cherry pick each upstream commit referenced in the changelog
 # of the upstream spec file.
 # To ensure you have all changes, you can use:
 # `diff -urq <sources> <upstream sources>`.
-# After that we can create the tag: `git tag -a v2.30.8-10-xcpng -m "v2.30.8-10-xcpng"`,
+# After that we can create the tag: `git tag -a v2.30.8-12-xcpng -m "v2.30.8-12-xcpng"`,
 # push the commits and tag.
 Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
 Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
@@ -106,7 +113,8 @@ Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
 Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
 Patch1020: 0020-Backport-NFS4-only-support.patch
 Patch1021: 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch
-Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51.patch
+Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51-55.patch
+Patch1023: 0023-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-56.patch
 
 %description
 This package contains storage backends used in XCP
@@ -509,6 +517,21 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+
+* Wed Jun 12 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 2.30.8-12.1
+- Add 0023-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-56.patch
+- Sync with hotfix XS82ECU1065
+- Sync patches with our latest 2.30.8-8.2 branch
+- - *** Upstream changelog ***
+- * Wed Mar 13 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-12
+- - CA-389576: in Python 2.7 IOError is not a subclass of OSError
+- * Mon Feb 26 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-11
+- - CA-387770 Improve error message for readonly shares
+- - CA-388451: Ensure that xapi sessions are logged out
+- - CP-47841: update multipath confiugration for PURE FlashArray
+- - Backport fix for NFS attach from config
+- - CA-387770: Backport Check for R/O FS at create
+
 * Mon May 06 2024 Damien Thenot <damien.thenot@vates.tech> - 2.30.8-10.2
 - Add LargeBlockSR for 8.2
 

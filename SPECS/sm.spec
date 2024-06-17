@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.1.0.linstor.1%{?dist}
+Release: %{?xsrel}.1.0.linstor.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -71,6 +71,7 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: xenserver-multipath
+Requires(post): xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Requires: python2-bitarray
 Requires(post): xs-presets >= 1.3
@@ -323,6 +324,14 @@ systemctl start sr_health_check.timer
 # XCP-ng: enable linstor-monitor by default.
 # However it won't start without linstor-controller.service
 systemctl enable linstor-monitor.service
+
+# XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
+# the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
+# it blocks its access to other hosts.
+# This command is also important if our multipath conf is modified for other drivers.
+if [ $1 -gt 1 ]; then
+    multipathd reconfigure
+fi
 
 %preun
 %systemd_preun make-dummy-sr.service
@@ -678,6 +687,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Mon Jun 17 2024 Ronan Abhamon <ronan.abhamon@vates.fr> 2.30.8-12.1.0.linstor.2
+- Reload automatically multipathd config after each update
+
 * Wed Jun 12 2024 Ronan Abhamon <ronan.abhamon@vates.fr> 2.30.8-12.1.0.linstor.1
 - Add "Provides": sm-linstor (necessary for the "Requires" of xcp-ng-linstor)
 - Add LINSTOR patches

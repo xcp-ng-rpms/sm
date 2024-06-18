@@ -1,7 +1,7 @@
 %global package_speccommit 1aed0a89775649c36c126242fe693c8ec8b7c018
 %global usver 3.0.12
 %global xsver 12
-%global xsrel %{xsver}.3%{?xscount}%{?xshash}
+%global xsrel %{xsver}.4%{?xscount}%{?xshash}
 %global package_srccommit v3.0.12
 
 # -*- rpm-spec -*-
@@ -64,6 +64,7 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: xenserver-multipath
+Requires(post): xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
 Requires: python36-bitarray
@@ -169,6 +170,14 @@ systemctl start sr_health_check.timer
 # XCP-ng: enable linstor-monitor by default.
 # However it won't start without linstor-controller.service
 systemctl enable linstor-monitor.service
+
+# XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
+# the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
+# it blocks its access to other hosts.
+# This command is also important if our multipath conf is modified for other drivers.
+if [ $1 -gt 1 ]; then
+    multipathd reconfigure
+fi
 
 %preun
 %systemd_preun make-dummy-sr.service
@@ -380,6 +389,8 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
+* Tue Jun 18 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.0.12-12.4
+- Reload automatically multipathd config after each update
 
 * Tue Apr 23 2024 Damien Thenot <damien.thenot@vates.tech> 3.0.12-12.3
 - Updated 0028-feat-LargeBlock-introduce-largeblocksr-51.patch

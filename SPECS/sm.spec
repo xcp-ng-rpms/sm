@@ -1,48 +1,16 @@
-%global package_speccommit 1aed0a89775649c36c126242fe693c8ec8b7c018
-%global usver 3.0.12
-%global xsver 12
-%global xsrel %{xsver}%{?xscount}%{?xshash}
-%global package_srccommit v3.0.12
+%global package_speccommit 57189dc25356fc8f7ec7b53b3b552c23ff2b1ab5
+%global package_srccommit v3.1.0
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.0.12
-Release: %{?xsrel}%{?dist}
+Version: 3.1.0
+Release: 1%{?xsrel}%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.0.12.tar.gz
-Patch0: fix_pylint_checking_issues.patch
-Patch1: cp-44484__fix_test_coverage_99%_issue.patch
-Patch2: cp-44484__generate_debugging_information.patch
-Patch3: remove_unused_scripts_and_code.patch
-Patch4: ca-379287_cope_with_fs-encoded_xmlrpc_request_on_command_line.patch
-Patch5: cp-383791_add_unit_test_coverage_for_srmetadata.py.patch
-Patch6: cp-383791_tidy_up_srmetadata.py_prior_to_fixing_utf-8_handling.patch
-Patch7: cp-383791_fix_handling_of_utf-8_in_srmetadata.py.patch
-Patch8: cp-45514__set_ownership_and_permissions_on_backend.patch
-Patch9: ca-371791__fix_world_readable_permissions_on_extsr.patch
-Patch10: ca-384030_ignore_awkardly_named_images_in_iso_srs.patch
-Patch11: ca-377454__ensure_iscsiadm_lock
-Patch12: cp-45927__change_equalogic_checker
-Patch13: ca-384783_probe_for_nfs4_when_rpcinfo_does_not_include_it.patch
-Patch14: ca-386281_cifs_username_can_be_omitted_in_ISO_SR
-Patch15: cp-46863_dump_multipath_status_from_storage_manager.patch
-Patch16: add_unittests_for_multisession_lvhdoiscsi_attach.patch
-Patch17: ca-386479__ensure_we_login_to_all_iscsi_target_portal_groups.patch
-Patch18: cp-46807__reduce_logs_from_scheduler_set_errors.patch
-Patch19: ca-387770_improve_error_message_for_readonly_shares.patch
-Patch20: ca-388451__ensure_that_xapi_sessions_are_logged_out.patch
-Patch21: ca_383076_proc_read.patch
-Patch22: add_unittests_to_exercise_xapi_session_handling.patch
-Patch23: ca-387770_increase_nfssr_and_smbsr_test_coverage.patch
-Patch24: cp-45750_add_unit_test_for_storage-init.patch
-Patch25: cp-45750_allow_for_alternative_local_storage_sr_types.patch
-Patch26: ca-386316_fix_race_condition_between_sr_detach_and_gc.patch
-Patch27: ca-388811_check_hardlinks_with_no_session.patch
-Patch28: cp-47841__update_multipath_configuration_for_pure_storage.patch
+Source0: sm-3.1.0.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 %define __python python3.6
@@ -80,7 +48,7 @@ DESTDIR=$RPM_BUILD_ROOT make install
 
 # Mark processes that should be moved to the data path
 %triggerin -- libcgroup-tools
-( grep "tapdisk" /etc/cgrules.conf > /dev/null || patch -tsN -r - -d / -p0 )>/dev/null << 'EOF'
+( patch -tsN -r - -d / -p0 )>/dev/null << 'EOF'
 --- /etc/cgrules.conf	2018-04-11 02:33:52.000000000 +0000
 +++ /tmp/cgrules.conf	2024-01-26 17:30:29.204242549 +0000
 @@ -7,4 +7,6 @@
@@ -224,6 +192,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/journaler.py
 /opt/xensource/sm/lcache.py
 /opt/xensource/sm/lock.py
+/opt/xensource/sm/lock_queue.py
 /opt/xensource/sm/lvhdutil.py
 /opt/xensource/sm/lvmanager.py
 /opt/xensource/sm/lvmcache.py
@@ -303,51 +272,39 @@ The package contains a fake key lookup plugin for system tests
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
 %changelog
-* Fri Feb 16 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-12
-- CA-386316 Fix race condition between sr_detach and GC
-- CA-388808: only patch cgrules if our setting is missing
-- CA-388811 Don't tell xapi whether SR supports hard links when there's no session
-- CP-47841: update multipath configuration for PURE Storage
+* Wed Mar 27 2024 Mark Syms <mark.syms@citrix.com> - 3.1.0-1
+- CP-45750: Allow for alternative local storage SR types
+- Release 3.0.13
 
-* Tue Feb 13 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-11
-- CP-45750 Allow for alternative local storage SR types
-
-* Thu Feb 08 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-10
-- CA-387770 increase NFSSR and SMBSR test coverage
-- CA-383076 Before returning open files from /proc ensure PIDs are alive
-
-* Tue Feb 06 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-9
-- CA-387770 Improve error message for readonly shares
-- CA-388451: Ensure that xapi sessions are logged out
-
-* Mon Jan 29 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-8
-- CA-388353: fix patch context for cgrules.conf triggerin script
-- CP-46807: reduce logs from scheduler set errors
-
-* Mon Jan 15 2024 Mark Syms <mark.syms@citrix.com> - 3.0.12-7
-- CA-386281 CIFS username can be omitted in ISO SR
-- CA-386479: ensure we login to all iSCSI Target Portal Groups
-- CP-46863 Dump Multipath Status from Storage Manager
-
-* Wed Nov 22 2023 Tim Smith <tim.smith@citrix.com> - 3.0.12-6
-- Backport fix for CA-384030 from upstream
-- CA-377454: ensure iscsiadm lock file is present
-- CP-45927: Change the pathselector used on Equalogic 100E-00
-- CA-384783 Probe for NFS4 when rpcinfo does not include it
-
-* Mon Oct 30 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-5
-- rebuild
-
-* Wed Oct 18 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-4
+* Tue Mar 26 2024 Mark Syms <mark.syms@citrix.com> - 3.0.13-2
+- CA-388353: Fix context in cgrules patch triggerin script
 - CA-379287 Cope with fs-encoded XMLRPC request on command line
-- CA-383791 fix LVM SR issues with wide character names
-- CA-371791: ensure that file SR mounts are not world readable
-
-* Fri Sep 29 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-3
-- rebuild
-
-* Fri Sep 29 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-2
-- CP-45514: set ownership and perms on backend device
+- CP-383791 Fix handling of UTF-8 in srmetadata.py
+- CP-45514: set ownership and permissions on backend
+- CA-371791: Fix world readable permissions on EXTSR
+- CA-384030 Ignore awkardly named images in ISO SRs
+- CP-45927: set multipath checker for Equalogic 100E-00 to tur
+- CA-377454: ensure that the iscsiadm running lock exists
+- CA-384783 Probe for NFS4 when rpcinfo does not include it
+- CA-253490 Add missing error codes
+- CP-46807: reduce logs from scheduler set errors
+- fix(NFSSR): ensure we can attach SR during attach_from_config call
+- CP-39600: Rework LVM locking to use fair lock queue
+- fix(ISOSR): type accepts 'nfs_iso' not 'nfs' as the docs claim
+- CA-386281 CIFS username can be omitted in ISO SR
+- CP-46863 Dump Multipath Status from Storage Manager
+- CA-386479: ensure we login to all iSCSI Target Portal Groups
+- CP-39600: remove stray print call
+- CA-385069: Remove unnecessary LvmContext wrap
+- CA-387770 Improve error message for readonly shares
+- CA-388451: ensure that xapi sessions are logged out
+- Always remove the RO/RW tag from VDIs in case of failure
+- CA-387770 increase NFSSR and SMBSR test coverage
+- CA-386316 Fix race condition between sr_detach and GC
+- CP-47841: update multipath configuration for PURE Storage
+- CA-387770: check for read-only shared fs at create
+- CP-48018: Update to systemd to manage services
+- CA-388933: rework GC Active lock to ensure GC starts
 
 * Tue Sep 26 2023 Mark Syms <mark.syms@citrix.com> - 3.0.12-1
 - Support IPv6 for NFS ISO SR

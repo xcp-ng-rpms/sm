@@ -1,17 +1,15 @@
-%global package_speccommit 57189dc25356fc8f7ec7b53b3b552c23ff2b1ab5
-%global package_srccommit v3.1.0
+%global package_speccommit ffb71ac33560eadc29827c13157837f60bc74beb
+%global package_srccommit v3.2.0
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.1.0
+Version: 3.2.0
 Release: 1%{?xsrel}%{?dist}
-Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.1.0.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
+Source0: sm-3.2.0.tar.gz
 
 %define __python python3.6
 
@@ -25,6 +23,7 @@ BuildRequires: python3-future
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
+Requires: sm-fairlock = %{version}-%{release}
 Requires: xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
@@ -41,10 +40,12 @@ This package contains storage backends used in XCP
 %autosetup -p1
 
 %build
-DESTDIR=$RPM_BUILD_ROOT make
+make
+make -C misc/fairlock
 
 %install
-DESTDIR=$RPM_BUILD_ROOT make install
+make -C misc/fairlock install DESTDIR=%{buildroot}
+make install DESTDIR=%{buildroot}
 
 # Mark processes that should be moved to the data path
 %triggerin -- libcgroup-tools
@@ -250,7 +251,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %package testresults
-Group:    System/Hypervisor
 Summary:  test results for SM package
 
 %description testresults
@@ -262,7 +262,6 @@ The package contains the build time test results for the SM package
 /htmlcov
 
 %package test-plugins
-Group:    System/Hypervisor
 Summary:  System test fake key lookup plugin
 
 %description test-plugins
@@ -271,7 +270,26 @@ The package contains a fake key lookup plugin for system tests
 %files test-plugins
 /opt/xensource/sm/plugins/keymanagerutil.py*
 
+%package fairlock
+Summary: Fair locking subsystem
+
+%description fairlock
+This package provides the fair locking subsystem using by the Storage
+Manager and some other packages
+
+%files fairlock
+%{python3_sitelib}/__pycache__/fairlock*pyc
+%{python3_sitelib}/fairlock.py
+%{_unitdir}/fairlock@.service
+%{_libexecdir}/fairlock
+
+
 %changelog
+* Fri May 17 2024 Mark Syms <mark.syms@cloud.com> - 3.2.0-1
+- CA-387861 Introduce fair locking subsystem
+- CA-384942: use resolved CD path for error checking
+- CA-392823: ensure no device mapper conflicts in LVHDSR detach
+
 * Wed Mar 27 2024 Mark Syms <mark.syms@citrix.com> - 3.1.0-1
 - CP-45750: Allow for alternative local storage SR types
 - Release 3.0.13

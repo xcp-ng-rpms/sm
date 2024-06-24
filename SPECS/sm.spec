@@ -43,35 +43,32 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.0.12-12-xcpng..3.0.12-8.3
-Patch1001: 0001-XCP-ng-cherry-pick-of-CP-45750-get-storage-init-test.patch
-Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1003: 0003-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
-Patch1004: 0004-feat-drivers-add-XFS-driver.patch
-Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1006: 0006-feat-drivers-add-LinstorSR-driver.patch
-Patch1007: 0007-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1008: 0008-Added-SM-Driver-for-MooseFS.patch
-Patch1009: 0009-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1010: 0010-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1011: 0011-Fix-is_open-call-for-many-drivers-25.patch
-Patch1012: 0012-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch1013: 0013-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
-Patch1014: 0014-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
-Patch1015: 0015-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
-Patch1016: 0016-py3-use-of-integer-division-operator.patch
-Patch1017: 0017-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
-Patch1018: 0018-py3-switch-interpreter-to-python3.patch
-Patch1019: 0019-Support-recent-version-of-coverage-tool.patch
-Patch1020: 0020-feat-LinstorSR-import-all-8.2-changes.patch
-Patch1021: 0021-feat-LinstorSR-is-now-compatible-with-python-3.patch
-Patch1022: 0022-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
-Patch1023: 0023-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
-Patch1024: 0024-Support-IPv6-in-Ceph-Driver.patch
-Patch1025: 0025-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
-Patch1026: 0026-Implement-correctly-fake_import-in-test_on_slave.py.patch
-Patch1027: 0027-fix-NFSSR-ensure-we-can-attach-SR-during-attach_from.patch
-Patch1028: 0028-feat-LargeBlock-introduce-largeblocksr-51.patch
+# git format-patch v3.2.0..3.2.0-8.3
+Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
+Patch1003: 0003-feat-drivers-add-XFS-driver.patch
+Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
+Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
+Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
+Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
+Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
+Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
+Patch1015: 0015-py3-use-of-integer-division-operator.patch
+Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
+Patch1017: 0017-py3-switch-interpreter-to-python3.patch
+Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
+Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
+Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
+Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
+Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
+Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
+Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
+Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
 
 %description
 This package contains storage backends used in XCP
@@ -364,6 +361,9 @@ Manager and some other packages
 %changelog
 * Mon Jun 24 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.0-1.1
 - Rebase on 3.2.0-1
+- Drop 0001-XCP-ng-cherry-pick-of-CP-45750-get-storage-init-test.patch
+- Drop 0026-Implement-correctly-fake_import-in-test_on_slave.py.patch
+- Drop 0027-fix-NFSSR-ensure-we-can-attach-SR-during-attach_from.patch
 - *** Upstream changelog ***
 - * Fri May 17 2024 Mark Syms <mark.syms@cloud.com> - 3.2.0-1
 - - CA-387861 Introduce fair locking subsystem

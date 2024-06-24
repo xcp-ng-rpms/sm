@@ -1,7 +1,7 @@
-From 7d0abaf6f02d4189f987ea073ba7d824ec850fda Mon Sep 17 00:00:00 2001
+From b26052d33fee70ddd28c8895d1453369f5ad55a9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
-Subject: [PATCH 21/27] feat(LinstorSR): is now compatible with python 3
+Subject: [PATCH 20/25] feat(LinstorSR): is now compatible with python 3
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -88,7 +88,7 @@ index 94591f0..7a34521 100755
                  str(device_size)
              ]
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e5a77ff..912f9c3 100755
+index eef2495..363efda 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3382,7 +3382,7 @@ class LinstorSR(SR):
@@ -286,7 +286,7 @@ index 5e5bcd5..dbca3b4 100755
          try:
              if not force:
 diff --git a/drivers/util.py b/drivers/util.py
-index 2085563..de964b2 100755
+index 9db6994..0564b29 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -751,7 +751,7 @@ def get_this_host_address(session):
@@ -329,5 +329,5 @@ index 9c1dcc4..3c64a3f 100755
  import argparse
  import subprocess
 -- 
-2.44.0
+2.45.2
 

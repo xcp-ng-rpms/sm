@@ -1,7 +1,7 @@
-From 5fb44996b05f96df13fe46af1de09ae01f22d626 Mon Sep 17 00:00:00 2001
+From 2d20ce97c268389c492c4057e7d5c851d33928dc Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 15:22:17 +0200
-Subject: [PATCH 02/27] Update xs-sm.service's description for XCP-ng
+Subject: [PATCH 01/25] Update xs-sm.service's description for XCP-ng
 
 This was a patch added to the sm RPM git repo before we had this
 forked git repo for sm in the xcp-ng github organisation.
@@ -21,5 +21,5 @@ index 99cb313..609c6ef 100644
  Conflicts=shutdown.target
  RefuseManualStop=yes
 -- 
-2.44.0
+2.45.2
 

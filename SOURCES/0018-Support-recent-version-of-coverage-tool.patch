@@ -1,7 +1,7 @@
-From e6433c289511a4aff9abb680ca8f06a34511f98e Mon Sep 17 00:00:00 2001
+From c40ab02a286dac8bacec4b767f06455aaa1d4ca9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 4 May 2023 10:24:22 +0200
-Subject: [PATCH 19/27] Support recent version of coverage tool (coverage
+Subject: [PATCH 18/25] Support recent version of coverage tool (coverage
  7.2.5)
 
 Without these changes many warns/errors are emitted:
@@ -29,5 +29,5 @@ index 1fe50c6..0321732 100644
  
  
 -- 
-2.44.0
+2.45.2
 

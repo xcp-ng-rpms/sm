@@ -1,7 +1,7 @@
-From 7c3534a7273ff97b321d7c7c0f25f638b9cdd21a Mon Sep 17 00:00:00 2001
+From 7f0be4bd602b200012bff8d7b9ff4be6d1d6ce56 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
-Subject: [PATCH 11/27] Fix is_open call for many drivers (#25)
+Subject: [PATCH 10/25] Fix is_open call for many drivers (#25)
 
 Ensure all shared drivers are imported in `_is_open` definition to register
 them in the driver list. Otherwise this function always fails with a SRUnknownType exception.
@@ -34,7 +34,7 @@ index a2f7484..323718d 100644
              self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
          else:
 diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
-index b42467a..74daba8 100755
+index b499cc9..ef73e1b 100755
 --- a/drivers/NFSSR.py
 +++ b/drivers/NFSSR.py
 @@ -88,9 +88,12 @@ class NFSSR(FileSR.SharedFileSR):
@@ -101,5 +101,5 @@ index b4f33de..bb3f5db 100755
  
      driver = SR.driver(srType)
 -- 
-2.44.0
+2.45.2
 

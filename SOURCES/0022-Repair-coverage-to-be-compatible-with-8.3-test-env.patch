@@ -1,7 +1,7 @@
-From 4d59edb0f20caddac3e594b667f4ee5a35c68b23 Mon Sep 17 00:00:00 2001
+From 75e23926764337eef68fc541a9f05a000ba449e5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 22 Sep 2023 11:11:27 +0200
-Subject: [PATCH 23/27] Repair coverage to be compatible with 8.3 test env
+Subject: [PATCH 22/25] Repair coverage to be compatible with 8.3 test env
 
 Impacted drivers: LINSTOR, MooseFS and ZFS.
 - Ignore all linstor.* members during coverage,
@@ -74,5 +74,5 @@ index e95ab7e..ac2c6eb 100644
  
  
 -- 
-2.44.0
+2.45.2
 

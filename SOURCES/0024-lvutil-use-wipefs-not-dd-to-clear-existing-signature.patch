@@ -1,7 +1,7 @@
-From 99ea7217d75b0211c51830048ea6d3a244df1561 Mon Sep 17 00:00:00 2001
+From fb64ed61b61ccd77b2da6c3e7784dfc77606e8bf Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 5 Jul 2023 16:57:26 +0200
-Subject: [PATCH 25/27] lvutil: use wipefs not dd to clear existing signatures
+Subject: [PATCH 24/25] lvutil: use wipefs not dd to clear existing signatures
  (xapi-project#624)
 
 Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
@@ -12,10 +12,10 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  3 files changed, 15 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index de73968..224ea23 100755
+index ae871c8..f1497ca 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -894,6 +894,12 @@
+@@ -904,6 +904,12 @@
              <value>461</value>
          </code>
  
@@ -29,10 +29,10 @@ index de73968..224ea23 100755
              <name>GenericException</name>
              <description>SM has thrown a generic python exception</description>
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index e0fc0d7..f1d1c5b 100755
+index 6011cfe..68fa03e 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
-@@ -503,24 +503,12 @@ def createVG(root, vgname):
+@@ -478,24 +478,12 @@ def createVG(root, vgname):
  
          f = _openExclusive(dev, True)
          os.close(f)
@@ -62,7 +62,7 @@ index e0fc0d7..f1d1c5b 100755
          if not (dev == rootdev):
              try:
 diff --git a/drivers/util.py b/drivers/util.py
-index de964b2..1facba7 100755
+index 0564b29..5d7b320 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -638,6 +638,11 @@ def zeroOut(path, fromByte, bytes):
@@ -78,5 +78,5 @@ index de964b2..1facba7 100755
      regex = re.compile("^PRIMARY_DISK")
      return regex.search(s, 0)
 -- 
-2.44.0
+2.45.2
 

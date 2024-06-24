@@ -1,7 +1,7 @@
-From 91b670956640874d4602f25735c967aef814b208 Mon Sep 17 00:00:00 2001
+From 3264fe0d1d0e4448e9709125cc99255c53be1fa6 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 13:53:21 +0100
-Subject: [PATCH 17/27] test_on_slave: allow to work with SR using absolute
+Subject: [PATCH 16/25] test_on_slave: allow to work with SR using absolute
  PROBE_MOUNTPOINT
 
 PROBE_MOUNTPOINT in a some drivers is a relative path, which is resolved
@@ -36,7 +36,7 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  1 file changed, 1 insertion(+)
 
 diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
-index 806fd63..42cf9eb 100644
+index 9034747..679d442 100644
 --- a/tests/test_on_slave.py
 +++ b/tests/test_on_slave.py
 @@ -30,6 +30,7 @@ class Test_on_slave_is_open(unittest.TestCase):
@@ -48,5 +48,5 @@ index 806fd63..42cf9eb 100644
          self.mock_blktap2 = mock.MagicMock()
          self.mocks['blktap2'] = self.mock_blktap2
 -- 
-2.44.0
+2.45.2
 

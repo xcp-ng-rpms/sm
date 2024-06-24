@@ -1,7 +1,7 @@
-From 7039fd4e5a89a3387006f1afc9bdb798dde18f86 Mon Sep 17 00:00:00 2001
+From 78f392f433a9f88aa02bd9b4502b449e4cebab86 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 06/27] feat(drivers): add LinstorSR driver
+Subject: [PATCH 05/25] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -78,7 +78,7 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index 752a9ce..752fb95 100755
+index 0b62505..aa9b18a 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -8,6 +8,7 @@ SM_DRIVERS += Dummy
@@ -99,7 +99,7 @@ index 752a9ce..752fb95 100755
  SM_LIBS += lvhdutil
  SM_LIBS += cifutils
  SM_LIBS += xs_errors
-@@ -95,7 +99,8 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
+@@ -96,7 +100,8 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
  
  .PHONY: build
  build:
@@ -109,7 +109,7 @@ index 752a9ce..752fb95 100755
  
  .PHONY: precommit
  precommit: build
-@@ -178,6 +183,8 @@ install: precheck
+@@ -171,6 +176,8 @@ install: precheck
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
  	install -m 644 systemd/sr_health_check.timer \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
@@ -118,7 +118,7 @@ index 752a9ce..752fb95 100755
  	for i in $(UDEV_RULES); do \
  	  install -m 644 udev/$$i.rules \
  	    $(SM_STAGING)$(UDEV_RULES_DIR); done
-@@ -195,6 +202,7 @@ install: precheck
+@@ -188,6 +195,7 @@ install: precheck
  	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoFCoESR && ln -sf LVHDoFCoESR.py LVMoFCoESR
  	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
  	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
@@ -126,7 +126,7 @@ index 752a9ce..752fb95 100755
  	install -m 755 drivers/lvhd-thin $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
  	install -m 755 drivers/on_slave.py $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)/on-slave
  	install -m 755 drivers/testing-hooks $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
-@@ -212,6 +220,7 @@ install: precheck
+@@ -205,6 +213,7 @@ install: precheck
  	install -m 755 scripts/kickpipe $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/set-iscsi-initiator $(SM_STAGING)$(LIBEXEC)
  	$(MAKE) -C dcopy install DESTDIR=$(SM_STAGING)
@@ -134,7 +134,7 @@ index 752a9ce..752fb95 100755
  	ln -sf $(SM_DEST)blktap2.py $(SM_STAGING)$(BIN_DEST)/blktap2
  	ln -sf $(SM_DEST)lcache.py $(SM_STAGING)$(BIN_DEST)tapdisk-cache-stats
  	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
-@@ -222,4 +231,3 @@ install: precheck
+@@ -215,4 +224,3 @@ install: precheck
  .PHONY: clean
  clean:
  	rm -rf $(SM_STAGING)
@@ -2246,10 +2246,10 @@ index 0000000..8be1836
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 535c9dc..de73968 100755
+index d4b7f29..ae871c8 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -911,4 +911,40 @@
+@@ -921,4 +921,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -2291,7 +2291,7 @@ index 535c9dc..de73968 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index cdb37c6..e93ff18 100755
+index a3ed481..13446f8 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -5133,7 +5133,7 @@ index 6b7fc09..932fc3c 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index f6b9ba8..9dc2478 100755
+index 8fa80da..a64512f 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -694,10 +694,35 @@ def get_this_host():
@@ -5658,5 +5658,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.44.0
+2.45.2
 

@@ -1,7 +1,7 @@
-From 06fb961def100566785a4e7eb1083d7c1e115a7f Mon Sep 17 00:00:00 2001
+From a5f69c0c93e064d78ac27b51ec07345626129683 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Fri, 4 Aug 2023 12:10:37 +0200
-Subject: [PATCH 22/27] Remove `SR_PROBE` from ZFS capabilities (#36)
+Subject: [PATCH 21/25] Remove `SR_PROBE` from ZFS capabilities (#36)
 
 The probe method is not implemented so we
 shouldn't advertise it.
@@ -24,5 +24,5 @@ index 354ca90..5301d5e 100644
      'VDI_CREATE',
      'VDI_DELETE',
 -- 
-2.44.0
+2.45.2
 

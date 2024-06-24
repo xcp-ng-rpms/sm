@@ -1,7 +1,7 @@
-From fb9461cef1d49c9b6c35c8b9598040d585701d69 Mon Sep 17 00:00:00 2001
+From b745aa17ccbfbdfd3c83861eb964989cf56d192e Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 12 Apr 2024 15:08:59 +0200
-Subject: [PATCH 28/28] feat(LargeBlock): introduce largeblocksr (#51)
+Subject: [PATCH 25/25] feat(LargeBlock): introduce largeblocksr (#51)
 
 A SR inheriting from a EXTSR allowing to use a 4KiB blocksize device as
 SR.
@@ -47,7 +47,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  create mode 100644 drivers/LargeBlockSR.py
 
 diff --git a/Makefile b/Makefile
-index 701dd1f..24ba532 100755
+index 32bcacd..c04fd1b 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -20,6 +20,7 @@ SM_DRIVERS += GlusterFS
@@ -314,10 +314,10 @@ index 0000000..624379b
 +else:
 +    SR.registerSR(LargeBlockSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 224ea23..51675ea 100755
+index f1497ca..0ec1fa1 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -953,4 +953,26 @@
+@@ -963,4 +963,26 @@
              <description>LINSTOR SR delete error</description>
              <value>5007</value>
          </code>
@@ -345,7 +345,7 @@ index 224ea23..51675ea 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 912f9c3..7150c04 100755
+index 363efda..9dfbf42 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3431,7 +3431,7 @@ def normalizeType(type):
@@ -358,10 +358,10 @@ index 912f9c3..7150c04 100755
          type = SR.TYPE_FILE
      if type in ["linstor"]:
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index f1d1c5b..f046def 100755
+index 68fa03e..15cf97c 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
-@@ -571,12 +571,16 @@ def resizePV(dev):
+@@ -546,12 +546,16 @@ def resizePV(dev):
          util.SMlog("Failed to grow the PV, non-fatal")
  
  
@@ -393,5 +393,5 @@ index 524424f..2f58281 100755
      import LinstorSR
      import LVHDSR
 -- 
-2.44.0
+2.45.2
 

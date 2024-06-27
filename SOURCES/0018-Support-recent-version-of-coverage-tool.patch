@@ -1,0 +1,33 @@
+From c40ab02a286dac8bacec4b767f06455aaa1d4ca9 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 4 May 2023 10:24:22 +0200
+Subject: [PATCH 18/25] Support recent version of coverage tool (coverage
+ 7.2.5)
+
+Without these changes many warns/errors are emitted:
+- "assertEquals" is deprecated, "assertEqual" must be used instead
+- mocked objects in "setUp" method like "cleanup.IPCFlag" cannot be repatched
+  at the level of the test functions, otherwise tests are aborted,
+  this is the  behavior of coverage version 7.2.5
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ tests/test_ISOSR.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
+index 1fe50c6..0321732 100644
+--- a/tests/test_ISOSR.py
++++ b/tests/test_ISOSR.py
+@@ -79,7 +79,7 @@ class TestISOSR_overLocal(unittest.TestCase):
+         isosr = self.create_isosr()
+         with self.assertRaises(SR.SROSError) as ose:
+             isosr.attach(None)
+-        self.assertEquals(ose.exception.errno, 226)
++        self.assertEqual(ose.exception.errno, 226)
+         self.assertFalse(pread.called)
+ 
+ 
+-- 
+2.45.2
+

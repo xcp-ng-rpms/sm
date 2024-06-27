@@ -1,0 +1,397 @@
+From b745aa17ccbfbdfd3c83861eb964989cf56d192e Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 12 Apr 2024 15:08:59 +0200
+Subject: [PATCH 25/25] feat(LargeBlock): introduce largeblocksr (#51)
+
+A SR inheriting from a EXTSR allowing to use a 4KiB blocksize device as
+SR.
+Create a 512 bytes loop device on top of a 4KiB device then give it to
+EXTSR code.
+It uses the same device-config as a normal local SR, i.e.
+`device-config:device=/dev/nvme0n1`
+
+After creation, the driver find the device under the VG to identify the
+correct disk.
+It means that creating the SR with a non-stable disk identifier is
+doable and it will work as EXTSR would by ignoring the device-config
+after creation.
+Identifying the correct disk by using LVM infos.
+
+The VG is created using a different prefix name from EXTSR.
+It is `XSLocalLargeBlock-<SR UUID>`.
+
+The SR artificially limits the creation to disk not being 512b.
+It will throw an error if a disk whose blocksize is 512 is given.
+
+We currently don't support multi devices, it fails at the EXTSR creation.
+We added an error to explicitly say that multi devices SR is not supported
+on the driver.
+Before that, it would make another error:
+```
+Error code: SR_BACKEND_FAILURE_77
+Error parameters: , Logical Volume group creation failed,
+```
+Sometimes the pvremove from EXTSR using the loop device fails.
+In this case, we need to remove the real device from PV list ourself in
+the error handling.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ Makefile                     |   1 +
+ drivers/LargeBlockSR.py      | 249 +++++++++++++++++++++++++++++++++++
+ drivers/XE_SR_ERRORCODES.xml |  22 ++++
+ drivers/cleanup.py           |   2 +-
+ drivers/lvutil.py            |   8 +-
+ drivers/on_slave.py          |   1 +
+ 6 files changed, 280 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/LargeBlockSR.py
+
+diff --git a/Makefile b/Makefile
+index 32bcacd..c04fd1b 100755
+--- a/Makefile
++++ b/Makefile
+@@ -20,6 +20,7 @@ SM_DRIVERS += GlusterFS
+ SM_DRIVERS += XFS
+ SM_DRIVERS += ZFS
+ SM_DRIVERS += MooseFS
++SM_DRIVERS += LargeBlock
+ 
+ SM_LIBS := SR
+ SM_LIBS += SRCommand
+diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
+new file mode 100644
+index 0000000..624379b
+--- /dev/null
++++ b/drivers/LargeBlockSR.py
+@@ -0,0 +1,249 @@
++#!/usr/bin/env python3
++#
++# Copyright (C) 2024  Vates SAS - damien.thenot@vates.tech
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++
++import SR
++from SR import deviceCheck
++import SRCommand
++import EXTSR
++import util
++import xs_errors
++import os
++import re
++import lvutil
++
++CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING",
++                "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
++                "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
++                "VDI_GENERATE_CONFIG",
++                "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
++                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING"]
++
++CONFIGURATION = [['device', 'local device path (required) (e.g. /dev/sda3)']]
++
++DRIVER_INFO = {
++    'name': 'Large Block SR',
++    'description': 'SR plugin which emulates a 512 bytes disk on top of a 4KiB device then create a EXT SR',
++    'vendor': 'Vates',
++    'copyright': '(C) 2024 Vates',
++    'driver_version': '1.0',
++    'required_api_version': '1.0',
++    'capabilities': CAPABILITIES,
++    'configuration': CONFIGURATION
++}
++
++LARGEBLOCK_PREFIX = "XSLocalLargeBlock-"
++
++class LargeBlockSR(EXTSR.EXTSR):
++    """Emulating 512b drives for EXT storage repository"""
++
++    DRIVER_TYPE = "largeblock"
++    LOOP_SECTOR_SIZE = 512
++
++    @staticmethod
++    def handles(srtype):
++        return srtype == LargeBlockSR.DRIVER_TYPE
++
++    def load(self, sr_uuid):
++        super(LargeBlockSR, self).load(sr_uuid)
++        self.is_deleting = False
++        self.vgname = LARGEBLOCK_PREFIX + sr_uuid
++        self.remotepath = os.path.join("/dev", self.vgname, sr_uuid)
++
++    def attach(self, sr_uuid):
++        if not self.is_deleting:
++            vg_device = self._get_device()
++            self.dconf["device"] = ",".join(vg_device)
++            self._create_emulated_device()
++            if not self._is_vg_connection_correct(): # Check if we need to redo the connection by parsing `vgs -o vg_name,devices self.vgname`
++                self._redo_vg_connection() # Call redo VG connection to connect it correctly to the loop device instead of the real 4KiB block device
++        super(LargeBlockSR, self).attach(sr_uuid)
++
++    def detach(self, sr_uuid):
++        if not self.is_deleting:
++            vg_device = self._get_device()
++            self.dconf["device"] = ",".join(vg_device)
++        super(LargeBlockSR, self).detach(sr_uuid)
++        if not self.is_deleting:
++            self._destroy_emulated_device()
++
++    @deviceCheck
++    def create(self, sr_uuid, size):
++        base_devices = self.dconf["device"].split(",")
++        if len(base_devices) > 1:
++            raise xs_errors.XenError("ConfigDeviceInvalid", opterr="Multiple devices configuration is not supported")
++
++        for dev in base_devices:
++            logical_blocksize = util.pread2(["blockdev", "--getss", dev]).strip()
++            if logical_blocksize == "512":
++                raise xs_errors.XenError("LargeBlockIncorrectBlocksize", opterr="The logical blocksize of the device {} is compatible with normal SR types".format(dev))
++
++        try:
++            self._create_emulated_device()
++            super(LargeBlockSR, self).create(sr_uuid, size)
++        finally:
++            self._destroy_emulated_device(base_devices)
++
++    def delete(self, sr_uuid):
++        base_devices = self._get_device()
++        self.dconf["device"] = ",".join(self._get_loopdev_from_device(base_devices))
++
++        self.is_deleting = True
++        try:
++            super(LargeBlockSR, self).delete(sr_uuid)
++        except SR.SROSError:
++            # In case, the lvremove doesn't like the loop device, it will throw an error.
++            # We need to remove the device ourselves using the real device in this case.
++            for dev in base_devices:
++                util.pread2(["pvremove", dev])
++        finally:
++            self._destroy_emulated_device(base_devices)
++            self.is_deleting = False
++
++    @deviceCheck
++    def probe(self):
++        # We override EXTSR.probe because it uses EXT_PREFIX in this call
++        return lvutil.srlist_toxml(
++            lvutil.scan_srlist(LARGEBLOCK_PREFIX, self.dconf['device']),
++            LARGEBLOCK_PREFIX
++        )
++
++    def _create_loopdev(self, dev, emulated_path):
++        cmd = ["losetup", "-f", "-v", "--show", "--sector-size", str(self.LOOP_SECTOR_SIZE), dev]
++        loopdev = util.pread2(cmd).rstrip()
++
++        if os.path.exists(emulated_path) and os.path.islink(emulated_path):
++            os.unlink(emulated_path)
++
++        try:
++            os.symlink(loopdev, emulated_path)
++        except OSError:
++            raise xs_errors.XenError("LargeBlockSymlinkExist", opterr="Symlink {} couldn't be created".format(emulated_path))
++
++    def _delete_loopdev(self, dev, emulated_path):
++            if os.path.exists(emulated_path) and os.path.islink(emulated_path):
++                os.unlink(emulated_path)
++
++            # The backing file isn't a symlink if given by ID in device-config but the real device
++            dev = os.path.realpath(dev)
++            loopdevs = self._get_loopdev_from_device(dev)
++
++            if loopdevs != None:
++                try:
++                    for lp in loopdevs:
++                        cmd = ["losetup", "-d", lp] # Remove the loop device
++                        util.pread2(cmd)
++                except SR.SROSError:
++                    util.SMlog("Couldn't removed losetup devices: {}".format(loopdevs))
++            else:
++                xs_errors.XenError("LargeBlockNoLosetup", opterr="Couldn't find loop device for {}".format(dev))
++
++    @staticmethod
++    def _get_loopdev_from_device(device):
++        lpdevs = []
++        output = util.pread2(["losetup", "--list"]).rstrip()
++        if output:
++            for line in output.split("\n"):
++                line = line.split()
++                loopdev = line[0]
++                dev = line[5].strip()
++                if dev in device:
++                    lpdevs.append(loopdev)
++        return lpdevs
++
++    @staticmethod
++    def _get_device_from_loopdev(loopdevs):
++        devices = []
++        output = util.pread2(["losetup", "--list"]).rstrip()
++        if output:
++            for line in output.split("\n"):
++                line = line.split()
++                lpdev = line[0]
++                dev = line[5]
++                if lpdev in loopdevs:
++                    devices.append(dev)
++        return devices
++
++    def _get_device_from_vg(self):
++        devices = []
++        output = util.pread2(["vgs", "--noheadings", "-o", "vg_name,devices", self.vgname]).splitlines()
++        for line in output:
++            line = line.split()
++            dev = line[1].split("(")[0]
++            if os.path.islink(dev):
++                dev = os.path.realpath(dev)
++            devices.append(dev)
++        return devices
++
++    def _get_device(self):
++        vg_device = self._get_device_from_vg()
++        for dev in vg_device:
++            if re.match(r"(.*\.512)|(/dev/loop[0-9]+)", dev):
++                lpdev = os.path.realpath(dev)
++                realdev = self._get_device_from_loopdev(lpdev)[0]
++                vg_device.remove(dev)
++                vg_device.append(realdev)
++
++        return vg_device
++
++    def _is_vg_connection_correct(self):
++        output = util.pread2(["vgs", "--noheadings", "-o", "vg_name,devices", self.vgname]).split()
++        output[1] = output[1].split("(")[0]
++        return bool(re.match(r"(.*\.512)|(/dev/loop[0-9]+)", output[1]))
++
++    def _redo_vg_connection(self):
++        """
++        In case of using a LargeBlockSR, the LVM scan at boot will find the LogicalVolume on the real block device.
++        And when the PBD is connecting, it will mount from the original device instead of the loop device since LVM prefers real devices it has seen first.
++        The PBD plug will succeed but then the SR will be accessed through the 4KiB device, returning to the erroneous behaviour on 4KiB device.
++        VM won't be able to run because vhd-util will fail to scan the VDI.
++        This function force the LogicalVolume to be mounted on top of our emulation layer by disabling the VolumeGroup and re-enabling while applying a filter.
++        """
++
++        util.SMlog("Reconnecting VG {} to use emulated device".format(self.vgname))
++        try:
++            lvutil.setActiveVG(self.vgname, False)
++            lvutil.setActiveVG(self.vgname, True, config="devices{ global_filter = [ \"r|^/dev/nvme.*|\", \"a|/dev/loop.*|\" ] }")
++        except util.CommandException as e:
++            xs_errors.XenError("LargeBlockVGReconnectFailed", opterr="Failed to reconnect the VolumeGroup {}, error: {}".format(self.vgname, e))
++
++
++    @classmethod
++    def _get_emulated_device_path(cls, dev):
++        return "{dev}.{bs}".format(dev=dev, bs=cls.LOOP_SECTOR_SIZE)
++
++    def _create_emulated_device(self):
++        base_devices = self.dconf["device"].split(",")
++        emulated_devices = []
++        for dev in base_devices:
++            emulated_path = self._get_emulated_device_path(dev)
++            self._create_loopdev(dev, emulated_path)
++            emulated_devices.append(emulated_path)
++
++        emulated_devices = ",".join(emulated_devices)
++        self.dconf["device"] = emulated_devices
++
++    def _destroy_emulated_device(self, devices=None):
++        if devices is None:
++            devices = self.dconf["device"].split(",")
++
++        for dev in devices:
++            emulated_path = self._get_emulated_device_path(dev)
++            self._delete_loopdev(dev, emulated_path)
++
++if __name__ == '__main__':
++    SRCommand.run(LargeBlockSR, DRIVER_INFO)
++else:
++    SR.registerSR(LargeBlockSR)
+diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
+index f1497ca..0ec1fa1 100755
+--- a/drivers/XE_SR_ERRORCODES.xml
++++ b/drivers/XE_SR_ERRORCODES.xml
+@@ -963,4 +963,26 @@
+             <description>LINSTOR SR delete error</description>
+             <value>5007</value>
+         </code>
++
++        <code>
++            <name>LargeBlockSymlinkExist</name>
++            <description>Symlink already exists</description>
++            <value>5008</value>
++        </code>
++
++        <code>
++            <name>LargeBlockNoLosetup</name>
++            <description>Couldn't find loop device</description>
++            <value>5009</value>
++        </code>
++        <code>
++            <name>LargeBlockIncorrectBlocksize</name>
++            <description>Blocksize isn't compatible with the driver</description>
++            <value>5010</value>
++        </code>
++        <code>
++            <name>LargeBlockVGReconnectFailed</name>
++            <description>Failed to reconnect the VolumeGroup</description>
++            <value>5011</value>
++        </code>
+ </SM-errorcodes>
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 363efda..9dfbf42 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3431,7 +3431,7 @@ def normalizeType(type):
+         type = SR.TYPE_LVHD
+     if type in [
+         "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
+-        "moosefs", "xfs", "zfs"
++        "moosefs", "xfs", "zfs", "largeblock"
+     ]:
+         type = SR.TYPE_FILE
+     if type in ["linstor"]:
+diff --git a/drivers/lvutil.py b/drivers/lvutil.py
+index 68fa03e..15cf97c 100755
+--- a/drivers/lvutil.py
++++ b/drivers/lvutil.py
+@@ -546,12 +546,16 @@ def resizePV(dev):
+         util.SMlog("Failed to grow the PV, non-fatal")
+ 
+ 
+-def setActiveVG(path, active):
++def setActiveVG(path, active, config=None):
+     "activate or deactivate VG 'path'"
+     val = "n"
+     if active:
+         val = "y"
+-    text = cmd_lvm([CMD_VGCHANGE, "-a" + val, path])
++    cmd = [CMD_VGCHANGE, "-a" + val, path]
++    if config:
++        cmd.append("--config")
++        cmd.append(config)
++    cmd_lvm(cmd)
+ 
+ 
+ @lvmretry
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index 524424f..2f58281 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -78,6 +78,7 @@ def _is_open(session, args):
+     import SR
+     import CephFSSR
+     import EXTSR
++    import LargeBlockSR
+     import GlusterFSSR
+     import LinstorSR
+     import LVHDSR
+-- 
+2.45.2
+

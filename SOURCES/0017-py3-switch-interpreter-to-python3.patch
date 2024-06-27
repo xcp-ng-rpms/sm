@@ -1,0 +1,99 @@
+From 222ebd7c6056486b9607221787f08c6b45f8bdd1 Mon Sep 17 00:00:00 2001
+From: Yann Dirson <yann.dirson@vates.fr>
+Date: Mon, 27 Mar 2023 15:30:46 +0200
+Subject: [PATCH 17/25] py3: switch interpreter to python3
+
+---
+ drivers/CephFSSR.py             | 2 +-
+ drivers/GlusterFSSR.py          | 2 +-
+ drivers/LinstorSR.py            | 2 +-
+ drivers/MooseFSSR.py            | 2 +-
+ drivers/ZFSSR.py                | 2 +-
+ drivers/linstorjournaler.py     | 2 +-
+ drivers/linstorvhdutil.py       | 2 +-
+ drivers/linstorvolumemanager.py | 2 +-
+ 8 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
+index 3575ade..d85faf9 100644
+--- a/drivers/CephFSSR.py
++++ b/drivers/CephFSSR.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Original work copyright (C) Citrix systems
+ # Modified work copyright (C) Vates SAS and XCP-ng community
+diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
+index 367a5b5..a2c320f 100644
+--- a/drivers/GlusterFSSR.py
++++ b/drivers/GlusterFSSR.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Original work copyright (C) Citrix systems
+ # Modified work copyright (C) Vates SAS and XCP-ng community
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 8eb9e5c..a72d43e 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
+ #
+diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
+index febb559..cad6d7a 100755
+--- a/drivers/MooseFSSR.py
++++ b/drivers/MooseFSSR.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Original work copyright (C) Citrix systems
+ # Modified work copyright (C) Tappest sp. z o.o., Vates SAS and XCP-ng community
+diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
+index d375210..354ca90 100644
+--- a/drivers/ZFSSR.py
++++ b/drivers/ZFSSR.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Copyright (C) 2020  Vates SAS
+ #
+diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
+index 7495330..bc7cff7 100755
+--- a/drivers/linstorjournaler.py
++++ b/drivers/linstorjournaler.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
+ #
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index f31c752..7a13566 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
+ #
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 1b86a43..182b889 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
+ #
+-- 
+2.45.2
+

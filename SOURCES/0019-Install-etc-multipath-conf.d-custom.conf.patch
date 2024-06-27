@@ -1,7 +1,7 @@
 From 507c2f067878ee88765c5750d3e618c8c63208c7 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 25 Aug 2023 17:47:34 +0200
-Subject: [PATCH 19/23] Install /etc/multipath/conf.d/custom.conf
+Subject: [PATCH 19/24] Install /etc/multipath/conf.d/custom.conf
 
 Update Makefile so that the file is installed along with sm.
 
@@ -48,5 +48,5 @@ index b0ae353..3357cbf 100755
  	  $(SM_STAGING)/$(INIT_DIR)
  	install -m 755 multipath/multipath-root-setup \
 -- 
-2.44.0
+2.45.2
 

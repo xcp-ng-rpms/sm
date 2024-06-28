@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.0
-Release: 1.1%{?xsrel}%{?dist}
+Release: 1.2%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.0.tar.gz
@@ -359,6 +359,9 @@ Manager and some other packages
 
 
 %changelog
+* Fri Jun 28 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.0-1.2
+- Fix 3.2.0 rebase which prevents VMs from starting
+
 * Mon Jun 24 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.0-1.1
 - Rebase on 3.2.0-1
 - Drop 0001-XCP-ng-cherry-pick-of-CP-45750-get-storage-init-test.patch

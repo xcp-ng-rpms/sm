@@ -1,7 +1,7 @@
-From 4b8db294574d248231edf40f7b7e9fdb4f37e79f Mon Sep 17 00:00:00 2001
+From 3d704956a9624303b4258e9e9954396bdeb1a0c5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 15 Apr 2024 11:22:18 +0200
-Subject: [PATCH 166/175] feat(linstor-manager): add
+Subject: [PATCH 166/176] feat(linstor-manager): add
  `getNodePreferredInterface` helper
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

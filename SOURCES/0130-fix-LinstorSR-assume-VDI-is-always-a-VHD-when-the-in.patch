@@ -1,7 +1,7 @@
-From 36c88f1ee37fa5f78f7dcc41b2ed7aaeac680dde Mon Sep 17 00:00:00 2001
+From 10f62cd78f1ce950b4f1527ab5baa227192a88ed Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 28 Sep 2023 16:00:02 +0200
-Subject: [PATCH 130/175] fix(LinstorSR): assume VDI is always a VHD when the
+Subject: [PATCH 130/176] fix(LinstorSR): assume VDI is always a VHD when the
  info is missing during cleanup
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

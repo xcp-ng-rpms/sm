@@ -1,7 +1,7 @@
-From 3e81ea7348e1c5cb03737274a3b3064b7e540723 Mon Sep 17 00:00:00 2001
+From 68885c56099d7e6e623789b4d49c54faa5075e45 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 1 Mar 2023 10:56:43 +0100
-Subject: [PATCH 111/175] fix(LinstorSR): ensure vhdutil calls are correctly
+Subject: [PATCH 111/176] fix(LinstorSR): ensure vhdutil calls are correctly
  executed on pools with > 3 hosts
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

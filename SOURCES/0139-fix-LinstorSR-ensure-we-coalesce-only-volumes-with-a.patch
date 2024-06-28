@@ -1,7 +1,7 @@
-From 4f4326e015f13074ba713c58a8347c7fe6a5db3d Mon Sep 17 00:00:00 2001
+From 5981f334d3fa7fff186446d094b9b83a92d20cb1 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 23 Oct 2023 15:52:23 +0200
-Subject: [PATCH 139/175] fix(LinstorSR): ensure we coalesce only volumes with
+Subject: [PATCH 139/176] fix(LinstorSR): ensure we coalesce only volumes with
  a valid size
 
 ---

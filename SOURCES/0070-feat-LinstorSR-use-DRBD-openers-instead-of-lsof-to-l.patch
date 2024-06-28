@@ -1,7 +1,7 @@
-From 667d63a0ccd29d6f29da828d898f245b3047d90b Mon Sep 17 00:00:00 2001
+From 18ac9ddc0672f43c3139baa13a4f761b7876589c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 9 Aug 2022 11:07:57 +0200
-Subject: [PATCH 070/175] feat(LinstorSR): use DRBD openers instead of lsof to
+Subject: [PATCH 070/176] feat(LinstorSR): use DRBD openers instead of lsof to
  log in blktap2
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -12,7 +12,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 100 insertions(+), 128 deletions(-)
 
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 70e74c6..719a152 100755
+index 14c564e..370f7fb 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -36,7 +36,7 @@ import json
@@ -24,13 +24,13 @@ index 70e74c6..719a152 100755
  from syslog import openlog, syslog
  from stat import * # S_ISBLK(), ...
  import nfs
-@@ -832,7 +832,7 @@ class Tapdisk(object):
+@@ -833,7 +833,7 @@ class Tapdisk(object):
                                      time.sleep(1)
                                      continue
                                  if err == errno.EROFS:
 -                                    log_lsof_drbd(path)
 +                                    log_drbd_openers(path)
-                             break
+                             raise
                      try:
                          tapdisk = cls.__from_blktap(blktap)
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager

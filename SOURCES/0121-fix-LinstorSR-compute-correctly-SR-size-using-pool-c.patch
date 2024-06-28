@@ -1,7 +1,7 @@
-From fad043f547a38223fc3a52400db70cf3b0ec2243 Mon Sep 17 00:00:00 2001
+From 55e92941365b6b39a78209d2d775e510a7a3ba32 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 1 Jun 2023 17:40:37 +0200
-Subject: [PATCH 121/175] fix(LinstorSR): compute correctly SR size using pool
+Subject: [PATCH 121/176] fix(LinstorSR): compute correctly SR size using pool
  count
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

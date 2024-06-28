@@ -1,7 +1,7 @@
-From c5ae69bbb54ff636d33aebced1d45f2ad85c0a5f Mon Sep 17 00:00:00 2001
+From 04e8aff781147e433b56f68626e60a48daa48d8d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 30 Jun 2022 17:09:51 +0200
-Subject: [PATCH 065/175] feat(linstor-manager): robustify exec_create_sr
+Subject: [PATCH 065/176] feat(linstor-manager): robustify exec_create_sr
 
 - Use lvm.py XCP-ng xapi plugins instead of lvm (old name)
 - Check arguments to create the SR

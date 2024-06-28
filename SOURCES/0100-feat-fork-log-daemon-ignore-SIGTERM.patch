@@ -1,7 +1,7 @@
-From 4b4e082a5e9fea8e1fb5ec158b1ca77f4e812665 Mon Sep 17 00:00:00 2001
+From 62142a4d7d2934b20e08fc8dc49876d5cb5eba5a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 15 Dec 2022 14:36:04 +0100
-Subject: [PATCH 100/175] feat(fork-log-daemon): ignore SIGTERM
+Subject: [PATCH 100/176] feat(fork-log-daemon): ignore SIGTERM
 
 Without this patch, the output logs of the fork-log-daemon child
 are never displayed when SIGTERM is sent to the PGID.

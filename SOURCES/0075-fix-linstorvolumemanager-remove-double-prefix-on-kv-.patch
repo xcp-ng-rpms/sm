@@ -1,7 +1,7 @@
-From 2f6b96a0f585003ef9804cc098c074a0e3098210 Mon Sep 17 00:00:00 2001
+From 462cc34d48bfafc96dd042ae7ee97c5801b436a5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 12 Sep 2022 15:56:09 +0200
-Subject: [PATCH 075/175] fix(linstorvolumemanager): remove double prefix on kv
+Subject: [PATCH 075/176] fix(linstorvolumemanager): remove double prefix on kv
  group name
 
 - Before this patch, when the kv store was created/accessed, a double "xcp-sr-" prefix was used.

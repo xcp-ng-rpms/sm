@@ -1,7 +1,7 @@
-From 7308c3894a4ce77e6b21543add154e5877e91ca1 Mon Sep 17 00:00:00 2001
+From e98d435ba2b95672803cd15c5ba6cd89209743d0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Sep 2022 15:09:17 +0200
-Subject: [PATCH 074/175] fix(linstorvolumemanager): `_get_volumes_info`
+Subject: [PATCH 074/176] fix(linstorvolumemanager): `_get_volumes_info`
  doesn't raise with offline host
 
 Ensure this method doesn't raise an exception when a host is offline.

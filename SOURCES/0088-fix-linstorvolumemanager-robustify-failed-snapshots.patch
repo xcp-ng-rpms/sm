@@ -1,7 +1,7 @@
-From e0d0c13e2621849ebeab9c9059020b4ff229bbc8 Mon Sep 17 00:00:00 2001
+From 0fe8a97bc5c810ca0d58248c59055c801728da26 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 17 Oct 2022 18:14:16 +0200
-Subject: [PATCH 088/175] fix(linstorvolumemanager): robustify failed snapshots
+Subject: [PATCH 088/176] fix(linstorvolumemanager): robustify failed snapshots
 
 - Ensure we can always rename a failed snap, so we must check if
   we have metadata in the KV-store. Otherwise an error is triggered

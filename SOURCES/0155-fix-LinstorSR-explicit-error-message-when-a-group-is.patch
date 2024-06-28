@@ -1,7 +1,7 @@
-From 30fdeb99a513ebc9ce66a1ab2d07459506a8b645 Mon Sep 17 00:00:00 2001
+From 4ddcc31d0695b66e6135c2fe9d671d3059bfe720 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 18 Jan 2024 10:24:01 +0100
-Subject: [PATCH 155/175] fix(LinstorSR): explicit error message when a group
+Subject: [PATCH 155/176] fix(LinstorSR): explicit error message when a group
  is not unique during SR creation
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

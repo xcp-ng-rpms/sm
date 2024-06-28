@@ -1,7 +1,7 @@
 From cab8593814b9b741a20d218df673a58d98dc3a79 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 22 Mar 2021 17:32:26 +0100
-Subject: [PATCH 037/175] feat(LinstorSR): add an option to disable auto-quorum
+Subject: [PATCH 037/176] feat(LinstorSR): add an option to disable auto-quorum
  on volume DB + fix doc
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

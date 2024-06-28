@@ -1,7 +1,7 @@
-From a4b69f4d89c45a4a7f90eff858bc59214832f321 Mon Sep 17 00:00:00 2001
+From 36dc495fb24764c5e1b7f4de379efc5568b105f0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Jun 2023 11:50:54 +0200
-Subject: [PATCH 122/175] fix(blktap2): ensure we can import this module when
+Subject: [PATCH 122/176] fix(blktap2): ensure we can import this module when
  LINSTOR is not installed
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 719a152..2a37efb 100755
+index 370f7fb..fd7c643 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -36,7 +36,6 @@ import json
@@ -34,14 +34,14 @@ index 719a152..2a37efb 100755
  PLUGIN_TAP_PAUSE = "tapdisk-pause"
  
  SOCKPATH = "/var/xapi/xcp-rrdd"
-@@ -831,7 +836,7 @@ class Tapdisk(object):
+@@ -832,7 +837,7 @@ class Tapdisk(object):
                                      retry_open += 1
                                      time.sleep(1)
                                      continue
 -                                if err == errno.EROFS:
 +                                if LINSTOR_AVAILABLE and err == errno.EROFS:
                                      log_drbd_openers(path)
-                             break
+                             raise
                      try:
 -- 
 2.45.2

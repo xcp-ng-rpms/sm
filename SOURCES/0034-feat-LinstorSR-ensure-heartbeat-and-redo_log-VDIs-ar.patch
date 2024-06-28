@@ -1,7 +1,7 @@
 From 6e0d84cf900e9c41cba663093c911fa025debd34 Mon Sep 17 00:00:00 2001
 From: Wescoeur <ronan.abhamon@vates.fr>
 Date: Wed, 24 Feb 2021 11:17:23 +0100
-Subject: [PATCH 034/175] feat(LinstorSR): ensure heartbeat and redo_log VDIs
+Subject: [PATCH 034/176] feat(LinstorSR): ensure heartbeat and redo_log VDIs
  are not diskless
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

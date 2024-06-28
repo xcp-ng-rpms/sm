@@ -1,7 +1,7 @@
-From c4ff0f4c15ff0e74162ecf3c7f494356e6051404 Mon Sep 17 00:00:00 2001
+From db8a2032a451a16d6bb7a7cadd6fbc8ce4795443 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 24 Mar 2022 18:13:46 +0100
-Subject: [PATCH 052/175] fix(LinstorSR): use IPs instead of hostnames in NBD
+Subject: [PATCH 052/176] fix(LinstorSR): use IPs instead of hostnames in NBD
  server
 
 Without this patch we can't use XCP-ng hosts configured with static IPS.

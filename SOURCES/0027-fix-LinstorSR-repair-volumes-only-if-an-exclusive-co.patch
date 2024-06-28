@@ -1,7 +1,7 @@
 From 56bdcd5312a20c92f5a1683b506ce447fa1914fa Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
-Subject: [PATCH 027/175] fix(LinstorSR): repair volumes only if an exclusive
+Subject: [PATCH 027/176] fix(LinstorSR): repair volumes only if an exclusive
  command is executed
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

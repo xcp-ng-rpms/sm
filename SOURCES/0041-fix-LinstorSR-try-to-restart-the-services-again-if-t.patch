@@ -1,7 +1,7 @@
-From 8c41a8dd967155cebcaa814da070aca0d0e4f884 Mon Sep 17 00:00:00 2001
+From c651376bea317652fd4e6bc53af741935126dc14 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 28 Apr 2021 15:15:58 +0200
-Subject: [PATCH 041/175] fix(LinstorSR): try to restart the services again if
+Subject: [PATCH 041/176] fix(LinstorSR): try to restart the services again if
  there is a failure in linstor-manager
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

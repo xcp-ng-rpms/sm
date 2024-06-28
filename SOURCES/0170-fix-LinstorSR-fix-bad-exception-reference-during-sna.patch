@@ -1,7 +1,7 @@
-From bbec79d3445aa772b2f3f5884fc1906becfd604d Mon Sep 17 00:00:00 2001
+From 20a4fa3fc5932216a30a7b0e6e8fad292ae73859 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 24 Apr 2024 15:10:49 +0200
-Subject: [PATCH 170/175] fix(LinstorSR): fix bad exception reference during
+Subject: [PATCH 170/176] fix(LinstorSR): fix bad exception reference during
  snapshot
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

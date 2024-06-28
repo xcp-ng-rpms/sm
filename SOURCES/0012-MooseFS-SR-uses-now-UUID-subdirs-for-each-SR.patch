@@ -1,7 +1,7 @@
 From 96777e1aebf0b4bf800d71c03a87908282669971 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 18 May 2022 17:28:09 +0200
-Subject: [PATCH 012/175] MooseFS SR uses now UUID subdirs for each SR
+Subject: [PATCH 012/176] MooseFS SR uses now UUID subdirs for each SR
 
 A sm-config boolean param `subdir` is available to configure where to store the VHDs:
 - In a subdir with the SR UUID, the new behavior

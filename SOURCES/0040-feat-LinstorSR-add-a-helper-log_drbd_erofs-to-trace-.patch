@@ -1,19 +1,19 @@
-From a9b37afd7c792af514898a3128fc129b8d5c90e4 Mon Sep 17 00:00:00 2001
+From fbe2c09a13bb93031b43b77a54cdb678e743654a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 26 Mar 2021 16:13:20 +0100
-Subject: [PATCH 040/175] feat(LinstorSR): add a helper `log_drbd_erofs` to
+Subject: [PATCH 040/176] feat(LinstorSR): add a helper `log_drbd_erofs` to
  trace EROFS errno code with DRBD resources + check EROFS error
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
- drivers/blktap2.py              | 18 ++++++-
+ drivers/blktap2.py              | 19 +++++++-
  drivers/linstor-manager         | 19 +++++++-
  drivers/linstorvolumemanager.py | 83 ++++++++++++++++++++++++++++++++-
  drivers/vhdutil.py              |  2 +-
- 4 files changed, 118 insertions(+), 4 deletions(-)
+ 4 files changed, 119 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index e9305ce..70e74c6 100755
+index e9305ce..14c564e 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -36,6 +36,7 @@ import json
@@ -24,7 +24,7 @@ index e9305ce..70e74c6 100755
  from syslog import openlog, syslog
  from stat import * # S_ISBLK(), ...
  import nfs
-@@ -817,7 +818,22 @@ class Tapdisk(object):
+@@ -817,7 +818,23 @@ class Tapdisk(object):
                  TapCtl.attach(pid, minor)
  
                  try:
@@ -33,6 +33,7 @@ index e9305ce..70e74c6 100755
 +                    while True:
 +                        try:
 +                            TapCtl.open(pid, minor, _type, path, options)
++                            break
 +                        except TapCtl.CommandFailure as e:
 +                            err = (
 +                                'status' in e.info and e.info['status']
@@ -44,7 +45,7 @@ index e9305ce..70e74c6 100755
 +                                    continue
 +                                if err == errno.EROFS:
 +                                    log_lsof_drbd(path)
-+                            break
++                            raise
                      try:
                          tapdisk = cls.__from_blktap(blktap)
                          node = '/sys/dev/block/%d:%d' % (tapdisk.major(), tapdisk.minor)

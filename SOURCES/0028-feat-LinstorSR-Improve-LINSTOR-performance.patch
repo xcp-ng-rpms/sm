@@ -1,7 +1,7 @@
 From 7e1008189ee1d49545d65f14bf6bee65cec21d5c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 10 Dec 2020 17:56:15 +0100
-Subject: [PATCH 028/175] feat(LinstorSR): Improve LINSTOR performance
+Subject: [PATCH 028/176] feat(LinstorSR): Improve LINSTOR performance
 
 Details:
 - vdi_attach and vdi_detach are now exclusive

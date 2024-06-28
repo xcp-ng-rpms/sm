@@ -1,7 +1,7 @@
-From 43241b09b329987a0407e0d7c50f7d7f5ed67d4c Mon Sep 17 00:00:00 2001
+From 2ba830e5083bcc1376344da20949368b0129d294 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 25 Apr 2023 11:20:55 +0200
-Subject: [PATCH 118/175] fix(LinstorSR): attach a valid XAPI session is_open
+Subject: [PATCH 118/176] fix(LinstorSR): attach a valid XAPI session is_open
  is called
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

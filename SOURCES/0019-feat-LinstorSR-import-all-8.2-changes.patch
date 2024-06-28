@@ -1,4 +1,4 @@
-From 0fdbb491664aff29caa9b3cc85e32bc930811059 Mon Sep 17 00:00:00 2001
+From 505db9115ea8bf7e690e1ee2a2dd34e86f58bbab Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
 Subject: [PATCH 19/25] feat(LinstorSR): import all 8.2 changes
@@ -7,7 +7,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
  Makefile                                      |   13 +
  drivers/LinstorSR.py                          | 1463 ++++++++---
- drivers/blktap2.py                            |   23 +-
+ drivers/blktap2.py                            |   24 +-
  drivers/cleanup.py                            |  351 ++-
  drivers/linstor-manager                       |  941 ++++++-
  drivers/linstorjournaler.py                   |   48 +-
@@ -26,7 +26,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  scripts/linstor-kv-tool                       |   84 +
  scripts/safe-umount                           |   39 +
  tests/test_on_slave.py                        |   10 +-
- 21 files changed, 5114 insertions(+), 1103 deletions(-)
+ 21 files changed, 5115 insertions(+), 1103 deletions(-)
  create mode 100644 etc/systemd/system/drbd-reactor.service.d/override.conf
  create mode 100644 etc/systemd/system/linstor-satellite.service.d/override.conf
  create mode 100644 etc/systemd/system/var-lib-linstor.service
@@ -2200,7 +2200,7 @@ index a72d43e..94591f0 100755
  else:
      SR.registerSR(LinstorSR)
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 5712d8f..9fb648c 100755
+index 5712d8f..669b9f6 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -50,6 +50,12 @@ import VDI as sm
@@ -2216,7 +2216,7 @@ index 5712d8f..9fb648c 100755
  PLUGIN_TAP_PAUSE = "tapdisk-pause"
  
  SOCKPATH = "/var/xapi/xcp-rrdd"
-@@ -811,7 +817,22 @@ class Tapdisk(object):
+@@ -811,7 +817,23 @@ class Tapdisk(object):
                  TapCtl.attach(pid, minor)
  
                  try:
@@ -2225,6 +2225,7 @@ index 5712d8f..9fb648c 100755
 +                    while True:
 +                        try:
 +                            TapCtl.open(pid, minor, _type, path, options)
++                            break
 +                        except TapCtl.CommandFailure as e:
 +                            err = (
 +                                'status' in e.info and e.info['status']

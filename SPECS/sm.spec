@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.1.0.linstor.3%{?dist}
+Release: %{?xsrel}.1.0.linstor.4%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -272,6 +272,8 @@ Patch1173: 0173-fix-linstorvhdutil-retry-check-on-another-machine-in.patch
 Patch1174: 0174-fix-LinstorSR-explicit-errors-when-database-path-is-.patch
 Patch1175: 0175-fix-LinstorSR-Misc-fixes-on-destroy.patch
 Patch1176: 0176-fix-LinstorSR-open-non-leaf-volumes-in-RO-mode-creat.patch
+Patch1177: 0177-fix-LinstorSR-ensure-_is_master-is-always-set.patch
+Patch1178: 0178-fix-linstor-check-if-resource-is-tiebreaker-62.patch
 
 %description
 This package contains storage backends used in XCP
@@ -688,6 +690,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Fri Jul 26 2024 Ronan Abhamon <ronan.abhamon@vates.fr> 2.30.8-12.1.0.linstor.4
+- Add 0177-fix-LinstorSR-ensure-_is_master-is-always-set.patch
+- Add 0178-fix-linstor-check-if-resource-is-tiebreaker-62.patch
+
 * Fri Jun 28 2024 Ronan Abhamon <ronan.abhamon@vates.fr> 2.30.8-12.1.0.linstor.3
 - Add 0176-fix-LinstorSR-open-non-leaf-volumes-in-RO-mode-creat.patch
 

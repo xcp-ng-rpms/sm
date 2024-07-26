@@ -1,7 +1,7 @@
 From af4c39361fa080e170eb2d9ae58cd839d2b7b550 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 3 Oct 2023 18:42:42 +0200
-Subject: [PATCH 132/176] fix(LinstorSR): ensure database is mounted during
+Subject: [PATCH 132/178] fix(LinstorSR): ensure database is mounted during
  scan
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

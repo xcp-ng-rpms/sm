@@ -1,7 +1,7 @@
 From 8642904e23c8818458f6112d52df60cd5a351331 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 9 Mar 2023 17:06:59 +0100
-Subject: [PATCH 112/176] fix(LinstorSR): replace bad param in detach_thin impl
+Subject: [PATCH 112/178] fix(LinstorSR): replace bad param in detach_thin impl
 
 To get the physical size, the volume UUID must be used, not the path.
 

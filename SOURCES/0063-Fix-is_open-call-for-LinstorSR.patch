@@ -1,7 +1,7 @@
 From 85411fa09ac82dcafe0ad600fcbfaa92d10380c5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Jun 2022 09:04:28 +0200
-Subject: [PATCH 063/176] Fix is_open call for LinstorSR
+Subject: [PATCH 063/178] Fix is_open call for LinstorSR
 
 1. Ensure LinstorSR driver is imported in `_is_open` definition to register it in the driver list.
 Otherwise this function always fails with a SRUnknownType exception.

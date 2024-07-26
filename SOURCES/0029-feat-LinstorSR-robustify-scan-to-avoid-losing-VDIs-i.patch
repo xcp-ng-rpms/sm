@@ -1,7 +1,7 @@
 From 78f29568ef2faee1f7fd01888169e07336f26f46 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 7 Jan 2021 11:17:08 +0100
-Subject: [PATCH 029/176] feat(LinstorSR): robustify scan to avoid losing VDIs
+Subject: [PATCH 029/178] feat(LinstorSR): robustify scan to avoid losing VDIs
  if function is called outside module
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

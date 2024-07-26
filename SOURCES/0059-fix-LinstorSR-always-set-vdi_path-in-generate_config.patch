@@ -1,7 +1,7 @@
 From 14e0b3c2bc3cbfccfa8356a953c51f38b20feb41 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 26 Apr 2022 11:20:08 +0200
-Subject: [PATCH 059/176] fix(LinstorSR): always set vdi_path in
+Subject: [PATCH 059/178] fix(LinstorSR): always set vdi_path in
  generate_config
 
 If the volume of a generated config is not related to HTTP/NBD

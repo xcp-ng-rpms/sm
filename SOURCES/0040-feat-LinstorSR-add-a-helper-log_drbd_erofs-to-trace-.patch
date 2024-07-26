@@ -1,7 +1,7 @@
 From fbe2c09a13bb93031b43b77a54cdb678e743654a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 26 Mar 2021 16:13:20 +0100
-Subject: [PATCH 040/176] feat(LinstorSR): add a helper `log_drbd_erofs` to
+Subject: [PATCH 040/178] feat(LinstorSR): add a helper `log_drbd_erofs` to
  trace EROFS errno code with DRBD resources + check EROFS error
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

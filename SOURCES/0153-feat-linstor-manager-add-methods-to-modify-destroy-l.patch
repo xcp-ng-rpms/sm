@@ -1,7 +1,7 @@
 From 334eddd740c2d9891f7671799f9c8f55a51c1a8a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 19 Dec 2023 14:49:33 +0100
-Subject: [PATCH 153/176] feat(linstor-manager): add methods to
+Subject: [PATCH 153/178] feat(linstor-manager): add methods to
  modify/destroy/list net interfaces
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

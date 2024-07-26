@@ -1,7 +1,7 @@
 From 36dc495fb24764c5e1b7f4de379efc5568b105f0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Jun 2023 11:50:54 +0200
-Subject: [PATCH 122/176] fix(blktap2): ensure we can import this module when
+Subject: [PATCH 122/178] fix(blktap2): ensure we can import this module when
  LINSTOR is not installed
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

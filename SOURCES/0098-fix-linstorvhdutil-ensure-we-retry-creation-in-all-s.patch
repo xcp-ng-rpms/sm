@@ -1,7 +1,7 @@
 From 8b614c3baa05acbe822ace1a3b09676f8042a137 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Dec 2022 11:22:15 +0100
-Subject: [PATCH 098/176] fix(linstorvhdutil): ensure we retry creation in all
+Subject: [PATCH 098/178] fix(linstorvhdutil): ensure we retry creation in all
  situations
 
 Without this patch, a basic resource creation is never restarted

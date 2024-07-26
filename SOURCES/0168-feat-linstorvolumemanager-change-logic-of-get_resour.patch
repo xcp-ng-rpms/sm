@@ -1,7 +1,7 @@
 From 91794049e90cbfa6997c27e1aa81dac3f460d0f3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 15 Apr 2024 17:56:47 +0200
-Subject: [PATCH 168/176] feat(linstorvolumemanager): change logic of
+Subject: [PATCH 168/178] feat(linstorvolumemanager): change logic of
  `get_resources_info`: - Add a nested level "nodes" for each resource - Add a
  "uuid" attr on resources - Rename LINSTOR "uuid" to "linstor-uuid" - Optimize
  code

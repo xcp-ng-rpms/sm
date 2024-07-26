@@ -1,7 +1,7 @@
 From 3b19f4d691a10f0023d936a0328e4a7684b4d3fa Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 007/176] feat(drivers): add LinstorSR driver
+Subject: [PATCH 007/178] feat(drivers): add LinstorSR driver
 
 Some important points:
 

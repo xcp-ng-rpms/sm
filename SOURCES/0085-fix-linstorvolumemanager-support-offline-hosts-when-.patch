@@ -1,7 +1,7 @@
 From 604dd18a16f87188bc6a6ca0a69c31cd68ac6f77 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 7 Oct 2022 17:18:37 +0200
-Subject: [PATCH 085/176] fix(linstorvolumemanager): support offline hosts when
+Subject: [PATCH 085/178] fix(linstorvolumemanager): support offline hosts when
  plugins are called
 
 - Robustify plugin calls

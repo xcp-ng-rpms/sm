@@ -1,7 +1,7 @@
 From b95191cf0e28705a2f92b73d42d252d81ae6e158 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 3 Apr 2023 10:03:57 +0200
-Subject: [PATCH 116/176] fix(LinstorSR): retry if we can't build volume cache
+Subject: [PATCH 116/178] fix(LinstorSR): retry if we can't build volume cache
 
 Otherwise after SR creation, the master PBD can be unplugged.
 See: https://xcp-ng.org/forum/post/60726

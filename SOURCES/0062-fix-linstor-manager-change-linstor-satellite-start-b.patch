@@ -1,7 +1,7 @@
 From 94412eef0fcaf1b5ac5d0367e25b7ce54b33845c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 31 May 2022 14:01:45 +0200
-Subject: [PATCH 062/176] fix(linstor-manager): change linstor satellite start
+Subject: [PATCH 062/178] fix(linstor-manager): change linstor satellite start
  behavior
 
 Ensure we don't have an invalid cache used by a satellite:

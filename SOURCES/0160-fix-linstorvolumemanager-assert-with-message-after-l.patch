@@ -1,7 +1,7 @@
 From 181e82b231f0abdb51594ec9c362c90dde80b31c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Feb 2024 18:01:22 +0100
-Subject: [PATCH 160/176] fix(linstorvolumemanager): assert with message after
+Subject: [PATCH 160/178] fix(linstorvolumemanager): assert with message after
  log in update_volume_uuid
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

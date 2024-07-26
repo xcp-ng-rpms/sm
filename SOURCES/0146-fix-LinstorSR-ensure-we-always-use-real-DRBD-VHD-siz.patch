@@ -1,7 +1,7 @@
 From 7aa1cd3e4e2539f424ec193fe599c51da9d63a0e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 27 Nov 2023 12:15:43 +0100
-Subject: [PATCH 146/176] fix(LinstorSR): ensure we always use real DRBD/VHD
+Subject: [PATCH 146/178] fix(LinstorSR): ensure we always use real DRBD/VHD
  sizes in inflate/deflate GC calls
 
 ---

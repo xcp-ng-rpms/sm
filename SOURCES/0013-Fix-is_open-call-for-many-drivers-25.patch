@@ -1,7 +1,7 @@
 From ebb716f123eb8b6c4e8b2ff1147926211af183db Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
-Subject: [PATCH 013/176] Fix is_open call for many drivers (#25)
+Subject: [PATCH 013/178] Fix is_open call for many drivers (#25)
 
 Ensure all shared drivers are imported in `_is_open` definition to register
 them in the driver list. Otherwise this function always fails with a SRUnknownType exception.

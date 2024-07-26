@@ -1,7 +1,7 @@
 From 6cdc1b2a0b9f5a8ec880800fc4c8ca5244987733 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 15 Jan 2021 17:01:05 +0100
-Subject: [PATCH 032/176] fix(LinstorSR): call correctly method in _locked_load
+Subject: [PATCH 032/178] fix(LinstorSR): call correctly method in _locked_load
  when vdi_attach_from_config is executed
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

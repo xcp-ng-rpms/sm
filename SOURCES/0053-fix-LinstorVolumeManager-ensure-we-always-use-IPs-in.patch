@@ -1,7 +1,7 @@
 From e7ecc4da932107ccc26ec88b0dd37818222c6852 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 31 Mar 2022 11:21:19 +0200
-Subject: [PATCH 053/176] fix(LinstorVolumeManager): ensure we always use IPs
+Subject: [PATCH 053/178] fix(LinstorVolumeManager): ensure we always use IPs
  in _get_controller_uri
 
 Otherwise if a hostname is returned, we can't use it if the XCP-ng pool

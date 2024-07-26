@@ -1,7 +1,7 @@
 From 86d936b5359bfaee5a3d392daed5c9199839901f Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 7 May 2024 15:20:22 +0200
-Subject: [PATCH 022/176] feat(LargeBlock): backport of largeblocksr (#51)
+Subject: [PATCH 022/178] feat(LargeBlock): backport of largeblocksr (#51)
  (#55)
 
 A SR inheriting from a EXTSR allowing to use a 4KiB blocksize device as

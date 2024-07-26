@@ -1,7 +1,7 @@
 From 8ae218c2942ac22a017a9cc880ab631f5aa69c36 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 3 Mar 2022 15:02:17 +0100
-Subject: [PATCH 051/176] fix(LinstorSR): find controller when XAPI unreachable
+Subject: [PATCH 051/178] fix(LinstorSR): find controller when XAPI unreachable
  (XHA)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

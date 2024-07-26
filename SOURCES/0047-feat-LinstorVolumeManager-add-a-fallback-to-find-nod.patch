@@ -1,7 +1,7 @@
 From a7aeadb712732b37f7dc8857d3999bfc01751308 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 21 Oct 2021 11:51:32 +0200
-Subject: [PATCH 047/176] feat(LinstorVolumeManager): add a fallback to find
+Subject: [PATCH 047/178] feat(LinstorVolumeManager): add a fallback to find
  node name (when len(hosts) >= 4)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

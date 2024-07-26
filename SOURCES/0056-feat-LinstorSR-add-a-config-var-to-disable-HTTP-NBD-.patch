@@ -1,7 +1,7 @@
 From 8a4e120a3b9c03b8f44ebc5bc28c774e1fb13fea Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 14 Apr 2022 10:30:23 +0200
-Subject: [PATCH 056/176] feat(LinstorSR): add a config var to disable HTTP/NBD
+Subject: [PATCH 056/178] feat(LinstorSR): add a config var to disable HTTP/NBD
  servers
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

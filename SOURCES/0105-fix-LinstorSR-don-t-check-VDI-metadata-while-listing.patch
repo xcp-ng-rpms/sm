@@ -1,7 +1,7 @@
 From babbfe1b1aee6a23a8bc560e2e145a7c76e3a0ce Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 13 Feb 2023 17:24:16 +0100
-Subject: [PATCH 105/176] fix(LinstorSR): don't check VDI metadata while
+Subject: [PATCH 105/178] fix(LinstorSR): don't check VDI metadata while
  listing VDIs if it's deleted
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.0
-Release: 1.2%{?xsrel}%{?dist}
+Release: 1.3%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.0.tar.gz
@@ -31,6 +31,7 @@ Requires(preun): systemd
 Requires(postun): systemd
 Requires: sm-fairlock = %{version}-%{release}
 Requires: xenserver-multipath
+Requires(post): xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
 Requires: python36-bitarray
@@ -135,6 +136,14 @@ systemctl start sr_health_check.timer
 # XCP-ng: enable linstor-monitor by default.
 # However it won't start without linstor-controller.service
 systemctl enable linstor-monitor.service
+
+# XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
+# the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
+# it blocks its access to other hosts.
+# This command is also important if our multipath conf is modified for other drivers.
+if [ $1 -gt 1 ]; then
+    multipathd reconfigure
+fi
 
 %preun
 %systemd_preun make-dummy-sr.service
@@ -359,6 +368,9 @@ Manager and some other packages
 
 
 %changelog
+* Tue Jul 30 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.2.0-1.3
+- Reload automatically multipathd config after each update
+
 * Fri Jun 28 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.0-1.2
 - Fix 3.2.0 rebase which prevents VMs from starting
 

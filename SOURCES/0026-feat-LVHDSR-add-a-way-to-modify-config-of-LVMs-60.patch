@@ -1,0 +1,109 @@
+From 132d2b4426177813331e04d32d37a47c23e097c7 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 30 Jul 2024 15:31:23 +0200
+Subject: [PATCH 26/26] feat(LVHDSR): add a way to modify config of LVMs (#60)
+
+With this change the driver supports a "lvm-conf" param on "other-config".
+For now The configuration is only used by "remove" calls from LVMCache.
+
+Example to issue discards after a lvremove command:
+
+> xe sr-param-set uuid=<SR_UUID> other-config:lvm-conf=issue_discards=1
+
+And to remove the param:
+
+> xe sr-param-remove uuid=<SR_UUID> param-name=other-config param-key=lvm-conf
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LVHDSR.py   | 15 ++++++++++++---
+ drivers/cleanup.py  |  7 ++++++-
+ drivers/lvmcache.py |  5 +++--
+ 3 files changed, 21 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index f15c92d..a2dac77 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -161,14 +161,24 @@ class LVHDSR(SR.SR):
+         self.path = os.path.join(lvhdutil.VG_LOCATION, self.vgname)
+         self.mdpath = os.path.join(self.path, self.MDVOLUME_NAME)
+         self.provision = self.PROVISIONING_DEFAULT
++
++        self.other_conf = None
++        has_sr_ref = self.srcmd.params.get("sr_ref")
++        if has_sr_ref:
++            self.other_conf = self.session.xenapi.SR.get_other_config(self.sr_ref)
++
++        self.lvm_conf = None
++        if self.other_conf:
++            self.lvm_conf = self.other_conf.get('lvm-conf')
++
+         try:
+-            self.lvmCache = lvmcache.LVMCache(self.vgname)
++            self.lvmCache = lvmcache.LVMCache(self.vgname, self.lvm_conf)
+         except:
+             raise xs_errors.XenError('SRUnavailable', \
+                         opterr='Failed to initialise the LVMCache')
+         self.lvActivator = LVActivator(self.uuid, self.lvmCache)
+         self.journaler = Journaler(self.lvmCache)
+-        if not self.srcmd.params.get("sr_ref"):
++        if not has_sr_ref:
+             return  # must be a probe call
+         # Test for thick vs thin provisioning conf parameter
+         if 'allocation' in self.dconf:
+@@ -178,7 +188,6 @@ class LVHDSR(SR.SR):
+                 raise xs_errors.XenError('InvalidArg', \
+                         opterr='Allocation parameter must be one of %s' % self.PROVISIONING_TYPES)
+ 
+-        self.other_conf = self.session.xenapi.SR.get_other_config(self.sr_ref)
+         if self.other_conf.get(self.TEST_MODE_KEY):
+             self.testMode = self.other_conf[self.TEST_MODE_KEY]
+             self._prepareTestMode()
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 9dfbf42..6f7f1e1 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2835,7 +2835,12 @@ class LVHDSR(SR):
+         SR.__init__(self, uuid, xapi, createLock, force)
+         self.vgName = "%s%s" % (lvhdutil.VG_PREFIX, self.uuid)
+         self.path = os.path.join(lvhdutil.VG_LOCATION, self.vgName)
+-        self.lvmCache = lvmcache.LVMCache(self.vgName)
++
++        sr_ref = self.xapi.session.xenapi.SR.get_by_uuid(self.uuid)
++        other_conf = self.xapi.session.xenapi.SR.get_other_config(sr_ref)
++        lvm_conf = other_conf.get('lvm-conf') if other_conf else None
++        self.lvmCache = lvmcache.LVMCache(self.vgName, lvm_conf)
++
+         self.lvActivator = LVActivator(self.uuid, self.lvmCache)
+         self.journaler = journaler.Journaler(self.lvmCache)
+ 
+diff --git a/drivers/lvmcache.py b/drivers/lvmcache.py
+index 8c63d45..6e21568 100644
+--- a/drivers/lvmcache.py
++++ b/drivers/lvmcache.py
+@@ -59,10 +59,11 @@ class LVMCache:
+     """Per-VG object to store LV information. Can be queried for cached LVM
+     information and refreshed"""
+ 
+-    def __init__(self, vgName):
++    def __init__(self, vgName, config=None):
+         """Create a cache for VG vgName, but don't scan the VG yet"""
+         self.vgName = vgName
+         self.vgPath = "/dev/%s" % self.vgName
++        self.config = config
+         self.lvs = dict()
+         self.tags = dict()
+         self.initialized = False
+@@ -115,7 +116,7 @@ class LVMCache:
+     @lazyInit
+     def remove(self, lvName):
+         path = self._getPath(lvName)
+-        lvutil.remove(path)
++        lvutil.remove(path, self.config)
+         for tag in self.lvs[lvName].tags:
+             self._removeTag(lvName, tag)
+         del self.lvs[lvName]
+-- 
+2.45.2
+

@@ -274,6 +274,7 @@ Patch1175: 0175-fix-LinstorSR-Misc-fixes-on-destroy.patch
 Patch1176: 0176-fix-LinstorSR-open-non-leaf-volumes-in-RO-mode-creat.patch
 Patch1177: 0177-fix-LinstorSR-ensure-_is_master-is-always-set.patch
 Patch1178: 0178-fix-linstor-check-if-resource-is-tiebreaker-62.patch
+Patch1179: 0179-feat-Linstor-rewrite-linstorhostcall-logic.patch
 
 %description
 This package contains storage backends used in XCP
@@ -676,6 +677,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Wed Aug 07 2024 Damien Thenot <damien.thenot@vates.tech> 2.30.8-12.2.0.linstor.2
+- Add 0179-feat-Linstor-rewrite-linstorhostcall-logic.patch
+
 * Tue Aug 06 2024 Damien Thenot <damien.thenot@vates.tech> - 2.30.8-12.2.0.linstor.1
 - Sync patches with latest 2.30.8-8.2
 - *** 8.2 release changelog ***

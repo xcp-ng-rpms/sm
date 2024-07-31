@@ -1,7 +1,7 @@
 From 8434a428d51849320db4b42e528501d283d495ac Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 26 Jul 2024 11:32:20 +0200
-Subject: [PATCH 177/178] fix(LinstorSR): ensure `_is_master` is always set
+Subject: [PATCH 177/179] fix(LinstorSR): ensure `_is_master` is always set
 
 `_is_master` is not always initialized, and more precisely
 in the case of detach where LinstorSR.load method is not called.

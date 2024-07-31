@@ -1,7 +1,7 @@
 From 0940fe2bfcfc74d6252a07cf95d1f261bf77cfc8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 24 Mar 2021 10:06:58 +0100
-Subject: [PATCH 040/178] feat(LinstorSR): add optional ips parameter
+Subject: [PATCH 040/179] feat(LinstorSR): add optional ips parameter
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

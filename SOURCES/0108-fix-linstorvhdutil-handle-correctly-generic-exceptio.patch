@@ -1,7 +1,7 @@
 From 3aed3787570dae79cef8952cb87596aec8ff98df Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 15 Feb 2023 11:34:54 +0100
-Subject: [PATCH 108/178] fix(linstorvhdutil): handle correctly generic
+Subject: [PATCH 108/179] fix(linstorvhdutil): handle correctly generic
  exceptions in _raise_openers_exception
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

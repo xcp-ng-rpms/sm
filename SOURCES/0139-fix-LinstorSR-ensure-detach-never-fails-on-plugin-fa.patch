@@ -1,7 +1,7 @@
 From f885dbd5d82b1af3ca70b38a0640580207d9bf5a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 23 Oct 2023 14:31:27 +0200
-Subject: [PATCH 139/178] fix(LinstorSR): ensure detach never fails on plugin
+Subject: [PATCH 139/179] fix(LinstorSR): ensure detach never fails on plugin
  failure
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

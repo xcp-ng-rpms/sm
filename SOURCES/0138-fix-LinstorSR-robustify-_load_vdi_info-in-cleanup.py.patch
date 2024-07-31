@@ -1,7 +1,7 @@
 From c3f1a7b62b9696cc6abb305a5164a75b49240de6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 11 Oct 2023 12:39:56 +0200
-Subject: [PATCH 138/178] fix(LinstorSR): robustify _load_vdi_info in
+Subject: [PATCH 138/179] fix(LinstorSR): robustify _load_vdi_info in
  cleanup.py
 
 After a failed snapshot like that:

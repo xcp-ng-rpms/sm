@@ -1,7 +1,7 @@
 From a719956530bd08539fa58f1cfd0043779cc7c0d9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 26 Oct 2021 10:44:00 +0200
-Subject: [PATCH 049/178] feat(LinstorSR): explain on which host, plugins
+Subject: [PATCH 049/179] feat(LinstorSR): explain on which host, plugins
  commands are executed
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

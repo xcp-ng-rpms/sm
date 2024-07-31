@@ -1,7 +1,7 @@
 From 5e96c8a43e8a672bc1622ed10ba7bc8138caed91 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 8 Mar 2021 13:25:28 +0100
-Subject: [PATCH 037/178] fix(LinstorJournaler): ensure uri is not None during
+Subject: [PATCH 037/179] fix(LinstorJournaler): ensure uri is not None during
  linstor.KV creation
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

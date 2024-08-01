@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.0
-Release: 1.3%{?xsrel}%{?dist}
+Release: 1.4%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.0.tar.gz
@@ -70,6 +70,7 @@ Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
 Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
 Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
 Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
+Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 
 %description
 This package contains storage backends used in XCP
@@ -368,6 +369,9 @@ Manager and some other packages
 
 
 %changelog
+* Tue Jul 30 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.2.0-1.4
+- Add 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
+
 * Tue Jul 30 2024 Ronan Abhamon <ronan.abhamon@vates.fr> - 3.2.0-1.3
 - Reload automatically multipathd config after each update
 

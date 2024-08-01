@@ -1,7 +1,7 @@
 From e4503ac458166e9be4dae69fce8c4c3ea16c2639 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:32:37 +0100
-Subject: [PATCH 15/25] py3: use of integer division operator
+Subject: [PATCH 15/26] py3: use of integer division operator
 
 Guided by futurize's "old_div" use
 

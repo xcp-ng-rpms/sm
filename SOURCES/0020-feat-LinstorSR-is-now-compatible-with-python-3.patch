@@ -1,7 +1,7 @@
 From 0313ce69cc0359d8f092735ffe96db85b26a69f6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
-Subject: [PATCH 20/26] feat(LinstorSR): is now compatible with python 3
+Subject: [PATCH 20/27] feat(LinstorSR): is now compatible with python 3
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

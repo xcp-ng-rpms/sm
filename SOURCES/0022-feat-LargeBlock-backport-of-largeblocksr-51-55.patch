@@ -1,7 +1,7 @@
 From 52d495879ebf8c1caee78f3e10f7febd65d8ccd3 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 7 May 2024 15:20:22 +0200
-Subject: [PATCH 22/23] feat(LargeBlock): backport of largeblocksr (#51) (#55)
+Subject: [PATCH 22/24] feat(LargeBlock): backport of largeblocksr (#51) (#55)
 
 A SR inheriting from a EXTSR allowing to use a 4KiB blocksize device as
 SR.
@@ -395,5 +395,5 @@ index 534e6c9..3c7bd34 100755
      import LVHDSR
      import MooseFSSR
 -- 
-2.44.0
+2.45.2
 

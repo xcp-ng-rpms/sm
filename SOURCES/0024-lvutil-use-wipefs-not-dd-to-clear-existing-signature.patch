@@ -1,7 +1,7 @@
 From a3dbbe1756addedb03c33fbb4c521708b3214c32 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 5 Jul 2023 16:57:26 +0200
-Subject: [PATCH 24/26] lvutil: use wipefs not dd to clear existing signatures
+Subject: [PATCH 24/27] lvutil: use wipefs not dd to clear existing signatures
  (xapi-project#624)
 
 Signed-off-by: Yann Dirson <yann.dirson@vates.fr>

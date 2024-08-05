@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.2.0.linstor.1%{?dist}
+Release: %{?xsrel}.2.0.linstor.1.1.linstorhostcall.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -677,7 +677,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
-* Wed Aug 07 2024 Damien Thenot <damien.thenot@vates.tech> 2.30.8-12.2.0.linstor.2
+* Wed Aug 07 2024 Damien Thenot <damien.thenot@vates.tech> 2.30.8-12.2.0.linstor.1.1.linstorhostcall.1
 - Add 0179-feat-Linstor-rewrite-linstorhostcall-logic.patch
 
 * Tue Aug 06 2024 Damien Thenot <damien.thenot@vates.tech> - 2.30.8-12.2.0.linstor.1

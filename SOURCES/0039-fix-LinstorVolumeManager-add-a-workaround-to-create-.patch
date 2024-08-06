@@ -1,0 +1,36 @@
+From 5a2642058762b8fa64c44b53e89618f5c7b77f3b Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 23 Mar 2021 14:49:39 +0100
+Subject: [PATCH 039/178] fix(LinstorVolumeManager): add a workaround to create
+ properly SR with thin LVM
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvolumemanager.py | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 27c8df5..3aaffdf 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -2134,6 +2134,17 @@ class LinstorVolumeManager(object):
+                 ) + 'LINSTOR volume list must be empty.'
+             )
+ 
++        # Workaround to use thin lvm. Without this line an error is returned:
++        # "Not enough available nodes"
++        # I don't understand why but this command protect against this bug.
++        try:
++            lin.storage_pool_list_raise(filter_by_stor_pools=[group_name])
++        except Exception as e:
++            raise LinstorVolumeManagerError(
++                'Failed to get storage pool list before database creation: {}'
++                .format(e)
++            )
++
+         size = cls.round_up_volume_size(DATABASE_SIZE)
+         cls._check_volume_creation_errors(lin.resource_group_spawn(
+             rsc_grp_name=group_name,
+-- 
+2.46.0
+

@@ -1,0 +1,31 @@
+From ec5a6609241a382f5734577f35194911ec8a1876 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 25 Apr 2023 11:20:55 +0200
+Subject: [PATCH 119/178] fix(LinstorSR): attach a valid XAPI session is_open
+ is called
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/on_slave.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index bbef4f7..a197660 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -125,6 +125,12 @@ def _is_open(session, args):
+ 
+     driver = SR.driver(srType)
+     sr = driver(cmd, sr_uuid)
++
++    # session_ref param is required to have a valid session when SR object is created.
++    # It's not the case here, so attach the current session object to make LinstorSR happy.
++    if srType == 'linstor':
++        sr.session = session
++
+     vdi = sr.vdi(vdiUuid)
+     tapdisk = blktap2.Tapdisk.find_by_path(vdi.path)
+     util.SMlog("Tapdisk for %s: %s" % (vdi.path, tapdisk))
+-- 
+2.46.0
+

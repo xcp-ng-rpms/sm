@@ -1,0 +1,30 @@
+From e6ef1f66479ae68d5b0809f7a2158106aa1b3eec Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 18 Nov 2022 10:40:58 +0100
+Subject: [PATCH 095/178] feat(linstor-kv-tool): remove-all-volumes supports
+ journals now
+
+Not yet supported for remove-volume, not sure about the consequences
+for the moment.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ scripts/linstor-kv-tool | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/linstor-kv-tool b/scripts/linstor-kv-tool
+index 128d899..c907027 100755
+--- a/scripts/linstor-kv-tool
++++ b/scripts/linstor-kv-tool
+@@ -48,7 +48,7 @@ def remove_all_volumes(controller_uri, group_name):
+     )
+ 
+     for key, value in list(kv.items()):
+-        if key.startswith('xcp/volume/'):
++        if key.startswith('xcp/volume/') or key.startswith('xcp/sr/journal/'):
+             size = key.rindex('/')
+             kv.namespace = key[:size]
+             del kv[key[size + 1:]]
+-- 
+2.46.0
+

@@ -1,0 +1,35 @@
+From 5de99a76105212088f70b4a7a7daab4b1d5e3f49 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 13 Feb 2023 17:27:43 +0100
+Subject: [PATCH 107/178] fix(LinstorSR): don't check metadata when destroying
+ snap in undo_clone
+
+Remove useless check in the snap rollback helper when there is an error
+during the second `_create_snapshot` call (when VDI.clone command is executed).
+
+There is no reason to verify the metadata, this code is
+present in the LVM driver, but is useless here.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 41ece82..94cf1b7 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1496,10 +1496,6 @@ class LinstorSR(SR.SR):
+         # Remove the child nodes.
+         if snap_uuid and snap_uuid in volume_names:
+             util.SMlog('Destroying snap {}...'.format(snap_uuid))
+-            snap_metadata = self._linstor.get_volume_metadata(snap_uuid)
+-
+-            if snap_metadata.get(VDI_TYPE_TAG) != vhdutil.VDI_TYPE_VHD:
+-                raise util.SMException('Clone {} not VHD'.format(snap_uuid))
+ 
+             try:
+                 self._linstor.destroy_volume(snap_uuid)
+-- 
+2.46.0
+

@@ -1,4 +1,4 @@
-From 3b19f4d691a10f0023d936a0328e4a7684b4d3fa Mon Sep 17 00:00:00 2001
+From 2c71c3ce33cd02573824a57bd4b3917b45c890b0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH 007/178] feat(drivers): add LinstorSR driver
@@ -64,8 +64,8 @@ module imports are protected by try.. except... blocks.
  drivers/util.py                 |   46 +-
  linstor/Makefile                |   22 +
  linstor/linstor-monitord.c      |  402 ++++++
- mocks/linstor/__init__.py       |    0
  systemd/linstor-monitor.service |   13 +
+ tests/mocks/linstor/__init__.py |    0
  14 files changed, 5361 insertions(+), 30 deletions(-)
  create mode 100755 drivers/LinstorSR.py
  create mode 100755 drivers/linstor-manager
@@ -74,8 +74,8 @@ module imports are protected by try.. except... blocks.
  create mode 100755 drivers/linstorvolumemanager.py
  create mode 100644 linstor/Makefile
  create mode 100644 linstor/linstor-monitord.c
- create mode 100644 mocks/linstor/__init__.py
  create mode 100644 systemd/linstor-monitor.service
+ create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
 index 9bc0a9d..609e182 100755
@@ -5657,9 +5657,6 @@ index 0000000..8161813
 +  close(inotifyFd);
 +  return -ret;
 +}
-diff --git a/mocks/linstor/__init__.py b/mocks/linstor/__init__.py
-new file mode 100644
-index 0000000..e69de29
 diff --git a/systemd/linstor-monitor.service b/systemd/linstor-monitor.service
 new file mode 100644
 index 0000000..5f8f0a7
@@ -5679,6 +5676,9 @@ index 0000000..5f8f0a7
 +
 +[Install]
 +WantedBy=multi-user.target
+diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
+new file mode 100644
+index 0000000..e69de29
 -- 
-2.45.2
+2.46.0
 

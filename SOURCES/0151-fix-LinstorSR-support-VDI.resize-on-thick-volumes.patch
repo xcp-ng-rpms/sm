@@ -1,0 +1,31 @@
+From 13f341c188dae35cc64dbcaf6197c47e23dd4bd2 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 1 Dec 2023 11:55:12 +0100
+Subject: [PATCH 151/178] fix(LinstorSR): support VDI.resize on thick volumes
+
+---
+ drivers/LinstorSR.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 1d1b51a..a524338 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1939,11 +1939,14 @@ class LinstorVDI(VDI.VDI):
+ 
+         if self.vdi_type == vhdutil.VDI_TYPE_RAW:
+             old_volume_size = self.size
++            new_volume_size = LinstorVolumeManager.round_up_volume_size(size)
+         else:
+             old_volume_size = self.utilisation
+             if self.sr._provisioning == 'thin':
+                 # VDI is currently deflated, so keep it deflated.
+                 new_volume_size = old_volume_size
++            else:
++                new_volume_size = LinstorVhdUtil.compute_volume_size(size, self.vdi_type)
+         assert new_volume_size >= old_volume_size
+ 
+         space_needed = new_volume_size - old_volume_size
+-- 
+2.46.0
+

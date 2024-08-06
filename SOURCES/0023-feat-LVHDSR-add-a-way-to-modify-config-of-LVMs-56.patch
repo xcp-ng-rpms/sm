@@ -1,4 +1,4 @@
-From 906aede91ac5b450e6e11332ab070d0ec7b71dbb Mon Sep 17 00:00:00 2001
+From ec5c7c6cd4732e7f70122ccdb8ccdaf6711e5f31 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 28 May 2024 15:17:21 +0200
 Subject: [PATCH 023/178] feat(LVHDSR): add a way to modify config of LVMs
@@ -106,5 +106,5 @@ index ea0bc17..54930b4 100644
              self._removeTag(lvName, tag)
          del self.lvs[lvName]
 -- 
-2.45.2
+2.46.0
 

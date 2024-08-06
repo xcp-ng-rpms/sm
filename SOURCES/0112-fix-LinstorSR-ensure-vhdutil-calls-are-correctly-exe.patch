@@ -1,0 +1,147 @@
+From c27027a689f926d2a0235e1dc85d4891f0346815 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 1 Mar 2023 10:56:43 +0100
+Subject: [PATCH 112/178] fix(LinstorSR): ensure vhdutil calls are correctly
+ executed on pools with > 3 hosts
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py            | 20 +++++++-------------
+ drivers/linstorvhdutil.py       | 19 ++++++++++++++++---
+ drivers/linstorvolumemanager.py |  8 ++++----
+ 3 files changed, 27 insertions(+), 20 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index a3da28e..10e0f54 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1884,9 +1884,12 @@ class LinstorVDI(VDI.VDI):
+             return self._attach_using_http_nbd()
+ 
+         if not util.pathexists(self.path):
+-            raise xs_errors.XenError(
+-                'VDIUnavailable', opterr='Could not find: {}'.format(self.path)
+-            )
++            # Ensure we have a path...
++            self._linstor.get_device_path(vdi_uuid)
++            if not util.pathexists(self.path):
++                raise xs_errors.XenError(
++                    'VDIUnavailable', opterr='Could not find: {}'.format(self.path)
++                )
+ 
+         self.attached = True
+         return VDI.VDI.attach(self, self.sr.uuid, self.uuid)
+@@ -2137,16 +2140,7 @@ class LinstorVDI(VDI.VDI):
+             self.size = volume_info.virtual_size
+             self.parent = ''
+         else:
+-            try:
+-                vhd_info = self.sr._vhdutil.get_vhd_info(self.uuid)
+-            except util.CommandException as e:
+-                if e.code != errno.ENOENT:
+-                    raise
+-                # Path doesn't exist. Probably a diskless without local path.
+-                # Force creation and retry.
+-                self._linstor.get_device_path(self.uuid)
+-                vhd_info = self.sr._vhdutil.get_vhd_info(self.uuid)
+-
++            vhd_info = self.sr._vhdutil.get_vhd_info(self.uuid)
+             self.hidden = vhd_info.hidden
+             self.size = vhd_info.sizeVirt
+             self.parent = vhd_info.parentUuid
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index 05225e8..c1b817d 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -47,7 +47,7 @@ def call_vhd_util_on_host(session, host_ref, method, device_path, args):
+     return response
+ 
+ 
+-class ErofsLinstorCallException(Exception):
++class LinstorCallException(Exception):
+     def __init__(self, cmd_err):
+         self.cmd_err = cmd_err
+ 
+@@ -55,6 +55,14 @@ class ErofsLinstorCallException(Exception):
+         return str(self.cmd_err)
+ 
+ 
++class ErofsLinstorCallException(LinstorCallException):
++    pass
++
++
++class NoPathLinstorCallException(LinstorCallException):
++    pass
++
++
+ def linstorhostcall(local_method, remote_method):
+     def decorated(response_parser):
+         def wrapper(*args, **kwargs):
+@@ -70,12 +78,12 @@ def linstorhostcall(local_method, remote_method):
+ 
+             # Try to read locally if the device is not in use or if the device
+             # is up to date and not diskless.
+-            (node_names, in_use) = \
++            (node_names, in_use_by) = \
+                 self._linstor.find_up_to_date_diskful_nodes(vdi_uuid)
+ 
+             local_e = None
+             try:
+-                if not in_use or socket.gethostname() in node_names:
++                if not in_use_by or socket.gethostname() in node_names:
+                     return self._call_local_vhd_util(local_method, device_path, *args[2:], **kwargs)
+             except ErofsLinstorCallException as e:
+                 local_e = e.cmd_err
+@@ -88,6 +96,9 @@ def linstorhostcall(local_method, remote_method):
+                 )
+             )
+ 
++            if in_use_by:
++                node_names = {in_use_by}
++
+             # B. Execute the plugin on master or slave.
+             remote_args = {
+                 'devicePath': device_path,
+@@ -319,6 +330,8 @@ class LinstorVhdUtil:
+                 except util.CommandException as e:
+                     if e.code == errno.EROFS or e.code == EMEDIUMTYPE:
+                         raise ErofsLinstorCallException(e)  # Break retry calls.
++                    if e.code == errno.ENOENT:
++                        raise NoPathLinstorCallException(e)
+                     raise e
+             # Retry only locally if it's not an EROFS exception.
+             return util.retry(local_call, 5, 2, exceptions=[util.CommandException])
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 4662043..5ab83c4 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1410,12 +1410,12 @@ class LinstorVolumeManager(object):
+         The disk must be up to data to be used.
+         :param str volume_uuid: The volume to use.
+         :return: The available nodes.
+-        :rtype: tuple(set(str), bool)
++        :rtype: tuple(set(str), str)
+         """
+ 
+         volume_name = self.get_volume_name(volume_uuid)
+ 
+-        in_use = False
++        in_use_by = None
+         node_names = set()
+ 
+         resource_states = filter(
+@@ -1428,9 +1428,9 @@ class LinstorVolumeManager(object):
+             if volume_state.disk_state == 'UpToDate':
+                 node_names.add(resource_state.node_name)
+             if resource_state.in_use:
+-                in_use = True
++                in_use_by = resource_state.node_name
+ 
+-        return (node_names, in_use)
++        return (node_names, in_use_by)
+ 
+     def invalidate_resource_cache(self):
+         """
+-- 
+2.46.0
+

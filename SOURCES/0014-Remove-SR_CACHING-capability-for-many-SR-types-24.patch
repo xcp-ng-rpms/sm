@@ -1,4 +1,4 @@
-From 658d391b17fa66a312401e43b22cefb897ea3b57 Mon Sep 17 00:00:00 2001
+From bf7577ff65e882686af8e7ca1748cfb0b7934a14 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:37:07 +0200
 Subject: [PATCH 014/178] Remove SR_CACHING capability for many SR types (#24)
@@ -56,5 +56,5 @@ index ab72f4e..212f1ad 100755
                  "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
                  "VDI_GENERATE_CONFIG",
 -- 
-2.45.2
+2.46.0
 

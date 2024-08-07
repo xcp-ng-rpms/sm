@@ -1,7 +1,7 @@
 From 6afb9f195a5b3ce97d6f727337708ce536e19456 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 30 May 2023 11:19:13 +0200
-Subject: [PATCH 121/178] fix(LinstorSR): remove hosts/ips param
+Subject: [PATCH 121/179] fix(LinstorSR): remove hosts/ips param
 
 ---
  drivers/LinstorSR.py            | 47 +++++----------------------------

@@ -1,7 +1,7 @@
 From a6352f0f967b9f688240e3bd2928330fab772893 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 26 Sep 2023 11:48:38 +0200
-Subject: [PATCH 136/178] fix(linstorvolumemanager): avoid diskless creation
+Subject: [PATCH 136/179] fix(linstorvolumemanager): avoid diskless creation
  when a new resource is added
 
 Like said in this discussion https://github.com/xcp-ng/sm/pull/34 :

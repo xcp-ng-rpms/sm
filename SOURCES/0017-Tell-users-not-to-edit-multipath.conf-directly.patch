@@ -1,7 +1,7 @@
 From 9bfcb0be3ff34354c9299bf6e0a90e691f14e813 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 27 Jan 2023 12:03:15 +0100
-Subject: [PATCH 017/178] Tell users not to edit multipath.conf directly
+Subject: [PATCH 017/179] Tell users not to edit multipath.conf directly
 
 This file is meant to remain unchanged and regularly updated along with
 the SM component. Users can create a custom configuration file in

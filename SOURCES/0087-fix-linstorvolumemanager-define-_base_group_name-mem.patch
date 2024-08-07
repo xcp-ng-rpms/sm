@@ -1,7 +1,7 @@
 From 846da4170432a4be553ac1e98db146df069ce2ae Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 7 Oct 2022 17:45:26 +0200
-Subject: [PATCH 087/178] fix(linstorvolumemanager): define _base_group_name
+Subject: [PATCH 087/179] fix(linstorvolumemanager): define _base_group_name
  member at SR creation
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

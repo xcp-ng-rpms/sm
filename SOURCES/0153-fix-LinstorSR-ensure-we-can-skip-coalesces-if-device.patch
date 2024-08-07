@@ -1,7 +1,7 @@
 From 3199098e8780e80ed57ee610c0f82f07d10be6c5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 4 Dec 2023 18:57:08 +0100
-Subject: [PATCH 153/178] fix(LinstorSR): ensure we can skip coalesces if
+Subject: [PATCH 153/179] fix(LinstorSR): ensure we can skip coalesces if
  device path can't be fetched
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

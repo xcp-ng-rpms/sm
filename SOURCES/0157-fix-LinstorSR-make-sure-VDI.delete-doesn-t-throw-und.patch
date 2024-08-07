@@ -1,7 +1,7 @@
 From ce96408a3dda9b8d321e2f12723d28043a251237 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 18 Jan 2024 11:18:11 +0100
-Subject: [PATCH 157/178] fix(LinstorSR): make sure VDI.delete doesn't throw
+Subject: [PATCH 157/179] fix(LinstorSR): make sure VDI.delete doesn't throw
  under specific conditions
 
 If we can update the volume state in the KV-store, there is no reason to raise

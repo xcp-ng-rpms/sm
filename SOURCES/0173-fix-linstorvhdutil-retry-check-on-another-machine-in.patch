@@ -1,7 +1,7 @@
 From bee9bb828530924b8596135b70bb38092ef5cf8f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 6 May 2024 18:15:00 +0200
-Subject: [PATCH 173/178] fix(linstorvhdutil): retry check on another machine
+Subject: [PATCH 173/179] fix(linstorvhdutil): retry check on another machine
  in case of failure (#54)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

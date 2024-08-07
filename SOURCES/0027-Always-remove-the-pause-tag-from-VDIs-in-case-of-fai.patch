@@ -1,7 +1,7 @@
 From e2533c00ebd0e76502dd3b8e4b57bae3e271e19e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Feb 2024 23:16:16 +0100
-Subject: [PATCH 027/178] Always remove the pause tag from VDIs in case of
+Subject: [PATCH 027/179] Always remove the pause tag from VDIs in case of
  failure
 
 During VDI activation in the blktap module and in case of failure

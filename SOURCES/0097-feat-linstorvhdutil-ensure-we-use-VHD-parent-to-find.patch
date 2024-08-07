@@ -1,7 +1,7 @@
 From 8390021e0aedb7ef2979ff9ac9c21fe3367a4f23 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 23 Nov 2022 15:28:23 +0100
-Subject: [PATCH 097/178] feat(linstorvhdutil): ensure we use VHD parent to
+Subject: [PATCH 097/179] feat(linstorvhdutil): ensure we use VHD parent to
  find host where to coalesce
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

@@ -1,7 +1,7 @@
 From 7bbb8e4cb68122d9e2a784dae2359edbe8a16445 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 19 Oct 2021 14:48:17 +0200
-Subject: [PATCH 045/178] feat(LinstorVolumeManager): increase peer slots limit
+Subject: [PATCH 045/179] feat(LinstorVolumeManager): increase peer slots limit
  (support 31 connections to a DRBD)
 
 - Also, create diskless devices when db is created

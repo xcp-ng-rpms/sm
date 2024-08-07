@@ -1,0 +1,34 @@
+From 30a3692573e79f371c2cf2b79c19b7cc02bc693f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 19 Jan 2024 14:39:17 +0100
+Subject: [PATCH 158/178] fix(LinstorSR): add drbd in the blacklist of
+ multipath.conf
+
+If DRBD is installed for the first time, and if the multipathd
+service is not restarted, volumes can be blocked by this daemon.
+
+Note: the drbd-utils RPM adds the same change in /etc/multipath/conf.d/drbd.conf,
+but this package is generally installed using XOSTOR UI and we don't display a
+reboot message to be performed like the host update view. So it's probably good
+to always have this modification whether we have drbd-utils or not.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ multipath/multipath.conf | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/multipath/multipath.conf b/multipath/multipath.conf
+index c854b57..309bf2a 100644
+--- a/multipath/multipath.conf
++++ b/multipath/multipath.conf
+@@ -23,6 +23,7 @@ blacklist {
+ 	devnode "scini*"
+ 	devnode "^rbd[0-9]*"
+ 	devnode "^nbd[0-9]*"
++	devnode "^drbd[0-9]*"
+ }
+ # Leave this section in place even if empty
+ blacklist_exceptions {
+-- 
+2.46.0
+

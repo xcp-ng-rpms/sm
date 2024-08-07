@@ -1,4 +1,4 @@
-From 17129f5341223dae7a0b38516e8b01990b61df1d Mon Sep 17 00:00:00 2001
+From 507c2f067878ee88765c5750d3e618c8c63208c7 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 25 Aug 2023 17:47:34 +0200
 Subject: [PATCH 019/178] Install /etc/multipath/conf.d/custom.conf
@@ -48,5 +48,5 @@ index b0ae353..3357cbf 100755
  	  $(SM_STAGING)/$(INIT_DIR)
  	install -m 755 multipath/multipath-root-setup \
 -- 
-2.45.2
+2.46.0
 

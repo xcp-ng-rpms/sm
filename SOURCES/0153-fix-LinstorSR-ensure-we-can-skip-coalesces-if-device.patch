@@ -1,0 +1,32 @@
+From 3199098e8780e80ed57ee610c0f82f07d10be6c5 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 4 Dec 2023 18:57:08 +0100
+Subject: [PATCH 153/178] fix(LinstorSR): ensure we can skip coalesces if
+ device path can't be fetched
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 8635f48..8c16f68 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1548,7 +1548,12 @@ class LinstorVDI(VDI):
+     def _activateChain(self):
+         vdi = self
+         while vdi:
+-            p = self.sr._linstor.get_device_path(vdi.uuid)
++            try:
++                p = self.sr._linstor.get_device_path(vdi.uuid)
++            except Exception as e:
++                # Use SMException to skip coalesce.
++                # Otherwise the GC is stopped...
++                raise util.SMException(str(e))
+             vdi = vdi.parent
+ 
+     def _setHidden(self, hidden=True):
+-- 
+2.46.0
+

@@ -1,0 +1,33 @@
+From bd36d8cc1077b88bf5257a91f270f84cf5261e64 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 5 Feb 2024 18:01:22 +0100
+Subject: [PATCH 161/178] fix(linstorvolumemanager): assert with message after
+ log in update_volume_uuid
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvolumemanager.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 7410fd7..5f2e06e 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -972,12 +972,12 @@ class LinstorVolumeManager(object):
+         deleted VDI.
+         """
+ 
+-        assert volume_uuid != new_volume_uuid
+-
+         self._logger(
+             'Trying to update volume UUID {} to {}...'
+             .format(volume_uuid, new_volume_uuid)
+         )
++        assert volume_uuid != new_volume_uuid, 'can\'t update volume UUID, same value'
++
+         if not force:
+             self._ensure_volume_exists(volume_uuid)
+         self.ensure_volume_is_not_locked(volume_uuid)
+-- 
+2.46.0
+

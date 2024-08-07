@@ -1,4 +1,4 @@
-From 56fd6bfd862670262c52d2722ac506c276a12d56 Mon Sep 17 00:00:00 2001
+From 8434a428d51849320db4b42e528501d283d495ac Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 26 Jul 2024 11:32:20 +0200
 Subject: [PATCH 177/178] fix(LinstorSR): ensure `_is_master` is always set
@@ -154,5 +154,5 @@ index 2127057..fdcad17 100755
              # or diskful available to init HA.
              # It also avoid this error in xensource.log
 -- 
-2.45.2
+2.46.0
 

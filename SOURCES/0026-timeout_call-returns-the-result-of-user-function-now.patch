@@ -1,0 +1,26 @@
+From 608866667c3f834f5a8128f0e646b494dbfda73f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 16 Feb 2022 18:28:06 +0100
+Subject: [PATCH 026/178] timeout_call returns the result of user function now
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/util.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/util.py b/drivers/util.py
+index 77f3f19..54fda46 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -851,7 +851,7 @@ def timeout_call(timeoutseconds, function, *arguments):
+     signal.signal(signal.SIGALRM, handler)
+     signal.alarm(timeoutseconds)
+     try:
+-        function(*arguments)
++        return function(*arguments)
+     finally:
+         signal.alarm(0)
+ 
+-- 
+2.46.0
+

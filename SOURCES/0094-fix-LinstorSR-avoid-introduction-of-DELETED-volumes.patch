@@ -1,0 +1,27 @@
+From a17925aa496b1814038ff6f998461b533f90d077 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 17 Nov 2022 15:46:02 +0100
+Subject: [PATCH 094/178] fix(LinstorSR): avoid introduction of DELETED volumes
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index ba28452..9e5b3cd 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1170,6 +1170,9 @@ class LinstorSR(SR.SR):
+                     )
+                     continue
+ 
++                if vdi_uuid.startswith('DELETED_'):
++                    continue
++
+                 util.SMlog(
+                     'Trying to introduce VDI {} as it is present in '
+                     'LINSTOR and not in XAPI...'
+-- 
+2.46.0
+

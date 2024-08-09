@@ -1,24 +1,23 @@
-%global package_speccommit ffb71ac33560eadc29827c13157837f60bc74beb
-%global package_srccommit v3.2.0
+%global package_speccommit 9b3d31b2bff0ffe8b70f0a49a857aaf910977f1c
+%global package_srccommit v3.2.1
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.0
+Version: 3.2.1
 Release: 1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.0.tar.gz
+Source0: sm-3.2.1.tar.gz
 
-%define __python python3.6
+%define __python python3
 
 BuildRequires: python3
 BuildRequires: python3-devel
 BuildRequires: python3-pylint
 BuildRequires: python3-coverage
 BuildRequires: python3-bitarray
-BuildRequires: python3-future
 
 Requires(post): systemd
 Requires(preun): systemd
@@ -285,6 +284,11 @@ Manager and some other packages
 
 
 %changelog
+* Wed May 29 2024 Mark Syms <mark.syms@cloud.com> - 3.2.1-1
+- Use python3 rather than python3.6
+- CA-390937: fix conflict between GC and SR detach
+- CA-392989: improve diagnostics for tests
+
 * Fri May 17 2024 Mark Syms <mark.syms@cloud.com> - 3.2.0-1
 - CA-387861 Introduce fair locking subsystem
 - CA-384942: use resolved CD path for error checking

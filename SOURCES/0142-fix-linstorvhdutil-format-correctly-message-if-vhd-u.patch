@@ -1,7 +1,7 @@
 From 1230aa74fee21eabb70be27959d16a01b20dd747 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 14 Nov 2023 18:21:53 +0100
-Subject: [PATCH 142/179] fix(linstorvhdutil): format correctly message if
+Subject: [PATCH 142/180] fix(linstorvhdutil): format correctly message if
  vhd-util cannot be run
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

@@ -1,7 +1,7 @@
 From d8a3fcab1752746435c599664efd7f4789e2c58f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 15 Sep 2022 11:49:34 +0200
-Subject: [PATCH 080/179] feat(minidrbdcluster): stop resource services at
+Subject: [PATCH 080/180] feat(minidrbdcluster): stop resource services at
  startup
 
 - Ensure all services are stopped when minidrbcluster is started.

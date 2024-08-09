@@ -1,7 +1,7 @@
 From 383f9128fb1a788074a5a6aca09a249bfeaa44f5 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 27 Jan 2023 12:23:13 +0100
-Subject: [PATCH 018/179] Add custom.conf multipath configuration file
+Subject: [PATCH 018/180] Add custom.conf multipath configuration file
 
 Meant to be installed as /etc/multipath/conf.d/custom.conf for users
 to have an easy entry point for editing, as well as information on what

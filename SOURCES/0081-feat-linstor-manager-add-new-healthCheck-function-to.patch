@@ -1,7 +1,7 @@
 From ef9a22262f1cfb444bf01274bfbbf0b53607f341 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 23 Sep 2022 17:45:08 +0200
-Subject: [PATCH 081/179] feat(linstor-manager): add new `healthCheck` function
+Subject: [PATCH 081/180] feat(linstor-manager): add new `healthCheck` function
  to monitor pool (#26)
 
 Print a JSON output to monitor state of LINSTOR SRs:

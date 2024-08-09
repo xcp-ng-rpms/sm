@@ -1,7 +1,7 @@
 From b63d80afb41d5cc1d053a3eb9cb12fe9d7c5cfee Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 1 Aug 2023 15:16:17 +0200
-Subject: [PATCH 126/179] fix(LinstorSR): Ensure we always have a device path
+Subject: [PATCH 126/180] fix(LinstorSR): Ensure we always have a device path
  during leaf-coalesce calls
 
 So we must not verify that we have a valid DRBD path in the load step,

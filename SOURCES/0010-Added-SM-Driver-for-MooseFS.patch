@@ -1,7 +1,7 @@
 From 359dd15436b153bedf32af7768973febc2b84c2f Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
-Subject: [PATCH 010/179] Added SM Driver for MooseFS
+Subject: [PATCH 010/180] Added SM Driver for MooseFS
 
 Co-authored-by: Piotr Robert Konopelko <piotr.konopelko@moosefs.pro>
 Signed-off-by: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>

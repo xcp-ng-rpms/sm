@@ -1,7 +1,7 @@
 From 5987a43e40444a524768b1434de1a67c6e53000a Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 17:10:12 +0200
-Subject: [PATCH 006/179] Re-add the ext4 driver for users who need to
+Subject: [PATCH 006/180] Re-add the ext4 driver for users who need to
  transition
 
 The driver is needed to transition to the ext driver.

@@ -1,7 +1,7 @@
 From 49fad6ce14acee828ef7d5c90abbc1a4310b788c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 13 May 2022 14:35:57 +0200
-Subject: [PATCH 061/179] fix(minidrbdcluster): supports new properties like
+Subject: [PATCH 061/180] fix(minidrbdcluster): supports new properties like
  `force-io-failures`
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

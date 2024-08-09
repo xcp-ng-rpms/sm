@@ -1,7 +1,7 @@
 From 388927905668b5f4b577b2099ea95fcae1f62c57 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 26 Aug 2021 16:52:01 +0200
-Subject: [PATCH 044/179] fix(LinstorSR): prevent starting controller during
+Subject: [PATCH 044/180] fix(LinstorSR): prevent starting controller during
  fail in linstor manager destroy method
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

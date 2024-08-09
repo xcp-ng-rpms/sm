@@ -1,7 +1,7 @@
 From c341a4047f34b35b128fd5555eeffe62b6a8977a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 20 Jul 2023 10:46:33 +0200
-Subject: [PATCH 125/179] fix(linstor-manager): remove dead/useless code in
+Subject: [PATCH 125/180] fix(linstor-manager): remove dead/useless code in
  add/remove_host helpers
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

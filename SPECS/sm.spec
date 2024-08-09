@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.2.0.linstor.1.1.linstorhostcall.1%{?dist}
+Release: %{?xsrel}.2.0.linstor.1.1.linstorhostcall.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -275,6 +275,7 @@ Patch1176: 0176-fix-LinstorSR-open-non-leaf-volumes-in-RO-mode-creat.patch
 Patch1177: 0177-fix-LinstorSR-ensure-_is_master-is-always-set.patch
 Patch1178: 0178-fix-linstor-check-if-resource-is-tiebreaker-62.patch
 Patch1179: 0179-feat-Linstor-rewrite-linstorhostcall-logic.patch
+Patch1180: 0180-feat-linstor-Add-new-debug-log-in-linstorhostcall-67.patch
 
 %description
 This package contains storage backends used in XCP
@@ -677,6 +678,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Fri Aug 09 2024 Damien Thenot <damien.thenot@vates.tech> 2.30.8-12.2.0.linstor.1.1.linstorhostcall.2
+- Add 0180-feat-linstor-Add-new-debug-log-in-linstorhostcall-67.patch
+
 * Wed Aug 07 2024 Damien Thenot <damien.thenot@vates.tech> 2.30.8-12.2.0.linstor.1.1.linstorhostcall.1
 - Add 0179-feat-Linstor-rewrite-linstorhostcall-logic.patch
 

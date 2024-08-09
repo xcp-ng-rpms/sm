@@ -1,7 +1,7 @@
 From 5de99a76105212088f70b4a7a7daab4b1d5e3f49 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 13 Feb 2023 17:27:43 +0100
-Subject: [PATCH 107/179] fix(LinstorSR): don't check metadata when destroying
+Subject: [PATCH 107/180] fix(LinstorSR): don't check metadata when destroying
  snap in undo_clone
 
 Remove useless check in the snap rollback helper when there is an error

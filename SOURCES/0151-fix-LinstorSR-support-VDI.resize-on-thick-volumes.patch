@@ -1,7 +1,7 @@
 From 13f341c188dae35cc64dbcaf6197c47e23dd4bd2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 1 Dec 2023 11:55:12 +0100
-Subject: [PATCH 151/179] fix(LinstorSR): support VDI.resize on thick volumes
+Subject: [PATCH 151/180] fix(LinstorSR): support VDI.resize on thick volumes
 
 ---
  drivers/LinstorSR.py | 3 +++

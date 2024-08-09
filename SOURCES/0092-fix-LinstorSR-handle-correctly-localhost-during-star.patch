@@ -1,7 +1,7 @@
 From bcc899d36e498e15ec9e5860f1439fcc4be4622b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Nov 2022 12:12:12 +0100
-Subject: [PATCH 092/179] fix(LinstorSR): handle correctly localhost during
+Subject: [PATCH 092/180] fix(LinstorSR): handle correctly localhost during
  start/stop of minidrbdcluster
 
 Otherwise another controller can be started during `xe sr-destroy` call.

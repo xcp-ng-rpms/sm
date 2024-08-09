@@ -1,7 +1,7 @@
 From 4ffea27c739e2a02c78438bfb2d281259afad615 Mon Sep 17 00:00:00 2001
 From: Benjamin Reis <benjamin.reis@vates.tech>
 Date: Thu, 27 Jun 2024 17:55:10 +0200
-Subject: [PATCH 024/179] Revert "CA-379329: check for missing iSCSI sessions
+Subject: [PATCH 024/180] Revert "CA-379329: check for missing iSCSI sessions
  and reconnect"
 
 This reverts commit d28dcc1341166ed4839dbea8ef6d1a24e981f461.

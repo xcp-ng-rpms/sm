@@ -1,7 +1,7 @@
 From 31d150bf84decf56a42866d0db09210493388090 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 19 Apr 2024 14:55:49 +0200
-Subject: [PATCH 179/179] feat(Linstor): rewrite linstorhostcall logic
+Subject: [PATCH 179/180] feat(Linstor): rewrite linstorhostcall logic
 
 Try to use host_OpaqueRef to access primary then try on the master host
 if it doesn't work, then find the primary with linstor API or if no

@@ -1,7 +1,7 @@
 From 09a32aefb00ff510ee3197dba69f1dfe1c40c81b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 26 Jan 2024 15:29:21 +0100
-Subject: [PATCH 160/179] fix(linstorvolumemanager): don't align volumes on LVM
+Subject: [PATCH 160/180] fix(linstorvolumemanager): don't align volumes on LVM
  sector size
 
 It's the goal of the LINSTOR stack to align properly on the LVM layer.

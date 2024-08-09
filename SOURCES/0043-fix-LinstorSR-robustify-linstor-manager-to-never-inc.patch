@@ -1,7 +1,7 @@
 From 00000e9bd493c60ff0fd29bd1ee0612188f14cba Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 26 Aug 2021 15:26:11 +0200
-Subject: [PATCH 043/179] fix(LinstorSR): robustify linstor-manager to never
+Subject: [PATCH 043/180] fix(LinstorSR): robustify linstor-manager to never
  include from plugins path
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

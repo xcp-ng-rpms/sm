@@ -1,7 +1,7 @@
 From 4a7d088083167e073cf0149f3ad54aa0c31869c3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 21 Nov 2023 13:50:24 +0100
-Subject: [PATCH 146/179] fix(LinstorSR): ensure we can deflate on any host
+Subject: [PATCH 146/180] fix(LinstorSR): ensure we can deflate on any host
  after a journal rollback
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

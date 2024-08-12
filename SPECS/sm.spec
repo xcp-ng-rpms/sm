@@ -1,17 +1,17 @@
-%global package_speccommit ffb71ac33560eadc29827c13157837f60bc74beb
-%global package_srccommit v3.2.0
+%global package_speccommit 9b3d31b2bff0ffe8b70f0a49a857aaf910977f1c
+%global package_srccommit v3.2.1
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.0
-Release: 1.5%{?xsrel}%{?dist}
+Version: 3.2.1
+Release: 1.1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.0.tar.gz
+Source0: sm-3.2.1.tar.gz
 
-%define __python python3.6
+%define __python python3
 
 BuildRequires: python3
 BuildRequires: python3-devel
@@ -44,7 +44,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.0..3.2.0-8.3
+# git format-patch v3.2.1..3.2.1-8.3
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -358,6 +358,14 @@ Manager and some other packages
 
 
 %changelog
+* Mon Aug 12 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.1-1.1
+- Rebase on 3.2.1-1
+- *** Upstream changelog ***
+- * Wed May 29 2024 Mark Syms <mark.syms@cloud.com> - 3.2.1-1
+- - Use python3 rather than python3.6
+- - CA-390937: fix conflict between GC and SR detach
+- - CA-392989: improve diagnostics for tests
+
 * Thu Aug 01 2024 Benjamin Reis <benjamin.reis@vates.fr> - 3.2.0-1.5
 - Add 0027-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
 

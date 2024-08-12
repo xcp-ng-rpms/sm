@@ -1,4 +1,4 @@
-From b0bf49a4284c22da590c8a9062a93d34bba4b2ac Mon Sep 17 00:00:00 2001
+From 7f488693541d0264c3442f3e14ab1913e7f9d555 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
 Subject: [PATCH 04/27] feat(drivers): add ZFS driver to avoid losing VDI
@@ -188,7 +188,7 @@ index 0000000..1b2f398
 +else:
 +    SR.registerSR(ZFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index a52585f..a3ed481 100755
+index 6b90733..65fec4e 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2890,7 +2890,7 @@ def normalizeType(type):
@@ -201,5 +201,5 @@ index a52585f..a3ed481 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
 -- 
-2.45.2
+2.46.0
 

@@ -1,4 +1,4 @@
-From a3dbbe1756addedb03c33fbb4c521708b3214c32 Mon Sep 17 00:00:00 2001
+From 1f46bf929c4d6bc192592b1247cfedf15203ae0e Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 5 Jul 2023 16:57:26 +0200
 Subject: [PATCH 24/27] lvutil: use wipefs not dd to clear existing signatures
@@ -78,5 +78,5 @@ index 0564b29..5d7b320 100755
      regex = re.compile("^PRIMARY_DISK")
      return regex.search(s, 0)
 -- 
-2.45.2
+2.46.0
 

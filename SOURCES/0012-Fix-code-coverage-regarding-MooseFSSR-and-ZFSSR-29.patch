@@ -1,4 +1,4 @@
-From 1d75e7b46a035fdb79a03ae370f8c3aea2d8e5a2 Mon Sep 17 00:00:00 2001
+From fd8bec931600fd5a0f64298783c064b2e7173cd4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 19 Sep 2022 10:31:00 +0200
 Subject: [PATCH 12/27] Fix code coverage regarding MooseFSSR and ZFSSR (#29)
@@ -23,10 +23,10 @@ index 3349a44..feaac62 100644
              'command': 'some_command',
              'device_config': {}
 diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
-index c477fa3..e95ab7e 100644
+index 879ea37..d0cca93 100644
 --- a/tests/test_ZFSSR.py
 +++ b/tests/test_ZFSSR.py
-@@ -50,9 +50,7 @@ class TestZFSSR(unittest.TestCase):
+@@ -53,9 +53,7 @@ class TestZFSSR(unittest.TestCase):
              self.create_zfs_sr()
          except SR.SROSError as e:
              # Check SRUnavailable error.
@@ -37,7 +37,7 @@ index c477fa3..e95ab7e 100644
          self.assertTrue(failed)
  
      @mock.patch('ZFSSR.is_zfs_available', autospec=True)
-@@ -77,9 +75,7 @@ class TestZFSSR(unittest.TestCase):
+@@ -80,9 +78,7 @@ class TestZFSSR(unittest.TestCase):
              sr.create(sr.uuid, 42)
          except SR.SROSError as e:
              # Check ZFSSRCreate error.
@@ -48,7 +48,7 @@ index c477fa3..e95ab7e 100644
          self.assertTrue(failed)
  
      @mock.patch('ZFSSR.is_zfs_available', autospec=True)
-@@ -112,7 +108,5 @@ class TestZFSSR(unittest.TestCase):
+@@ -115,7 +111,5 @@ class TestZFSSR(unittest.TestCase):
              sr.scan(sr.uuid)
          except SR.SROSError as e:
              # Check SRUnavailable error.
@@ -58,5 +58,5 @@ index c477fa3..e95ab7e 100644
 +            failed = e.errno == 47
          self.assertTrue(failed)
 -- 
-2.45.2
+2.46.0
 

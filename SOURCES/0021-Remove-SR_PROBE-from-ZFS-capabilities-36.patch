@@ -1,4 +1,4 @@
-From 6c5fb067eff3d4c72f766655c4a20998f72ab516 Mon Sep 17 00:00:00 2001
+From e0c382ade87d0ee3c371344ad18158d64e4d3b39 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Fri, 4 Aug 2023 12:10:37 +0200
 Subject: [PATCH 21/27] Remove `SR_PROBE` from ZFS capabilities (#36)
@@ -24,5 +24,5 @@ index 354ca90..5301d5e 100644
      'VDI_CREATE',
      'VDI_DELETE',
 -- 
-2.45.2
+2.46.0
 

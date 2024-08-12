@@ -1,4 +1,4 @@
-From 505db9115ea8bf7e690e1ee2a2dd34e86f58bbab Mon Sep 17 00:00:00 2001
+From baf9741205742d561077ff6e0dbffc4ea24f3067 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
 Subject: [PATCH 19/27] feat(LinstorSR): import all 8.2 changes
@@ -2242,7 +2242,7 @@ index 5712d8f..669b9f6 100755
                          tapdisk = cls.__from_blktap(blktap)
                          node = '/sys/dev/block/%d:%d' % (tapdisk.major(), tapdisk.minor)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 6ec09cd..eef2495 100755
+index f70879b..eb8a143 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -53,8 +53,11 @@ from time import monotonic as _time
@@ -2817,7 +2817,7 @@ index 6ec09cd..eef2495 100755
  
  ################################################################################
  #
-@@ -3526,9 +3711,9 @@ def abort(srUuid, soft=False):
+@@ -3534,9 +3719,9 @@ def abort(srUuid, soft=False):
  
  
  def gc(session, srUuid, inBackground, dryRun=False):
@@ -8328,5 +8328,5 @@ index 679d442..4b59f63 100644
      def fake_import(self, *args, **kwargs):
          print('Asked to import {}'.format(args[0]))
 -- 
-2.45.2
+2.46.0
 

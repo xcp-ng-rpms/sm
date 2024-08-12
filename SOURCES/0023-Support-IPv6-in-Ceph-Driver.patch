@@ -1,4 +1,4 @@
-From f53aacf74d9e4ca5517653e872081ec63e18f9c0 Mon Sep 17 00:00:00 2001
+From dad397ab5c584430b0f21f146a281d3421beeef9 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Mon, 25 Sep 2023 16:13:13 +0200
 Subject: [PATCH 23/27] Support IPv6 in Ceph Driver
@@ -40,5 +40,5 @@ index d85faf9..2f8c50d 100644
          except util.CommandException as inst:
              syslog(_syslog.LOG_ERR, 'CephFS mount failed ' + inst.__str__())
 -- 
-2.45.2
+2.46.0
 

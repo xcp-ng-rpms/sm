@@ -1,15 +1,15 @@
-%global package_speccommit 9b3d31b2bff0ffe8b70f0a49a857aaf910977f1c
-%global package_srccommit v3.2.1
+%global package_speccommit eb20118552753e3d609cbdbd8102ecfc2a31f4fa
+%global package_srccommit v3.2.3
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.1
+Version: 3.2.3
 Release: 1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.1.tar.gz
+Source0: sm-3.2.3.tar.gz
 
 %define __python python3
 
@@ -238,6 +238,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/storage-init.service
 %{_unitdir}/sr_health_check.timer
 %{_unitdir}/sr_health_check.service
+%{_unitdir}/SMGC@.service
 %config /etc/udev/rules.d/65-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
 %config /etc/udev/rules.d/58-xapi.rules
@@ -284,6 +285,14 @@ Manager and some other packages
 
 
 %changelog
+* Thu Jul 04 2024 Mark Syms <mark.syms@cloud.com> - 3.2.3-1
+- CA-393194: Fix pvremove failure
+
+* Mon Jun 24 2024 Mark Syms <mark.syms@cloud.com> - 3.2.2-1
+- CP-49689: remove reverse dependency on SR from xs_errors
+- CP-49775 convert SMGC to systemd service
+- CP-49720 Move LOCK_TYPE_RUNNING from cleanup.py to lock.py
+
 * Wed May 29 2024 Mark Syms <mark.syms@cloud.com> - 3.2.1-1
 - Use python3 rather than python3.6
 - CA-390937: fix conflict between GC and SR detach

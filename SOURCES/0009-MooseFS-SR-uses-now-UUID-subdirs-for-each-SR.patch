@@ -1,4 +1,4 @@
-From d5d805ff65fb9a48c8dc75b9b6a7ef70b48230c2 Mon Sep 17 00:00:00 2001
+From bf4cc43a6b1cd7c8b4a0aeead38c1b4b463eabf4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 18 May 2022 17:28:09 +0200
 Subject: [PATCH 09/27] MooseFS SR uses now UUID subdirs for each SR
@@ -126,5 +126,5 @@ index be5112c..ab72f4e 100755
              self.detach(sr_uuid)
              if inst.code != errno.ENOENT:
 -- 
-2.45.2
+2.46.0
 

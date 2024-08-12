@@ -1,4 +1,4 @@
-From e4503ac458166e9be4dae69fce8c4c3ea16c2639 Mon Sep 17 00:00:00 2001
+From 1dc9707a4c195d3366b7bd4e17f142787d9fac5b Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:32:37 +0100
 Subject: [PATCH 15/27] py3: use of integer division operator
@@ -33,5 +33,5 @@ index dca9645..1b86a43 100755
          error_str = self._get_error_str(result)
          if error_str:
 -- 
-2.45.2
+2.46.0
 

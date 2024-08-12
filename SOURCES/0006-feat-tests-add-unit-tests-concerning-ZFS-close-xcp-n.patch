@@ -1,4 +1,4 @@
-From 79d91294c7c0ba02c86b39152e9fe139b1606568 Mon Sep 17 00:00:00 2001
+From d0a8421f88b507d10c1c61934bd60295b7742670 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 27 Oct 2020 15:04:36 +0100
 Subject: [PATCH 06/27] feat(tests): add unit tests concerning ZFS (close
@@ -8,8 +8,8 @@ Subject: [PATCH 06/27] feat(tests): add unit tests concerning ZFS (close
 - Check if "scan" failed if the path is not mounted (not a ZFS mountpoint)
 ---
  drivers/ZFSSR.py    |  32 ++++++------
- tests/test_ZFSSR.py | 118 ++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 134 insertions(+), 16 deletions(-)
+ tests/test_ZFSSR.py | 121 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 137 insertions(+), 16 deletions(-)
  create mode 100644 tests/test_ZFSSR.py
 
 diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
@@ -85,10 +85,12 @@ index 1b2f398..d375210 100644
  class ZFSFileVDI(FileSR.FileVDI):
 diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
 new file mode 100644
-index 0000000..c477fa3
+index 0000000..879ea37
 --- /dev/null
 +++ b/tests/test_ZFSSR.py
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,121 @@
++import uuid
++
 +import FileSR
 +import mock
 +import os
@@ -113,6 +115,7 @@ index 0000000..c477fa3
 +    def __init__(self, srcmd, none):
 +        self.dconf = srcmd.dconf
 +        self.srcmd = srcmd
++        self.uuid = str(uuid.uuid4())
 +
 +
 +class TestZFSSR(unittest.TestCase):
@@ -208,5 +211,5 @@ index 0000000..c477fa3
 +            failed = True
 +        self.assertTrue(failed)
 -- 
-2.45.2
+2.46.0
 

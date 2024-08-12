@@ -1,4 +1,4 @@
-From 47cc3de5c552a7fb57286f9262b779a932757f48 Mon Sep 17 00:00:00 2001
+From 87c3c1009f90c74d9d78f24c2158e931f67783c5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
 Subject: [PATCH 02/27] feat(drivers): add CephFS and GlusterFS drivers
@@ -621,7 +621,7 @@ index 0000000..a2f7484
 +else:
 +    SR.registerSR(GlusterFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index c41173c..3b29d60 100755
+index c6686e7..60112c6 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2888,7 +2888,9 @@ def normalizeType(type):
@@ -636,5 +636,5 @@ index c41173c..3b29d60 100755
      if not type in SR.TYPES:
          raise util.SMException("Unsupported SR type: %s" % type)
 -- 
-2.45.2
+2.46.0
 

@@ -1,4 +1,4 @@
-From 222ebd7c6056486b9607221787f08c6b45f8bdd1 Mon Sep 17 00:00:00 2001
+From 10a20eb55f7a697885d8c380557130d5ff88b9ca Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Mon, 27 Mar 2023 15:30:46 +0200
 Subject: [PATCH 17/27] py3: switch interpreter to python3
@@ -95,5 +95,5 @@ index 1b86a43..182b889 100755
  # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
  #
 -- 
-2.45.2
+2.46.0
 

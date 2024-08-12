@@ -1,4 +1,4 @@
-From 546aed24efdb8bcc1d0f641447f4c1a3ed5a2549 Mon Sep 17 00:00:00 2001
+From 532bb11b49d7d90f5d84392f504143dc3d3e14bd Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 22 Sep 2023 11:11:27 +0200
 Subject: [PATCH 22/27] Repair coverage to be compatible with 8.3 test env
@@ -14,8 +14,8 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/LinstorSR.py    | 3 +--
  tests/pylintrc          | 2 +-
  tests/test_MooseFSSR.py | 4 +++-
- tests/test_ZFSSR.py     | 5 +++--
- 4 files changed, 8 insertions(+), 6 deletions(-)
+ tests/test_ZFSSR.py     | 4 ++--
+ 4 files changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
 index 7a34521..c8aa56b 100755
@@ -58,13 +58,14 @@ index feaac62..f4e0a85 100644
  import unittest
  
 diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
-index e95ab7e..ac2c6eb 100644
+index d0cca93..544ea39 100644
 --- a/tests/test_ZFSSR.py
 +++ b/tests/test_ZFSSR.py
-@@ -1,8 +1,9 @@
+@@ -1,10 +1,10 @@
 +from unittest import mock
 +import unittest
-+
+ import uuid
+ 
  import FileSR
 -import mock
  import os
@@ -74,5 +75,5 @@ index e95ab7e..ac2c6eb 100644
  
  
 -- 
-2.45.2
+2.46.0
 

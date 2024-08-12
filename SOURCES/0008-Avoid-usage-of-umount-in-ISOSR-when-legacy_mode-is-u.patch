@@ -1,4 +1,4 @@
-From fdd8e6a066fe06c5cec9c8f1b2e9e8e606ad6b93 Mon Sep 17 00:00:00 2001
+From 24cf34b2504d633e9bffeea408545674c00cdbc2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Dec 2021 09:28:37 +0100
 Subject: [PATCH 08/27] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
@@ -99,5 +99,5 @@ index 456e5ca..1fe50c6 100644
  class TestISOSR_overNFS(unittest.TestCase):
  
 -- 
-2.45.2
+2.46.0
 

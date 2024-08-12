@@ -1,4 +1,4 @@
-From 78f392f433a9f88aa02bd9b4502b449e4cebab86 Mon Sep 17 00:00:00 2001
+From e99c6009d2274e7e3a39c0e2aff2ecef6435cb86 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH 05/27] feat(drivers): add LinstorSR driver
@@ -2291,7 +2291,7 @@ index d4b7f29..ae871c8 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index a3ed481..13446f8 100755
+index 65fec4e..75c706a 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -5658,5 +5658,5 @@ diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
 index 0000000..e69de29
 -- 
-2.45.2
+2.46.0
 

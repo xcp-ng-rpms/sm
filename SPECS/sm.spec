@@ -44,7 +44,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.0..3.2.0-8.3
+# git format-patch v3.2.1..3.2.1-8.3
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -358,7 +358,7 @@ Manager and some other packages
 
 
 %changelog
-* Mon Aug 12 2024 Benjamin Reis <benjamin.reis@vates.tech> - WIP - 3.2.1-1.1
+* Mon Aug 12 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.1-1.1
 - Rebase on 3.2.1-1
 - *** Upstream changelog ***
 - * Wed May 29 2024 Mark Syms <mark.syms@cloud.com> - 3.2.1-1

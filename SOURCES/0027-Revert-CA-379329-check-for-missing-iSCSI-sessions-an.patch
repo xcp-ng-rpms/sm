@@ -1,4 +1,4 @@
-From 1eabe7d6f3f2bf29dc6ea294343a87c6a3f8dd64 Mon Sep 17 00:00:00 2001
+From df8c4a721c207538e7eb50580a0394765923bbd2 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.tech>
 Date: Thu, 1 Aug 2024 10:05:22 +0200
 Subject: [PATCH 27/27] Revert "CA-379329: check for missing iSCSI sessions and
@@ -929,5 +929,5 @@ index c104e96..0000000
 -        # Assert
 -        mock_sr.check_sr.assert_called_with(SR_UUID)
 -- 
-2.45.2
+2.46.0
 

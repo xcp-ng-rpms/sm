@@ -1,4 +1,4 @@
-From 7f0be4bd602b200012bff8d7b9ff4be6d1d6ce56 Mon Sep 17 00:00:00 2001
+From 7884e2066a4d27cf5cae57da6851814b81636701 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
 Subject: [PATCH 10/27] Fix is_open call for many drivers (#25)
@@ -101,5 +101,5 @@ index b4f33de..bb3f5db 100755
  
      driver = SR.driver(srType)
 -- 
-2.45.2
+2.46.0
 

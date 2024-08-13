@@ -1,7 +1,7 @@
-From c03456d9a8d9bb979e324e3b4e26b136180eae46 Mon Sep 17 00:00:00 2001
+From 09aa72c4d2655ba1027dc831b1580bde87643447 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 4 May 2023 10:24:22 +0200
-Subject: [PATCH 18/27] Support recent version of coverage tool (coverage
+Subject: [PATCH 18/28] Support recent version of coverage tool (coverage
  7.2.5)
 
 Without these changes many warns/errors are emitted:
@@ -16,10 +16,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
-index 1fe50c6..0321732 100644
+index 760c566..9dec459 100644
 --- a/tests/test_ISOSR.py
 +++ b/tests/test_ISOSR.py
-@@ -79,7 +79,7 @@ class TestISOSR_overLocal(unittest.TestCase):
+@@ -80,7 +80,7 @@ class TestISOSR_overLocal(unittest.TestCase):
          isosr = self.create_isosr()
          with self.assertRaises(SR.SROSError) as ose:
              isosr.attach(None)

@@ -44,7 +44,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.1..3.2.1-8.3
+# git format-patch v3.2.3..3.2.3-8.3
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -72,6 +72,7 @@ Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
 Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
 Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 Patch1027: 0027-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
+Patch1028: 0028-reflect-upstream-changes-in-our-tests.patch
 
 %description
 This package contains storage backends used in XCP
@@ -359,8 +360,9 @@ Manager and some other packages
 
 
 %changelog
-* Tue Aug 13 2024 Benjamin Reis <benjamin.reis@vates.tech> - WIP - 3.2.3-1.1
-- Rebase on 3.2.3-1.1
+* Tue Aug 13 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.3-1.1
+- Rebase on 3.2.3-1
+- Add 0028-reflect-upstream-changes-in-our-tests.patch
 - *** Upstream changelog ***
 - * Thu Jul 04 2024 Mark Syms <mark.syms@cloud.com> - 3.2.3-1
 - - CA-393194: Fix pvremove failure

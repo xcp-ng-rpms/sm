@@ -1,7 +1,7 @@
-From e5f6a1eba96311d3ae43b449d4946b4b771e451a Mon Sep 17 00:00:00 2001
+From 395daa86f0b4dcbc4eeabb42fed4f818d46afc36 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:13:18 +0100
-Subject: [PATCH 13/27] py3: simple changes from futurize on XCP-ng drivers
+Subject: [PATCH 13/28] py3: simple changes from futurize on XCP-ng drivers
 
 * `except` syntax fixes
 * drop `has_key()` usage
@@ -12,16 +12,16 @@ Subject: [PATCH 13/27] py3: simple changes from futurize on XCP-ng drivers
 
 Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
 ---
- drivers/CephFSSR.py             | 18 +++++++++---------
- drivers/GlusterFSSR.py          | 16 ++++++++--------
+ drivers/CephFSSR.py             | 16 ++++++++--------
+ drivers/GlusterFSSR.py          | 14 +++++++-------
  drivers/LinstorSR.py            | 11 ++++-------
- drivers/MooseFSSR.py            | 16 ++++++++--------
+ drivers/MooseFSSR.py            | 14 +++++++-------
  drivers/cleanup.py              |  6 +++---
  drivers/linstorvolumemanager.py |  2 +-
- 6 files changed, 33 insertions(+), 36 deletions(-)
+ 6 files changed, 30 insertions(+), 33 deletions(-)
 
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index 09c928b..528cd3b 100644
+index f334bb3..f83beb3 100644
 --- a/drivers/CephFSSR.py
 +++ b/drivers/CephFSSR.py
 @@ -132,18 +132,18 @@ class CephFSSR(FileSR.FileSR):
@@ -61,15 +61,6 @@ index 09c928b..528cd3b 100644
                  raise CephFSException("rmdir failed with error '%s'" % inst.strerror)
  
      def attach(self, sr_uuid):
-@@ -174,7 +174,7 @@ class CephFSSR(FileSR.FileSR):
-             try:
-                 self.mount()
-                 os.symlink(self.linkpath, self.path)
--            except CephFSException, exc:
-+            except CephFSException as exc:
-                 raise SR.SROSError(12, exc.errstr)
-         self.attached = True
- 
 @@ -206,7 +206,7 @@ class CephFSSR(FileSR.FileSR):
  
          try:
@@ -96,9 +87,9 @@ index 09c928b..528cd3b 100644
 +        except util.CommandException as inst:
              self.detach(sr_uuid)
              if inst.code != errno.ENOENT:
-                 raise SR.SROSError(114, "Failed to remove CephFS mount point")
+                 raise xs_errors.SROSError(114, "Failed to remove CephFS mount point")
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 61a7d40..0d9d4e1 100644
+index 290a331..6d5e061 100644
 --- a/drivers/GlusterFSSR.py
 +++ b/drivers/GlusterFSSR.py
 @@ -122,7 +122,7 @@ class GlusterFSSR(FileSR.FileSR):
@@ -134,15 +125,6 @@ index 61a7d40..0d9d4e1 100644
                  raise GlusterFSException("rmdir failed with error '%s'" % inst.strerror)
  
      def attach(self, sr_uuid):
-@@ -165,7 +165,7 @@ class GlusterFSSR(FileSR.FileSR):
-             try:
-                 self.mount()
-                 os.symlink(self.linkpath, self.path)
--            except GlusterFSException, exc:
-+            except GlusterFSException as exc:
-                 raise SR.SROSError(12, exc.errstr)
-         self.attached = True
- 
 @@ -197,7 +197,7 @@ class GlusterFSSR(FileSR.FileSR):
  
          try:
@@ -169,9 +151,9 @@ index 61a7d40..0d9d4e1 100644
 +        except util.CommandException as inst:
              self.detach(sr_uuid)
              if inst.code != errno.ENOENT:
-                 raise SR.SROSError(114, "Failed to remove GlusterFS mount point")
+                 raise xs_errors.SROSError(114, "Failed to remove GlusterFS mount point")
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 8be1836..ab1b958 100755
+index ffd70ab..4e8888e 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -460,7 +460,7 @@ class LinstorSR(SR.SR):
@@ -214,7 +196,7 @@ index 8be1836..ab1b958 100755
  
              # 7. Verify parent locator field of both children and
 diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index 212f1ad..8860fdf 100755
+index 504e850..05a4264 100755
 --- a/drivers/MooseFSSR.py
 +++ b/drivers/MooseFSSR.py
 @@ -139,12 +139,12 @@ class MooseFSSR(FileSR.FileSR):
@@ -241,7 +223,7 @@ index 212f1ad..8860fdf 100755
              syslog(_syslog.LOG_ERR, 'MooseFS mount failed ' + inst.__str__())
              raise MooseFSException("Mount failed with return code %d" % inst.code)
  
-@@ -171,19 +171,19 @@ class MooseFSSR(FileSR.FileSR):
+@@ -171,12 +171,12 @@ class MooseFSSR(FileSR.FileSR):
      def unmount(self, mountpoint, rmmountpoint):
          try:
              util.pread(["umount", mountpoint])
@@ -256,14 +238,6 @@ index 212f1ad..8860fdf 100755
                  raise MooseFSException("Command rmdir failed with error '%s'" % inst.strerror)
  
      def attach(self, sr_uuid):
-         if not self.checkmount():
-             try:
-                 self.mount()
--            except MooseFSException, exc:
-+            except MooseFSException as exc:
-                 raise SR.SROSError(12, exc.errstr)
-         self.attached = True
- 
 @@ -215,7 +215,7 @@ class MooseFSSR(FileSR.FileSR):
          assert self.remotepath == self.rootpath
          try:
@@ -281,12 +255,12 @@ index 212f1ad..8860fdf 100755
 +        except util.CommandException as inst:
              self.detach(sr_uuid)
              if inst.code != errno.ENOENT:
-                 raise SR.SROSError(114, "Failed to remove MooseFS mount point")
+                 raise xs_errors.SROSError(114, "Failed to remove MooseFS mount point")
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 2a1b6be..f70879b 100755
+index 9fa6f27..90611b3 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3005,7 +3005,7 @@ class LinstorSR(SR):
+@@ -3004,7 +3004,7 @@ class LinstorSR(SR):
  
      def scan(self, force=False):
          all_vdi_info = self._scan(force)
@@ -295,7 +269,7 @@ index 2a1b6be..f70879b 100755
              # When vdiInfo is None, the VDI is RAW.
              vdi = self.getVDI(uuid)
              if not vdi:
-@@ -3049,7 +3049,7 @@ class LinstorSR(SR):
+@@ -3048,7 +3048,7 @@ class LinstorSR(SR):
              error = False
              try:
                  all_vdi_info = self._load_vdi_info()
@@ -304,7 +278,7 @@ index 2a1b6be..f70879b 100755
                      if vdiInfo and vdiInfo.error:
                          error = True
                          break
-@@ -3114,7 +3114,7 @@ class LinstorSR(SR):
+@@ -3113,7 +3113,7 @@ class LinstorSR(SR):
  
      def _handleInterruptedCoalesceLeaf(self):
          entries = self.journaler.get_all(VDI.JRN_LEAF)

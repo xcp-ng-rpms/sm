@@ -1,7 +1,7 @@
-From 7f488693541d0264c3442f3e14ab1913e7f9d555 Mon Sep 17 00:00:00 2001
+From cd3cd24251e847eb20ac5b32a374109718c8cca0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
-Subject: [PATCH 04/27] feat(drivers): add ZFS driver to avoid losing VDI
+Subject: [PATCH 04/28] feat(drivers): add ZFS driver to avoid losing VDI
  metadata (xcp-ng/xcp#401)
 
 ---
@@ -13,7 +13,7 @@ Subject: [PATCH 04/27] feat(drivers): add ZFS driver to avoid losing VDI
  create mode 100644 drivers/ZFSSR.py
 
 diff --git a/Makefile b/Makefile
-index d48f40d..0b62505 100755
+index 7cb6ba4..2b2b980 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -17,6 +17,7 @@ SM_DRIVERS += LVHDoFCoE
@@ -188,10 +188,10 @@ index 0000000..1b2f398
 +else:
 +    SR.registerSR(ZFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 6b90733..65fec4e 100755
+index 57522b8..81cf032 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2890,7 +2890,7 @@ def normalizeType(type):
+@@ -2889,7 +2889,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

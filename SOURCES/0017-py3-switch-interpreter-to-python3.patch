@@ -1,7 +1,7 @@
-From 10a20eb55f7a697885d8c380557130d5ff88b9ca Mon Sep 17 00:00:00 2001
+From 2df6ea2d37f2a117f70f844105db2771d9c88517 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Mon, 27 Mar 2023 15:30:46 +0200
-Subject: [PATCH 17/27] py3: switch interpreter to python3
+Subject: [PATCH 17/28] py3: switch interpreter to python3
 
 ---
  drivers/CephFSSR.py             | 2 +-
@@ -15,7 +15,7 @@ Subject: [PATCH 17/27] py3: switch interpreter to python3
  8 files changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index 3575ade..d85faf9 100644
+index be2521f..bd6a4b1 100644
 --- a/drivers/CephFSSR.py
 +++ b/drivers/CephFSSR.py
 @@ -1,4 +1,4 @@
@@ -25,7 +25,7 @@ index 3575ade..d85faf9 100644
  # Original work copyright (C) Citrix systems
  # Modified work copyright (C) Vates SAS and XCP-ng community
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 367a5b5..a2c320f 100644
+index 48471f9..42e5ab5 100644
 --- a/drivers/GlusterFSSR.py
 +++ b/drivers/GlusterFSSR.py
 @@ -1,4 +1,4 @@
@@ -35,7 +35,7 @@ index 367a5b5..a2c320f 100644
  # Original work copyright (C) Citrix systems
  # Modified work copyright (C) Vates SAS and XCP-ng community
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 8eb9e5c..a72d43e 100755
+index f6badab..e7022ca 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1,4 +1,4 @@
@@ -45,7 +45,7 @@ index 8eb9e5c..a72d43e 100755
  # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
  #
 diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index febb559..cad6d7a 100755
+index c29c758..3911b09 100755
 --- a/drivers/MooseFSSR.py
 +++ b/drivers/MooseFSSR.py
 @@ -1,4 +1,4 @@

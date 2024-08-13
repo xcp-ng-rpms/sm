@@ -1,7 +1,7 @@
-From df8c4a721c207538e7eb50580a0394765923bbd2 Mon Sep 17 00:00:00 2001
+From d2d42c12838c9accfd2c1e2be7d9d2ef7cd66cff Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.tech>
 Date: Thu, 1 Aug 2024 10:05:22 +0200
-Subject: [PATCH 27/27] Revert "CA-379329: check for missing iSCSI sessions and
+Subject: [PATCH 27/28] Revert "CA-379329: check for missing iSCSI sessions and
  reconnect" (#65)
 
 This reverts commit d28dcc1341166ed4839dbea8ef6d1a24e981f461.
@@ -30,7 +30,7 @@ Signed-off-by: Benjamin Reis <benjamin.reis@vates.tech>
  delete mode 100644 tests/test_sr_health_check.py
 
 diff --git a/Makefile b/Makefile
-index c04fd1b..5c4bdac 100755
+index 472413e..57bcbfa 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -69,7 +69,6 @@ SM_LIBS += pluginutil
@@ -49,9 +49,9 @@ index c04fd1b..5c4bdac 100755
 -	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
 -	install -m 644 systemd/sr_health_check.timer \
 -	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
- 	install -m 644 systemd/linstor-monitor.service \
+ 	install -m 644 systemd/SMGC@.service \
  	  $(SM_STAGING)/$(SYSTEMD_SERVICE_DIR)
- 	for i in $(UDEV_RULES); do \
+ 	install -m 644 systemd/linstor-monitor.service \
 diff --git a/drivers/BaseISCSI.py b/drivers/BaseISCSI.py
 index 67388dc..195411d 100755
 --- a/drivers/BaseISCSI.py
@@ -66,7 +66,7 @@ index 67388dc..195411d 100755
  
          # we are no longer putting hconf in the xml.
 diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
-index 417583c..3bebf9f 100755
+index cbde1b9..934bbe7 100755
 --- a/drivers/LVHDoISCSISR.py
 +++ b/drivers/LVHDoISCSISR.py
 @@ -92,250 +92,243 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
@@ -212,7 +212,7 @@ index 417583c..3bebf9f 100755
 +            try:
 +                self.iscsi = self.iscsiSRs[0]
 +            except IndexError as exc:
-+                if isinstance(saved_exc, SR.SROSError):
++                if isinstance(saved_exc, xs_errors.SROSError):
 +                    raise saved_exc  # pylint: disable-msg=E0702
 +                elif isinstance(saved_exc, Exception):
 +                    raise xs_errors.XenError('SMGeneral', str(saved_exc))
@@ -245,7 +245,7 @@ index 417583c..3bebf9f 100755
 -        try:
 -            self.iscsi = self.iscsiSRs[0]
 -        except IndexError as exc:
--            if isinstance(saved_exc, SR.SROSError):
+-            if isinstance(saved_exc, xs_errors.SROSError):
 -                raise saved_exc  # pylint: disable-msg=E0702
 -            elif isinstance(saved_exc, Exception):
 -                raise xs_errors.XenError('SMGeneral', str(saved_exc))
@@ -560,17 +560,17 @@ index 417583c..3bebf9f 100755
 -                    for iscsi in self.iscsiSRs:
 -                        try:
 -                            iscsi.attach(sr_uuid)
--                        except SR.SROSError:
+-                        except xs_errors.SROSError:
 -                            util.SMlog("Failed to attach iSCSI target")
 -
      def vdi(self, uuid):
          return LVHDoISCSIVDI(self, uuid)
  
 diff --git a/drivers/SR.py b/drivers/SR.py
-index 2312b1f..69a2734 100755
+index 9ca0045..9410926 100755
 --- a/drivers/SR.py
 +++ b/drivers/SR.py
-@@ -374,10 +374,6 @@ class SR(object):
+@@ -357,10 +357,6 @@ class SR(object):
          """Post-init hook"""
          pass
  
@@ -615,7 +615,7 @@ index d5f5f59..0000000
 -[Install]
 -WantedBy=timers.target
 diff --git a/tests/test_LVHDoISCSISR.py b/tests/test_LVHDoISCSISR.py
-index b6ce62d..cd9a152 100644
+index 3b5e1c4..532e5f7 100644
 --- a/tests/test_LVHDoISCSISR.py
 +++ b/tests/test_LVHDoISCSISR.py
 @@ -2,8 +2,6 @@ import os
@@ -636,7 +636,7 @@ index b6ce62d..cd9a152 100644
  
  class RandomError(Exception):
      pass
-@@ -126,192 +122,3 @@ class TestLVHDoISCSISR_load(unittest.TestCase):
+@@ -118,192 +114,3 @@ class TestLVHDoISCSISR_load(unittest.TestCase):
              str(cm.exception),
              'General backend error [opterr=Raise RandomError]'
          )

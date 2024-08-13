@@ -1,7 +1,7 @@
-From 8671f9d42328ff8369650df265b2060ed8a3a4d9 Mon Sep 17 00:00:00 2001
+From 1dc43ae24403979db03fb7bbf90aeffe81d6c28b Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
-Subject: [PATCH 07/27] Added SM Driver for MooseFS
+Subject: [PATCH 07/28] Added SM Driver for MooseFS
 
 Co-authored-by: Piotr Robert Konopelko <piotr.konopelko@moosefs.pro>
 Signed-off-by: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100644 tests/test_MooseFSSR.py
 
 diff --git a/Makefile b/Makefile
-index aa9b18a..5ad9e94 100755
+index dc370cf..c2f6f46 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -19,6 +19,7 @@ SM_DRIVERS += CephFS
@@ -29,7 +29,7 @@ index aa9b18a..5ad9e94 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
 new file mode 100755
-index 0000000..be5112c
+index 0000000..53485a0
 --- /dev/null
 +++ b/drivers/MooseFSSR.py
 @@ -0,0 +1,271 @@
@@ -205,8 +205,8 @@ index 0000000..be5112c
 +        if not self.checkmount():
 +            try:
 +                self.mount()
-+            except MooseFSException, exc:
-+                raise SR.SROSError(12, exc.errstr)
++            except MooseFSException as exc:
++                raise xs_errors.SROSError(12, exc.errstr)
 +        self.attached = True
 +
 +    def probe(self):
@@ -232,7 +232,7 @@ index 0000000..be5112c
 +
 +    def create(self, sr_uuid, size):
 +        if self.checkmount():
-+            raise SR.SROSError(113, 'MooseFS mount point already attached')
++            raise xs_errors.SROSError(113, 'MooseFS mount point already attached')
 +
 +        try:
 +            self.mount()
@@ -243,7 +243,7 @@ index 0000000..be5112c
 +            except:
 +                # we have no recovery strategy
 +                pass
-+            raise SR.SROSError(111, "MooseFS mount error [opterr=%s]" % exc.errstr)
++            raise xs_errors.SROSError(111, "MooseFS mount error [opterr=%s]" % exc.errstr)
 +
 +
 +    def delete(self, sr_uuid):
@@ -257,7 +257,7 @@ index 0000000..be5112c
 +        except util.CommandException, inst:
 +            self.detach(sr_uuid)
 +            if inst.code != errno.ENOENT:
-+                raise SR.SROSError(114, "Failed to remove MooseFS mount point")
++                raise xs_errors.SROSError(114, "Failed to remove MooseFS mount point")
 +
 +    def vdi(self, uuid, loadLocked=False):
 +        return MooseFSFileVDI(self, uuid)
@@ -305,10 +305,10 @@ index 0000000..be5112c
 +else:
 +    SR.registerSR(MooseFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 75c706a..2a1b6be 100755
+index 3bf84d5..9fa6f27 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3246,7 +3246,7 @@ def normalizeType(type):
+@@ -3245,7 +3245,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

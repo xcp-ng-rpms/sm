@@ -1,7 +1,7 @@
-From bf4cc43a6b1cd7c8b4a0aeead38c1b4b463eabf4 Mon Sep 17 00:00:00 2001
+From 1f67bfaffbd431c166a5e61322ea7d179ee4d687 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 18 May 2022 17:28:09 +0200
-Subject: [PATCH 09/27] MooseFS SR uses now UUID subdirs for each SR
+Subject: [PATCH 09/28] MooseFS SR uses now UUID subdirs for each SR
 
 A sm-config boolean param `subdir` is available to configure where to store the VHDs:
 - In a subdir with the SR UUID, the new behavior
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 52 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index be5112c..ab72f4e 100755
+index 53485a0..b2e056a 100755
 --- a/drivers/MooseFSSR.py
 +++ b/drivers/MooseFSSR.py
 @@ -18,6 +18,7 @@
@@ -67,7 +67,7 @@ index be5112c..ab72f4e 100755
              syslog(_syslog.LOG_ERR, 'MooseFS mount failed ' + inst.__str__())
 @@ -199,6 +212,7 @@ class MooseFSSR(FileSR.FileSR):
          if self.checkmount():
-             raise SR.SROSError(113, 'MooseFS mount point already attached')
+             raise xs_errors.SROSError(113, 'MooseFS mount point already attached')
  
 +        assert self.remotepath == self.rootpath
          try:
@@ -75,7 +75,7 @@ index be5112c..ab72f4e 100755
          except MooseFSException, exc:
 @@ -210,6 +224,33 @@ class MooseFSSR(FileSR.FileSR):
                  pass
-             raise SR.SROSError(111, "MooseFS mount error [opterr=%s]" % exc.errstr)
+             raise xs_errors.SROSError(111, "MooseFS mount error [opterr=%s]" % exc.errstr)
  
 +        try:
 +            self.subdir = self.sm_config.get('subdir')

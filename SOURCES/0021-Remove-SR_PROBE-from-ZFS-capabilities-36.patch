@@ -1,7 +1,7 @@
-From e0c382ade87d0ee3c371344ad18158d64e4d3b39 Mon Sep 17 00:00:00 2001
+From d778817b78c72a04d419073ee8e98099e2a960a0 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Fri, 4 Aug 2023 12:10:37 +0200
-Subject: [PATCH 21/27] Remove `SR_PROBE` from ZFS capabilities (#36)
+Subject: [PATCH 21/28] Remove `SR_PROBE` from ZFS capabilities (#36)
 
 The probe method is not implemented so we
 shouldn't advertise it.

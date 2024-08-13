@@ -1,7 +1,7 @@
-From 0eafcdca6421d7f08f31fe8a912366601e73b4d4 Mon Sep 17 00:00:00 2001
+From 1354e78a5409805f08f118910db32b89bfc6c780 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
-Subject: [PATCH 20/27] feat(LinstorSR): is now compatible with python 3
+Subject: [PATCH 20/28] feat(LinstorSR): is now compatible with python 3
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  9 files changed, 36 insertions(+), 40 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 94591f0..7a34521 100755
+index 52d5c26..1c9bd54 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -758,7 +758,7 @@ class LinstorSR(SR.SR):
@@ -88,10 +88,10 @@ index 94591f0..7a34521 100755
                  str(device_size)
              ]
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index eb8a143..1af0a2b 100755
+index 03bdc94..02435db 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3382,7 +3382,7 @@ class LinstorSR(SR):
+@@ -3381,7 +3381,7 @@ class LinstorSR(SR):
      def _checkSlaves(self, vdi):
          try:
              all_openers = self._linstor.get_volume_openers(vdi.uuid)

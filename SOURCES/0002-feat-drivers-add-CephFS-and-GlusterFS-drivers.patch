@@ -1,7 +1,7 @@
-From 87c3c1009f90c74d9d78f24c2158e931f67783c5 Mon Sep 17 00:00:00 2001
+From 1809f021bf3af5fa18419e248469cd970bded9f3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 02/27] feat(drivers): add CephFS and GlusterFS drivers
+Subject: [PATCH 02/28] feat(drivers): add CephFS and GlusterFS drivers
 
 ---
  Makefile               |   2 +
@@ -13,7 +13,7 @@ Subject: [PATCH 02/27] feat(drivers): add CephFS and GlusterFS drivers
  create mode 100644 drivers/GlusterFSSR.py
 
 diff --git a/Makefile b/Makefile
-index 972f671..a90c7a2 100755
+index ad81be4..0750482 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -14,6 +14,8 @@ SM_DRIVERS += LVHDoHBA
@@ -27,7 +27,7 @@ index 972f671..a90c7a2 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
 new file mode 100644
-index 0000000..d797490
+index 0000000..415152f
 --- /dev/null
 +++ b/drivers/CephFSSR.py
 @@ -0,0 +1,296 @@
@@ -207,8 +207,8 @@ index 0000000..d797490
 +            try:
 +                self.mount()
 +                os.symlink(self.linkpath, self.path)
-+            except CephFSException, exc:
-+                raise SR.SROSError(12, exc.errstr)
++            except CephFSException as exc:
++                raise xs_errors.SROSError(12, exc.errstr)
 +        self.attached = True
 +
 +    def probe(self):
@@ -235,7 +235,7 @@ index 0000000..d797490
 +
 +    def create(self, sr_uuid, size):
 +        if self.checkmount():
-+            raise SR.SROSError(113, 'CephFS mount point already attached')
++            raise xs_errors.SROSError(113, 'CephFS mount point already attached')
 +
 +        try:
 +            self.mount()
@@ -246,7 +246,7 @@ index 0000000..d797490
 +            except:
 +                # we have no recovery strategy
 +                pass
-+            raise SR.SROSError(111, "CephFS mount error [opterr=%s]" % exc.errstr)
++            raise xs_errors.SROSError(111, "CephFS mount error [opterr=%s]" % exc.errstr)
 +
 +        if util.ioretry(lambda: util.pathexists(self.linkpath)):
 +            if len(util.ioretry(lambda: util.listdir(self.linkpath))) != 0:
@@ -262,7 +262,7 @@ index 0000000..d797490
 +                        self.unmount(self.mountpoint, True)
 +                    except CephFSException:
 +                        util.logException('CephFSSR.unmount()')
-+                    raise SR.SROSError(116,
++                    raise xs_errors.SROSError(116,
 +                                       "Failed to create CephFS SR. remote directory creation error: {}".format(
 +                                           os.strerror(inst.code)))
 +        self.detach(sr_uuid)
@@ -280,7 +280,7 @@ index 0000000..d797490
 +        except util.CommandException, inst:
 +            self.detach(sr_uuid)
 +            if inst.code != errno.ENOENT:
-+                raise SR.SROSError(114, "Failed to remove CephFS mount point")
++                raise xs_errors.SROSError(114, "Failed to remove CephFS mount point")
 +
 +    def vdi(self, uuid, loadLocked=False):
 +        return CephFSFileVDI(self, uuid)
@@ -329,7 +329,7 @@ index 0000000..d797490
 +    SR.registerSR(CephFSSR)
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
 new file mode 100644
-index 0000000..a2f7484
+index 0000000..72c482a
 --- /dev/null
 +++ b/drivers/GlusterFSSR.py
 @@ -0,0 +1,287 @@
@@ -499,8 +499,8 @@ index 0000000..a2f7484
 +            try:
 +                self.mount()
 +                os.symlink(self.linkpath, self.path)
-+            except GlusterFSException, exc:
-+                raise SR.SROSError(12, exc.errstr)
++            except GlusterFSException as exc:
++                raise xs_errors.SROSError(12, exc.errstr)
 +        self.attached = True
 +
 +    def probe(self):
@@ -527,7 +527,7 @@ index 0000000..a2f7484
 +
 +    def create(self, sr_uuid, size):
 +        if self.checkmount():
-+            raise SR.SROSError(113, 'GlusterFS mount point already attached')
++            raise xs_errors.SROSError(113, 'GlusterFS mount point already attached')
 +
 +        try:
 +            self.mount()
@@ -538,7 +538,7 @@ index 0000000..a2f7484
 +            except:
 +                # we have no recovery strategy
 +                pass
-+            raise SR.SROSError(111, "GlusterFS mount error [opterr=%s]" % exc.errstr)
++            raise xs_errors.SROSError(111, "GlusterFS mount error [opterr=%s]" % exc.errstr)
 +
 +        if util.ioretry(lambda: util.pathexists(self.linkpath)):
 +            if len(util.ioretry(lambda: util.listdir(self.linkpath))) != 0:
@@ -554,7 +554,7 @@ index 0000000..a2f7484
 +                        self.unmount(self.mountpoint, True)
 +                    except GlusterFSException:
 +                        util.logException('GlusterFSSR.unmount()')
-+                    raise SR.SROSError(116,
++                    raise xs_errors.SROSError(116,
 +                                       "Failed to create GlusterFS SR. remote directory creation error: {}".format(
 +                                           os.strerror(inst.code)))
 +        self.detach(sr_uuid)
@@ -572,7 +572,7 @@ index 0000000..a2f7484
 +        except util.CommandException, inst:
 +            self.detach(sr_uuid)
 +            if inst.code != errno.ENOENT:
-+                raise SR.SROSError(114, "Failed to remove GlusterFS mount point")
++                raise xs_errors.SROSError(114, "Failed to remove GlusterFS mount point")
 +
 +    def vdi(self, uuid, loadLocked=False):
 +        return GlusterFSFileVDI(self, uuid)
@@ -621,10 +621,10 @@ index 0000000..a2f7484
 +else:
 +    SR.registerSR(GlusterFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index c6686e7..60112c6 100755
+index 042fe99..d3dfc0e 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2888,7 +2888,9 @@ def normalizeType(type):
+@@ -2887,7 +2887,9 @@ def normalizeType(type):
      if type in ["lvm", "lvmoiscsi", "lvmohba", "lvmofcoe"]:
          # temporary while LVHD is symlinked as LVM
          type = SR.TYPE_LVHD

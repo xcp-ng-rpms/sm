@@ -1,7 +1,7 @@
-From 7884e2066a4d27cf5cae57da6851814b81636701 Mon Sep 17 00:00:00 2001
+From d32bf0ccfe58c67ba87e9bab5b76f9eead92735d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
-Subject: [PATCH 10/27] Fix is_open call for many drivers (#25)
+Subject: [PATCH 10/28] Fix is_open call for many drivers (#25)
 
 Ensure all shared drivers are imported in `_is_open` definition to register
 them in the driver list. Otherwise this function always fails with a SRUnknownType exception.
@@ -20,7 +20,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 25 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index a2f7484..323718d 100644
+index 72c482a..750eb23 100644
 --- a/drivers/GlusterFSSR.py
 +++ b/drivers/GlusterFSSR.py
 @@ -96,7 +96,8 @@ class GlusterFSSR(FileSR.FileSR):

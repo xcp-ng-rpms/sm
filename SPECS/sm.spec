@@ -154,6 +154,21 @@ if [ $1 -gt 1 ]; then
     multipathd reconfigure
 fi
 
+if [ $1 -gt 1 ]; then
+    # XCP-ng: we temporarily removed sr_health_check.timer,
+    # so we need to disable and stop it if it is present on the system
+    TIMER_LINK=/etc/systemd/system/timers.target.wants/sr_health_check.timer
+    if [ -e "$TIMER_LINK" ]; then
+        systemctl --no-reload disable sr_health_check.timer 2>&1 || :
+        systemctl stop sr_health_check.timer 2>&1 || :
+    elif [ -L "$TIMER_LINK" ]; then
+        # Remove dangling symlink left by previous build that removed
+        # the timer without disabling it first.
+        rm -f "$TIMER_LINK"
+        systemctl reset-failed sr_health_check.timer
+    fi
+fi
+
 %preun
 %systemd_preun make-dummy-sr.service
 %systemd_preun mpcount.service
@@ -372,9 +387,11 @@ Manager and some other packages
 
 
 %changelog
-* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - WIP - 3.2.3-1.3
+* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.3
 - %%preun: Move command above exit 0 so that it's executed
-- WIP: more to come before the build
+- Properly disable the removed sr_health_check.timer
+- Also remove the dangling symlink if still present due to improper removal
+  of the timer in sm-3.2.0-1.5
 
 * Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.2
 - Don't try to patch /etc/cgrules.conf when the patch was already applied

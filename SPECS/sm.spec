@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.2.0.linstor.1%{?dist}
+Release: %{?xsrel}.3.0.linstor.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -345,10 +345,11 @@ fi
 if [ $1 -eq 0 ] ; then
     update-alternatives --remove multipath.conf /etc/multipath.xenserver/multipath.conf
 fi
-exit 0
 
 # XCP-ng
 %systemd_preun linstor-monitor.service
+
+exit 0
 
 %postun
 %systemd_postun make-dummy-sr.service
@@ -676,6 +677,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - WIP - 2.30.8-12.3
+- %%preun: Move command above exit 0 so that it's executed
+
 * Tue Aug 06 2024 Damien Thenot <damien.thenot@vates.tech> - 2.30.8-12.2.0.linstor.1
 - Sync patches with latest 2.30.8-8.2
 - *** 8.2 release changelog ***

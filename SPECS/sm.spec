@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.1%{?xsrel}%{?dist}
+Release: 1.2%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -90,7 +90,7 @@ make install DESTDIR=%{buildroot}
 
 # Mark processes that should be moved to the data path
 %triggerin -- libcgroup-tools
-( patch -tsN -r - -d / -p0 )>/dev/null << 'EOF'
+CGRULES_PATCH=$(cat << 'EOF'
 --- /etc/cgrules.conf	2018-04-11 02:33:52.000000000 +0000
 +++ /tmp/cgrules.conf	2024-01-26 17:30:29.204242549 +0000
 @@ -7,4 +7,6 @@
@@ -101,6 +101,17 @@ make install DESTDIR=%{buildroot}
 +%		blkio		vm.slice/
  # End of file
 EOF
+)
+
+# Do not apply patch if it was already applied
+if ! echo "$CGRULES_PATCH" | patch --dry-run -RsN -d / -p1 >/dev/null; then
+    # Apply patch. Output NOT redirected to /dev/null so that error messages are displayed
+    if ! echo "$CGRULES_PATCH" | patch -tsN -r - -d / -p1; then
+        echo "Error: failed to apply patch:"
+        echo "$CGRULES_PATCH"
+        false
+    fi
+fi
 
 %pre
 # Remove sm-multipath on install or upgrade, to ensure it goes
@@ -360,6 +371,10 @@ Manager and some other packages
 
 
 %changelog
+* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.2
+- Don't try to patch /etc/cgrules.conf when the patch was already applied
+- Fixes update warning
+
 * Tue Aug 13 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.3-1.1
 - Rebase on 3.2.3-1
 - Add 0028-reflect-upstream-changes-in-our-tests.patch

@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.2%{?xsrel}%{?dist}
+Release: 1.3%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -168,10 +168,11 @@ fi
 if [ $1 -eq 0 ] ; then
     update-alternatives --remove multipath.conf /etc/multipath.xenserver/multipath.conf
 fi
-exit 0
 
 # XCP-ng
 %systemd_preun linstor-monitor.service
+
+exit 0
 
 %postun
 %systemd_postun make-dummy-sr.service
@@ -371,6 +372,10 @@ Manager and some other packages
 
 
 %changelog
+* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - WIP - 3.2.3-1.3
+- %%preun: Move command above exit 0 so that it's executed
+- WIP: more to come before the build
+
 * Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.2
 - Don't try to patch /etc/cgrules.conf when the patch was already applied
 - Fixes update warning

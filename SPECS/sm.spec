@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.1%{?xsrel}%{?dist}
+Release: 1.1.0.restorehc.1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -71,7 +71,7 @@ Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
 Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
 Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
 Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
-Patch1027: 0027-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
+#Patch1027: 0027-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
 Patch1028: 0028-reflect-upstream-changes-in-our-tests.patch
 
 %description
@@ -114,6 +114,8 @@ EOF
 %systemd_post storage-init.service
 %systemd_post usb-scan.socket
 %systemd_post mpathcount.socket
+%systemd_post sr_health_check.timer
+%systemd_post sr_health_check.service
 
 # On upgrade, migrate from the old statefile to the new statefile so that
 # storage is not reinitialized.
@@ -130,6 +132,9 @@ if [ -e /etc/multipath.conf -a ! -h /etc/multipath.conf ]; then
    mv -f /etc/multipath.conf /etc/multipath.conf.$(date +%F_%T)
 fi
 update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.xenserver/multipath.conf 90
+
+systemctl enable sr_health_check.timer
+systemctl start sr_health_check.timer
 
 # XCP-ng: enable linstor-monitor by default.
 # However it won't start without linstor-controller.service
@@ -151,6 +156,8 @@ fi
 %systemd_preun storage-init.service
 %systemd_preun usb-scan.socket
 %systemd_preun mpathcount.socket
+%systemd_preun sr_health_check.timer
+%systemd_preun sr_health_check.service
 # Remove sm-multipath on upgrade or uninstall, to ensure it goes
 [ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
 # only remove in case of erase (but not at upgrade)
@@ -168,6 +175,8 @@ exit 0
 %systemd_postun sm-mpath-root.service
 %systemd_postun xs-sm.service
 %systemd_postun storage-init.service
+%systemd_postun sr_health_check.timer
+%systemd_postun sr_health_check.service
 
 # XCP-ng
 %systemd_postun linstor-monitor.service
@@ -274,6 +283,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/constants.py
 /opt/xensource/sm/cbtutil.py
 /opt/xensource/sm/multipath-root-setup
+/opt/xensource/sm/sr_health_check.py
 %dir /opt/xensource/sm/plugins
 /opt/xensource/sm/plugins/__init__.py*
 /sbin/mpathutil
@@ -286,6 +296,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/mpathcount.service
 %{_unitdir}/mpathcount.socket
 %{_unitdir}/storage-init.service
+%{_unitdir}/sr_health_check.timer
+%{_unitdir}/sr_health_check.service
 %{_unitdir}/SMGC@.service
 %config /etc/udev/rules.d/65-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
@@ -360,6 +372,9 @@ Manager and some other packages
 
 
 %changelog
+* Tue Aug 27 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.1.0.restorehc.1
+- Restore the sr-health-check service and the code which goes with it.
+
 * Tue Aug 13 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.3-1.1
 - Rebase on 3.2.3-1
 - Add 0028-reflect-upstream-changes-in-our-tests.patch

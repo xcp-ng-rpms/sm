@@ -692,11 +692,13 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
-* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.30.8-12.3
-- %%preun: Move command above exit 0 so that it's executed
-- Properly disable the removed sr_health_check.timer
-- Also remove the dangling symlink if still present due to improper removal
-  of the timer in sm-2.30.8-12.2
+* Fri Aug 30 2024 Damien Thenot <damien.thenot@vates.tech> - 2.30.8-12.3.0.linstor.1
+- Sync with packaging changes in 8.2
+- * Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.30.8-12.3
+- - %%preun: Move command above exit 0 so that it's executed
+- - Properly disable the removed sr_health_check.timer
+- - Also remove the dangling symlink if still present due to improper removal
+-   of the timer in sm-2.30.8-12.2
 
 * Tue Aug 06 2024 Damien Thenot <damien.thenot@vates.tech> - 2.30.8-12.2.0.linstor.1
 - Sync patches with latest 2.30.8-8.2

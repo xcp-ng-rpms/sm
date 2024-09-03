@@ -32,6 +32,3 @@ index dca9645..1b86a43 100755
          )
          error_str = self._get_error_str(result)
          if error_str:
--- 
-2.46.0
-

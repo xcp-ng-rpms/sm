@@ -28,6 +28,3 @@ index 760c566..9dec459 100644
          self.assertFalse(pread.called)
  
  
--- 
-2.46.0
-

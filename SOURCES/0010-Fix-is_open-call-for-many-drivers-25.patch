@@ -100,6 +100,3 @@ index b4f33de..bb3f5db 100755
      cmd.params = {"command": None}
  
      driver = SR.driver(srType)
--- 
-2.46.0
-

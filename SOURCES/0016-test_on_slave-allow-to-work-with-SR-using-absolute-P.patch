@@ -47,6 +47,3 @@ index 9034747..679d442 100644
          self.mocks['SR'] = self.mock_sr
          self.mock_blktap2 = mock.MagicMock()
          self.mocks['blktap2'] = self.mock_blktap2
--- 
-2.46.0
-

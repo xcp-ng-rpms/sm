@@ -387,6 +387,3 @@ index 0000000..3349a44
 +        mock_checkmount.return_value=False
 +        mfssr.detach('asr_uuid')
 +        self.assertTrue(mfssr.attached)
--- 
-2.46.0
-

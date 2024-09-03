@@ -98,6 +98,3 @@ index 3aea796..760c566 100644
  
  class TestISOSR_overNFS(unittest.TestCase):
  
--- 
-2.46.0
-

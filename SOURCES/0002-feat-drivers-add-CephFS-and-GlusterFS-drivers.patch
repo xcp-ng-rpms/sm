@@ -635,6 +635,3 @@ index 042fe99..d3dfc0e 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
          raise util.SMException("Unsupported SR type: %s" % type)
--- 
-2.46.0
-

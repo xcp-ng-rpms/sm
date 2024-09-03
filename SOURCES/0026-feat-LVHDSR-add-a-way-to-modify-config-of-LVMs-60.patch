@@ -104,6 +104,3 @@ index 8c63d45..6e21568 100644
          for tag in self.lvs[lvName].tags:
              self._removeTag(lvName, tag)
          del self.lvs[lvName]
--- 
-2.46.0
-

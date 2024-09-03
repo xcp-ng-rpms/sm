@@ -210,6 +210,3 @@ index 0000000..879ea37
 +                raise
 +            failed = True
 +        self.assertTrue(failed)
--- 
-2.46.0
-

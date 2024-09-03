@@ -125,6 +125,3 @@ index 53485a0..b2e056a 100755
          except util.CommandException, inst:
              self.detach(sr_uuid)
              if inst.code != errno.ENOENT:
--- 
-2.46.0
-

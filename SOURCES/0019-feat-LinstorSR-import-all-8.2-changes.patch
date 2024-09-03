@@ -8327,6 +8327,3 @@ index 679d442..4b59f63 100644
  
      def fake_import(self, *args, **kwargs):
          print('Asked to import {}'.format(args[0]))
--- 
-2.46.0
-

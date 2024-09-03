@@ -20,6 +20,3 @@ index 99cb313..609c6ef 100644
  Before=xapi.service
  Conflicts=shutdown.target
  RefuseManualStop=yes
--- 
-2.46.0
-

@@ -57,6 +57,3 @@ index 879ea37..d0cca93 100644
 -            failed = True
 +            failed = e.errno == 47
          self.assertTrue(failed)
--- 
-2.46.0
-

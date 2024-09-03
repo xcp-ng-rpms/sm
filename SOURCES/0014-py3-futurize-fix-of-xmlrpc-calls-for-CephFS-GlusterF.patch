@@ -117,6 +117,3 @@ index 05a4264..c29c758 100755
  
      def attach_from_config(self, sr_uuid, vdi_uuid):
          try:
--- 
-2.46.0
-

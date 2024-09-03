@@ -77,6 +77,3 @@ index 0564b29..5d7b320 100755
  def match_rootdev(s):
      regex = re.compile("^PRIMARY_DISK")
      return regex.search(s, 0)
--- 
-2.46.0
-

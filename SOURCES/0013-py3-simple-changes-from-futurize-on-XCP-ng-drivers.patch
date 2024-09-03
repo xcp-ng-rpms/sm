@@ -300,6 +300,3 @@ index d400421..dca9645 100755
              raise LinstorVolumeManagerError(
                  'Unable to create SR `{}`. It already exists on node(s): {}'
                  .format(group_name, existing_node_names)
--- 
-2.46.0
-

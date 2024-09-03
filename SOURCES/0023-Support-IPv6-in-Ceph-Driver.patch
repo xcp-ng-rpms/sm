@@ -39,6 +39,3 @@ index bd6a4b1..f7c2633 100644
              util.ioretry(lambda: util.pread(command), errlist=[errno.EPIPE, errno.EIO], maxretry=2, nofail=True)
          except util.CommandException as inst:
              syslog(_syslog.LOG_ERR, 'CephFS mount failed ' + inst.__str__())
--- 
-2.46.0
-

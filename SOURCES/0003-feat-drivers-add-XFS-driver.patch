@@ -299,6 +299,3 @@ index d3dfc0e..57522b8 100755
      ]:
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
--- 
-2.46.0
-

@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.4%{?xsrel}%{?dist}
+Release: 1.7%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -73,6 +73,7 @@ Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
 Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
 Patch1028: 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
+Patch1029: 0029-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
 
 %description
 This package contains storage backends used in XCP
@@ -384,6 +385,18 @@ Manager and some other packages
 
 
 %changelog
+* Mon Sep 09 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.7
+- Import 8.2 LINSTOR changes on 8.3:
+- Robustify HA: use a specific group with a replication count of 3
+- Export helpers in linstor-manager regarding network interfaces
+- Improve health-check helper: more details and simple API
+- Fix pause/unpause: always load a valid VHD chain
+- Robustify remote "vhdutil check" command
+- Robustify SR destruction
+- Prevent diskless destruction on master host
+- Prevent tiebreaker destruction
+- Reduce LINSTOR vhdutil queries
+
 * Tue Sep 03 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.4
 - Add 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
 - Restore the sr_health_check service and the code which goes with it.

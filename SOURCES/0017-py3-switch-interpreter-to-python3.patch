@@ -1,7 +1,7 @@
 From 2df6ea2d37f2a117f70f844105db2771d9c88517 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Mon, 27 Mar 2023 15:30:46 +0200
-Subject: [PATCH 17/28] py3: switch interpreter to python3
+Subject: [PATCH 17/29] py3: switch interpreter to python3
 
 ---
  drivers/CephFSSR.py             | 2 +-
@@ -15,7 +15,7 @@ Subject: [PATCH 17/28] py3: switch interpreter to python3
  8 files changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index be2521f..bd6a4b1 100644
+index be2521fd..bd6a4b14 100644
 --- a/drivers/CephFSSR.py
 +++ b/drivers/CephFSSR.py
 @@ -1,4 +1,4 @@
@@ -25,7 +25,7 @@ index be2521f..bd6a4b1 100644
  # Original work copyright (C) Citrix systems
  # Modified work copyright (C) Vates SAS and XCP-ng community
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 48471f9..42e5ab5 100644
+index 48471f96..42e5ab52 100644
 --- a/drivers/GlusterFSSR.py
 +++ b/drivers/GlusterFSSR.py
 @@ -1,4 +1,4 @@
@@ -35,7 +35,7 @@ index 48471f9..42e5ab5 100644
  # Original work copyright (C) Citrix systems
  # Modified work copyright (C) Vates SAS and XCP-ng community
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index f6badab..e7022ca 100755
+index f6badabb..e7022ca9 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1,4 +1,4 @@
@@ -45,7 +45,7 @@ index f6badab..e7022ca 100755
  # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
  #
 diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index c29c758..3911b09 100755
+index c29c7583..3911b096 100755
 --- a/drivers/MooseFSSR.py
 +++ b/drivers/MooseFSSR.py
 @@ -1,4 +1,4 @@
@@ -55,7 +55,7 @@ index c29c758..3911b09 100755
  # Original work copyright (C) Citrix systems
  # Modified work copyright (C) Tappest sp. z o.o., Vates SAS and XCP-ng community
 diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
-index d375210..354ca90 100644
+index d3752101..354ca90e 100644
 --- a/drivers/ZFSSR.py
 +++ b/drivers/ZFSSR.py
 @@ -1,4 +1,4 @@
@@ -65,7 +65,7 @@ index d375210..354ca90 100644
  # Copyright (C) 2020  Vates SAS
  #
 diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
-index 7495330..bc7cff7 100755
+index 74953305..bc7cff7c 100755
 --- a/drivers/linstorjournaler.py
 +++ b/drivers/linstorjournaler.py
 @@ -1,4 +1,4 @@
@@ -75,7 +75,7 @@ index 7495330..bc7cff7 100755
  # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
  #
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index f31c752..7a13566 100644
+index f31c7525..7a135662 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -1,4 +1,4 @@
@@ -85,7 +85,7 @@ index f31c752..7a13566 100644
  # Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
  #
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 1b86a43..182b889 100755
+index 1b86a439..182b8899 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1,4 +1,4 @@

@@ -1,7 +1,7 @@
 From 395daa86f0b4dcbc4eeabb42fed4f818d46afc36 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:13:18 +0100
-Subject: [PATCH 13/28] py3: simple changes from futurize on XCP-ng drivers
+Subject: [PATCH 13/29] py3: simple changes from futurize on XCP-ng drivers
 
 * `except` syntax fixes
 * drop `has_key()` usage
@@ -21,7 +21,7 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  6 files changed, 30 insertions(+), 33 deletions(-)
 
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index f334bb3..f83beb3 100644
+index f334bb30..f83beb3d 100644
 --- a/drivers/CephFSSR.py
 +++ b/drivers/CephFSSR.py
 @@ -132,18 +132,18 @@ class CephFSSR(FileSR.FileSR):
@@ -89,7 +89,7 @@ index f334bb3..f83beb3 100644
              if inst.code != errno.ENOENT:
                  raise xs_errors.SROSError(114, "Failed to remove CephFS mount point")
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 290a331..6d5e061 100644
+index 290a3312..6d5e0614 100644
 --- a/drivers/GlusterFSSR.py
 +++ b/drivers/GlusterFSSR.py
 @@ -122,7 +122,7 @@ class GlusterFSSR(FileSR.FileSR):
@@ -153,7 +153,7 @@ index 290a331..6d5e061 100644
              if inst.code != errno.ENOENT:
                  raise xs_errors.SROSError(114, "Failed to remove GlusterFS mount point")
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index ffd70ab..4e8888e 100755
+index ffd70abf..4e8888e2 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -460,7 +460,7 @@ class LinstorSR(SR.SR):
@@ -196,7 +196,7 @@ index ffd70ab..4e8888e 100755
  
              # 7. Verify parent locator field of both children and
 diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index 504e850..05a4264 100755
+index 504e8503..05a42640 100755
 --- a/drivers/MooseFSSR.py
 +++ b/drivers/MooseFSSR.py
 @@ -139,12 +139,12 @@ class MooseFSSR(FileSR.FileSR):
@@ -257,7 +257,7 @@ index 504e850..05a4264 100755
              if inst.code != errno.ENOENT:
                  raise xs_errors.SROSError(114, "Failed to remove MooseFS mount point")
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 9fa6f27..90611b3 100755
+index 9fa6f27b..90611b3d 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3004,7 +3004,7 @@ class LinstorSR(SR):
@@ -288,7 +288,7 @@ index 9fa6f27..90611b3 100755
                      self._hasValidDevicePath(self.TMP_RENAME_PREFIX + uuid):
                  self._undoInterruptedCoalesceLeaf(uuid, parentUuid)
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index d400421..dca9645 100755
+index d4004217..dca96456 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1053,7 +1053,7 @@ class LinstorVolumeManager(object):

@@ -1,7 +1,7 @@
 From 471b7b2742da807aca012c6609c8917cbe786507 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 19 Sep 2022 10:31:00 +0200
-Subject: [PATCH 12/28] Fix code coverage regarding MooseFSSR and ZFSSR (#29)
+Subject: [PATCH 12/29] Fix code coverage regarding MooseFSSR and ZFSSR (#29)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 3 insertions(+), 11 deletions(-)
 
 diff --git a/tests/test_MooseFSSR.py b/tests/test_MooseFSSR.py
-index 3349a44..feaac62 100644
+index 3349a449..feaac626 100644
 --- a/tests/test_MooseFSSR.py
 +++ b/tests/test_MooseFSSR.py
 @@ -23,8 +23,6 @@ class TestMooseFSSR(unittest.TestCase):
@@ -23,7 +23,7 @@ index 3349a44..feaac62 100644
              'command': 'some_command',
              'device_config': {}
 diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
-index 879ea37..d0cca93 100644
+index 879ea372..d0cca935 100644
 --- a/tests/test_ZFSSR.py
 +++ b/tests/test_ZFSSR.py
 @@ -53,9 +53,7 @@ class TestZFSSR(unittest.TestCase):

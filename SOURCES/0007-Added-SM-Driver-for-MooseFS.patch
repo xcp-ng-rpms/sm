@@ -1,7 +1,7 @@
 From 1dc43ae24403979db03fb7bbf90aeffe81d6c28b Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
-Subject: [PATCH 07/28] Added SM Driver for MooseFS
+Subject: [PATCH 07/29] Added SM Driver for MooseFS
 
 Co-authored-by: Piotr Robert Konopelko <piotr.konopelko@moosefs.pro>
 Signed-off-by: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100644 tests/test_MooseFSSR.py
 
 diff --git a/Makefile b/Makefile
-index dc370cf..c2f6f46 100755
+index dc370cfd..c2f6f463 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -19,6 +19,7 @@ SM_DRIVERS += CephFS
@@ -29,7 +29,7 @@ index dc370cf..c2f6f46 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
 new file mode 100755
-index 0000000..53485a0
+index 00000000..53485a0c
 --- /dev/null
 +++ b/drivers/MooseFSSR.py
 @@ -0,0 +1,271 @@
@@ -305,7 +305,7 @@ index 0000000..53485a0
 +else:
 +    SR.registerSR(MooseFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 3bf84d5..9fa6f27 100755
+index 3bf84d5e..9fa6f27b 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3245,7 +3245,7 @@ def normalizeType(type):
@@ -319,7 +319,7 @@ index 3bf84d5..9fa6f27 100755
      if type in ["linstor"]:
 diff --git a/tests/test_MooseFSSR.py b/tests/test_MooseFSSR.py
 new file mode 100644
-index 0000000..3349a44
+index 00000000..3349a449
 --- /dev/null
 +++ b/tests/test_MooseFSSR.py
 @@ -0,0 +1,64 @@

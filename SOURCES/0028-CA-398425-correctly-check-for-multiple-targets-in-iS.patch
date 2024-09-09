@@ -1,7 +1,7 @@
 From 006a3727a18eed16a581251553b829667efceefd Mon Sep 17 00:00:00 2001
 From: Mark Syms <mark.syms@cloud.com>
 Date: Fri, 30 Aug 2024 10:13:27 +0100
-Subject: [PATCH 28/28] CA-398425: correctly check for multiple targets in
+Subject: [PATCH 28/29] CA-398425: correctly check for multiple targets in
  iSCSI
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
@@ -10,7 +10,7 @@ Signed-off-by: Mark Syms <mark.syms@cloud.com>
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
-index cbde1b9..442ec30 100755
+index cbde1b92..442ec30f 100755
 --- a/drivers/LVHDoISCSISR.py
 +++ b/drivers/LVHDoISCSISR.py
 @@ -103,7 +103,8 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):

@@ -1,7 +1,7 @@
 From 1354e78a5409805f08f118910db32b89bfc6c780 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
-Subject: [PATCH 20/28] feat(LinstorSR): is now compatible with python 3
+Subject: [PATCH 20/29] feat(LinstorSR): is now compatible with python 3
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  9 files changed, 36 insertions(+), 40 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 52d5c26..1c9bd54 100755
+index 52d5c26e..1c9bd54a 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -758,7 +758,7 @@ class LinstorSR(SR.SR):
@@ -88,7 +88,7 @@ index 52d5c26..1c9bd54 100755
                  str(device_size)
              ]
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 03bdc94..02435db 100755
+index 03bdc94d..02435db8 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3381,7 +3381,7 @@ class LinstorSR(SR):
@@ -101,7 +101,7 @@ index 03bdc94..02435db 100755
                      if opener['process-name'] != 'tapdisk':
                          raise util.SMException(
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 8a30834..8d313ec 100755
+index 8a308344..8d313ec7 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -1,4 +1,4 @@
@@ -120,7 +120,7 @@ index 8a30834..8d313ec 100755
          util.SMlog('linstor-manager:get_block_bitmap error: {}'.format(e))
          raise
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 836f4ce..13e1bb0 100644
+index 836f4ceb..13e1bb08 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -27,9 +27,6 @@ import xs_errors
@@ -176,7 +176,7 @@ index 836f4ce..13e1bb0 100644
                      continue
  
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 5e5bcd5..dbca3b4 100755
+index 5e5bcd51..dbca3b41 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -529,8 +529,8 @@ class LinstorVolumeManager(object):
@@ -286,7 +286,7 @@ index 5e5bcd5..dbca3b4 100755
          try:
              if not force:
 diff --git a/drivers/util.py b/drivers/util.py
-index 9db6994..0564b29 100755
+index 9db6994b..0564b29b 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -751,7 +751,7 @@ def get_this_host_address(session):
@@ -299,7 +299,7 @@ index 9db6994..0564b29 100755
      return addresses
  
 diff --git a/scripts/fork-log-daemon b/scripts/fork-log-daemon
-index 665a60b..986de63 100755
+index 665a60ba..986de63f 100755
 --- a/scripts/fork-log-daemon
 +++ b/scripts/fork-log-daemon
 @@ -1,4 +1,4 @@
@@ -309,7 +309,7 @@ index 665a60b..986de63 100755
  import select
  import signal
 diff --git a/scripts/linstor-kv-tool b/scripts/linstor-kv-tool
-index b845ec2..de14e73 100755
+index b845ec2b..de14e731 100755
 --- a/scripts/linstor-kv-tool
 +++ b/scripts/linstor-kv-tool
 @@ -1,4 +1,4 @@
@@ -319,7 +319,7 @@ index b845ec2..de14e73 100755
  # Copyright (C) 2022  Vates SAS
  #
 diff --git a/scripts/safe-umount b/scripts/safe-umount
-index 9c1dcc4..3c64a3f 100755
+index 9c1dcc40..3c64a3f3 100755
 --- a/scripts/safe-umount
 +++ b/scripts/safe-umount
 @@ -1,4 +1,4 @@

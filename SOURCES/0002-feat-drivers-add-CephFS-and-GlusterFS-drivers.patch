@@ -1,7 +1,7 @@
 From 1809f021bf3af5fa18419e248469cd970bded9f3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 02/28] feat(drivers): add CephFS and GlusterFS drivers
+Subject: [PATCH 02/29] feat(drivers): add CephFS and GlusterFS drivers
 
 ---
  Makefile               |   2 +
@@ -13,7 +13,7 @@ Subject: [PATCH 02/28] feat(drivers): add CephFS and GlusterFS drivers
  create mode 100644 drivers/GlusterFSSR.py
 
 diff --git a/Makefile b/Makefile
-index ad81be4..0750482 100755
+index ad81be40..07504828 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -14,6 +14,8 @@ SM_DRIVERS += LVHDoHBA
@@ -27,7 +27,7 @@ index ad81be4..0750482 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
 new file mode 100644
-index 0000000..415152f
+index 00000000..415152f7
 --- /dev/null
 +++ b/drivers/CephFSSR.py
 @@ -0,0 +1,296 @@
@@ -329,7 +329,7 @@ index 0000000..415152f
 +    SR.registerSR(CephFSSR)
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
 new file mode 100644
-index 0000000..72c482a
+index 00000000..72c482ae
 --- /dev/null
 +++ b/drivers/GlusterFSSR.py
 @@ -0,0 +1,287 @@
@@ -621,7 +621,7 @@ index 0000000..72c482a
 +else:
 +    SR.registerSR(GlusterFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 042fe99..d3dfc0e 100755
+index 042fe998..d3dfc0e4 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2887,7 +2887,9 @@ def normalizeType(type):

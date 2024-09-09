@@ -1,7 +1,7 @@
 From e1335b1ca83771142e6a6f831b5b4aa888e2ff18 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:32:37 +0100
-Subject: [PATCH 15/28] py3: use of integer division operator
+Subject: [PATCH 15/29] py3: use of integer division operator
 
 Guided by futurize's "old_div" use
 
@@ -11,7 +11,7 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index dca9645..1b86a43 100755
+index dca96456..1b86a439 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -28,7 +28,7 @@ import util

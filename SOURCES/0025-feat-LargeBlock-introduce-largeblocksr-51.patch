@@ -1,7 +1,7 @@
 From 47d5d8691b40f9c4bd8a77c00d851443e68ac887 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 12 Apr 2024 15:08:59 +0200
-Subject: [PATCH 25/28] feat(LargeBlock): introduce largeblocksr (#51)
+Subject: [PATCH 25/29] feat(LargeBlock): introduce largeblocksr (#51)
 
 A SR inheriting from a EXTSR allowing to use a 4KiB blocksize device as
 SR.
@@ -47,7 +47,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  create mode 100644 drivers/LargeBlockSR.py
 
 diff --git a/Makefile b/Makefile
-index 075f460..472413e 100755
+index 075f4603..472413e5 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -20,6 +20,7 @@ SM_DRIVERS += GlusterFS
@@ -60,7 +60,7 @@ index 075f460..472413e 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
 new file mode 100644
-index 0000000..ba0ac1d
+index 00000000..ba0ac1d1
 --- /dev/null
 +++ b/drivers/LargeBlockSR.py
 @@ -0,0 +1,249 @@
@@ -314,7 +314,7 @@ index 0000000..ba0ac1d
 +else:
 +    SR.registerSR(LargeBlockSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index f1497ca..0ec1fa1 100755
+index f1497ca3..0ec1fa1b 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
 @@ -963,4 +963,26 @@
@@ -345,7 +345,7 @@ index f1497ca..0ec1fa1 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 02435db..99d7387 100755
+index 02435db8..99d73872 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3430,7 +3430,7 @@ def normalizeType(type):
@@ -358,7 +358,7 @@ index 02435db..99d7387 100755
          type = SR.TYPE_FILE
      if type in ["linstor"]:
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 54d30d6..9bf9d1e 100755
+index 54d30d6d..9bf9d1e9 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
 @@ -569,12 +569,16 @@ def resizePV(dev):
@@ -381,7 +381,7 @@ index 54d30d6..9bf9d1e 100755
  
  @lvmretry
 diff --git a/drivers/on_slave.py b/drivers/on_slave.py
-index 524424f..2f58281 100755
+index 524424f6..2f58281a 100755
 --- a/drivers/on_slave.py
 +++ b/drivers/on_slave.py
 @@ -78,6 +78,7 @@ def _is_open(session, args):

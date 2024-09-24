@@ -1,7 +1,7 @@
 From 52d495879ebf8c1caee78f3e10f7febd65d8ccd3 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 7 May 2024 15:20:22 +0200
-Subject: [PATCH 22/24] feat(LargeBlock): backport of largeblocksr (#51) (#55)
+Subject: [PATCH 22/23] feat(LargeBlock): backport of largeblocksr (#51) (#55)
 
 A SR inheriting from a EXTSR allowing to use a 4KiB blocksize device as
 SR.
@@ -47,7 +47,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  create mode 100644 drivers/LargeBlockSR.py
 
 diff --git a/Makefile b/Makefile
-index 3357cbf..284b9a3 100755
+index 3357cbfb..284b9a39 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -24,6 +24,7 @@ SM_DRIVERS += XFS
@@ -60,7 +60,7 @@ index 3357cbf..284b9a3 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
 new file mode 100644
-index 0000000..0fd1f34
+index 00000000..0fd1f345
 --- /dev/null
 +++ b/drivers/LargeBlockSR.py
 @@ -0,0 +1,249 @@
@@ -314,7 +314,7 @@ index 0000000..0fd1f34
 +else:
 +    SR.registerSR(LargeBlockSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 6bbb817..391c9d6 100755
+index 6bbb8179..391c9d63 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
 @@ -947,4 +947,26 @@
@@ -345,7 +345,7 @@ index 6bbb817..391c9d6 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index a6636c5..d9237aa 100755
+index a6636c5d..d9237aa7 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3123,7 +3123,7 @@ def normalizeType(type):
@@ -358,7 +358,7 @@ index a6636c5..d9237aa 100755
          type = SR.TYPE_FILE
      if type in ["linstor"]:
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 7e2cdaf..ac0e2e0 100755
+index 7e2cdaff..ac0e2e0b 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
 @@ -543,13 +543,17 @@ def resizePV(dev):
@@ -383,7 +383,7 @@ index 7e2cdaf..ac0e2e0 100755
  def create(name, size, vgname, tag=None, size_in_percentage=None):
      if size_in_percentage:
 diff --git a/drivers/on_slave.py b/drivers/on_slave.py
-index 534e6c9..3c7bd34 100755
+index 534e6c90..3c7bd340 100755
 --- a/drivers/on_slave.py
 +++ b/drivers/on_slave.py
 @@ -76,6 +76,7 @@ def _is_open(session, args):
@@ -394,6 +394,3 @@ index 534e6c9..3c7bd34 100755
      import GlusterFSSR
      import LVHDSR
      import MooseFSSR
--- 
-2.45.2
-

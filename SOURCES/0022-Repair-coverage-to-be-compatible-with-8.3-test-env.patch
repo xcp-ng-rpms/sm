@@ -1,7 +1,7 @@
 From 18fe0f0b6c645b314d49b377602cc681167422e6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 22 Sep 2023 11:11:27 +0200
-Subject: [PATCH 22/28] Repair coverage to be compatible with 8.3 test env
+Subject: [PATCH 22/29] Repair coverage to be compatible with 8.3 test env
 
 Impacted drivers: LINSTOR, MooseFS and ZFS.
 - Ignore all linstor.* members during coverage,
@@ -18,7 +18,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  4 files changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 1c9bd54..fe6d01d 100755
+index 1c9bd54a..fe6d01d4 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -779,9 +779,8 @@ class LinstorSR(SR.SR):
@@ -33,7 +33,7 @@ index 1c9bd54..fe6d01d 100755
      @_locked_load
      def vdi(self, uuid):
 diff --git a/tests/pylintrc b/tests/pylintrc
-index a982913..4588675 100644
+index a982913b..4588675b 100644
 --- a/tests/pylintrc
 +++ b/tests/pylintrc
 @@ -84,7 +84,7 @@ ignored-classes=SQLObject
@@ -46,7 +46,7 @@ index a982913..4588675 100644
  # List of module names for which member attributes should not be checked
  # # (useful for modules/projects where namespaces are manipulated during runtime
 diff --git a/tests/test_MooseFSSR.py b/tests/test_MooseFSSR.py
-index feaac62..f4e0a85 100644
+index feaac626..f4e0a852 100644
 --- a/tests/test_MooseFSSR.py
 +++ b/tests/test_MooseFSSR.py
 @@ -1,4 +1,6 @@
@@ -58,7 +58,7 @@ index feaac62..f4e0a85 100644
  import unittest
  
 diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
-index d0cca93..544ea39 100644
+index d0cca935..544ea39a 100644
 --- a/tests/test_ZFSSR.py
 +++ b/tests/test_ZFSSR.py
 @@ -1,10 +1,10 @@

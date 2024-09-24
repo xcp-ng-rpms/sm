@@ -1,7 +1,7 @@
 From d32bf0ccfe58c67ba87e9bab5b76f9eead92735d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
-Subject: [PATCH 10/28] Fix is_open call for many drivers (#25)
+Subject: [PATCH 10/29] Fix is_open call for many drivers (#25)
 
 Ensure all shared drivers are imported in `_is_open` definition to register
 them in the driver list. Otherwise this function always fails with a SRUnknownType exception.
@@ -20,7 +20,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 25 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 72c482a..750eb23 100644
+index 72c482ae..750eb233 100644
 --- a/drivers/GlusterFSSR.py
 +++ b/drivers/GlusterFSSR.py
 @@ -96,7 +96,8 @@ class GlusterFSSR(FileSR.FileSR):
@@ -34,7 +34,7 @@ index 72c482a..750eb23 100644
              self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
          else:
 diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
-index b499cc9..ef73e1b 100755
+index b499cc90..ef73e1b4 100755
 --- a/drivers/NFSSR.py
 +++ b/drivers/NFSSR.py
 @@ -88,9 +88,12 @@ class NFSSR(FileSR.SharedFileSR):
@@ -64,7 +64,7 @@ index b499cc9..ef73e1b 100755
                  try:
                      self.scan_exports(self.dconf['server'])
 diff --git a/drivers/on_slave.py b/drivers/on_slave.py
-index b4f33de..bb3f5db 100755
+index b4f33de2..bb3f5db6 100755
 --- a/drivers/on_slave.py
 +++ b/drivers/on_slave.py
 @@ -76,9 +76,14 @@ def _is_open(session, args):

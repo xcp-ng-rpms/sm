@@ -1,7 +1,7 @@
 From 98d8c31104c3eae9ea62ea106d09fb801a784f4e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
-Subject: [PATCH 19/28] feat(LinstorSR): import all 8.2 changes
+Subject: [PATCH 19/29] feat(LinstorSR): import all 8.2 changes
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -35,7 +35,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100755 scripts/safe-umount
 
 diff --git a/Makefile b/Makefile
-index c2f6f46..075f460 100755
+index c2f6f463..075f4603 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -86,6 +86,7 @@ PLUGIN_SCRIPT_DEST := /etc/xapi.d/plugins/
@@ -80,7 +80,7 @@ index c2f6f46..075f460 100755
  	install -m 755 scripts/check-device-sharing $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/usb_change $(SM_STAGING)$(LIBEXEC)
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index e7022ca..52d5c26 100755
+index e7022ca9..52d5c26e 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -19,25 +19,39 @@ from constants import CBTLOG_TAG
@@ -2200,7 +2200,7 @@ index e7022ca..52d5c26 100755
  else:
      SR.registerSR(LinstorSR)
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 5712d8f..669b9f6 100755
+index 5712d8f2..669b9f65 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -50,6 +50,12 @@ import VDI as sm
@@ -2242,7 +2242,7 @@ index 5712d8f..669b9f6 100755
                          tapdisk = cls.__from_blktap(blktap)
                          node = '/sys/dev/block/%d:%d' % (tapdisk.major(), tapdisk.minor)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 90611b3..03bdc94 100755
+index 90611b3d..03bdc94d 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -53,8 +53,11 @@ from time import monotonic as _time
@@ -2831,7 +2831,7 @@ index 90611b3..03bdc94 100755
      1. If we are already GC'ing in this SR, return
      2. If we are already coalescing a VDI pair:
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index f7ce180..8a30834 100755
+index f7ce1809..8a308344 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -14,32 +14,53 @@
@@ -3910,7 +3910,7 @@ index f7ce180..8a30834 100755
 +        'setNodePreferredInterface': set_node_preferred_interface
      })
 diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
-index bc7cff7..a61d9f1 100755
+index bc7cff7c..a61d9f11 100755
 --- a/drivers/linstorjournaler.py
 +++ b/drivers/linstorjournaler.py
 @@ -16,7 +16,8 @@
@@ -3991,7 +3991,7 @@ index bc7cff7..a61d9f1 100755
      def _get_key(type, identifier):
          return '{}/{}'.format(type, identifier)
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 7a13566..836f4ce 100644
+index 7a135662..836f4ceb 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -14,6 +14,8 @@
@@ -4557,7 +4557,7 @@ index 7a13566..836f4ce 100644
 +                opterr='Failed to zero out VHD footer {}'.format(path)
 +            )
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 182b889..5e5bcd5 100755
+index 182b8899..5e5bcd51 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -16,14 +16,104 @@
@@ -7501,7 +7501,7 @@ index 182b889..5e5bcd5 100755
 +            '`{}` is open: {}'.format(path, e)
 +        )
 diff --git a/drivers/on_slave.py b/drivers/on_slave.py
-index bb3f5db..524424f 100755
+index bb3f5db6..524424f6 100755
 --- a/drivers/on_slave.py
 +++ b/drivers/on_slave.py
 @@ -79,6 +79,7 @@ def _is_open(session, args):
@@ -7543,7 +7543,7 @@ index bb3f5db..524424f 100755
      tapdisk = blktap2.Tapdisk.find_by_path(vdi.path)
      util.SMlog("Tapdisk for %s: %s" % (vdi.path, tapdisk))
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 932fc3c..7532875 100755
+index 932fc3ca..75328757 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
 @@ -30,7 +30,7 @@ import vhdutil
@@ -7576,7 +7576,7 @@ index 932fc3c..7532875 100755
                  logger=util.SMlog
              ).get_device_path(self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index a64512f..9db6994 100755
+index a64512f4..9db6994b 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -699,32 +699,10 @@ def get_master_ref(session):
@@ -7727,7 +7727,7 @@ index a64512f..9db6994 100755
 +    finally:
 +        SMlog('* End profiling of {} ({}) *'.format(name, filename))
 diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
-index 40807e8..723f3af 100755
+index 40807e84..723f3af2 100755
 --- a/drivers/vhdutil.py
 +++ b/drivers/vhdutil.py
 @@ -94,13 +94,16 @@ def ioretry(cmd, text=True):
@@ -7750,7 +7750,7 @@ index 40807e8..723f3af 100755
      fields = ret.strip().split('\n')
 diff --git a/etc/systemd/system/drbd-reactor.service.d/override.conf b/etc/systemd/system/drbd-reactor.service.d/override.conf
 new file mode 100644
-index 0000000..2f99a46
+index 00000000..2f99a46a
 --- /dev/null
 +++ b/etc/systemd/system/drbd-reactor.service.d/override.conf
 @@ -0,0 +1,6 @@
@@ -7762,7 +7762,7 @@ index 0000000..2f99a46
 +RestartSec=2
 diff --git a/etc/systemd/system/linstor-satellite.service.d/override.conf b/etc/systemd/system/linstor-satellite.service.d/override.conf
 new file mode 100644
-index 0000000..b1686b4
+index 00000000..b1686b4f
 --- /dev/null
 +++ b/etc/systemd/system/linstor-satellite.service.d/override.conf
 @@ -0,0 +1,5 @@
@@ -7773,7 +7773,7 @@ index 0000000..b1686b4
 +After=drbd.service
 diff --git a/etc/systemd/system/var-lib-linstor.service b/etc/systemd/system/var-lib-linstor.service
 new file mode 100644
-index 0000000..e9deb90
+index 00000000..e9deb904
 --- /dev/null
 +++ b/etc/systemd/system/var-lib-linstor.service
 @@ -0,0 +1,21 @@
@@ -7799,7 +7799,7 @@ index 0000000..e9deb90
 +ExecStop=/opt/xensource/libexec/safe-umount /var/lib/linstor
 +RemainAfterExit=true
 diff --git a/linstor/linstor-monitord.c b/linstor/linstor-monitord.c
-index 8161813..4774059 100644
+index 8161813d..47740598 100644
 --- a/linstor/linstor-monitord.c
 +++ b/linstor/linstor-monitord.c
 @@ -14,8 +14,10 @@
@@ -8118,7 +8118,7 @@ index 8161813..4774059 100644
  
    const int inotifyFd = createInotifyInstance();
 diff --git a/multipath/multipath.conf b/multipath/multipath.conf
-index 744b646..00a8f48 100644
+index 744b6461..00a8f488 100644
 --- a/multipath/multipath.conf
 +++ b/multipath/multipath.conf
 @@ -23,6 +23,7 @@ blacklist {
@@ -8131,7 +8131,7 @@ index 744b646..00a8f48 100644
  blacklist_exceptions {
 diff --git a/scripts/fork-log-daemon b/scripts/fork-log-daemon
 new file mode 100755
-index 0000000..665a60b
+index 00000000..665a60ba
 --- /dev/null
 +++ b/scripts/fork-log-daemon
 @@ -0,0 +1,36 @@
@@ -8173,7 +8173,7 @@ index 0000000..665a60b
 +        syslog.syslog(sys.argv[1] + ' is now terminated!')
 diff --git a/scripts/linstor-kv-tool b/scripts/linstor-kv-tool
 new file mode 100755
-index 0000000..b845ec2
+index 00000000..b845ec2b
 --- /dev/null
 +++ b/scripts/linstor-kv-tool
 @@ -0,0 +1,84 @@
@@ -8263,7 +8263,7 @@ index 0000000..b845ec2
 +    main()
 diff --git a/scripts/safe-umount b/scripts/safe-umount
 new file mode 100755
-index 0000000..9c1dcc4
+index 00000000..9c1dcc40
 --- /dev/null
 +++ b/scripts/safe-umount
 @@ -0,0 +1,39 @@
@@ -8307,7 +8307,7 @@ index 0000000..9c1dcc4
 +    args = parser.parse_args()
 +    sys.exit(safe_umount(args.path))
 diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
-index 679d442..4b59f63 100644
+index 679d4421..4b59f632 100644
 --- a/tests/test_on_slave.py
 +++ b/tests/test_on_slave.py
 @@ -13,7 +13,15 @@ import on_slave

@@ -1,0 +1,38 @@
+From 4b2b13218bdd1cc521482fd1ff25a26ae4dbc7da Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 17 Mar 2023 12:06:08 +0100
+Subject: [PATCH 115/177] fix(LinstorSR): create parent path during attach
+
+It's necessary to force DRBD diskless path creation when
+a VDI is attached. Otherwise the attach can fail on pool with
+>= 4 hosts.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index c42f07d6..48feec7a 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1883,13 +1883,14 @@ class LinstorVDI(VDI.VDI):
+         ):
+             return self._attach_using_http_nbd()
+ 
+-        if not util.pathexists(self.path):
+-            # Ensure we have a path...
+-            self._linstor.get_device_path(vdi_uuid)
+-            if not util.pathexists(self.path):
++        # Ensure we have a path...
++        while vdi_uuid:
++            path = self._linstor.get_device_path(vdi_uuid)
++            if not util.pathexists(path):
+                 raise xs_errors.XenError(
+-                    'VDIUnavailable', opterr='Could not find: {}'.format(self.path)
++                    'VDIUnavailable', opterr='Could not find: {}'.format(path)
+                 )
++            vdi_uuid = self.sr._vhdutil.get_vhd_info(vdi_uuid).parentUuid
+ 
+         self.attached = True
+         return VDI.VDI.attach(self, self.sr.uuid, self.uuid)

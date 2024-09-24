@@ -1,0 +1,24 @@
+From 6a3d970ee0c6c49d859bd1a9b12e8cb9d3df960a Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 8 Jul 2022 14:52:25 +0200
+Subject: [PATCH 066/177] fix(cleanup): print LINSTOR VDI UUID if error during
+ info loading (not SR UUID)
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 9e3a5b07..7eeeee7f 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2974,7 +2974,7 @@ class LinstorSR(SR):
+             except Exception as e:
+                 Util.log(
+                     ' [VDI {}: failed to load VDI info]: {}'
+-                    .format(self.uuid, e)
++                    .format(vdi_uuid, e)
+                 )
+                 info = vhdutil.VHDInfo(vdi_uuid)
+                 info.error = 1

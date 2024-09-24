@@ -1,7 +1,7 @@
 From a365619c2835e593259dad3c26761575f64066d6 Mon Sep 17 00:00:00 2001
 From: Mark Syms <mark.syms@citrix.com>
 Date: Thu, 20 May 2021 17:40:06 +0100
-Subject: [PATCH 001/178] backport of ccd121cc248d79b749a63d4ad099e6d5f4b8b588:
+Subject: [PATCH 001/177] backport of ccd121cc248d79b749a63d4ad099e6d5f4b8b588:
  CA-354692: check for device parameter in create/probe calls
 
 Signed-off-by: Mark Syms <mark.syms@citrix.com>
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 15 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
-index 4caa09d..da43082 100755
+index 4caa09df..da43082e 100755
 --- a/drivers/EXTSR.py
 +++ b/drivers/EXTSR.py
 @@ -18,6 +18,7 @@
@@ -38,7 +38,7 @@ index 4caa09d..da43082 100755
          if self._checkmount():
              raise xs_errors.XenError('SRExists')
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index cfee071..dd8e20b 100755
+index cfee0717..dd8e20b9 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -19,6 +19,7 @@
@@ -67,7 +67,7 @@ index cfee071..dd8e20b 100755
          return lvutil.srlist_toxml(
                  lvutil.scan_srlist(lvhdutil.VG_PREFIX, self.dconf['device']),
 diff --git a/drivers/SR.py b/drivers/SR.py
-index aa5a6b1..c752863 100755
+index aa5a6b1e..c7528638 100755
 --- a/drivers/SR.py
 +++ b/drivers/SR.py
 @@ -49,6 +49,15 @@ class SROSError(SRException):
@@ -86,6 +86,3 @@ index aa5a6b1..c752863 100755
  backends = []
  def registerSR(SRClass):
      """Register SR with handler. All SR subclasses should call this in 
--- 
-2.46.0
-

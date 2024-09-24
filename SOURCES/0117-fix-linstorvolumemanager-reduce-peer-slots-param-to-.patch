@@ -1,0 +1,54 @@
+From f28b40cc4d1858a3182d46b8d1b824b56bf63791 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 25 Apr 2023 10:46:00 +0200
+Subject: [PATCH 117/177] fix(linstorvolumemanager): reduce peer-slots param to
+ 3
+
+Because we use 3 backing disks at most, it's useless to increase the default linstor limit (8).
+Diskless is a resource that does not count in the peer-slots param.
+
+Note: this change is important to reduce the RAM usage, see =>
+https://linbit.com/drbd-user-guide/drbd-guide-9_0-en/#s-meta-data-size
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvolumemanager.py | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 91db3d80..6f20c02c 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -2089,7 +2089,7 @@ class LinstorVolumeManager(object):
+                 volume_uuid,
+                 self._group_name
+             )
+-            self._increase_volume_peer_slots(self._linstor, volume_name)
++            self._configure_volume_peer_slots(self._linstor, volume_name)
+ 
+         def clean():
+             try:
+@@ -2475,12 +2475,12 @@ class LinstorVolumeManager(object):
+         )
+ 
+     @classmethod
+-    def _increase_volume_peer_slots(cls, lin, volume_name):
+-        result = lin.resource_dfn_modify(volume_name, {}, peer_slots=31)
++    def _configure_volume_peer_slots(cls, lin, volume_name):
++        result = lin.resource_dfn_modify(volume_name, {}, peer_slots=3)
+         error_str = cls._get_error_str(result)
+         if error_str:
+             raise LinstorVolumeManagerError(
+-                'Could not increase volume peer slots of {}: {}'
++                'Could not configure volume peer slots of {}: {}'
+                 .format(volume_name, error_str)
+             )
+ 
+@@ -2581,7 +2581,7 @@ class LinstorVolumeManager(object):
+             vlm_sizes=['{}B'.format(size)],
+             definitions_only=True
+         ), DATABASE_VOLUME_NAME, group_name)
+-        cls._increase_volume_peer_slots(lin, DATABASE_VOLUME_NAME)
++        cls._configure_volume_peer_slots(lin, DATABASE_VOLUME_NAME)
+ 
+         # Create real resources on the first nodes.
+         resources = []

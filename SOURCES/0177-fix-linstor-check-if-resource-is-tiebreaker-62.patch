@@ -1,0 +1,32 @@
+From ebeaf709ee0e0336a0749f295916c665aa8b5006 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 26 Jul 2024 14:13:05 +0200
+Subject: [PATCH 177/177] fix(linstor): check if resource is tiebreaker (#62)
+
+We check if a resource is already a tiebreaker before trying to delete
+the resource.
+If it is, we do not delete it.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 103f91b7..8bfd1c1b 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -812,6 +812,13 @@ class LinstorVolumeManager(object):
+         volume_name = volume_properties.get(self.PROP_VOLUME_NAME)
+ 
+         node_name = socket.gethostname()
++
++        for resource in self._get_resource_cache().resources:
++            if resource.name == volume_name and resource.node_name == node_name:
++                if linstor.consts.FLAG_TIE_BREAKER in resource.flags:
++                    return
++                break
++
+         result = self._linstor.resource_delete_if_diskless(
+             node_name=node_name, rsc_name=volume_name
+         )

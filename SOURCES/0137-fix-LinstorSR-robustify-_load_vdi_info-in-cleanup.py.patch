@@ -1,0 +1,96 @@
+From 0a1d454d4da2596a1a724ff27df4ec88ee10c862 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 11 Oct 2023 12:39:56 +0200
+Subject: [PATCH 137/177] fix(LinstorSR): robustify _load_vdi_info in
+ cleanup.py
+
+After a failed snapshot like that:
+```
+Sep 18 12:02:47 xcp1 SM: [909] ['/usr/bin/vhd-util', 'snapshot', '--debug', '-n', '/dev/drbd/by-res/xcp-volume-bbf05b73-bbad-438e-a194-3470558c8a8d/0', '-p', '/dev/drbd/by-res/xcp-volume-432905e3-57ba-41c7-8517-3331e1907c69/0', '-S', '2097152']
+Sep 18 12:02:49 xcp1 SM: [909] FAILED in util.pread: (rc 30) stdout: '', stderr: '/dev/drbd/by-res/xcp-volume-bbf05b73-bbad-438e-a194-3470558c8a8d/0: failed to create: -30
+Sep 18 12:02:50 xcp1 SM: [909] raise opener exception: cmd: `['/usr/bin/vhd-util', 'snapshot', '--debug', '-n', '/dev/drbd/by-res/xcp-volume-bbf05b73-bbad-438e-a194-3470558c8a8d/0', '-p', '/dev/drbd/by-res/xcp-volume-432905e3-57ba-41c7-8517-3331e1907c69/0', '-S', '2097152']`, code: `30`, reason: `/dev/drbd/by-res/xcp-volume-bbf05b73-bbad-438e-a194-3470558c8a8d/0: failed to create: -30` (openers: {'xcp3': {}, 'xcp2': {}, 'xcp1': {}})
+Sep 18 12:02:50 xcp1 SM: [909] ***** Failed to snapshot!: EXCEPTION <type 'exceptions.Exception'>, cmd: `['/usr/bin/vhd-util', 'snapshot', '--debug', '-n', '/dev/drbd/by-res/xcp-volume-bbf05b73-bbad-438e-a194-3470558c8a8d/0', '-p', '/dev/drbd/by-res/xcp-volume-432905e3-57ba-41c7-8517-3331e1907c69/0', '-S', '2097152']`, code: `30`, reason: `/dev/drbd/by-res/xcp-volume-bbf05b73-bbad-438e-a194-3470558c8a8d/0: failed to create: -30` (openers: {'xcp3': {}, 'xcp2': {}, 'xcp1': {}})
+Sep 18 12:02:50 xcp1 SM: [909] Cannot destroy VDI 4e1ac2a2-3d57-408f-92a8-ccc03882511f during undo clone: Cannot destroy volume `4e1ac2a2-3d57-408f-92a8-ccc03882511f`: Could not destroy resource `xcp-volume-bbf05b73-bbad-438e-a194-3470558c8a8d` from SR `xcp-sr-linstor_group_thin_device`: Resource 'xcp-volume-bbf05b73-bbad-438e-a194-3470558c8a8d' on node 'xcp2' is still in use.
+Sep 18 12:02:50 xcp1 SM: [909] Trying to update volume UUID 4e1ac2a2-3d57-408f-92a8-ccc03882511f to DELETED_4e1ac2a2-3d57-408f-92a8-ccc03882511f...
+```
+
+The remaining volume can be empty, so we must ignore all volumes with the `DELETED_` prefix.
+These are not valid VHDs after all.
+And also we must be sure to never set the RAW flag on corrupted VHDs during cleanup.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 46 ++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 42 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 5353e9aa..376da3ec 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2990,16 +2990,31 @@ class LinstorSR(SR):
+         all_volume_info = self._linstor.get_volumes_with_info()
+         volumes_metadata = self._linstor.get_volumes_with_metadata()
+         for vdi_uuid, volume_info in all_volume_info.items():
++            deleted = False
+             try:
+                 if not volume_info.name and \
+                         not list(volumes_metadata[vdi_uuid].items()):
+                     continue  # Ignore it, probably deleted.
+ 
+                 vdi_type = volumes_metadata[vdi_uuid].get(VDI_TYPE_TAG)
+-                if vdi_type == vhdutil.VDI_TYPE_RAW:
+-                    info = None
+-                else:
++                if vdi_uuid.startswith('DELETED_'):
++                    # Assume it's really a RAW volume of a failed snap without VHD header/footer.
++                    deleted = True
++                elif vdi_type == vhdutil.VDI_TYPE_VHD:
+                     info = self._vhdutil.get_vhd_info(vdi_uuid)
++                else:
++                    # Ensure it's not a VHD...
++                    try:
++                        info = self._vhdutil.get_vhd_info(vdi_uuid)
++                    except:
++                        try:
++                            self._vhdutil.force_repair(
++                                self._linstor.get_device_path(vdi_uuid)
++                            )
++                            info = self._vhdutil.get_vhd_info(vdi_uuid)
++                        except:
++                            info = None
++
+             except Exception as e:
+                 Util.log(
+                     ' [VDI {}: failed to load VDI info]: {}'
+@@ -3007,7 +3022,30 @@ class LinstorSR(SR):
+                 )
+                 info = vhdutil.VHDInfo(vdi_uuid)
+                 info.error = 1
+-            all_vdi_info[vdi_uuid] = info
++
++            if not deleted:
++                all_vdi_info[vdi_uuid] = info
++                continue
++
++            # We must remove this VDI now without adding it in the VDI list.
++            # Otherwise `Relinking` calls and other actions can be launched on it.
++            # We don't want that...
++            assert deleted
++            assert vdi_uuid.startswith('DELETED_')
++            Util.log('Deleting bad VDI {}'.format(vdi_uuid))
++
++            self.lock()
++            try:
++                self._linstor.destroy_volume(vdi_uuid)
++                try:
++                    self.forgetVDI(vdi_uuid)
++                except:
++                    pass
++            except Exception as e:
++                Util.log('Cannot delete bad VDI: {}'.format(e))
++            finally:
++                self.unlock()
++
+         return all_vdi_info
+ 
+     # TODO: Maybe implement _liveLeafCoalesce/_prepareCoalesceLeaf/

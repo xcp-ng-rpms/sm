@@ -1,0 +1,55 @@
+From 07be87fc8c3e038f73917ef166c237c3fbe25de4 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 5 Feb 2024 23:16:16 +0100
+Subject: [PATCH 026/177] Always remove the pause tag from VDIs in case of
+ failure
+
+During VDI activation in the blktap module and in case of failure
+in "sm.VDI.from_uuid" call, the pause tag is never removed.
+As a result a VDI can no longer be used correctly: an assert is
+triggered each time we try to re-activate this volume because
+the tag is still present.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/blktap2.py | 22 +++++++++++++---------
+ 1 file changed, 13 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index e1f75e9f..e9305ce9 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -1599,20 +1599,24 @@ class VDI(object):
+         import VDI as sm
+ 
+         #util.SMlog("VDI.activate %s" % vdi_uuid)
++        refresh = False
+         if self.tap_wanted():
+             if not self._add_tag(vdi_uuid, not options["rdonly"]):
+                 return False
+-            # it is possible that while the VDI was paused some of its 
+-            # attributes have changed (e.g. its size if it was inflated; or its 
+-            # path if it was leaf-coalesced onto a raw LV), so refresh the 
+-            # object completely
+-            params = self.target.vdi.sr.srcmd.params
+-            target = sm.VDI.from_uuid(self.target.vdi.session, vdi_uuid)
+-            target.sr.srcmd.params = params
+-            driver_info = target.sr.srcmd.driver_info
+-            self.target = self.TargetDriver(target, driver_info)
++            refresh = True
+ 
+         try:
++            if refresh:
++                # it is possible that while the VDI was paused some of its
++                # attributes have changed (e.g. its size if it was inflated; or its
++                # path if it was leaf-coalesced onto a raw LV), so refresh the
++                # object completely
++                params = self.target.vdi.sr.srcmd.params
++                target = sm.VDI.from_uuid(self.target.vdi.session, vdi_uuid)
++                target.sr.srcmd.params = params
++                driver_info = target.sr.srcmd.driver_info
++                self.target = self.TargetDriver(target, driver_info)
++
+             util.fistpoint.activate_custom_fn(
+                     "blktap_activate_inject_failure",
+                     lambda: util.inject_failure())

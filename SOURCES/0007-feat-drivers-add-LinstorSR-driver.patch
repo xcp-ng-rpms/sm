@@ -1,7 +1,7 @@
 From 2c71c3ce33cd02573824a57bd4b3917b45c890b0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 007/178] feat(drivers): add LinstorSR driver
+Subject: [PATCH 007/177] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -78,7 +78,7 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index 9bc0a9d..609e182 100755
+index 9bc0a9d8..609e1828 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -8,6 +8,7 @@ SM_DRIVERS += udev
@@ -139,7 +139,7 @@ index 9bc0a9d..609e182 100755
 -
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
 new file mode 100755
-index 0000000..8be1836
+index 00000000..8be18367
 --- /dev/null
 +++ b/drivers/LinstorSR.py
 @@ -0,0 +1,2100 @@
@@ -2244,7 +2244,7 @@ index 0000000..8be1836
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 535c9dc..6bbb817 100755
+index 535c9dc3..6bbb8179 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
 @@ -911,4 +911,40 @@
@@ -2289,7 +2289,7 @@ index 535c9dc..6bbb817 100755
 +       </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 12e4428..af2f316 100755
+index 12e44285..af2f316b 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -47,7 +47,17 @@ import xs_errors
@@ -2709,7 +2709,7 @@ index 12e4428..af2f316 100755
  
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
 new file mode 100755
-index 0000000..f7ce180
+index 00000000..f7ce1809
 --- /dev/null
 +++ b/drivers/linstor-manager
 @@ -0,0 +1,272 @@
@@ -2987,7 +2987,7 @@ index 0000000..f7ce180
 +    })
 diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
 new file mode 100755
-index 0000000..7495330
+index 00000000..74953305
 --- /dev/null
 +++ b/drivers/linstorjournaler.py
 @@ -0,0 +1,155 @@
@@ -3148,7 +3148,7 @@ index 0000000..7495330
 +        return '{}/{}'.format(type, identifier)
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
 new file mode 100644
-index 0000000..f31c752
+index 00000000..f31c7525
 --- /dev/null
 +++ b/drivers/linstorvhdutil.py
 @@ -0,0 +1,186 @@
@@ -3340,7 +3340,7 @@ index 0000000..f31c752
 +        )
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
 new file mode 100755
-index 0000000..d400421
+index 00000000..d4004217
 --- /dev/null
 +++ b/drivers/linstorvolumemanager.py
 @@ -0,0 +1,1713 @@
@@ -5058,7 +5058,7 @@ index 0000000..d400421
 +                    return True
 +        return False
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 5936869..ed6abed 100755
+index 59368696..ed6abede 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
 @@ -29,6 +29,12 @@ import lvhdutil
@@ -5153,7 +5153,7 @@ index 5936869..ed6abed 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 4f9fa9d..8bd3635 100755
+index 4f9fa9d1..8bd36351 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -653,10 +653,36 @@ def get_this_host():
@@ -5223,7 +5223,7 @@ index 4f9fa9d..8bd3635 100755
          if retries >= maxretry:
 diff --git a/linstor/Makefile b/linstor/Makefile
 new file mode 100644
-index 0000000..c329ca3
+index 00000000..c329ca30
 --- /dev/null
 +++ b/linstor/Makefile
 @@ -0,0 +1,22 @@
@@ -5251,7 +5251,7 @@ index 0000000..c329ca3
 +	rm -f linstor-monitord
 diff --git a/linstor/linstor-monitord.c b/linstor/linstor-monitord.c
 new file mode 100644
-index 0000000..8161813
+index 00000000..8161813d
 --- /dev/null
 +++ b/linstor/linstor-monitord.c
 @@ -0,0 +1,402 @@
@@ -5659,7 +5659,7 @@ index 0000000..8161813
 +}
 diff --git a/systemd/linstor-monitor.service b/systemd/linstor-monitor.service
 new file mode 100644
-index 0000000..5f8f0a7
+index 00000000..5f8f0a76
 --- /dev/null
 +++ b/systemd/linstor-monitor.service
 @@ -0,0 +1,13 @@
@@ -5678,7 +5678,4 @@ index 0000000..5f8f0a7
 +WantedBy=multi-user.target
 diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
 new file mode 100644
-index 0000000..e69de29
--- 
-2.46.0
-
+index 00000000..e69de29b

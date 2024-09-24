@@ -1,0 +1,56 @@
+From c37334e02b368588fafc4025fbfc4da228683180 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 1 Aug 2023 15:16:17 +0200
+Subject: [PATCH 125/177] fix(LinstorSR): Ensure we always have a device path
+ during leaf-coalesce calls
+
+So we must not verify that we have a valid DRBD path in the load step,
+it can fail on many hosts, instead we must create a diskless path only
+during the real coalesce.
+
+Note: I removed this assert: `assert virtual_size >= volume_size`,
+it seems that it's not always true, I suppose the volume size can be
+greater than expected due to a bigger allocation in the LVM or DRBD layer.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 12 +++++-------
+ 1 file changed, 5 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index f6c4346b..19d03d96 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1394,11 +1394,6 @@ class LinstorVDI(VDI):
+ 
+         self.fileName = self.sr._linstor.get_volume_name(self.uuid)
+         self.path = self.sr._linstor.build_device_path(self.fileName)
+-        if not util.pathexists(self.path):
+-            raise util.SMException(
+-                '{} of {} not found'
+-                .format(self.fileName, self.uuid)
+-            )
+ 
+         if not info:
+             try:
+@@ -3025,8 +3020,6 @@ class LinstorSR(SR):
+             parent.sizeVirt + meta_overhead + bitmap_overhead
+         )
+         volume_size = self._linstor.get_volume_size(parent.uuid)
+-
+-        assert virtual_size >= volume_size
+         return virtual_size - volume_size
+ 
+     def _hasValidDevicePath(self, uuid):
+@@ -3047,6 +3040,11 @@ class LinstorSR(SR):
+         finally:
+             self.unlock()
+ 
++    def _prepareCoalesceLeaf(self, vdi):
++        # Move diskless path if necessary. We must have an access
++        # to modify locally the volume.
++        self._linstor.get_device_path(vdi.uuid)
++
+     def _handleInterruptedCoalesceLeaf(self):
+         entries = self.journaler.get_all(VDI.JRN_LEAF)
+         for uuid, parentUuid in entries.iteritems():

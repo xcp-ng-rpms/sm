@@ -1,0 +1,96 @@
+From edc4069d907e24bb4b3e908eb7f2547967219cfe Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 15 Sep 2022 11:34:25 +0200
+Subject: [PATCH 078/177] fix(minidrbdcluster): ensure SIGINT is handled
+ correctly
+
+This patch is here to make sure no LINSTOR controller survives when
+systemd asks to minidrbdcluster to stop with `SIGINT`.
+
+- Remove `os.system`, it's totally unsafe, all signals are ignored with it.
+- Use `subprocess.Popen` instead and catch correctly signal exceptions, it works
+  because `wait` call doesn't hide the signals.
+- Ensure `SIGINT` is only sent to the main process, not to the subprocesses.
+- Ensure `SIGKILL` is NEVER sent to minidrbdcluster.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ scripts/minidrbdcluster         | 35 ++++++++++++++++++++++++---------
+ systemd/minidrbdcluster.service |  1 +
+ 2 files changed, 27 insertions(+), 9 deletions(-)
+
+diff --git a/scripts/minidrbdcluster b/scripts/minidrbdcluster
+index fb4de09b..4cdc59e6 100755
+--- a/scripts/minidrbdcluster
++++ b/scripts/minidrbdcluster
+@@ -1,7 +1,6 @@
+ #! /usr/bin/env python2
+ 
+ import configparser
+-import os
+ import re
+ import signal
+ import subprocess
+@@ -35,24 +34,42 @@ def sig_handler(sig, frame):
+     )
+ 
+ 
++def preexec_subprocess():
++    signal.signal(signal.SIGINT, signal.SIG_IGN)
++
++
++def exec_subprocess(args):
++    proc = subprocess.Popen(args, preexec_fn=preexec_subprocess)
++    raise_sigint = False
++    while True:
++        try:
++            proc.wait()
++            break
++        except KeyboardInterrupt:
++            raise_sigint = True
++        except:  # noqa: E722
++            pass
++
++    if raise_sigint:
++        raise KeyboardInterrupt
++
++    return proc.returncode
++
++
+ def call_systemd(operation, service):
+     verbose = operation in ('start', 'stop')
+     if verbose:
+         print('Trying to %s %s' % (operation, service))
+-    r = os.system('systemctl %s %s' % (operation, service))
++    ret = exec_subprocess(['systemctl', operation, service])
+     if verbose:
+         print('%s for %s %s' % (
+-            'success' if r == 0 else 'failure', operation, service
++            'success' if ret == 0 else 'failure', operation, service
+         ))
+-    return r == 0
++    return ret == 0
+ 
+ 
+ def ensure_systemd_started(service):
+-    args = ['systemctl', 'is-active', '--quiet', service]
+-
+-    proc = subprocess.Popen(args)
+-    proc.wait()
+-    if not proc.returncode:
++    if not exec_subprocess(['systemctl', 'is-active', '--quiet', service]):
+         return True  # Already active.
+ 
+     return call_systemd('start', service)
+diff --git a/systemd/minidrbdcluster.service b/systemd/minidrbdcluster.service
+index 3de6ac4f..1ddf91f3 100644
+--- a/systemd/minidrbdcluster.service
++++ b/systemd/minidrbdcluster.service
+@@ -10,6 +10,7 @@ Environment=PYTHONUNBUFFERED=1
+ ExecStart=/opt/xensource/libexec/minidrbdcluster
+ KillMode=process
+ KillSignal=SIGINT
++SendSIGKILL=no
+ StandardOutput=journal
+ StandardError=journal
+ SyslogIdentifier=minidrbdcluster

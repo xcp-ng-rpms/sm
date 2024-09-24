@@ -1,0 +1,66 @@
+From df5176f05b614facade947a58f334cde16b1d127 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 3 Oct 2023 18:42:42 +0200
+Subject: [PATCH 132/177] fix(LinstorSR): ensure database is mounted during
+ scan
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py            | 15 +++++++++++++++
+ drivers/linstorvolumemanager.py | 10 +++++++++-
+ 2 files changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index ed41e77a..ed5998e8 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -824,6 +824,21 @@ class LinstorSR(SR.SR):
+             if self.vdis[vdi_uuid].deleted:
+                 del self.vdis[vdi_uuid]
+ 
++        # Security to prevent VDIs from being forgotten if the controller
++        # is started without a shared and mounted /var/lib/linstor path.
++        try:
++            self._linstor.get_database_path()
++        except Exception:
++            # Failed to get database path, ensure we don't have
++            # VDIs in the XAPI database...
++            if self.session.xenapi.SR.get_VDIs(
++                self.session.xenapi.SR.get_by_uuid(self.uuid)
++            ):
++                raise xs_errors.XenError(
++                    'SRUnavailable',
++                    opterr='Database is not mounted'
++                )
++
+         # Update the database before the restart of the GC to avoid
+         # bad sync in the process if new VDIs have been introduced.
+         ret = super(LinstorSR, self).scan(self.uuid)
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index ee637ae2..f1f3bce7 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -884,7 +884,7 @@ class LinstorVolumeManager(object):
+ 
+     def get_device_path(self, volume_uuid):
+         """
+-        Get the dev path of a volume.
++        Get the dev path of a volume, create a diskless if necessary.
+         :param str volume_uuid: The volume uuid to get the dev path.
+         :return: The current device path of the volume.
+         :rtype: str
+@@ -1587,6 +1587,14 @@ class LinstorVolumeManager(object):
+ 
+         return resources
+ 
++    def get_database_path(self):
++        """
++        Get the database path.
++        :return: The current database path.
++        :rtype: str
++        """
++        return self._request_database_path(self._linstor)
++
+     @classmethod
+     def create_sr(
+         cls, group_name, ips, redundancy,

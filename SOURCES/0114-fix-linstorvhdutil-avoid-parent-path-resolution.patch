@@ -1,0 +1,108 @@
+From 61c7e38064b44ad271d92455b836b7bca61d9c8e Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 16 Mar 2023 18:54:46 +0100
+Subject: [PATCH 114/177] fix(linstorvhdutil): avoid parent path resolution
+
+When many hosts are used (>= 4), we can fail to get
+VHD info (with parent option) because the local parent VDI
+path can be absent (no DRBD diskless path). So it's necessary
+to deactivate parent resolution:
+- vhdutil has been patched to support that
+- vhdutil returns a relative path now when "-u" option is used
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstor-manager         |  2 +-
+ drivers/linstorvhdutil.py       |  9 ++++++---
+ drivers/linstorvolumemanager.py | 13 ++++++++++---
+ drivers/vhdutil.py              |  5 ++++-
+ 4 files changed, 21 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index 7e34b5f6..9e96aaca 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -400,7 +400,7 @@ def get_vhd_info(session, args):
+             )
+ 
+         vhd_info = vhdutil.getVHDInfo(
+-            device_path, extract_uuid, include_parent
++            device_path, extract_uuid, include_parent, False
+         )
+         return json.dumps(vhd_info.__dict__)
+     except Exception as e:
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index c1b817d7..8b6985d9 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -143,8 +143,8 @@ class LinstorVhdUtil:
+ 
+     def check(self, vdi_uuid, ignore_missing_footer=False, fast=False):
+         kwargs = {
+-            'ignoreMissingFooter': str(ignore_missing_footer),
+-            'fast': str(fast)
++            'ignoreMissingFooter': ignore_missing_footer,
++            'fast': fast
+         }
+         return self._check(vdi_uuid, **kwargs)  # pylint: disable = E1123
+ 
+@@ -153,7 +153,10 @@ class LinstorVhdUtil:
+         return distutils.util.strtobool(response)
+ 
+     def get_vhd_info(self, vdi_uuid, include_parent=True):
+-        kwargs = {'includeParent': str(include_parent)}
++        kwargs = {
++            'includeParent': include_parent,
++            'resolveParent': False
++        }
+         # TODO: Replace pylint comment with this feature when possible:
+         # https://github.com/PyCQA/pylint/pull/2926
+         return self._get_vhd_info(vdi_uuid, self._extract_uuid, **kwargs)  # pylint: disable = E1123
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 8befb33f..91db3d80 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -920,11 +920,18 @@ class LinstorVolumeManager(object):
+         :rtype: str
+         """
+ 
+-        assert device_path.startswith(DRBD_BY_RES_PATH)
++        # Assume that we have a path like this:
++        # - "/dev/drbd/by-res/xcp-volume-<UUID>/0"
++        # - "../xcp-volume-<UUID>/0"
++        if device_path.startswith(DRBD_BY_RES_PATH):
++            prefix_len = len(DRBD_BY_RES_PATH)
++        else:
++            assert device_path.startswith('../')
++            prefix_len = 3
+ 
+-        res_name_end = device_path.find('/', len(DRBD_BY_RES_PATH))
++        res_name_end = device_path.find('/', prefix_len)
+         assert res_name_end != -1
+-        return device_path[len(DRBD_BY_RES_PATH):res_name_end]
++        return device_path[prefix_len:res_name_end]
+ 
+     def update_volume_uuid(self, volume_uuid, new_volume_uuid, force=False):
+         """
+diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
+index d75edb11..48337f87 100755
+--- a/drivers/vhdutil.py
++++ b/drivers/vhdutil.py
+@@ -100,13 +100,16 @@ def fullSizeVHD(virtual_size):
+ def ioretry(cmd, errlist=[errno.EIO, errno.EAGAIN]):
+     return util.ioretry(lambda: util.pread2(cmd), errlist)
+ 
+-def getVHDInfo(path, extractUuidFunction, includeParent = True):
++def getVHDInfo(path, extractUuidFunction, includeParent=True, resolveParent=True):
+     """Get the VHD info. The parent info may optionally be omitted: vhd-util
+     tries to verify the parent by opening it, which results in error if the VHD
+     resides on an inactive LV"""
+     opts = "-vsf"
+     if includeParent:
+         opts += "p"
++        if not resolveParent:
++            opts += "u"
++
+     cmd = [VHD_UTIL, "query", OPT_LOG_ERR, opts, "-n", path]
+     ret = ioretry(cmd)
+     fields = ret.strip().split('\n')

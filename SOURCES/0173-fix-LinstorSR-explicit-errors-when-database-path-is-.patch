@@ -1,0 +1,46 @@
+From c18b76e7f81ba5e48e0755c5c171b3df11f1b8d2 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 6 May 2024 21:35:36 +0200
+Subject: [PATCH 173/177] fix(LinstorSR): explicit errors when database path is
+ fetched
+
+---
+ drivers/LinstorSR.py            | 4 ++--
+ drivers/linstorvolumemanager.py | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index c5ed7c58..9f0986cd 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -766,7 +766,7 @@ class LinstorSR(SR.SR):
+         # is started without a shared and mounted /var/lib/linstor path.
+         try:
+             self._linstor.get_database_path()
+-        except Exception:
++        except Exception as e:
+             # Failed to get database path, ensure we don't have
+             # VDIs in the XAPI database...
+             if self.session.xenapi.SR.get_VDIs(
+@@ -774,7 +774,7 @@ class LinstorSR(SR.SR):
+             ):
+                 raise xs_errors.XenError(
+                     'SRUnavailable',
+-                    opterr='Database is not mounted'
++                    opterr='Database is not mounted or node name is invalid ({})'.format(e)
+                 )
+ 
+         # Update the database before the restart of the GC to avoid
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 94d5c514..948d45df 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -2648,7 +2648,7 @@ class LinstorVolumeManager(object):
+             )
+         except Exception as e:
+             raise LinstorVolumeManagerError(
+-                'Unable to get resources during database creation: {}'
++                'Unable to fetch database resource: {}'
+                 .format(e)
+             )
+ 

@@ -1,7 +1,7 @@
 From 2d197ca1c046dce44579f77f4e2ac23397edb9c1 Mon Sep 17 00:00:00 2001
 From: Benjamin Reis <benjamin.reis@vates.tech>
 Date: Mon, 18 Dec 2023 10:22:26 +0100
-Subject: [PATCH 020/178] Backport NFS4 only support
+Subject: [PATCH 020/177] Backport NFS4 only support
 
 See: https://github.com/xapi-project/sm/pull/617
 
@@ -14,7 +14,7 @@ Signed-off-by: Benjamin Reis <benjamin.reis@vates.tech>
  4 files changed, 139 insertions(+), 64 deletions(-)
 
 diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
-index 207e45c..e8389db 100755
+index 207e45c4..e8389db7 100755
 --- a/drivers/NFSSR.py
 +++ b/drivers/NFSSR.py
 @@ -115,11 +115,12 @@ class NFSSR(FileSR.SharedFileSR):
@@ -51,7 +51,7 @@ index 207e45c..e8389db 100755
  
  class NFSFileVDI(FileSR.FileVDI):
 diff --git a/drivers/nfs.py b/drivers/nfs.py
-index 80b71a5..ddb869e 100644
+index 80b71a52..ddb869e7 100644
 --- a/drivers/nfs.py
 +++ b/drivers/nfs.py
 @@ -44,6 +44,7 @@ import time
@@ -275,7 +275,7 @@ index 80b71a5..ddb869e 100644
  
  def get_nfs_timeout(other_config):
 diff --git a/tests/test_NFSSR.py b/tests/test_NFSSR.py
-index 31c06de..0f1603c 100644
+index 31c06de3..0f1603c6 100644
 --- a/tests/test_NFSSR.py
 +++ b/tests/test_NFSSR.py
 @@ -182,7 +182,7 @@ class TestNFSSR(unittest.TestCase):
@@ -288,7 +288,7 @@ index 31c06de..0f1603c 100644
          soft_mount.assert_called_once_with('/var/run/sr-mount/UUID',
                                             'aServer',
 diff --git a/tests/test_nfs.py b/tests/test_nfs.py
-index cef414f..9ea807f 100644
+index cef414fe..9ea807f6 100644
 --- a/tests/test_nfs.py
 +++ b/tests/test_nfs.py
 @@ -9,31 +9,32 @@ class Test_nfs(unittest.TestCase):
@@ -425,6 +425,3 @@ index cef414f..9ea807f 100644
  
          expected = """<?xml version="1.0" ?>
  <nfs-exports>
--- 
-2.46.0
-

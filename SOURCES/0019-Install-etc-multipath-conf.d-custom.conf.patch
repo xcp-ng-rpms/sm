@@ -1,7 +1,7 @@
 From 507c2f067878ee88765c5750d3e618c8c63208c7 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 25 Aug 2023 17:47:34 +0200
-Subject: [PATCH 019/178] Install /etc/multipath/conf.d/custom.conf
+Subject: [PATCH 019/177] Install /etc/multipath/conf.d/custom.conf
 
 Update Makefile so that the file is installed along with sm.
 
@@ -11,7 +11,7 @@ Signed-off-by: Samuel Verschelde <stormi-xcp@ylix.fr>
  1 file changed, 5 insertions(+)
 
 diff --git a/Makefile b/Makefile
-index b0ae353..3357cbf 100755
+index b0ae3536..3357cbfb 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -78,6 +78,7 @@ SM_LIBS += sr_health_check
@@ -47,6 +47,3 @@ index b0ae353..3357cbf 100755
  	install -m 755 multipath/sm-multipath \
  	  $(SM_STAGING)/$(INIT_DIR)
  	install -m 755 multipath/multipath-root-setup \
--- 
-2.46.0
-

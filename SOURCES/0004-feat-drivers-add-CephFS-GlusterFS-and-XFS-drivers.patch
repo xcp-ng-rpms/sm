@@ -1,7 +1,7 @@
 From 13542e244eea28a4c60708de99a50fa8c3d4ec5a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 004/178] feat(drivers): add CephFS, GlusterFS and XFS drivers
+Subject: [PATCH 004/177] feat(drivers): add CephFS, GlusterFS and XFS drivers
 
 ---
  Makefile               |   3 +
@@ -15,7 +15,7 @@ Subject: [PATCH 004/178] feat(drivers): add CephFS, GlusterFS and XFS drivers
  create mode 100644 drivers/XFSSR.py
 
 diff --git a/Makefile b/Makefile
-index d07a8ca..0a10470 100755
+index d07a8ca3..0a10470a 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -17,6 +17,9 @@ SM_DRIVERS += OCFSoHBA
@@ -30,7 +30,7 @@ index d07a8ca..0a10470 100755
  SM_LIBS += SRCommand
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
 new file mode 100644
-index 0000000..d797490
+index 00000000..d7974907
 --- /dev/null
 +++ b/drivers/CephFSSR.py
 @@ -0,0 +1,296 @@
@@ -332,7 +332,7 @@ index 0000000..d797490
 +    SR.registerSR(CephFSSR)
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
 new file mode 100644
-index 0000000..a2f7484
+index 00000000..a2f7484f
 --- /dev/null
 +++ b/drivers/GlusterFSSR.py
 @@ -0,0 +1,287 @@
@@ -625,7 +625,7 @@ index 0000000..a2f7484
 +    SR.registerSR(GlusterFSSR)
 diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
 new file mode 100644
-index 0000000..de35d73
+index 00000000..de35d738
 --- /dev/null
 +++ b/drivers/XFSSR.py
 @@ -0,0 +1,242 @@
@@ -872,7 +872,7 @@ index 0000000..de35d73
 +else:
 +    SR.registerSR(XFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index dce460e..aff51ae 100755
+index dce460ea..aff51aed 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2765,7 +2765,10 @@ def normalizeType(type):
@@ -887,6 +887,3 @@ index dce460e..aff51ae 100755
          type = SR.TYPE_FILE
      if not type in SR.TYPES:
          raise util.SMException("Unsupported SR type: %s" % type)
--- 
-2.46.0
-

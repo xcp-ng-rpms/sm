@@ -1,7 +1,7 @@
 From ec5c7c6cd4732e7f70122ccdb8ccdaf6711e5f31 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 28 May 2024 15:17:21 +0200
-Subject: [PATCH 023/178] feat(LVHDSR): add a way to modify config of LVMs
+Subject: [PATCH 023/177] feat(LVHDSR): add a way to modify config of LVMs
  (#56)
 
 With this change the driver supports a "lvm-conf" param on "other-config".
@@ -23,7 +23,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 21 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 6ac3f80..5a83ae0 100755
+index 6ac3f804..5a83ae0c 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -161,14 +161,24 @@ class LVHDSR(SR.SR):
@@ -62,7 +62,7 @@ index 6ac3f80..5a83ae0 100755
              self.testMode = self.other_conf[self.TEST_MODE_KEY]
              self._prepareTestMode()
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index d9237aa..926525f 100755
+index d9237aa7..926525f1 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2565,7 +2565,12 @@ class LVHDSR(SR):
@@ -80,7 +80,7 @@ index d9237aa..926525f 100755
          self.journaler = journaler.Journaler(self.lvmCache)
  
 diff --git a/drivers/lvmcache.py b/drivers/lvmcache.py
-index ea0bc17..54930b4 100644
+index ea0bc171..54930b47 100644
 --- a/drivers/lvmcache.py
 +++ b/drivers/lvmcache.py
 @@ -59,10 +59,11 @@ class LVMCache:
@@ -105,6 +105,3 @@ index ea0bc17..54930b4 100644
          for tag in self.lvs[lvName].tags:
              self._removeTag(lvName, tag)
          del self.lvs[lvName]
--- 
-2.46.0
-

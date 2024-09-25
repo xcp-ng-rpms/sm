@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.4%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -115,7 +115,6 @@ Patch1020: 0020-Backport-NFS4-only-support.patch
 Patch1021: 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch
 Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51-55.patch
 Patch1023: 0023-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-56.patch
-Patch1024: 0024-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
 
 %description
 This package contains storage backends used in XCP
@@ -144,6 +143,8 @@ rm -rf $RPM_BUILD_ROOT
 %systemd_post storage-init.service
 %systemd_post usb-scan.socket
 %systemd_post mpathcount.socket
+%systemd_post sr_health_check.timer
+%systemd_post sr_health_check.service
 
 # On upgrade, migrate from the old statefile to the new statefile so that
 # storage is not reinitialized.
@@ -161,25 +162,12 @@ if [ -e /etc/multipath.conf -a ! -h /etc/multipath.conf ]; then
 fi
 update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.xenserver/multipath.conf 90
 
+systemctl enable sr_health_check.timer
+systemctl start sr_health_check.timer
 
 # XCP-ng: enable linstor-monitor by default.
 # However it won't start without linstor-controller.service
 systemctl enable linstor-monitor.service
-
-if [ $1 -gt 1 ]; then
-    # XCP-ng: we temporarily removed sr_health_check.timer,
-    # so we need to disable and stop it if it is present on the system
-    TIMER_LINK=/etc/systemd/system/timers.target.wants/sr_health_check.timer
-    if [ -e "$TIMER_LINK" ]; then
-        systemctl --no-reload disable sr_health_check.timer 2>&1 || :
-        systemctl stop sr_health_check.timer 2>&1 || :
-    elif [ -L "$TIMER_LINK" ]; then
-        # Remove dangling symlink left by previous build that removed
-        # the timer without disabling it first.
-        rm -f "$TIMER_LINK"
-        systemctl reset-failed sr_health_check.timer
-    fi
-fi
 
 %preun
 %systemd_preun make-dummy-sr.service
@@ -189,6 +177,8 @@ fi
 %systemd_preun storage-init.service
 %systemd_preun usb-scan.socket
 %systemd_preun mpathcount.socket
+%systemd_preun sr_health_check.timer
+%systemd_preun sr_health_check.service
 # Remove sm-multipath on upgrade or uninstall, to ensure it goes
 [ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
 # only remove in case of erase (but not at upgrade)
@@ -207,6 +197,8 @@ exit 0
 %systemd_postun sm-mpath-root.service
 %systemd_postun xs-sm.service
 %systemd_postun storage-init.service
+%systemd_postun sr_health_check.timer
+%systemd_postun sr_health_check.service
 if [ $1 -eq 0 ]; then
     [ ! -d /etc/lvm/master ] || rm -Rf /etc/lvm/master || exit $?
     cp -f /etc/lvm/lvm.conf.orig /etc/lvm/lvm.conf || exit $?
@@ -447,6 +439,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/cbtutil.pyc
 /opt/xensource/sm/cbtutil.pyo
 /opt/xensource/sm/multipath-root-setup
+/opt/xensource/sm/sr_health_check.py
+/opt/xensource/sm/sr_health_check.pyc
+/opt/xensource/sm/sr_health_check.pyo
 %dir /opt/xensource/sm/plugins
 /opt/xensource/sm/plugins/__init__.py*
 /sbin/mpathutil
@@ -459,6 +454,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/mpathcount.service
 %{_unitdir}/mpathcount.socket
 %{_unitdir}/storage-init.service
+%{_unitdir}/sr_health_check.timer
+%{_unitdir}/sr_health_check.service
 %config /etc/udev/rules.d/65-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
 %config /etc/udev/rules.d/58-xapi.rules
@@ -521,6 +518,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue Sep 24 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-12.4
+- Remove 0024-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
+
 * Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 2.30.8-12.3
 - %%preun: Move command above exit 0 so that it's executed
 - Properly disable the removed sr_health_check.timer

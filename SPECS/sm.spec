@@ -1,6 +1,6 @@
-%global package_speccommit 634fbf9dda9f0157f2fdac9867484d76b2fd9a08
+%global package_speccommit ef4e952dd7d4364009e647b68b07e489fb991a83
 %global usver 2.30.8
-%global xsver 12
+%global xsver 13
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Series applies on top of v2.29.0 and includes all later tags to 2.30.7
 # after that tag the commits are in the patchqueue here.
@@ -65,6 +65,12 @@ Patch45: move_mocks_dir
 Patch46: fix-nfssr-ensure-we-can-attach
 Patch47: ca-387770-check-for-read-only
 Patch48: ca-389576_handle_ioerror
+Patch49: update-multipath.conf-with
+Patch50: clean-up-regex-on-hp-hpe
+Patch51: CA-393194-Fix-pvremove-failure
+Patch52: CP-49961-update-multipath
+Patch53: CP-50251-update-multipath
+Patch54: feat-add-HPE-Nimble-multipath
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 Requires(post): systemd
 Requires(preun): systemd
@@ -416,6 +422,11 @@ cp -r htmlcov %{buildroot}/htmlcov
 %doc CONTRIB LICENSE MAINTAINERS README.md
 
 %changelog
+* Tue Aug 13 2024 Mark Syms <mark.syms@cloud.com> - 2.30.8-13
+- Update multipath.conf with backports for HPE MSA SAN
+- Backport fix for CA-393194
+- UPD-1002: backport updates to multipath.conf for several SANs
+
 * Wed Mar 13 2024 Mark Syms <mark.syms@citrix.com> - 2.30.8-12
 - CA-389576: in Python 2.7 IOError is not a subclass of OSError
 

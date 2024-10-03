@@ -1,6 +1,6 @@
-%global package_speccommit 634fbf9dda9f0157f2fdac9867484d76b2fd9a08
+%global package_speccommit ef4e952dd7d4364009e647b68b07e489fb991a83
 %global usver 2.30.8
-%global xsver 12
+%global xsver 13
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Series applies on top of v2.29.0 and includes all later tags to 2.30.7
 # after that tag the commits are in the patchqueue here.
@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.4%{?dist}
+Release: %{?xsrel}.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -65,6 +65,12 @@ Patch45: move_mocks_dir
 Patch46: fix-nfssr-ensure-we-can-attach
 Patch47: ca-387770-check-for-read-only
 Patch48: ca-389576_handle_ioerror
+Patch49: update-multipath.conf-with
+Patch50: clean-up-regex-on-hp-hpe
+Patch51: CA-393194-Fix-pvremove-failure
+Patch52: CP-49961-update-multipath
+Patch53: CP-50251-update-multipath
+Patch54: feat-add-HPE-Nimble-multipath
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 BuildRequires: gcc
 Requires(post): systemd
@@ -92,29 +98,7 @@ Obsoletes: sm-additional-drivers
 # `diff -urq <sources> <upstream sources>`.
 # After that we can create the tag: `git tag -a v2.30.8-12-xcpng -m "v2.30.8-12-xcpng"`,
 # push the commits and tag.
-Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
-Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1003: 0003-Add-TrueNAS-multipath-config.patch
-Patch1004: 0004-feat-drivers-add-CephFS-GlusterFS-and-XFS-drivers.patch
-Patch1005: 0005-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1006: 0006-Re-add-the-ext4-driver-for-users-who-need-to-transit.patch
-Patch1007: 0007-feat-drivers-add-LinstorSR-driver.patch
-Patch1008: 0008-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1009: 0009-If-no-NFS-ACLs-provided-assume-everyone.patch
-Patch1010: 0010-Added-SM-Driver-for-MooseFS.patch
-Patch1011: 0011-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1012: 0012-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1013: 0013-Fix-is_open-call-for-many-drivers-25.patch
-Patch1014: 0014-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch1015: 0015-Remove-SR_PROBE-from-ZFS-capabilities-37.patch
-Patch1016: 0016-Fix-vdi-ref-when-static-vdis-are-used.patch
-Patch1017: 0017-Tell-users-not-to-edit-multipath.conf-directly.patch
-Patch1018: 0018-Add-custom.conf-multipath-configuration-file.patch
-Patch1019: 0019-Install-etc-multipath-conf.d-custom.conf.patch
-Patch1020: 0020-Backport-NFS4-only-support.patch
-Patch1021: 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch
-Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51-55.patch
-Patch1023: 0023-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-56.patch
+TODO
 
 %description
 This package contains storage backends used in XCP
@@ -518,6 +502,15 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Oct 03 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-13.1
+- Sync with hotfix XS82ECU1075
+- TODO: Update XCP-ng patches
+- - *** Upstream changelog ***
+- * Tue Aug 13 2024 Mark Syms <mark.syms@cloud.com> - 2.30.8-13
+- - Update multipath.conf with backports for HPE MSA SAN
+- - Backport fix for CA-393194
+- - UPD-1002: backport updates to multipath.conf for several SANs
+
 * Tue Sep 24 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-12.4
 - Remove 0024-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
 

@@ -1,0 +1,75 @@
+CA-393194: Fix pvremove failure
+
+From: Stephen Cheng <stephen.cheng@cloud.com>
+
+In lvmohba test, the test failed at
+`SR.destroy(sr_ref) -> removeVG -> pvremove ` with the
+lvm error message "No devices to process".
+The root cause is that the PV which was to be removed
+was not really used as PV when it comes to multipathed devices.
+The LVM official document says:
+"Since each LUN has multiple device nodes in /dev 
+that point to the same underlying data,
+they all contain the same LVM metadata
+and thus LVM commands will find the same metadata
+multiple times and report them as duplicates.
+These duplicate messages are only warnings
+and do not mean the LVM operation has failed.
+Rather, they are alerting the user that only one of the devices
+has been used as a physical volume and the others are being ignored." 
+Please refer to https://docs.redhat.com/en/documentation/
+red_hat_enterprise_linux/6/html/logical_volume_manager_administration
+/duplicate_pv_multipath#duplicate_pv_multipath
+
+This fix is to find the real PV in a VG before removing the VG.
+
+Signed-off-by: Stephen Cheng <stephen.cheng@cloud.com>
+---
+ drivers/lvutil.py |   25 ++++++++++++++++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/lvutil.py b/drivers/lvutil.py
+index 7e2cdaf..e447fde 100755
+--- a/drivers/lvutil.py
++++ b/drivers/lvutil.py
+@@ -517,6 +517,27 @@ def createVG(root, vgname):
+ 
+     # End block
+ 
++def getPVsInVG(vgname):
++    # Get PVs in a specific VG
++    pvs_ret = cmd_lvm([CMD_PVS, '--separator', ' ', '--noheadings', '-o', 'pv_name,vg_name'])
++    
++    # Parse each line to extract PV and VG information
++    # No need to handle exceptions here, return empty list if any error
++    pvs_in_vg = []
++    lines = pvs_ret.strip().split('\n')
++    for line in lines:
++        # To avoid invalid return format
++        parts = line.split()
++        if len(parts) != 2:
++            util.SMlog("Warning: Invalid or empty line in pvs output: %s" % line)
++            continue
++        pv, vg = parts
++        if vg == vgname:
++            pvs_in_vg.append(pv)
++    
++    util.SMlog("PVs in VG %s: %s" % (vgname, pvs_in_vg))
++    return pvs_in_vg
++
+ def removeVG(root, vgname):
+     # Check PVs match VG
+     try:
+@@ -530,9 +551,11 @@ def removeVG(root, vgname):
+               opterr='error is %d' % inst.code)
+ 
+     try:
++        # Get PVs in VG before removing the VG
++        devs_in_vg = getPVsInVG(vgname)
+         cmd_lvm([CMD_VGREMOVE, vgname])
+ 
+-        for dev in root.split(','):
++        for dev in devs_in_vg:
+             cmd_lvm([CMD_PVREMOVE, dev])
+     except util.CommandException, inst:
+         raise xs_errors.XenError('LVMDelete', \

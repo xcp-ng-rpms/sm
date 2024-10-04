@@ -1,6 +1,6 @@
-%global package_speccommit 634fbf9dda9f0157f2fdac9867484d76b2fd9a08
+%global package_speccommit ef4e952dd7d4364009e647b68b07e489fb991a83
 %global usver 2.30.8
-%global xsver 12
+%global xsver 13
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Series applies on top of v2.29.0 and includes all later tags to 2.30.7
 # after that tag the commits are in the patchqueue here.
@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.4%{?dist}
+Release: %{?xsrel}.1%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -65,6 +65,12 @@ Patch45: move_mocks_dir
 Patch46: fix-nfssr-ensure-we-can-attach
 Patch47: ca-387770-check-for-read-only
 Patch48: ca-389576_handle_ioerror
+Patch49: update-multipath.conf-with
+Patch50: clean-up-regex-on-hp-hpe
+Patch51: CA-393194-Fix-pvremove-failure
+Patch52: CP-49961-update-multipath
+Patch53: CP-50251-update-multipath
+Patch54: feat-add-HPE-Nimble-multipath
 BuildRequires: python-devel xen-devel systemd pylint python-nose python-coverage python2-mock python2-bitarray
 BuildRequires: gcc
 Requires(post): systemd
@@ -82,15 +88,15 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.8-12-xcpng..2.30.8-8.2
-# Note: the v2.30.8-12-xcpng tag was manually created by us on our fork because
+# git format-patch v2.30.8-13-xcpng..2.30.8-8.2
+# Note: the v2.30.8-13-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
 # To create this tag in the sources, you must create a 2.30.8-8.2 branch from the
 # previous -xcpng tag then cherry pick each upstream commit referenced in the changelog
 # of the upstream spec file.
 # To ensure you have all changes, you can use:
 # `diff -urq <sources> <upstream sources>`.
-# After that we can create the tag: `git tag -a v2.30.8-12-xcpng -m "v2.30.8-12-xcpng"`,
+# After that we can create the tag: `git tag -a v2.30.8-13-xcpng -m "v2.30.8-13-xcpng"`,
 # push the commits and tag.
 Patch1001: 0001-backport-of-ccd121cc248d79b749a63d4ad099e6d5f4b8b588.patch
 Patch1002: 0002-Update-xs-sm.service-s-description-for-XCP-ng.patch
@@ -518,6 +524,15 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Thu Oct 03 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-13.1
+- Sync with hotfix XS82ECU1075
+- Sync patches with our latest 2.30.8-8.2 branch
+- - *** Upstream changelog ***
+- * Tue Aug 13 2024 Mark Syms <mark.syms@cloud.com> - 2.30.8-13
+- - Update multipath.conf with backports for HPE MSA SAN
+- - Backport fix for CA-393194
+- - UPD-1002: backport updates to multipath.conf for several SANs
+
 * Tue Sep 24 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-12.4
 - Remove 0024-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
 

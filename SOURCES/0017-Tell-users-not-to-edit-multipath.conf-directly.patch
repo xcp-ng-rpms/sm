@@ -1,4 +1,4 @@
-From 9bfcb0be3ff34354c9299bf6e0a90e691f14e813 Mon Sep 17 00:00:00 2001
+From 1cf0c93a4e8c1de3688115954a8d4a8d4c25830d Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 27 Jan 2023 12:03:15 +0100
 Subject: [PATCH 17/23] Tell users not to edit multipath.conf directly
@@ -14,7 +14,7 @@ Signed-off-by: Samuel Verschelde <stormi-xcp@ylix.fr>
  1 file changed, 8 insertions(+)
 
 diff --git a/multipath/multipath.conf b/multipath/multipath.conf
-index f63506d8..c854b577 100644
+index 6dbd5bf8..ede40bad 100644
 --- a/multipath/multipath.conf
 +++ b/multipath/multipath.conf
 @@ -1,3 +1,11 @@

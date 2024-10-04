@@ -1,0 +1,26 @@
+Clean up regex on HP/HPE appliance in multipath.conf
+
+From: Peter Wells <peter@webbird.com.au>
+
+Cleaned up the regex on the newly added HP/HPE appliance in multipath.conf
+
+Signed-off-by: Peter Wells <peter@webbird.com.au>
+---
+ multipath/multipath.conf |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/multipath/multipath.conf b/multipath/multipath.conf
+index 184430b..1b1c62e 100644
+--- a/multipath/multipath.conf
++++ b/multipath/multipath.conf
+@@ -117,8 +117,8 @@ devices {
+         failback                    immediate
+     }
+     device {
+-        vendor                      "HP|HPE"
+-        product                     "MSA [12]0[456]0*"
++        vendor                      "(HP|HPE)"
++        product                     "MSA [12]0[456]0 .*"
+         path_selector               "round-robin 0"
+         hardware_handler            "1 alua"
+         path_grouping_policy        group_by_prio

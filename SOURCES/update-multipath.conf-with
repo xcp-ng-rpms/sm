@@ -1,0 +1,35 @@
+Update multipath.conf with support for HP/HPE MSA storage appliances
+
+From: Peter Wells <peter@webbird.com.au>
+
+Added support for HP/HPE MSA storage appliances such as the HP MSA2050 and HPE MSA2060.
+
+The added configuration settings were sourced from the following location:
+https://community.hpe.com/t5/msa-storage/msa-2060-sas-red-hat-8-multipathing/td-p/7163998
+As well as my own experience, here:
+https://xcp-ng.org/forum/topic/6553/can-t-create-sr-on-fibre-channel-storage-msa2062-sr_backend_failure_53/
+
+Signed-off-by: Peter Wells <peter@webbird.com.au>
+---
+ multipath/multipath.conf |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/multipath/multipath.conf b/multipath/multipath.conf
+index 9f3dfa7..184430b 100644
+--- a/multipath/multipath.conf
++++ b/multipath/multipath.conf
+@@ -116,4 +116,14 @@ devices {
+         prio                        alua
+         failback                    immediate
+     }
++    device {
++        vendor                      "HP|HPE"
++        product                     "MSA [12]0[456]0*"
++        path_selector               "round-robin 0"
++        hardware_handler            "1 alua"
++        path_grouping_policy        group_by_prio
++        prio                        alua
++        failback                    immediate
++        no_path_retry               18
++    }
+ }

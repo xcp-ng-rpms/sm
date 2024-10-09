@@ -1,0 +1,21 @@
+commit 71c9b4c28f1c6ca41ed651bdb162653e669754c1
+Author: Damien Thenot <damien.thenot@vates.tech>
+Date:   Wed Oct 9 16:20:46 2024 +0200
+
+    linstor: Fix to add sync to DD
+    
+    Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+
+diff --git a/drivers/util.py b/drivers/util.py
+index fe8e13d..673cd6e 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -575,7 +575,7 @@ def zeroOut(path, fromByte, bytes):
+             bytesBefore = bytes
+         bytes -= bytesBefore
+         cmd = [CMD_DD, "if=/dev/zero", "of=%s" % path, "bs=1", \
+-                "seek=%s" % fromByte, "count=%s" % bytesBefore]
++                "seek=%s" % fromByte, "count=%s" % bytesBefore, "conv=fsync"]
+         try:
+             text = pread2(cmd)
+         except CommandException:

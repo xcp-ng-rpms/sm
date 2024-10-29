@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.7.0.2%{?xsrel}%{?dist}
+Release: 1.7.0.3%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -30,9 +30,15 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: sm-fairlock = %{version}-%{release}
-Requires: xenserver-multipath
-Requires(post): xenserver-multipath
-Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+
+# YD: see later if that makes any sense
+Requires: device-mapper-multipath
+Requires(post): device-mapper-multipath
+Requires: lvm2
+#Requires: xenserver-multipath
+#Requires(post): xenserver-multipath
+#Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
 Requires: python3-bitarray
 Requires(post): xs-presets >= 1.3
@@ -154,13 +160,13 @@ systemctl start sr_health_check.timer
 # However it won't start without linstor-controller.service
 systemctl enable linstor-monitor.service
 
-# XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
-# the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
-# it blocks its access to other hosts.
-# This command is also important if our multipath conf is modified for other drivers.
-if [ $1 -gt 1 ]; then
-    multipathd reconfigure
-fi
+# # XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
+# # the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
+# # it blocks its access to other hosts.
+# # This command is also important if our multipath conf is modified for other drivers.
+# if [ $1 -gt 1 ]; then
+#     multipathd reconfigure
+# fi
 
 %preun
 %systemd_preun make-dummy-sr.service
@@ -387,9 +393,11 @@ Manager and some other packages
 
 
 %changelog
-* Tue Oct 23 2024 Yann Dirson <yann.dirson@vates.fr> - 3.2.3-1.7.0.2
+* Tue Oct 23 2024 Yann Dirson <yann.dirson@vates.fr> - 3.2.3-1.7.0.3
 - Adjust deps for Almalinux 9
 - Fix linstor driver to properly override a pylint check
+- TEMP HACK remove dependency on device-mapper-multipath, which needs work
+- TEMP HACK depend on lvm2 not xenserver-lvm2, which needs work
 
 * Mon Sep 09 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.7
 - Import 8.2 LINSTOR changes on 8.3:

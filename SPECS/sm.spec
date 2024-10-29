@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.7%{?xsrel}%{?dist}
+Release: 1.7.0.1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -15,13 +15,13 @@ Source0: sm-3.2.3.tar.gz
 
 BuildRequires: python3
 BuildRequires: python3-devel
-BuildRequires: python36-pylint
+BuildRequires: python3-pylint
 BuildRequires: python3-coverage
-BuildRequires: python36-bitarray
+BuildRequires: python3-bitarray
 BuildRequires: python3-future
 
 # XCP-ng: python36-mock for %%check
-BuildRequires: python36-mock
+BuildRequires: python3-mock
 
 # XCP-ng: gcc must be explicitly required in our build system
 BuildRequires: gcc
@@ -385,6 +385,9 @@ Manager and some other packages
 
 
 %changelog
+* Tue Oct 23 2024 Yann Dirson <yann.dirson@vates.fr> - 3.2.3-1.7.0.1
+- Adjust deps for Almalinux 9
+
 * Mon Sep 09 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.7
 - Import 8.2 LINSTOR changes on 8.3:
 - Robustify HA: use a specific group with a replication count of 3

@@ -28,9 +28,16 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: sm-fairlock = %{version}-%{release}
-Requires: xenserver-multipath
-Requires(post): xenserver-multipath
-Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+
+# XCP-ng BEGIN: see later if it useful to follow XS forks
+Requires: device-mapper-multipath
+Requires(post): device-mapper-multipath
+Requires: lvm2
+#Requires: xenserver-multipath
+#Requires(post): xenserver-multipath
+#Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+# XCP-ng END
+
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
 Requires: python3-bitarray
 Requires: sm-debugtools = %{version}-%{release}
@@ -329,6 +336,8 @@ in /opt/xensource
 - Dropped obsolete dependency on python3-future
 - New patch: install relative symlinks
 - HACK include systemctl in BuildRequires, some unit tests to strange things
+- TEMP HACK remove dependency on device-mapper-multipath, which needs work
+- TEMP HACK depend on lvm2 not xenserver-lvm2, which needs work
 - TODO: XCP-ng patches were not ported yet to 4.x, XCP-ng-specific files commented out
 - *** Upstream changelog ***
   * Mon Jan 26 2026 Mark Syms <mark.syms@citrix.com> - 4.1.12-1

@@ -75,6 +75,8 @@ Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
 Patch1028: 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
 Patch1029: 0029-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
 
+Patch2000: sm-pylint-e1120.patch
+
 %description
 This package contains storage backends used in XCP
 
@@ -387,6 +389,7 @@ Manager and some other packages
 %changelog
 * Tue Oct 23 2024 Yann Dirson <yann.dirson@vates.fr> - 3.2.3-1.7.0.1
 - Adjust deps for Almalinux 9
+- Fix linstor driver to properly override a pylint check
 
 * Mon Sep 09 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.7
 - Import 8.2 LINSTOR changes on 8.3:

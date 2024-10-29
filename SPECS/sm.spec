@@ -33,9 +33,15 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: sm-fairlock = %{version}-%{release}
-Requires: xenserver-multipath
-Requires(post): xenserver-multipath
-Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+
+# YD: see later if that makes any sense
+Requires: device-mapper-multipath
+Requires(post): device-mapper-multipath
+Requires: lvm2
+#Requires: xenserver-multipath
+#Requires(post): xenserver-multipath
+#Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
 Requires: python3-bitarray
 Requires: sm-debugtools = %{version}-%{release}
@@ -183,13 +189,13 @@ systemctl start sr_health_check.timer
 # # However it won't start without linstor-controller.service
 # systemctl enable linstor-monitor.service
 
-# XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
-# the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
-# it blocks its access to other hosts.
-# This command is also important if our multipath conf is modified for other drivers.
-if [ $1 -gt 1 ]; then
-    multipathd reconfigure
-fi
+# # XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
+# # the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
+# # it blocks its access to other hosts.
+# # This command is also important if our multipath conf is modified for other drivers.
+# if [ $1 -gt 1 ]; then
+#     multipathd reconfigure
+# fi
 
 %preun
 %systemd_preun make-dummy-sr.service
@@ -468,6 +474,8 @@ in /opt/xensource
 - Dropped all XS patches, all assumed integrated upstream
 - Skipped all XCP-ng patches for now
 - New patch: install relative symlinks
+- TEMP HACK remove dependency on device-mapper-multipath, which needs work
+- TEMP HACK depend on lvm2 not xenserver-lvm2, which needs work
 
 * Thu Jul 10 2025 Yann Dirson <yann.dirson@vates.tech> - 3.2.12-8.0.ydi.1
 - Adjust deps for Almalinux 9

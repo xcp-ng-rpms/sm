@@ -1,0 +1,58 @@
+From 21107692fb711ec01a36f36132e32c37c951a992 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 11 Oct 2024 15:55:02 +0200
+Subject: [PATCH 56/60] Fix _locked_load calls compatibility with python 3.10
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py | 6 ++++++
+ drivers/util.py      | 8 ++++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 1197723a..22c1b37e 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -45,6 +45,7 @@ import socket
+ import SR
+ import SRCommand
+ import subprocess
++import sys
+ import time
+ import traceback
+ import util
+@@ -371,6 +372,9 @@ class LinstorSR(SR.SR):
+         self._all_volume_info_cache = None
+         self._all_volume_metadata_cache = None
+ 
++    # To remove in python 3.10.
++    # Use directly @staticmethod instead.
++    @util.conditional_decorator(staticmethod, sys.version_info >= (3, 10, 0))
+     def _locked_load(method):
+         def wrapped_method(self, *args, **kwargs):
+             self._init_status = self.INIT_STATUS_OK
+@@ -792,6 +796,8 @@ class LinstorSR(SR.SR):
+     def vdi(self, uuid):
+         return LinstorVDI(self, uuid)
+ 
++    # To remove in python 3.10
++    # See: https://stackoverflow.com/questions/12718187/python-version-3-9-calling-class-staticmethod-within-the-class-body
+     _locked_load = staticmethod(_locked_load)
+ 
+     # --------------------------------------------------------------------------
+diff --git a/drivers/util.py b/drivers/util.py
+index 544603a3..c027f1c8 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -2112,3 +2112,11 @@ def strtobool(str):
+ 
+ def find_executable(name):
+     return shutil.which(name)
++
++
++def conditional_decorator(decorator, condition):
++    def wrapper(func):
++        if not condition:
++            return func
++        return decorator(func)
++    return wrapper

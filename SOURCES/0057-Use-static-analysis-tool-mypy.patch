@@ -1,0 +1,396 @@
+From 9cc1409b13bbc35aed4077eb2a3c8666811d808c Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 11 Oct 2024 17:51:25 +0200
+Subject: [PATCH 57/60] Use static analysis tool (mypy)
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ .github/workflows/main.yml           | 19 +++++++++++++++++++
+ Makefile                             |  1 +
+ dev_requirements_static_analysis.txt |  3 +++
+ drivers/DummySR.py                   |  4 +++-
+ drivers/FileSR.py                    |  4 +++-
+ drivers/LVHDSR.py                    |  4 +++-
+ drivers/blktap2.py                   | 19 +++++++++++--------
+ drivers/flock.py                     |  4 +++-
+ drivers/lock.py                      |  6 ++++--
+ drivers/mpathcount.py                |  6 ++++--
+ drivers/srmetadata.py                |  5 ++++-
+ misc/fairlock/fairlock.py            |  6 ++++--
+ sm_typing/Makefile                   | 12 ++++++++++++
+ sm_typing/__init__.py                |  2 ++
+ tests/test_cleanup.py                |  4 +++-
+ 15 files changed, 79 insertions(+), 20 deletions(-)
+ create mode 100644 dev_requirements_static_analysis.txt
+ create mode 100644 sm_typing/Makefile
+ create mode 100644 sm_typing/__init__.py
+
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+index 6271a21b..d89b968c 100644
+--- a/.github/workflows/main.yml
++++ b/.github/workflows/main.yml
+@@ -3,6 +3,25 @@ name: Test SM
+ on: [push, pull_request]
+ 
+ jobs:
++  static-analysis:
++    runs-on: ubuntu-latest
++
++    steps:
++      - uses: actions/checkout@v3
++      - name: Set up Python 3
++        uses: actions/setup-python@v4
++        with:
++          python-version: '3.x'
++
++      - name: Install dependencies
++        run: |
++          python -m pip install --upgrade pip
++          pip install -r dev_requirements_static_analysis.txt
++
++      - name: mypy
++        run: |
++          mypy .
++
+   build:
+     runs-on: ubuntu-20.04
+ 
+diff --git a/Makefile b/Makefile
+index 472413e5..84cbb5a7 100755
+--- a/Makefile
++++ b/Makefile
+@@ -231,6 +231,7 @@ install: precheck
+ 	install -m 755 scripts/set-iscsi-initiator $(SM_STAGING)$(LIBEXEC)
+ 	$(MAKE) -C dcopy install DESTDIR=$(SM_STAGING)
+ 	$(MAKE) -C linstor install DESTDIR=$(SM_STAGING)
++	$(MAKE) -C sm_typing install DESTDIR=$(SM_STAGING)
+ 	ln -sf $(SM_DEST)blktap2.py $(SM_STAGING)$(BIN_DEST)/blktap2
+ 	ln -sf $(SM_DEST)lcache.py $(SM_STAGING)$(BIN_DEST)tapdisk-cache-stats
+ 	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
+diff --git a/dev_requirements_static_analysis.txt b/dev_requirements_static_analysis.txt
+new file mode 100644
+index 00000000..8a59c8f2
+--- /dev/null
++++ b/dev_requirements_static_analysis.txt
+@@ -0,0 +1,3 @@
++bitarray
++mypy
++python-linstor
+diff --git a/drivers/DummySR.py b/drivers/DummySR.py
+index c733fdf7..be0298b9 100755
+--- a/drivers/DummySR.py
++++ b/drivers/DummySR.py
+@@ -17,6 +17,8 @@
+ #
+ # DummySR: an example dummy SR for the SDK
+ 
++from sm_typing import List, Tuple
++
+ import SR
+ import VDI
+ import SRCommand
+@@ -28,7 +30,7 @@ CAPABILITIES = ["SR_PROBE", "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETAC
+                 "VDI_ACTIVATE", "VDI_DEACTIVATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE",
+                 "VDI_INTRODUCE", "VDI_MIRROR"]
+ 
+-CONFIGURATION = []
++CONFIGURATION: List[Tuple[str, str]] = []
+ 
+ DRIVER_INFO = {
+     'name': 'dummy',
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 4d2e0a21..9f2ec28f 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -17,6 +17,8 @@
+ #
+ # FileSR: local-file storage repository
+ 
++from sm_typing import Dict, List
++
+ import SR
+ import VDI
+ import SRCommand
+@@ -36,7 +38,7 @@ import xmlrpc.client
+ import XenAPI # pylint: disable=import-error
+ from constants import CBTLOG_TAG
+ 
+-geneology = {}
++geneology: Dict[str, List[str]] = {}
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", \
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", \
+                 "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index 361e88eb..0cb86bea 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -18,6 +18,8 @@
+ # LVHDSR: VHD on LVM storage repository
+ #
+ 
++from sm_typing import Dict, List
++
+ import SR
+ from SR import deviceCheck
+ import VDI
+@@ -54,7 +56,7 @@ from constants import CBTLOG_TAG
+ from fairlock import Fairlock
+ DEV_MAPPER_ROOT = os.path.join('/dev/mapper', lvhdutil.VG_PREFIX)
+ 
+-geneology = {}
++geneology: Dict[str, List[str]] = {}
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_TRIM",
+         "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", "VDI_MIRROR",
+         "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "ATOMIC_PAUSE",
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 669b9f65..672f7448 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -17,6 +17,9 @@
+ #
+ # blktap2: blktap/tapdisk management layer
+ #
++
++from sm_typing import Any, Callable, ClassVar, Dict
++
+ import grp
+ import os
+ import re
+@@ -513,7 +516,7 @@ def mkdirs(path, mode=0o777):
+ 
+ class KObject(object):
+ 
+-    SYSFS_CLASSTYPE = None
++    SYSFS_CLASSTYPE: ClassVar[str] = ""
+ 
+     def sysfs_devname(self):
+         raise NotImplementedError("sysfs_devname is undefined")
+@@ -521,7 +524,7 @@ class KObject(object):
+ 
+ class Attribute(object):
+ 
+-    SYSFS_NODENAME = None
++    SYSFS_NODENAME: ClassVar[str] = ""
+ 
+     def __init__(self, path):
+         self.path = path
+@@ -1171,7 +1174,7 @@ class VDI(object):
+         # before VDI.activate. Therefore those link steps where we
+         # relink existing devices under deterministic path names.
+ 
+-        BASEDIR = None
++        BASEDIR: ClassVar[str] = ""
+ 
+         def _mklink(self, target):
+             raise NotImplementedError("_mklink is not defined")
+@@ -2130,7 +2133,7 @@ class UEventHandler(object):
+             return "Uevent '%s' not handled by %s" % \
+                 (self.event, self.handler.__class__.__name__)
+ 
+-    ACTIONS = {}
++    ACTIONS: Dict[str, Callable] = {}
+ 
+     def run(self):
+ 
+@@ -2226,7 +2229,7 @@ class PagePool(KObject):
+ 
+ class BusDevice(KObject):
+ 
+-    SYSFS_BUSTYPE = None
++    SYSFS_BUSTYPE: ClassVar[str] = ""
+ 
+     @classmethod
+     def sysfs_bus_path(cls):
+@@ -2244,7 +2247,7 @@ class XenbusDevice(BusDevice):
+ 
+     XBT_NIL = ""
+ 
+-    XENBUS_DEVTYPE = None
++    XENBUS_DEVTYPE: ClassVar[str] = ""
+ 
+     def __init__(self, domid, devid):
+         self.domid = int(domid)
+@@ -2393,7 +2396,7 @@ class Blkback(XenBackendDevice):
+         self._q_events = None
+ 
+     class XenstoreValueError(Exception):
+-        KEY = None
++        KEY: ClassVar[str] = ""
+ 
+         def __init__(self, vbd, _str):
+             self.vbd = vbd
+@@ -2830,7 +2833,7 @@ if __name__ == '__main__':
+ 
+     elif _class == 'tap':
+ 
+-        attrs = {}
++        attrs: Dict[str, Any] = {}
+         for item in sys.argv[2:]:
+             try:
+                 key, val = item.split('=')
+diff --git a/drivers/flock.py b/drivers/flock.py
+index dceb0428..2d295ec4 100644
+--- a/drivers/flock.py
++++ b/drivers/flock.py
+@@ -23,6 +23,8 @@ testing and trying of locks isn't well supported. Looks as if we've
+ got to grow our own.
+ """
+ 
++from sm_typing import ClassVar
++
+ import os
+ import fcntl
+ import struct
+@@ -73,7 +75,7 @@ class FcntlLockBase:
+     definition of LOCK_TYPE (fcntl.{F_RDLCK|F_WRLCK}) determines the
+     type."""
+ 
+-    LOCK_TYPE = None
++    LOCK_TYPE: ClassVar[int]
+ 
+     if __debug__:
+         ERROR_ISLOCKED = "Attempt to acquire lock held."
+diff --git a/drivers/lock.py b/drivers/lock.py
+index 56bf9fcc..2e6e2c9c 100755
+--- a/drivers/lock.py
++++ b/drivers/lock.py
+@@ -16,6 +16,8 @@
+ 
+ """Serialization for concurrent operations"""
+ 
++from sm_typing import Dict
++
+ import os
+ import errno
+ import flock
+@@ -37,8 +39,8 @@ class Lock(object):
+ 
+     BASE_DIR = "/var/lock/sm"
+ 
+-    INSTANCES = {}
+-    BASE_INSTANCES = {}
++    INSTANCES: Dict[str, 'LockImplementation'] = {}
++    BASE_INSTANCES: Dict[str, 'LockImplementation'] = {}
+ 
+     def __new__(cls, name, ns=None, *args, **kwargs):
+         if ns:
+diff --git a/drivers/mpathcount.py b/drivers/mpathcount.py
+index a31ec1b7..73123a8c 100755
+--- a/drivers/mpathcount.py
++++ b/drivers/mpathcount.py
+@@ -15,6 +15,8 @@
+ # along with this program; if not, write to the Free Software Foundation, Inc.,
+ # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ 
++from sm_typing import Dict
++
+ import util
+ import os
+ import sys
+@@ -238,7 +240,7 @@ if __name__ == '__main__':
+         mpc_exit(session, -1)
+ 
+     try:
+-        mpath_status = {}
++        mpath_status: Dict[str, str] = {}
+         for pbd in pbds:
+             def remove(key):
+                 session.xenapi.PBD.remove_from_other_config(pbd, key)
+@@ -258,7 +260,7 @@ if __name__ == '__main__':
+         util.atomicFileWrite(MPATH_FILE_NAME, MPATHS_DIR, json.dumps(mpath_status))
+         os.chmod(MPATH_FILE_NAME, 0o0644)
+     except:
+-        util.SMlog("MPATH: Failure updating db. %s" % sys.exc_info())
++        util.SMlog("MPATH: Failure updating db. %s" % str(sys.exc_info()))
+         mpc_exit(session, -1)
+ 
+     util.SMlog("MPATH: Update done")
+diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
+index f86711e2..c80fb6d7 100755
+--- a/drivers/srmetadata.py
++++ b/drivers/srmetadata.py
+@@ -15,6 +15,9 @@
+ #
+ # Functions to read and write SR metadata
+ #
++
++from sm_typing import ClassVar
++
+ from io import SEEK_SET
+ 
+ import util
+@@ -254,7 +257,7 @@ def getMetadataLength(fd):
+ # ----------------- # General helper functions - end # -----------------
+ class MetadataHandler:
+ 
+-    VDI_INFO_SIZE_IN_SECTORS = None
++    VDI_INFO_SIZE_IN_SECTORS: ClassVar[int]
+ 
+     # constructor
+     def __init__(self, path=None, write=True):
+diff --git a/misc/fairlock/fairlock.py b/misc/fairlock/fairlock.py
+index 9217c697..391fbea3 100644
+--- a/misc/fairlock/fairlock.py
++++ b/misc/fairlock/fairlock.py
+@@ -1,3 +1,5 @@
++from sm_typing import Any, Callable, Dict, Optional
++
+ import os
+ import socket
+ import inspect
+@@ -7,8 +9,8 @@ SOCKDIR = "/run/fairlock"
+ START_SERVICE_TIMEOUT_SECS = 2
+ 
+ class SingletonWithArgs(type):
+-    _instances = {}
+-    _init = {}
++    _instances: Dict[Any, Any] = {}
++    _init: Dict[type, Optional[Callable[..., None]]] = {}
+ 
+     def __init__(cls, name, bases, dct):
+         cls._init[cls] = dct.get('__init__', None)
+diff --git a/sm_typing/Makefile b/sm_typing/Makefile
+new file mode 100644
+index 00000000..1e2ea815
+--- /dev/null
++++ b/sm_typing/Makefile
+@@ -0,0 +1,12 @@
++PYTHONLIBDIR = $(shell python3 -c "import sys; print(sys.path.pop())")
++DESTDIR ?= 
++
++.PHONY: install
++install:
++	install -D -m 644 __init__.py $(DESTDIR)$(PYTHONLIBDIR)/sm_typing.py
++	python3 -m compileall $(DESTDIR)$(PYTHONLIBDIR)/sm_typing.py
++
++.PHONY: uninstall
++uninstall:
++	rm -rf $(DESTDIR)$(PYTHONLIBDIR)/sm_typing.py
++	rm -rf $(DESTDIR)$(PYTHONLIBDIR)/__pycache__/sm_typing.*
+diff --git a/sm_typing/__init__.py b/sm_typing/__init__.py
+new file mode 100644
+index 00000000..c515056c
+--- /dev/null
++++ b/sm_typing/__init__.py
+@@ -0,0 +1,2 @@
++import typing
++from typing import *
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index cc4570d9..bd789515 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -1,3 +1,5 @@
++from sm_typing import List
++
+ import errno
+ import unittest
+ import unittest.mock as mock
+@@ -22,7 +24,7 @@ class FakeException(Exception):
+ 
+ 
+ class FakeUtil:
+-    record = []
++    record: List[str] = []
+ 
+     def log(input):
+         FakeUtil.record.append(input)

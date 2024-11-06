@@ -1,0 +1,28 @@
+From 6667a8e9813e519d3afa4001e99be0bc6e81c6c4 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 7 Nov 2024 15:50:22 +0100
+Subject: [PATCH 60/60] Makefile fix: don't execute precheck during
+ installation
+
+Due to mypy modifications, we can't build the sm RPM in Koji
+without a recent pylint version. So the precheck target is only
+executed in a github workflow now.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 84cbb5a7..fbe2dec5 100755
+--- a/Makefile
++++ b/Makefile
+@@ -127,7 +127,7 @@ precheck: build
+ 	echo "Precheck succeeded with no outstanding issues found."
+ 
+ .PHONY: install
+-install: precheck
++install: build
+ 	mkdir -p $(SM_STAGING)
+ 	$(call mkdir_clean,$(SM_STAGING))
+ 	mkdir -p $(SM_STAGING)$(SM_DEST)

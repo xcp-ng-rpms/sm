@@ -1,0 +1,42 @@
+From 65021acb5918cfe002dc53232a1b5569efce0d13 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 11 Dec 2024 11:14:27 +0100
+Subject: [PATCH 32/60] fix(linstorvhdutil): coalesce helper returns the sector
+ count now
+
+Without this change we have an error in cleanup.py that interrupts
+the coalesce algorithm.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstor-manager   | 3 +--
+ drivers/linstorvhdutil.py | 2 +-
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index 47c434a3..8ee6f149 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -539,8 +539,7 @@ def set_parent(session, args):
+ def coalesce(session, args):
+     try:
+         device_path = args['devicePath']
+-        vhdutil.coalesce(device_path)
+-        return ''
++        return str(vhdutil.coalesce(device_path))
+     except Exception as e:
+         util.SMlog('linstor-manager:coalesce error: {}'.format(e))
+         raise
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index 046c9695..b3df004a 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -376,7 +376,7 @@ class LinstorVhdUtil:
+ 
+     @linstormodifier()
+     def force_coalesce(self, path):
+-        return self._call_method(vhdutil.coalesce, 'coalesce', path, use_parent=True)
++        return int(self._call_method(vhdutil.coalesce, 'coalesce', path, use_parent=True))
+ 
+     @linstormodifier()
+     def force_repair(self, path):

@@ -1,0 +1,60 @@
+From 2be912d548cf8104d9b170e52a10bca5cbfae41d Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 14 Oct 2024 17:33:49 +0200
+Subject: [PATCH 36/60] Fix override of FileSR.attach
+
+The current attach method of FileSR doesn't correctly override the method of the SR class.
+It actually adds a "bind" parameter, which is seen as an error by analyzers like mypy.
+
+The "bind" parameter was added by this commit:
+"CA-371791: Fix world readable permissions on EXTSR"
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/EXTSR.py     | 2 +-
+ drivers/FileSR.py    | 5 ++++-
+ tests/test_FileSR.py | 2 +-
+ 3 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
+index 61e88dcd..16481620 100755
+--- a/drivers/EXTSR.py
++++ b/drivers/EXTSR.py
+@@ -123,7 +123,7 @@ class EXTSR(FileSR.FileSR):
+                         'LVMMount',
+                         opterr='FSCK failed on %s. Errno is %d' % (self.remotepath, inst.code))
+ 
+-            super(EXTSR, self).attach(sr_uuid, bind=False)
++            self.attach_and_bind(sr_uuid, bind=False)
+ 
+         self.attached = True
+ 
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index ba9b1863..8b832983 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -156,7 +156,10 @@ class FileSR(SR.SR):
+             raise xs_errors.XenError('FileSRDelete', \
+                   opterr='error %d' % inst.code)
+ 
+-    def attach(self, sr_uuid, bind=True):
++    def attach(self, sr_uuid):
++        self.attach_and_bind(sr_uuid)
++
++    def attach_and_bind(self, sr_uuid, bind=True):
+         if not self._checkmount():
+             try:
+                 util.ioretry(lambda: util.makedirs(self.path, mode=0o700))
+diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
+index e755f2d8..a82d0e5b 100644
+--- a/tests/test_FileSR.py
++++ b/tests/test_FileSR.py
+@@ -682,7 +682,7 @@ class TestFileSR(unittest.TestCase):
+ 
+         sr.path = mount_dst
+         sr.remotepath = mount_src
+-        sr.attach(None, bind=False)
++        sr.attach_and_bind(None, bind=False)
+ 
+         self.assertTrue(sr.attached)
+ 

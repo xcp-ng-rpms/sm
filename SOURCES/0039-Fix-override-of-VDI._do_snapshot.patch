@@ -1,0 +1,63 @@
+From 04b406d1ff3a4f04d60f86803de01b5244a4aaf7 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 16 Oct 2024 14:52:40 +0200
+Subject: [PATCH 39/60] Fix override of `VDI._do_snapshot`
+
+`cloneOp` must be present. Parameters like `snapType` must must be written in the same way
+between the parent class and the child class. Otherwise a linter like mypy may return an error.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/FileSR.py    | 6 +++---
+ drivers/LinstorSR.py | 7 +++----
+ 2 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 8b832983..4d2e0a21 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -709,8 +709,8 @@ class FileVDI(VDI.VDI):
+ 
+         vhdutil.killData(self.path)
+ 
+-    def _do_snapshot(self, sr_uuid, vdi_uuid, snap_type,
+-                     secondary=None, cbtlog=None):
++    def _do_snapshot(self, sr_uuid, vdi_uuid, snapType,
++                     cloneOp=False, secondary=None, cbtlog=None):
+         # If cbt enabled, save file consistency state
+         if cbtlog is not None:
+             if blktap2.VDI.tap_status(self.session, vdi_uuid):
+@@ -728,7 +728,7 @@ class FileVDI(VDI.VDI):
+         if not blktap2.VDI.tap_pause(self.session, sr_uuid, vdi_uuid):
+             raise util.SMException("failed to pause VDI %s" % vdi_uuid)
+         try:
+-            return self._snapshot(snap_type, cbtlog, consistency_state)
++            return self._snapshot(snapType, cbtlog, consistency_state)
+         finally:
+             blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid, secondary)
+ 
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 7640f93d..81c4b7e0 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -2316,9 +2316,8 @@ class LinstorVDI(VDI.VDI):
+         volume_uuid = self._linstor.get_volume_uuid_from_device_path(oldpath)
+         self._linstor.update_volume_name(volume_uuid, newpath)
+ 
+-    def _do_snapshot(
+-        self, sr_uuid, vdi_uuid, snap_type, secondary=None, cbtlog=None
+-    ):
++    def _do_snapshot(self, sr_uuid, vdi_uuid, snapType,
++                     cloneOp=False, secondary=None, cbtlog=None):
+         # If cbt enabled, save file consistency state.
+         if cbtlog is not None:
+             if blktap2.VDI.tap_status(self.session, vdi_uuid):
+@@ -2338,7 +2337,7 @@ class LinstorVDI(VDI.VDI):
+         if not blktap2.VDI.tap_pause(self.session, sr_uuid, vdi_uuid):
+             raise util.SMException('Failed to pause VDI {}'.format(vdi_uuid))
+         try:
+-            return self._snapshot(snap_type, cbtlog, consistency_state)
++            return self._snapshot(snapType, cbtlog, consistency_state)
+         finally:
+             blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid, secondary)
+ 

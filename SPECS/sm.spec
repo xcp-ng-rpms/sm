@@ -77,6 +77,34 @@ Patch1029: 0029-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
 # Upstream PR: https://github.com/xapi-project/sm/pull/719
 Patch1030: 0030-fix-getAllocatedSize-is-incorrect-75.patch
 Patch1031: 0031-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
+Patch1032: 0032-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
+Patch1033: 0033-Fix-many-invalid-escape-sequences.patch
+Patch1034: 0034-Fix-many-invalid-escape-sequences-on-regexes.patch
+Patch1035: 0035-Fix-override-of-FileSR.attach.patch
+Patch1036: 0036-Fix-override-of-BaseISCSISR.detach.patch
+Patch1037: 0037-Fix-override-of-VDI.delete-in-many-subclasses.patch
+Patch1038: 0038-Fix-override-of-VDI._do_snapshot.patch
+Patch1039: 0039-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
+Patch1040: 0040-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
+Patch1041: 0041-Modernize-Lock-class-using-staticmethod-decorator.patch
+Patch1042: 0042-Modernize-GC-using-staticmethod-decorator.patch
+Patch1043: 0043-Modernize-RefCounter-using-staticmethod-decorator.patch
+Patch1044: 0044-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
+Patch1045: 0045-Use-for-session-instead-of-for-e.patch
+Patch1046: 0046-Define-and-details-attr-on-Failure-mock.patch
+Patch1047: 0047-Fix-util.SRtoXML-calls-in-many-drivers.patch
+Patch1048: 0048-Replace-Dict-variable-with-info-in-LVHDSR.patch
+Patch1049: 0049-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
+Patch1050: 0050-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
+Patch1051: 0051-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
+Patch1052: 0052-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
+Patch1053: 0053-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
+Patch1054: 0054-Replace-deprecated-calls-to-distutils.util.strtobool.patch
+Patch1055: 0055-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
+Patch1056: 0056-Use-static-analysis-tool-mypy.patch
+Patch1057: 0057-Add-mypy-stubs.patch
+Patch1058: 0058-Use-override-everywhere.patch
+Patch1059: 0059-Makefile-fix-don-t-execute-precheck-during-installat.patch
 
 %description
 This package contains storage backends used in XCP
@@ -352,6 +380,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/LargeBlockSR
 /opt/xensource/sm/LargeBlockSR.py
 %{_unitdir}/linstor-monitor.service
+%{python3_sitelib}/__pycache__/sm_typing*pyc
+%{python3_sitelib}/sm_typing.py
 
 %package testresults
 Summary:  test results for SM package
@@ -390,7 +420,7 @@ Manager and some other packages
 %changelog
 * Fri Nov 29 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.14
 - Sync fork-load-daemon script with http-nbd-transfer (v1.5.0)
-- WIP
+- Add many changes to support mypy
 
 * Wed Nov 27 2024 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.13
 - Replace 0030-fix-cleanup.py-bad-live-coalesce-check-regarding-Fil.patch with 0030-fix-getAllocatedSize-is-incorrect-75.patch

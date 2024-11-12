@@ -1,7 +1,7 @@
 From 9c9b5a3ea111d22c550e6f983ca7539b14908737 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 15 Sep 2022 11:34:25 +0200
-Subject: [PATCH 078/177] fix(minidrbdcluster): ensure SIGINT is handled
+Subject: [PATCH 078/178] fix(minidrbdcluster): ensure SIGINT is handled
  correctly
 
 This patch is here to make sure no LINSTOR controller survives when
@@ -20,7 +20,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 27 insertions(+), 9 deletions(-)
 
 diff --git a/scripts/minidrbdcluster b/scripts/minidrbdcluster
-index fb4de09b..4cdc59e6 100755
+index fb4de09..4cdc59e 100755
 --- a/scripts/minidrbdcluster
 +++ b/scripts/minidrbdcluster
 @@ -1,7 +1,6 @@
@@ -83,7 +83,7 @@ index fb4de09b..4cdc59e6 100755
  
      return call_systemd('start', service)
 diff --git a/systemd/minidrbdcluster.service b/systemd/minidrbdcluster.service
-index 3de6ac4f..1ddf91f3 100644
+index 3de6ac4..1ddf91f 100644
 --- a/systemd/minidrbdcluster.service
 +++ b/systemd/minidrbdcluster.service
 @@ -10,6 +10,7 @@ Environment=PYTHONUNBUFFERED=1

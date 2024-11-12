@@ -1,7 +1,7 @@
 From cbe616a7450f988cc267eb02b73de8e03f546fd6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 12 Sep 2022 17:54:57 +0200
-Subject: [PATCH 076/177] feat(LinstorSR): add linstor-kv-dump helper to print
+Subject: [PATCH 076/178] feat(LinstorSR): add linstor-kv-dump helper to print
  kv store
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -12,7 +12,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100755 scripts/linstor-kv-dump
 
 diff --git a/Makefile b/Makefile
-index af1011a1..aa71f809 100755
+index af1011a..aa71f80 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -240,6 +240,7 @@ install: precheck
@@ -25,7 +25,7 @@ index af1011a1..aa71f809 100755
  	install -m 755 scripts/usb_change $(SM_STAGING)$(LIBEXEC)
 diff --git a/scripts/linstor-kv-dump b/scripts/linstor-kv-dump
 new file mode 100755
-index 00000000..93598d7c
+index 0000000..93598d7
 --- /dev/null
 +++ b/scripts/linstor-kv-dump
 @@ -0,0 +1,38 @@

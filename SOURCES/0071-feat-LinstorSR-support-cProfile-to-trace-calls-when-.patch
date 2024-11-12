@@ -1,7 +1,7 @@
 From 7af2ef8980077fc54ee58661502c9b49f7b973c9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 25 Aug 2022 12:11:18 +0200
-Subject: [PATCH 071/177] feat(LinstorSR): support cProfile to trace calls when
+Subject: [PATCH 071/178] feat(LinstorSR): support cProfile to trace calls when
  a command is executed
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 52 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index e5f6f85c..00554d73 100755
+index e5f6f85..00554d7 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -69,6 +69,9 @@ FORK_LOG_DAEMON = '/opt/xensource/libexec/fork-log-daemon'
@@ -39,7 +39,7 @@ index e5f6f85c..00554d73 100755
  else:
      SR.registerSR(LinstorSR)
 diff --git a/drivers/util.py b/drivers/util.py
-index 7c52703c..fe8e13d1 100755
+index 7c52703..fe8e13d 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -1862,3 +1862,45 @@ def check_pid_exists(pid):

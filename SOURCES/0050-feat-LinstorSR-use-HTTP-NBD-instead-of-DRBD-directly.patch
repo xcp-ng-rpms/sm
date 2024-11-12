@@ -1,7 +1,7 @@
 From 7983be637bf274036cd89552891cc406bf20ea0a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 12 May 2022 17:52:35 +0200
-Subject: [PATCH 050/177] feat(LinstorSR): use HTTP/NBD instead of DRBD
+Subject: [PATCH 050/178] feat(LinstorSR): use HTTP/NBD instead of DRBD
  directly with heartbeat VDI
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100755 scripts/fork-log-daemon
 
 diff --git a/Makefile b/Makefile
-index 2eb6a868..af1011a1 100755
+index 2eb6a86..af1011a 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -239,6 +239,7 @@ install: precheck
@@ -29,7 +29,7 @@ index 2eb6a868..af1011a1 100755
  	install -m 755 scripts/check-device-sharing $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/usb_change $(SM_STAGING)$(LIBEXEC)
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 15b9dda3..5bdf6769 100755
+index 15b9dda..5bdf676 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -34,9 +34,13 @@ import cleanup
@@ -502,7 +502,7 @@ index 15b9dda3..5bdf6769 100755
  
  
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index af8d2b9e..30230adb 100755
+index af8d2b9..30230ad 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -36,7 +36,7 @@ import vhdutil
@@ -580,7 +580,7 @@ index af8d2b9e..30230adb 100755
          linstor = LinstorVolumeManager(
              'linstor://localhost',
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index ac858371..9ba0ac3b 100644
+index ac85837..9ba0ac3 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -42,7 +42,7 @@ def linstorhostcall(local_method, remote_method):
@@ -611,7 +611,7 @@ index ac858371..9ba0ac3b 100644
              )
  
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index e497afa6..da98e0b6 100755
+index e497afa..da98e0b 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -329,18 +329,21 @@ class LinstorVolumeManager(object):
@@ -662,7 +662,7 @@ index e497afa6..da98e0b6 100755
                  # We ignore diskless pools of the form "DfltDisklessStorPool".
                  if volume.storage_pool_name == self._group_name:
 diff --git a/drivers/util.py b/drivers/util.py
-index 7151f368..6a9fc1a0 100755
+index 7151f36..6a9fc1a 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -1801,3 +1801,52 @@ def sessions_less_than_targets(other_config, device_config):
@@ -720,7 +720,7 @@ index 7151f368..6a9fc1a0 100755
 +        return True
 diff --git a/scripts/fork-log-daemon b/scripts/fork-log-daemon
 new file mode 100755
-index 00000000..eb0f0b0f
+index 0000000..eb0f0b0
 --- /dev/null
 +++ b/scripts/fork-log-daemon
 @@ -0,0 +1,34 @@

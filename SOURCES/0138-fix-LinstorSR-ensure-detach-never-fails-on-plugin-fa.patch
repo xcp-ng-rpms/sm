@@ -1,7 +1,7 @@
 From 64d36a80ff1e19ee7b4a8816f537b1e90ccda32f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 23 Oct 2023 14:31:27 +0200
-Subject: [PATCH 138/177] fix(LinstorSR): ensure detach never fails on plugin
+Subject: [PATCH 138/178] fix(LinstorSR): ensure detach never fails on plugin
  failure
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 7b9a8e57..d0fc4219 100755
+index 7b9a8e5..d0fc421 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -2241,7 +2241,12 @@ class LinstorVDI(VDI.VDI):

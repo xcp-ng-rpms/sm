@@ -1,7 +1,7 @@
 From 30b45e72a11b9e72a9edcdd22d71a15b8d132e63 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 3 Oct 2023 18:42:42 +0200
-Subject: [PATCH 132/177] fix(LinstorSR): ensure database is mounted during
+Subject: [PATCH 132/178] fix(LinstorSR): ensure database is mounted during
  scan
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 24 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index ed41e77a..ed5998e8 100755
+index ed41e77..ed5998e 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -824,6 +824,21 @@ class LinstorSR(SR.SR):
@@ -37,7 +37,7 @@ index ed41e77a..ed5998e8 100755
          # bad sync in the process if new VDIs have been introduced.
          ret = super(LinstorSR, self).scan(self.uuid)
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index ee637ae2..f1f3bce7 100755
+index ee637ae..f1f3bce 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -884,7 +884,7 @@ class LinstorVolumeManager(object):

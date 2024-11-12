@@ -1,7 +1,7 @@
 From 58bf1f4dbf2f7860d18a55ff313363c6fa3f1305 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 24 Mar 2022 18:13:46 +0100
-Subject: [PATCH 052/177] fix(LinstorSR): use IPs instead of hostnames in NBD
+Subject: [PATCH 052/178] fix(LinstorSR): use IPs instead of hostnames in NBD
  server
 
 Without this patch we can't use XCP-ng hosts configured with static IPS.
@@ -14,7 +14,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 97 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index a4f7afce..c0bfc3f1 100755
+index a4f7afc..c0bfc3f 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -251,8 +251,15 @@ def deflate(linstor, vdi_uuid, vdi_path, new_size, old_size):
@@ -181,7 +181,7 @@ index a4f7afce..c0bfc3f1 100755
              raise xs_errors.XenError(
                  'VDIUnavailable',
 diff --git a/drivers/util.py b/drivers/util.py
-index 6a9fc1a0..7c52703c 100755
+index 6a9fc1a..7c52703 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -702,6 +702,18 @@ def get_hosts_attached_on(session, vdi_uuids):

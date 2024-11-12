@@ -1,7 +1,7 @@
 From d3d377079f5153fa41220b4df9de176b733cd6a8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 15 Apr 2024 11:22:18 +0200
-Subject: [PATCH 166/177] feat(linstor-manager): add
+Subject: [PATCH 166/178] feat(linstor-manager): add
  `getNodePreferredInterface` helper
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 33 insertions(+)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 6b45875d..a2501d74 100755
+index 6b45875..a2501d7 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -1062,6 +1062,21 @@ def list_node_interfaces(session, args):
@@ -44,7 +44,7 @@ index 6b45875d..a2501d74 100755
          'setNodePreferredInterface': set_node_preferred_interface
      })
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 4118a28f..46c3283d 100755
+index 4118a28..46c3283 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1544,6 +1544,23 @@ class LinstorVolumeManager(object):

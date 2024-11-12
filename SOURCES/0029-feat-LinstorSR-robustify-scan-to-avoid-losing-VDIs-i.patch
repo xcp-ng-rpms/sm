@@ -1,7 +1,7 @@
 From 045d23321e99b135556cb3d9872c1f3c8ae4b9af Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 7 Jan 2021 11:17:08 +0100
-Subject: [PATCH 029/177] feat(LinstorSR): robustify scan to avoid losing VDIs
+Subject: [PATCH 029/178] feat(LinstorSR): robustify scan to avoid losing VDIs
  if function is called outside module
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 21 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 548f4b17..52131a59 100755
+index 548f4b1..52131a5 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -325,6 +325,7 @@ class LinstorSR(SR.SR):

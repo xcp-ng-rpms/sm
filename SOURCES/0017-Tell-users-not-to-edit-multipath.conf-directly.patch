@@ -1,7 +1,7 @@
 From 1cf0c93a4e8c1de3688115954a8d4a8d4c25830d Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi-xcp@ylix.fr>
 Date: Fri, 27 Jan 2023 12:03:15 +0100
-Subject: [PATCH 017/177] Tell users not to edit multipath.conf directly
+Subject: [PATCH 017/178] Tell users not to edit multipath.conf directly
 
 This file is meant to remain unchanged and regularly updated along with
 the SM component. Users can create a custom configuration file in
@@ -14,7 +14,7 @@ Signed-off-by: Samuel Verschelde <stormi-xcp@ylix.fr>
  1 file changed, 8 insertions(+)
 
 diff --git a/multipath/multipath.conf b/multipath/multipath.conf
-index 6dbd5bf8..ede40bad 100644
+index 6dbd5bf..ede40ba 100644
 --- a/multipath/multipath.conf
 +++ b/multipath/multipath.conf
 @@ -1,3 +1,11 @@

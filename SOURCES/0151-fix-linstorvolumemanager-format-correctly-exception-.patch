@@ -1,7 +1,7 @@
 From 4119be3b2769b7c29013cb5f60e68238a439b474 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 4 Dec 2023 16:36:55 +0100
-Subject: [PATCH 151/177] fix(linstorvolumemanager): format correctly exception
+Subject: [PATCH 151/178] fix(linstorvolumemanager): format correctly exception
  during db mount
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index fef34d3b..a41314e5 100755
+index fef34d3..a41314e 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -2764,9 +2764,9 @@ class LinstorVolumeManager(object):

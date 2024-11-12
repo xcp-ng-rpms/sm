@@ -1,7 +1,7 @@
 From 099f7a633435610b5e09c487ef0d42473d8fd9a9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 9 Mar 2023 17:06:59 +0100
-Subject: [PATCH 112/177] fix(LinstorSR): replace bad param in detach_thin impl
+Subject: [PATCH 112/178] fix(LinstorSR): replace bad param in detach_thin impl
 
 To get the physical size, the volume UUID must be used, not the path.
 
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 10e0f543..c42f07d6 100755
+index 10e0f54..c42f07d 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -215,7 +215,7 @@ def detach_thin(session, linstor, sr_uuid, vdi_uuid):

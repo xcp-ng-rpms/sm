@@ -1,7 +1,7 @@
 From 53755a3d8e40a2493bc006139e9631ed7c3ae531 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 7 Oct 2022 17:18:37 +0200
-Subject: [PATCH 085/177] fix(linstorvolumemanager): support offline hosts when
+Subject: [PATCH 085/178] fix(linstorvolumemanager): support offline hosts when
  plugins are called
 
 - Robustify plugin calls
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 52 insertions(+), 17 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 09aad42f..58c02382 100755
+index 09aad42..58c0238 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -83,15 +83,30 @@ def get_all_volume_openers(resource_name, volume):

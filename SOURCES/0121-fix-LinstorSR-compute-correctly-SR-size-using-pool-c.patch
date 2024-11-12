@@ -1,7 +1,7 @@
 From 54fa0adaf9bd385ca6e3f7b2eab5616f10b458be Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 1 Jun 2023 17:40:37 +0200
-Subject: [PATCH 121/177] fix(LinstorSR): compute correctly SR size using pool
+Subject: [PATCH 121/178] fix(LinstorSR): compute correctly SR size using pool
  count
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 25 insertions(+), 24 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 7a9cbac6..f6c43569 100755
+index 7a9cbac..f6c4356 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1065,8 +1065,8 @@ class LinstorSR(SR.SR):
@@ -26,7 +26,7 @@ index 7a9cbac6..f6c43569 100755
  
          self.physical_utilisation = self._linstor.allocated_volume_size
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 464ab2ce..ee637ae2 100755
+index 464ab2c..ee637ae 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -492,28 +492,6 @@ class LinstorVolumeManager(object):

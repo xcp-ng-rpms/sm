@@ -1,7 +1,7 @@
 From 11cd26e0cd28d9aa622bdc31ace20008c11ab02e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Dec 2022 11:22:15 +0100
-Subject: [PATCH 098/177] fix(linstorvhdutil): ensure we retry creation in all
+Subject: [PATCH 098/178] fix(linstorvhdutil): ensure we retry creation in all
  situations
 
 Without this patch, a basic resource creation is never restarted
@@ -14,7 +14,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 35 insertions(+), 39 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 2e2feb23..81cce802 100755
+index 2e2feb2..81cce80 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -2044,9 +2044,25 @@ class LinstorVolumeManager(object):

@@ -1,7 +1,7 @@
 From 0d61202439fd59c9d0121d71ce63e41e5a7d7f68 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Feb 2024 00:10:32 +0100
-Subject: [PATCH 162/177] fix(LinstorSR): create DRBD diskless if necessary for
+Subject: [PATCH 162/178] fix(LinstorSR): create DRBD diskless if necessary for
  each VHD parent
 
 It's necessary to have all parents during snapshot to create a new VHD child.
@@ -12,7 +12,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 33 insertions(+), 27 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 1e09e9bb..53afbefe 100755
+index 1e09e9b..53afbef 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1827,32 +1827,7 @@ class LinstorVDI(VDI.VDI):

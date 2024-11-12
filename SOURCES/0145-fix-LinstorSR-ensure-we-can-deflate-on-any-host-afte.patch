@@ -1,7 +1,7 @@
 From 5cd04079c9bca752f6f78532ad1ae0bf962c3902 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 21 Nov 2023 13:50:24 +0100
-Subject: [PATCH 145/177] fix(LinstorSR): ensure we can deflate on any host
+Subject: [PATCH 145/178] fix(LinstorSR): ensure we can deflate on any host
  after a journal rollback
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  4 files changed, 76 insertions(+), 42 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index c570925f..1d1b51a8 100755
+index c570925..1d1b51a 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -197,7 +197,7 @@ def detach_thin_impl(session, linstor, sr_uuid, vdi_uuid):
@@ -41,7 +41,7 @@ index c570925f..1d1b51a8 100755
      def _handle_interrupted_clone(
          self, vdi_uuid, clone_info, force_undo=False
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index d2fb884f..3c2810cd 100755
+index d2fb884..3c2810c 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -1432,7 +1432,7 @@ class LinstorVDI(VDI):
@@ -54,7 +54,7 @@ index d2fb884f..3c2810cd 100755
              self.sr.unlock()
          self.drbd_size = self.sr._vhdutil.get_drbd_size(self.uuid)
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 9e5e1d6e..7726c1b7 100755
+index 9e5e1d6..7726c1b 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -28,6 +28,7 @@ import XenAPI
@@ -103,7 +103,7 @@ index 9e5e1d6e..7726c1b7 100755
          'hasControllerRunning': has_controller_running,
          'addHost': add_host,
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 239a10ad..23d8b6a0 100644
+index 239a10a..23d8b6a 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -31,7 +31,7 @@ MANAGER_PLUGIN = 'linstor-manager'

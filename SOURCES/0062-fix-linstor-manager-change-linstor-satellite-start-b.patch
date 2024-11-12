@@ -1,7 +1,7 @@
 From 77eddf395a3248f479ece8223c11da473ba7992b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 31 May 2022 14:01:45 +0200
-Subject: [PATCH 062/177] fix(linstor-manager): change linstor satellite start
+Subject: [PATCH 062/178] fix(linstor-manager): change linstor satellite start
  behavior
 
 Ensure we don't have an invalid cache used by a satellite:
@@ -15,7 +15,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 7893ebc6..c6d622f2 100755
+index 7893ebc..c6d622f 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -61,7 +61,16 @@ def update_all_ports(open):

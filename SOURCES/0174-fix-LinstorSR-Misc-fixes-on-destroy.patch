@@ -1,7 +1,7 @@
 From 34e414b5d11363ebcce4c0f3a98d9e8de6c90432 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 30 Apr 2024 15:38:34 +0200
-Subject: [PATCH 174/177] fix(LinstorSR): Misc fixes on destroy
+Subject: [PATCH 174/178] fix(LinstorSR): Misc fixes on destroy
 
 linstor-manager:
 - fix on get_drbd_volumes
@@ -27,7 +27,7 @@ Co-authored-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 28 insertions(+), 11 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 9f0986cd..8d958908 100755
+index 9f0986c..8d95890 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -650,17 +650,17 @@ class LinstorSR(SR.SR):
@@ -62,7 +62,7 @@ index 9f0986cd..8d958908 100755
          except Exception as e:
              try:
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 47cbd2b7..f0404b80 100755
+index 47cbd2b..f0404b8 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -241,7 +241,10 @@ def get_drbd_volumes(volume_group=None):
@@ -78,7 +78,7 @@ index 47cbd2b7..f0404b80 100755
              if not match:
                  continue
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 948d45df..103f91b7 100755
+index 948d45d..103f91b 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -18,7 +18,6 @@

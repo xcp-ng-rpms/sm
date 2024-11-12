@@ -1,7 +1,7 @@
 From c241c1495897b952e6ea11fd062cac28109394aa Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 14 Apr 2022 15:45:20 +0200
-Subject: [PATCH 057/177] feat(LinstorSr): ensure LVM group is activated during
+Subject: [PATCH 057/178] feat(LinstorSr): ensure LVM group is activated during
  SR.attach/create
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 19 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 927e4771..e2d3d783 100755
+index 927e477..e2d3d78 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -34,6 +34,7 @@ import cleanup
@@ -82,7 +82,7 @@ index 927e4771..e2d3d783 100755
      def _update_minidrbdcluster(self, host, enabled):
          self._exec_manager_command(
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 7e34ce65..91731b1d 100755
+index 7e34ce6..91731b1 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -76,6 +76,8 @@ def update_minidrbdcluster_service(start):

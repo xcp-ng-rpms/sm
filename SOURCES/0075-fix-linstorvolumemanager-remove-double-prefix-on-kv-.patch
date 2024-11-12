@@ -1,7 +1,7 @@
 From 5d26e090abc329bd612d52e2c82fd4607c01ef17 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 12 Sep 2022 15:56:09 +0200
-Subject: [PATCH 075/177] fix(linstorvolumemanager): remove double prefix on kv
+Subject: [PATCH 075/178] fix(linstorvolumemanager): remove double prefix on kv
  group name
 
 - Before this patch, when the kv store was created/accessed, a double "xcp-sr-" prefix was used.
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 1 insertion(+), 4 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index a1bc151e..3ee5d248 100755
+index a1bc151..3ee5d24 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -2195,7 +2195,7 @@ class LinstorVolumeManager(object):

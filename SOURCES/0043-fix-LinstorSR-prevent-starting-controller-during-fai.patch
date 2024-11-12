@@ -1,7 +1,7 @@
 From 855fb10643225cae3ec8e6b89c20972eefaee607 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 26 Aug 2021 16:52:01 +0200
-Subject: [PATCH 043/177] fix(LinstorSR): prevent starting controller during
+Subject: [PATCH 043/178] fix(LinstorSR): prevent starting controller during
  fail in linstor manager destroy method
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 0357b92d..e9b7c2f3 100755
+index 0357b92..e9b7c2f 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1263,9 +1263,11 @@ class LinstorVolumeManager(object):

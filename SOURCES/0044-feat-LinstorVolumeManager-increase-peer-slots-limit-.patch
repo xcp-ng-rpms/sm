@@ -1,7 +1,7 @@
 From 02c4a4a0a092f9ae8d387a4773fbf0fc5b09cb11 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 19 Oct 2021 14:48:17 +0200
-Subject: [PATCH 044/177] feat(LinstorVolumeManager): increase peer slots limit
+Subject: [PATCH 044/178] feat(LinstorVolumeManager): increase peer slots limit
  (support 31 connections to a DRBD)
 
 - Also, create diskless devices when db is created
@@ -12,7 +12,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 67 insertions(+), 17 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index e9b7c2f3..553e2f50 100755
+index e9b7c2f..553e2f5 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1507,7 +1507,7 @@ class LinstorVolumeManager(object):

@@ -1,7 +1,7 @@
 From e7550ad1ca7033adb3bb6dbc3c6a79fa2386d90b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 16 Mar 2023 18:54:46 +0100
-Subject: [PATCH 114/177] fix(linstorvhdutil): avoid parent path resolution
+Subject: [PATCH 114/178] fix(linstorvhdutil): avoid parent path resolution
 
 When many hosts are used (>= 4), we can fail to get
 VHD info (with parent option) because the local parent VDI
@@ -19,7 +19,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  4 files changed, 21 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 7e34b5f6..9e96aaca 100755
+index 7e34b5f..9e96aac 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -400,7 +400,7 @@ def get_vhd_info(session, args):
@@ -32,7 +32,7 @@ index 7e34b5f6..9e96aaca 100755
          return json.dumps(vhd_info.__dict__)
      except Exception as e:
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index c1b817d7..8b6985d9 100644
+index c1b817d..8b6985d 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -143,8 +143,8 @@ class LinstorVhdUtil:
@@ -59,7 +59,7 @@ index c1b817d7..8b6985d9 100644
          # https://github.com/PyCQA/pylint/pull/2926
          return self._get_vhd_info(vdi_uuid, self._extract_uuid, **kwargs)  # pylint: disable = E1123
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 8befb33f..91db3d80 100755
+index 8befb33..91db3d8 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -920,11 +920,18 @@ class LinstorVolumeManager(object):
@@ -85,7 +85,7 @@ index 8befb33f..91db3d80 100755
      def update_volume_uuid(self, volume_uuid, new_volume_uuid, force=False):
          """
 diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
-index d75edb11..48337f87 100755
+index d75edb1..48337f8 100755
 --- a/drivers/vhdutil.py
 +++ b/drivers/vhdutil.py
 @@ -100,13 +100,16 @@ def fullSizeVHD(virtual_size):

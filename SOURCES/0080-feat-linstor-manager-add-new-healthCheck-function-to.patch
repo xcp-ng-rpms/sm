@@ -1,7 +1,7 @@
 From 488877ba4b8602148c23e3238a7530e67ad5ea8f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 23 Sep 2022 17:45:08 +0200
-Subject: [PATCH 080/177] feat(linstor-manager): add new `healthCheck` function
+Subject: [PATCH 080/178] feat(linstor-manager): add new `healthCheck` function
  to monitor pool (#26)
 
 Print a JSON output to monitor state of LINSTOR SRs:
@@ -109,7 +109,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 220 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 5485b900..7abc1054 100755
+index 5485b90..7abc105 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -848,6 +848,119 @@ def get_drbd_openers(session, args):
@@ -241,7 +241,7 @@ index 5485b900..7abc1054 100755
 +        'healthCheck': health_check
      })
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 3ee5d248..efe5d53b 100755
+index 3ee5d24..efe5d53 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1402,6 +1402,111 @@ class LinstorVolumeManager(object):

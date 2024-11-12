@@ -1,7 +1,7 @@
 From d1e3ace3c5c16ba428c4151482f4065d09930621 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 14 Nov 2023 18:08:26 +0100
-Subject: [PATCH 143/177] fix(LinstorSR): support different volume sizes in
+Subject: [PATCH 143/178] fix(LinstorSR): support different volume sizes in
  cleanup.py
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -12,7 +12,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 194 insertions(+), 106 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 3063abf4..6802f494 100755
+index 3063abf..6802f49 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -134,19 +134,6 @@ OPS_EXCLUSIVE = [
@@ -211,7 +211,7 @@ index 3063abf4..6802f494 100755
                      new_volume_size, old_volume_size
                  )
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 1f898225..d2fb884f 100755
+index 1f89822..d2fb884 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -1383,8 +1383,6 @@ class LVHDVDI(VDI):
@@ -399,7 +399,7 @@ index 1f898225..d2fb884f 100755
      def _hasValidDevicePath(self, uuid):
          try:
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 3ce7ab9e..239a10ad 100644
+index 3ce7ab9..239a10a 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -14,6 +14,8 @@

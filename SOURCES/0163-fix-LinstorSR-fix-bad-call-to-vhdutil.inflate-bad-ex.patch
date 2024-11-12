@@ -1,7 +1,7 @@
 From 574d72fc61a205b0a037cfe6a0002f2602f8e99d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Feb 2024 00:14:11 +0100
-Subject: [PATCH 163/177] fix(LinstorSR): fix bad call to vhdutil.inflate + bad
+Subject: [PATCH 163/178] fix(LinstorSR): fix bad call to vhdutil.inflate + bad
  exception
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 53afbefe..de10f423 100755
+index 53afbef..de10f42 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1944,7 +1944,7 @@ class LinstorVDI(VDI.VDI):

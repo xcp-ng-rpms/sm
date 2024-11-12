@@ -1,7 +1,7 @@
 From 344d0c58408c89f48fb41cb1bfd70e5bed56781e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 13 Feb 2023 17:24:16 +0100
-Subject: [PATCH 105/177] fix(LinstorSR): don't check VDI metadata while
+Subject: [PATCH 105/178] fix(LinstorSR): don't check VDI metadata while
  listing VDIs if it's deleted
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 31f45055..41ece825 100755
+index 31f4505..41ece82 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1169,6 +1169,9 @@ class LinstorSR(SR.SR):

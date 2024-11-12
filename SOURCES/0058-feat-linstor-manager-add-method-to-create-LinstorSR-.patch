@@ -1,7 +1,7 @@
 From cac2dda720b05ba479b272c9c65b5f14af180956 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 25 Apr 2022 14:47:51 +0200
-Subject: [PATCH 058/177] feat(linstor-manager): add method to create LinstorSR
+Subject: [PATCH 058/178] feat(linstor-manager): add method to create LinstorSR
  + to list/destroy DRBD volumes
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 168 insertions(+), 11 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 91731b1d..7893ebc6 100755
+index 91731b1..7893ebc 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -23,6 +23,7 @@ sys.path[0] = '/opt/xensource/sm/'

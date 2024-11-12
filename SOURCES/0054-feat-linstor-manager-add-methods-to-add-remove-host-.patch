@@ -1,7 +1,7 @@
 From df1b37be2e1b33838aa843f922de1de6cec3a793 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 6 Apr 2022 17:53:02 +0200
-Subject: [PATCH 054/177] feat(linstor-manager): add methods to add remove/host
+Subject: [PATCH 054/178] feat(linstor-manager): add methods to add remove/host
  from LINSTOR SR
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -12,7 +12,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 338 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index c0bfc3f1..413c5501 100755
+index c0bfc3f..413c550 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -401,7 +401,9 @@ class LinstorSR(SR.SR):
@@ -36,7 +36,7 @@ index c0bfc3f1..413c5501 100755
          self.physical_utilisation = self._linstor.allocated_volume_size
  
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 30230adb..7e34ce65 100755
+index 30230ad..7e34ce6 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -22,8 +22,7 @@ sys.path[0] = '/opt/xensource/sm/'
@@ -349,7 +349,7 @@ index 30230adb..7e34ce65 100755
 +        'removeHost': remove_host
      })
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 2d5c63ed..6c0d5aa2 100755
+index 2d5c63e..6c0d5aa 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -402,6 +402,15 @@ class LinstorVolumeManager(object):

@@ -1,7 +1,7 @@
 From 628668575b779ebb479e4621170b78ae2636b928 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 17 Nov 2022 15:43:25 +0100
-Subject: [PATCH 092/177] fix(cleanup.py): call repair on another host when
+Subject: [PATCH 092/178] fix(cleanup.py): call repair on another host when
  EROFS is returned (DRBD)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 18 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 73293632..f6c4346b 100755
+index 7329363..f6c4346 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -726,6 +726,12 @@ class VDI(object):

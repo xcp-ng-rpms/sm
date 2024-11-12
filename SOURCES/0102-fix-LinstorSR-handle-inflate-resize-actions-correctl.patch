@@ -1,7 +1,7 @@
 From 574565e1b754b653ab88a8ad6d897a5725462fb4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Jan 2023 17:58:51 +0100
-Subject: [PATCH 102/177] fix(LinstorSR): handle inflate + resize actions
+Subject: [PATCH 102/178] fix(LinstorSR): handle inflate + resize actions
  correctly
 
 - Ensure LINSTOR set the expected new volume size when inflate is executed,
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 35 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index f336534e..72ec9de7 100755
+index f336534..72ec9de 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -234,7 +234,7 @@ def inflate(journaler, linstor, vdi_uuid, vdi_path, new_size, old_size):

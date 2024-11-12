@@ -1,7 +1,7 @@
 From 3bda00e34c79c8448b61d3f02c09ae7d910eb9ce Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 25 Aug 2022 10:54:56 +0200
-Subject: [PATCH 073/177] fix(linstorvhdutil): fix coalesce with VM running
+Subject: [PATCH 073/178] fix(linstorvhdutil): fix coalesce with VM running
  under specific scenario:
 
 When a VM is running, we can't coalesce without this patch with a long chain
@@ -21,7 +21,7 @@ Impacted vhd-util functions: coalesce, getParent, repair.
  5 files changed, 251 insertions(+), 94 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 00554d73..47ac3c85 100755
+index 00554d7..47ac3c8 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -163,7 +163,9 @@ def attach_thin(session, journaler, linstor, sr_uuid, vdi_uuid):
@@ -59,7 +59,7 @@ index 00554d73..47ac3c85 100755
              # 4.c. Update CBT status of disks either just added
              # or already in XAPI.
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 0a586a67..73293632 100755
+index 0a586a6..7329363 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -840,12 +840,14 @@ class VDI(object):
@@ -110,7 +110,7 @@ index 0a586a67..73293632 100755
          HIDDEN_TAG = 'hidden'
  
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 4d0ba299..5485b900 100755
+index 4d0ba29..5485b90 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -416,6 +416,37 @@ def get_block_bitmap(session, args):
@@ -165,7 +165,7 @@ index 4d0ba299..5485b900 100755
          'hasControllerRunning': has_controller_running,
          'addHost': add_host,
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index d6a21c26..4d031e12 100644
+index d6a21c2..4d031e1 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -25,39 +25,30 @@ import xs_errors
@@ -534,7 +534,7 @@ index d6a21c26..4d031e12 100644
 +            )
 +        return util.retry(remote_call, 5, 2)
 diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
-index 0a8fe918..d75edb11 100755
+index 0a8fe91..d75edb1 100755
 --- a/drivers/vhdutil.py
 +++ b/drivers/vhdutil.py
 @@ -97,9 +97,8 @@ def calcOverheadFull(virtual_size):

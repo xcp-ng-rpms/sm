@@ -1,7 +1,7 @@
 From 8ae786437072d4328825c97b0786d7caa1f4ca35 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 20 Oct 2021 14:33:04 +0200
-Subject: [PATCH 045/177] feat(LinstorVolumeManager): add a fallback to find
+Subject: [PATCH 045/178] feat(LinstorVolumeManager): add a fallback to find
  controller uri (when len(hosts) >= 4)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 40 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index f12747f1..afc4bfe5 100755
+index f12747f..afc4bfe 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -364,6 +364,13 @@ def lsof_resource(session, args):
@@ -37,7 +37,7 @@ index f12747f1..afc4bfe5 100755
 +        'hasControllerRunning': has_controller_running
      })
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 553e2f50..821ef420 100755
+index 553e2f5..821ef42 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -16,6 +16,7 @@

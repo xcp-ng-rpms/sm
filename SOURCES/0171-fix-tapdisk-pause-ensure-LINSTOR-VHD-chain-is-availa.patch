@@ -1,7 +1,7 @@
 From 66ec66a863f3d5c8c95e5310dd2e9c77335faab5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 24 Apr 2024 17:29:26 +0200
-Subject: [PATCH 171/177] fix(tapdisk-pause): ensure LINSTOR VHD chain is
+Subject: [PATCH 171/178] fix(tapdisk-pause): ensure LINSTOR VHD chain is
  available
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -12,7 +12,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 44 insertions(+), 35 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 3bd31e9e..c5ed7c58 100755
+index 3bd31e9..c5ed7c5 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1830,7 +1830,7 @@ class LinstorVDI(VDI.VDI):
@@ -72,7 +72,7 @@ index 3bd31e9e..c5ed7c58 100755
  
  
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 23d8b6a0..17b7790e 100644
+index 23d8b6a..17b7790 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -21,6 +21,7 @@ import distutils.util
@@ -128,7 +128,7 @@ index 23d8b6a0..17b7790e 100644
      # Getters: read locally and try on another host in case of failure.
      # --------------------------------------------------------------------------
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index e0bca7be..c316cdfa 100755
+index e0bca7b..c316cdf 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
 @@ -30,6 +30,7 @@ import vhdutil

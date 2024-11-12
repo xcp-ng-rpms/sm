@@ -1,7 +1,7 @@
 From 392a7fc2cefde386c048c2daf1250d3b6fc70584 Mon Sep 17 00:00:00 2001
 From: Wescoeur <ronan.abhamon@vates.fr>
 Date: Wed, 24 Feb 2021 11:17:23 +0100
-Subject: [PATCH 034/177] feat(LinstorSR): ensure heartbeat and redo_log VDIs
+Subject: [PATCH 034/178] feat(LinstorSR): ensure heartbeat and redo_log VDIs
  are not diskless
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 86 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 9650d712..d943d49e 100755
+index 9650d71..d943d49 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1463,7 +1463,7 @@ class LinstorVDI(VDI.VDI):
@@ -24,7 +24,7 @@ index 9650d712..d943d49e 100755
              volume_info = self._linstor.get_volume_info(self.uuid)
  
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index a383e327..d8d64b4a 100755
+index a383e32..d8d64b4 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -468,7 +468,8 @@ class LinstorVolumeManager(object):

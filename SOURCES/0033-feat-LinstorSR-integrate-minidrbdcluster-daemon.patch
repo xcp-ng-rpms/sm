@@ -1,7 +1,7 @@
 From 2390152b1ccf081874356ded5ee9ae5bad0f00b6 Mon Sep 17 00:00:00 2001
 From: Wescoeur <ronan.abhamon@vates.fr>
 Date: Wed, 20 Jan 2021 18:04:26 +0100
-Subject: [PATCH 033/177] feat(LinstorSR): integrate minidrbdcluster daemon
+Subject: [PATCH 033/178] feat(LinstorSR): integrate minidrbdcluster daemon
 
 Now, we can:
 - Start a controller on any node
@@ -33,7 +33,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100644 systemd/minidrbdcluster.service
 
 diff --git a/Makefile b/Makefile
-index 284b9a39..43dd5692 100755
+index 284b9a3..43dd569 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -92,6 +92,7 @@ PLUGIN_SCRIPT_DEST := /etc/xapi.d/plugins/
@@ -98,7 +98,7 @@ index 284b9a39..43dd5692 100755
  .PHONY: clean
  clean:
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 2df2d681..9650d712 100755
+index 2df2d68..9650d71 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -19,8 +19,11 @@ from constants import CBTLOG_TAG
@@ -504,7 +504,7 @@ index 2df2d681..9650d712 100755
          # Reload size attrs after inflate or deflate!
          self._load_this()
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 895f36e8..9e3a5b07 100755
+index 895f36e..9e3a5b0 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -52,8 +52,10 @@ from srmetadata import LVMMetadataHandler, VDI_TYPE_TAG
@@ -545,7 +545,7 @@ index 895f36e8..9e3a5b07 100755
              repair=True,
              logger=util.SMlog
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index e7e58fd8..f82b73f2 100755
+index e7e58fd..f82b73f 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -22,7 +22,7 @@ import XenAPIPlugin
@@ -745,7 +745,7 @@ index e7e58fd8..f82b73f2 100755
          'getVHDInfo': get_vhd_info,
          'hasParent': has_parent,
 diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
-index 74953305..285012ca 100755
+index 7495330..285012c 100755
 --- a/drivers/linstorjournaler.py
 +++ b/drivers/linstorjournaler.py
 @@ -16,7 +16,7 @@
@@ -811,7 +811,7 @@ index 74953305..285012ca 100755
      def _get_key(type, identifier):
          return '{}/{}'.format(type, identifier)
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index a6f67d8d..a383e327 100755
+index a6f67d8..a383e32 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -16,15 +16,30 @@
@@ -1712,7 +1712,7 @@ index a6f67d8d..a383e327 100755
 +                    .format(volume_path, mountpoint, e)
 +                )
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index ed6abede..e0bca7be 100755
+index ed6abed..e0bca7b 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
 @@ -30,7 +30,7 @@ import vhdutil
@@ -1745,7 +1745,7 @@ index ed6abede..e0bca7be 100755
                  logger=util.SMlog
              ).get_device_path(self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 54fda469..7151f368 100755
+index 54fda46..7151f36 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -659,31 +659,10 @@ def get_master_ref(session):
@@ -1782,7 +1782,7 @@ index 54fda469..7151f368 100755
      filename = '/etc/xensource-inventory'
 diff --git a/etc/minidrbdcluster.ini b/etc/minidrbdcluster.ini
 new file mode 100644
-index 00000000..0126e862
+index 0000000..0126e86
 --- /dev/null
 +++ b/etc/minidrbdcluster.ini
 @@ -0,0 +1,14 @@
@@ -1802,7 +1802,7 @@ index 00000000..0126e862
 +systemd-units=
 diff --git a/etc/systemd/system/linstor-satellite.service.d/override.conf b/etc/systemd/system/linstor-satellite.service.d/override.conf
 new file mode 100644
-index 00000000..b1686b4f
+index 0000000..b1686b4
 --- /dev/null
 +++ b/etc/systemd/system/linstor-satellite.service.d/override.conf
 @@ -0,0 +1,5 @@
@@ -1813,7 +1813,7 @@ index 00000000..b1686b4f
 +After=drbd.service
 diff --git a/etc/systemd/system/var-lib-linstor.mount b/etc/systemd/system/var-lib-linstor.mount
 new file mode 100644
-index 00000000..a05a7f74
+index 0000000..a05a7f7
 --- /dev/null
 +++ b/etc/systemd/system/var-lib-linstor.mount
 @@ -0,0 +1,6 @@
@@ -1824,7 +1824,7 @@ index 00000000..a05a7f74
 +What=/dev/drbd/by-res/xcp-persistent-database/0
 +Where=/var/lib/linstor
 diff --git a/linstor/linstor-monitord.c b/linstor/linstor-monitord.c
-index a1592fda..47740598 100644
+index a1592fd..4774059 100644
 --- a/linstor/linstor-monitord.c
 +++ b/linstor/linstor-monitord.c
 @@ -287,18 +287,6 @@ static inline int addInotifyWatch (int inotifyFd, const char *filepath, uint32_t
@@ -1865,7 +1865,7 @@ index a1592fda..47740598 100644
        // Maybe the file doesn't exist. Waiting its creation...
 diff --git a/scripts/minidrbdcluster b/scripts/minidrbdcluster
 new file mode 100755
-index 00000000..a04b6c1c
+index 0000000..a04b6c1
 --- /dev/null
 +++ b/scripts/minidrbdcluster
 @@ -0,0 +1,171 @@
@@ -2042,7 +2042,7 @@ index 00000000..a04b6c1c
 +    main()
 diff --git a/systemd/minidrbdcluster.service b/systemd/minidrbdcluster.service
 new file mode 100644
-index 00000000..3de6ac4f
+index 0000000..3de6ac4
 --- /dev/null
 +++ b/systemd/minidrbdcluster.service
 @@ -0,0 +1,18 @@

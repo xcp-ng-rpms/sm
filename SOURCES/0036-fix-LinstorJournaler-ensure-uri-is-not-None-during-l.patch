@@ -1,7 +1,7 @@
 From dba2e9c951a47c4193a779a934c5a2d415675b10 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 8 Mar 2021 13:25:28 +0100
-Subject: [PATCH 036/177] fix(LinstorJournaler): ensure uri is not None during
+Subject: [PATCH 036/178] fix(LinstorJournaler): ensure uri is not None during
  linstor.KV creation
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 10 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
-index 285012ca..3993f601 100755
+index 285012c..3993f60 100755
 --- a/drivers/linstorjournaler.py
 +++ b/drivers/linstorjournaler.py
 @@ -16,7 +16,8 @@

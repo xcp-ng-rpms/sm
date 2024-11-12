@@ -1,7 +1,7 @@
 From 1d84de36cf45bbaba8fa0ea993bba09e1c18616d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 10 Mar 2023 18:11:10 +0100
-Subject: [PATCH 113/177] fix(linstorvolumemanager): remove usage of realpath
+Subject: [PATCH 113/178] fix(linstorvolumemanager): remove usage of realpath
 
 Because a diskless DRBD path not always exist, get_volume_name_from_device_path can fail.
 It's easy to reproduce using > 4 hosts and with a call to linstorvhdutil.get_vhd_info:
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 6 insertions(+), 17 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 5ab83c41..8befb33f 100755
+index 5ab83c4..8befb33 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -914,28 +914,17 @@ class LinstorVolumeManager(object):

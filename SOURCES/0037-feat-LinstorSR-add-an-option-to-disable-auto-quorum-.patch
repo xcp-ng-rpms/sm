@@ -1,7 +1,7 @@
 From 70bb114f08a6957946ab653bef674d5cbe870998 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 22 Mar 2021 17:32:26 +0100
-Subject: [PATCH 037/177] feat(LinstorSR): add an option to disable auto-quorum
+Subject: [PATCH 037/178] feat(LinstorSR): add an option to disable auto-quorum
  on volume DB + fix doc
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 29 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 092f5e8e..9f2be58c 100755
+index 092f5e8..9f2be58 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -31,6 +31,7 @@ except ImportError:
@@ -52,7 +52,7 @@ index 092f5e8e..9f2be58c 100755
              )
              self._vhdutil = LinstorVhdUtil(self.session, self._linstor)
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index d8d64b4a..27c8df5d 100755
+index d8d64b4..27c8df5 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1261,15 +1261,17 @@ class LinstorVolumeManager(object):

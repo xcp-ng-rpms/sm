@@ -1,7 +1,7 @@
 From 84e236ff9a967f5df25535213f89e377d51d4b5f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 24 Apr 2024 15:10:49 +0200
-Subject: [PATCH 170/177] fix(LinstorSR): fix bad exception reference during
+Subject: [PATCH 170/178] fix(LinstorSR): fix bad exception reference during
  snapshot
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 3421f79f..3bd31e9e 100755
+index 3421f79..3bd31e9 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -2500,17 +2500,17 @@ class LinstorVDI(VDI.VDI):

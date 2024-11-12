@@ -1,7 +1,7 @@
 From 9d45a0e68acbcaec82a36c74f91dfa176b4fc7bf Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:37:07 +0200
-Subject: [PATCH 014/177] Remove SR_CACHING capability for many SR types (#24)
+Subject: [PATCH 014/178] Remove SR_CACHING capability for many SR types (#24)
 
 SR_CACHING offers the capacity to use IntelliCache, but this
 feature is only available using NFS SR.
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index d7974907..09c928be 100644
+index d797490..09c928b 100644
 --- a/drivers/CephFSSR.py
 +++ b/drivers/CephFSSR.py
 @@ -38,7 +38,7 @@ import vhdutil
@@ -30,7 +30,7 @@ index d7974907..09c928be 100644
                  "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
                  "VDI_GENERATE_CONFIG",
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 323718d9..61a7d409 100644
+index 323718d..61a7d40 100644
 --- a/drivers/GlusterFSSR.py
 +++ b/drivers/GlusterFSSR.py
 @@ -35,7 +35,7 @@ import vhdutil
@@ -43,7 +43,7 @@ index 323718d9..61a7d409 100644
                  "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
                  "VDI_GENERATE_CONFIG",
 diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index ab72f4e9..212f1ad2 100755
+index ab72f4e..212f1ad 100755
 --- a/drivers/MooseFSSR.py
 +++ b/drivers/MooseFSSR.py
 @@ -39,7 +39,7 @@ import vhdutil

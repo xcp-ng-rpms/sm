@@ -1,7 +1,7 @@
 From fb05d2668ccc6f24109d5c30611fbfc167e34340 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 23 Nov 2022 15:26:51 +0100
-Subject: [PATCH 095/177] fix(linstorvhdutil): due to bad refactoring, check
+Subject: [PATCH 095/178] fix(linstorvhdutil): due to bad refactoring, check
  call was broken
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 2687cadf..a883ca4d 100644
+index 2687cad..a883ca4 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -124,11 +124,11 @@ class LinstorVhdUtil:

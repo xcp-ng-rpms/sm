@@ -1,7 +1,7 @@
 From 5f8a99eff7f2f137b7afac5738d45c1c56a8846b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 15 Sep 2022 11:49:34 +0200
-Subject: [PATCH 079/177] feat(minidrbdcluster): stop resource services at
+Subject: [PATCH 079/178] feat(minidrbdcluster): stop resource services at
  startup
 
 - Ensure all services are stopped when minidrbcluster is started.
@@ -14,7 +14,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 32 insertions(+), 18 deletions(-)
 
 diff --git a/scripts/minidrbdcluster b/scripts/minidrbdcluster
-index 4cdc59e6..eae7cbfe 100755
+index 4cdc59e..eae7cbf 100755
 --- a/scripts/minidrbdcluster
 +++ b/scripts/minidrbdcluster
 @@ -83,8 +83,7 @@ def show_status(services, status):

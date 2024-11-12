@@ -1,7 +1,7 @@
 From fdd9b4d9038c31c1c54d31b5ea135f6cab85ac24 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 12 Feb 2024 20:54:06 +0100
-Subject: [PATCH 164/177] fix(LinstorSR): activate VG if attach from config is
+Subject: [PATCH 164/178] fix(LinstorSR): activate VG if attach from config is
  asked
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index de10f423..b6b15298 100755
+index de10f42..b6b1529 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -382,7 +382,7 @@ class LinstorSR(SR.SR):

@@ -1,7 +1,7 @@
 From 5232782abcfd52a3ff75a8f83906af61c5a0a77d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 14 Sep 2022 10:17:18 +0200
-Subject: [PATCH 077/177] fix(LinstorSR): disable VHD key hash usage to limit
+Subject: [PATCH 077/178] fix(LinstorSR): disable VHD key hash usage to limit
  exec time
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 47ac3c85..374d6cb9 100755
+index 47ac3c8..374d6cb 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -72,6 +72,9 @@ USE_HTTP_NBD_SERVERS = True

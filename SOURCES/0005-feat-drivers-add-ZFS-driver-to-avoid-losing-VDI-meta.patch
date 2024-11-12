@@ -1,7 +1,7 @@
 From 3a948fe3ff75146c3a9c960768ca4791c109a6b6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
-Subject: [PATCH 005/177] feat(drivers): add ZFS driver to avoid losing VDI
+Subject: [PATCH 005/178] feat(drivers): add ZFS driver to avoid losing VDI
  metadata (xcp-ng/xcp#401)
 
 ---
@@ -13,7 +13,7 @@ Subject: [PATCH 005/177] feat(drivers): add ZFS driver to avoid losing VDI
  create mode 100644 drivers/ZFSSR.py
 
 diff --git a/Makefile b/Makefile
-index 0a10470a..f93b7be5 100755
+index 0a10470..f93b7be 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -20,6 +20,7 @@ SM_DRIVERS += LVHDoFCoE
@@ -25,7 +25,7 @@ index 0a10470a..f93b7be5 100755
  SM_LIBS := SR
  SM_LIBS += SRCommand
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 7ab7bc1c..535c9dc3 100755
+index 7ab7bc1..535c9dc 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
 @@ -900,5 +900,15 @@
@@ -46,7 +46,7 @@ index 7ab7bc1c..535c9dc3 100755
  </SM-errorcodes>
 diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
 new file mode 100644
-index 00000000..1b2f398f
+index 0000000..1b2f398
 --- /dev/null
 +++ b/drivers/ZFSSR.py
 @@ -0,0 +1,137 @@
@@ -188,7 +188,7 @@ index 00000000..1b2f398f
 +else:
 +    SR.registerSR(ZFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index aff51aed..feb7c187 100755
+index aff51ae..feb7c18 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2767,7 +2767,7 @@ def normalizeType(type):

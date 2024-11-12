@@ -1,7 +1,7 @@
 From e615d0cc2f5dad974bec0de819fa3bf0a4b5d07a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 24 Oct 2023 11:57:40 +0200
-Subject: [PATCH 140/177] fix(LinstorSR): don't try to repair persistent
+Subject: [PATCH 140/178] fix(LinstorSR): don't try to repair persistent
  volumes in GC
 
 Use constants to simplify maintenance.
@@ -12,7 +12,7 @@ Use constants to simplify maintenance.
  3 files changed, 43 insertions(+), 36 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index d0fc4219..d0ce079a 100755
+index d0fc421..d0ce079 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -23,6 +23,7 @@ try:
@@ -94,7 +94,7 @@ index d0fc4219..d0ce079a 100755
              self._start_persistent_http_server(volume_name)
  
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 4e4620f3..1f898225 100755
+index 4e4620f..1f89822 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -55,6 +55,7 @@ try:
@@ -178,7 +178,7 @@ index 4e4620f3..1f898225 100755
          return all_vdi_info
  
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 0f6fbcf3..47ca4e87 100755
+index 0f6fbcf..47ca4e8 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -30,9 +30,11 @@ import time

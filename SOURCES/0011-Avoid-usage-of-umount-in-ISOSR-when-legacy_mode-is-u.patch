@@ -1,7 +1,7 @@
 From dc7619735961b1fc0b7075cdc02ba375b76aa011 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Dec 2021 09:28:37 +0100
-Subject: [PATCH 011/177] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
+Subject: [PATCH 011/178] Avoid usage of `umount` in `ISOSR` when `legacy_mode`
  is used
 
 `umount` should not be called when `legacy_mode` is enabled, otherwise a mounted dir
@@ -15,7 +15,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 62 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
-index 1094a716..0206ef95 100755
+index 1094a71..0206ef9 100755
 --- a/drivers/ISOSR.py
 +++ b/drivers/ISOSR.py
 @@ -458,10 +458,9 @@ class ISOSR(SR.SR):
@@ -33,7 +33,7 @@ index 1094a716..0206ef95 100755
              util.pread(["umount", self.mountpoint]);
          except util.CommandException, inst:
 diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
-index 7655f14a..03c88511 100644
+index 7655f14..03c8851 100644
 --- a/tests/test_ISOSR.py
 +++ b/tests/test_ISOSR.py
 @@ -20,6 +20,65 @@ class FakeISOSR(ISOSR.ISOSR):

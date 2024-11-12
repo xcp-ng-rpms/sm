@@ -1,7 +1,7 @@
 From c83b1aeacc1db0ec6110accaa128eed05eb36294 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 18 Jan 2024 10:24:01 +0100
-Subject: [PATCH 155/177] fix(LinstorSR): explicit error message when a group
+Subject: [PATCH 155/178] fix(LinstorSR): explicit error message when a group
  is not unique during SR creation
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index a73ae5a2..fed1de2b 100755
+index a73ae5a..fed1de2 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -569,7 +569,9 @@ class LinstorSR(SR.SR):

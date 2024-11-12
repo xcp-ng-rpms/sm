@@ -1,0 +1,41 @@
+From 3c55fb72e1fe0d8191e43776fed8de23e4f28cbd Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 9 Oct 2024 16:20:46 +0200
+Subject: [PATCH 178/178] linstor: Fix to add sync to DD
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/util.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/util.py b/drivers/util.py
+index fe8e13d..0a60f83 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -575,7 +575,7 @@ def zeroOut(path, fromByte, bytes):
+             bytesBefore = bytes
+         bytes -= bytesBefore
+         cmd = [CMD_DD, "if=/dev/zero", "of=%s" % path, "bs=1", \
+-                "seek=%s" % fromByte, "count=%s" % bytesBefore]
++                "seek=%s" % fromByte, "count=%s" % bytesBefore, "conv=fsync"]
+         try:
+             text = pread2(cmd)
+         except CommandException:
+@@ -586,7 +586,7 @@ def zeroOut(path, fromByte, bytes):
+     fromByte = (fromBlock + blocks) * blockSize
+     if blocks:
+         cmd = [CMD_DD, "if=/dev/zero", "of=%s" % path, "bs=%s" % blockSize, \
+-                "seek=%s" % fromBlock, "count=%s" % blocks]
++                "seek=%s" % fromBlock, "count=%s" % blocks, "conv=fsync"]
+         try:
+             text = pread2(cmd)
+         except CommandException:
+@@ -594,7 +594,7 @@ def zeroOut(path, fromByte, bytes):
+ 
+     if bytes:
+         cmd = [CMD_DD, "if=/dev/zero", "of=%s" % path, "bs=1", \
+-                "seek=%s" % fromByte, "count=%s" % bytes]
++                "seek=%s" % fromByte, "count=%s" % bytes, "conv=fsync"]
+         try:
+             text = pread2(cmd)
+         except CommandException:

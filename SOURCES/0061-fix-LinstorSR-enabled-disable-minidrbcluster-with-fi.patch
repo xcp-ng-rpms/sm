@@ -1,7 +1,7 @@
 From 4a1220b9552323f2e79f9512ed030ae45ab4c800 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 18 May 2022 17:28:33 +0200
-Subject: [PATCH 061/177] fix(LinstorSR): enabled/disable minidrbcluster with
+Subject: [PATCH 061/178] fix(LinstorSR): enabled/disable minidrbcluster with
  fixed order
 
 Ensure we disable minidrbdcluster during SR destruction on all hosts
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 31 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 1855e3d9..57280e36 100755
+index 1855e3d..57280e3 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -751,7 +751,9 @@ class LinstorSR(SR.SR):

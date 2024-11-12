@@ -1,7 +1,7 @@
 From 511280dc71a3766cead7f37138cc3b8f843a187b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 3 Feb 2023 16:38:49 +0100
-Subject: [PATCH 104/177] feat(LinstorSR): sync with last http-nbd-transfer
+Subject: [PATCH 104/178] feat(LinstorSR): sync with last http-nbd-transfer
  version
 
 - Increase auto promote timeout of heartbeat VDI to reduce CPU usage
@@ -15,7 +15,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 40 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 72ec9de7..31f45055 100755
+index 72ec9de..31f4505 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1761,6 +1761,13 @@ class LinstorVDI(VDI.VDI):
@@ -88,7 +88,7 @@ index 72ec9de7..31f45055 100755
                          return match.group(1)
              # Use a timeout to never block the smapi if there is a problem.
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 81cce802..e0f39e71 100755
+index 81cce80..e0f39e7 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -851,6 +851,25 @@ class LinstorVolumeManager(object):

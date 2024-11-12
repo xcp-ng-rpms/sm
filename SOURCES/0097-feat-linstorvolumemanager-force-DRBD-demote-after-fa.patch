@@ -1,7 +1,7 @@
 From be33740647adac8be43e998a0ce620524f43db24 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Dec 2022 18:40:11 +0100
-Subject: [PATCH 097/177] feat(linstorvolumemanager): force DRBD demote after
+Subject: [PATCH 097/178] feat(linstorvolumemanager): force DRBD demote after
  failed volume creation/clone
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 91 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 7abc1054..5c4c5c90 100755
+index 7abc105..5c4c5c9 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -804,6 +804,18 @@ def create_sr(session, args):
@@ -42,7 +42,7 @@ index 7abc1054..5c4c5c90 100755
          'destroyDrbdVolumes': destroy_drbd_volumes,
          'getDrbdOpeners': get_drbd_openers,
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 8c253d49..2e2feb23 100755
+index 8c253d4..2e2feb2 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -242,6 +242,29 @@ def get_controller_node_name():

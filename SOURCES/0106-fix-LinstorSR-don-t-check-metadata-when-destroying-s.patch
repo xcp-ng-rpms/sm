@@ -1,7 +1,7 @@
 From a00ccf6b47da3012b77dcba6cc22e21124434ec9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 13 Feb 2023 17:27:43 +0100
-Subject: [PATCH 106/177] fix(LinstorSR): don't check metadata when destroying
+Subject: [PATCH 106/178] fix(LinstorSR): don't check metadata when destroying
  snap in undo_clone
 
 Remove useless check in the snap rollback helper when there is an error
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 4 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 41ece825..94cf1b77 100755
+index 41ece82..94cf1b7 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1496,10 +1496,6 @@ class LinstorSR(SR.SR):

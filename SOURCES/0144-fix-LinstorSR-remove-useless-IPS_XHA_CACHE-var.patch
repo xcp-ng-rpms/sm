@@ -1,7 +1,7 @@
 From 79d4085610ef1ca85107eccd5a6e79f91d460027 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Nov 2023 10:52:27 +0100
-Subject: [PATCH 144/177] fix(LinstorSR): remove useless IPS_XHA_CACHE var
+Subject: [PATCH 144/178] fix(LinstorSR): remove useless IPS_XHA_CACHE var
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 6 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 6802f494..c570925f 100755
+index 6802f49..c570925 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -210,13 +210,7 @@ def detach_thin(session, linstor, sr_uuid, vdi_uuid):

@@ -1,7 +1,7 @@
 From 04722ec04e536210e0504bb784e649639d6af306 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 15 Feb 2023 11:34:54 +0100
-Subject: [PATCH 107/177] fix(linstorvhdutil): handle correctly generic
+Subject: [PATCH 107/178] fix(linstorvhdutil): handle correctly generic
  exceptions in _raise_openers_exception
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 11 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 63d59ab5..05225e88 100644
+index 63d59ab..05225e8 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -289,25 +289,26 @@ class LinstorVhdUtil:

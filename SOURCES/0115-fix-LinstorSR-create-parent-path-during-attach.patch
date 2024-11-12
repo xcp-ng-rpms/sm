@@ -1,7 +1,7 @@
 From 03a0c875d8ee453743237f36e9dcd9715f4a07d2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 17 Mar 2023 12:06:08 +0100
-Subject: [PATCH 115/177] fix(LinstorSR): create parent path during attach
+Subject: [PATCH 115/178] fix(LinstorSR): create parent path during attach
 
 It's necessary to force DRBD diskless path creation when
 a VDI is attached. Otherwise the attach can fail on pool with
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 6 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index c42f07d6..48feec7a 100755
+index c42f07d..48feec7 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1883,13 +1883,14 @@ class LinstorVDI(VDI.VDI):

@@ -1,7 +1,7 @@
 From 297296c0ec9c5df659267e1432e4de0ac6af5618 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 15 Apr 2024 11:26:00 +0200
-Subject: [PATCH 167/177] fix(linstorvolumemanager): blocks deletion of default
+Subject: [PATCH 167/178] fix(linstorvolumemanager): blocks deletion of default
  network interface
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 6 insertions(+)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 46c3283d..02059d81 100755
+index 46c3283..02059d8 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1491,6 +1491,12 @@ class LinstorVolumeManager(object):

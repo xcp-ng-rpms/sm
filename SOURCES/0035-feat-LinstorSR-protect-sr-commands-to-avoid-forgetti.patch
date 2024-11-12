@@ -1,7 +1,7 @@
 From ad4076e7333d047a54a0fb6055d9b00d9030ae28 Mon Sep 17 00:00:00 2001
 From: Wescoeur <ronan.abhamon@vates.fr>
 Date: Thu, 25 Feb 2021 17:52:57 +0100
-Subject: [PATCH 035/177] feat(LinstorSR): protect sr commands to avoid
+Subject: [PATCH 035/178] feat(LinstorSR): protect sr commands to avoid
  forgetting LINSTOR volumes when master satellite is down
 
 Steps to reproduce:
@@ -52,7 +52,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 37 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index d943d49e..092f5e8e 100755
+index d943d49..092f5e8 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -256,6 +256,11 @@ class LinstorSR(SR.SR):

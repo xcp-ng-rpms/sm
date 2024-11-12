@@ -1,7 +1,7 @@
 From 65d5ff02da3d1c084573924a82735da84f1ec5c4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 4 Oct 2022 18:48:09 +0200
-Subject: [PATCH 082/177] fix(LinstorSR): start correctly HA servers (HTTP/NBD)
+Subject: [PATCH 082/178] fix(LinstorSR): start correctly HA servers (HTTP/NBD)
  after reboot
 
 Use a timeout call after a reboot to get a XAPI session because
@@ -15,7 +15,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index d32771fe..ae253858 100755
+index d32771f..ae25385 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -2513,7 +2513,10 @@ class LinstorVDI(VDI.VDI):

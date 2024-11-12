@@ -1,7 +1,7 @@
 From 995c6b7cf9ecb9baee34e05586320ccb4339651b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 11 Oct 2023 12:39:56 +0200
-Subject: [PATCH 137/177] fix(LinstorSR): robustify _load_vdi_info in
+Subject: [PATCH 137/178] fix(LinstorSR): robustify _load_vdi_info in
  cleanup.py
 
 After a failed snapshot like that:
@@ -24,7 +24,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 42 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 5353e9aa..376da3ec 100755
+index 5353e9a..376da3e 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2990,16 +2990,31 @@ class LinstorSR(SR):

@@ -1,7 +1,7 @@
 From eea13526d4e202e395d1a4289f837b0171a73b8e Mon Sep 17 00:00:00 2001
 From: Benjamin Reis <benjamin.reis@vates.tech>
 Date: Mon, 18 Dec 2023 10:35:46 +0100
-Subject: [PATCH 021/177] Backport probe for NFS4 when rpcinfo does not include
+Subject: [PATCH 021/178] Backport probe for NFS4 when rpcinfo does not include
  it
 
 See: https://github.com/xapi-project/sm/pull/655
@@ -13,7 +13,7 @@ Signed-off-by: Benjamin Reis <benjamin.reis@vates.tech>
  2 files changed, 60 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/nfs.py b/drivers/nfs.py
-index ddb869e7..32b9fc58 100644
+index ddb869e..32b9fc5 100644
 --- a/drivers/nfs.py
 +++ b/drivers/nfs.py
 @@ -83,10 +83,14 @@ def check_server_service(server, transport):
@@ -82,7 +82,7 @@ index ddb869e7..32b9fc58 100644
  def get_nfs_timeout(other_config):
      nfs_timeout = 200
 diff --git a/tests/test_nfs.py b/tests/test_nfs.py
-index 9ea807f6..3874d8e7 100644
+index 9ea807f..3874d8e 100644
 --- a/tests/test_nfs.py
 +++ b/tests/test_nfs.py
 @@ -9,12 +9,14 @@ class Test_nfs(unittest.TestCase):

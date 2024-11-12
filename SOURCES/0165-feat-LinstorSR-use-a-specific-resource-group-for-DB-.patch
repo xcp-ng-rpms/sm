@@ -1,7 +1,7 @@
 From 51699827c68a7674b379b44bcc9fa51c95c9b9a2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 19 Mar 2024 23:09:54 +0100
-Subject: [PATCH 165/177] feat(LinstorSR): use a specific resource group for DB
+Subject: [PATCH 165/178] feat(LinstorSR): use a specific resource group for DB
  and HA
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 182 insertions(+), 78 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index b6b15298..3421f79f 100755
+index b6b1529..3421f79 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1662,8 +1662,11 @@ class LinstorVDI(VDI.VDI):
@@ -29,7 +29,7 @@ index b6b15298..3421f79f 100755
              volume_info = self._linstor.get_volume_info(self.uuid)
  
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 79ac84a4..4118a28f 100755
+index 79ac84a..4118a28 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -273,7 +273,8 @@ class LinstorVolumeManagerError(Exception):

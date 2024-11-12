@@ -1,7 +1,7 @@
 From 17e39c0d21e3e0385d51d27c3192f8a28022bb3c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 22 Jul 2022 10:26:20 +0200
-Subject: [PATCH 068/177] feat(linstorvhdutil): trace DRBD openers in case of
+Subject: [PATCH 068/178] feat(linstorvhdutil): trace DRBD openers in case of
  EROFS errors
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 47 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 81789e7a..9022499f 100755
+index 81789e7..9022499 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -868,6 +868,13 @@ if __name__ == '__main__':
@@ -37,7 +37,7 @@ index 81789e7a..9022499f 100755
          'lsofResource': lsof_resource,
          'hasControllerRunning': has_controller_running,
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index f3d98705..d6a21c26 100644
+index f3d9870..d6a21c2 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -26,6 +26,36 @@ import xs_errors

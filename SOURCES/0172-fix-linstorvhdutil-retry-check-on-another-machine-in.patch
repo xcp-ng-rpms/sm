@@ -1,7 +1,7 @@
 From 5a48b3ddc8683c3f6217c1bcce17d4f064efaee9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 6 May 2024 18:15:00 +0200
-Subject: [PATCH 172/177] fix(linstorvhdutil): retry check on another machine
+Subject: [PATCH 172/178] fix(linstorvhdutil): retry check on another machine
  in case of failure (#54)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 20 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 94aa4fb9..47cbd2b7 100755
+index 94aa4fb..47cbd2b 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -29,7 +29,7 @@ import XenAPIPlugin
@@ -34,7 +34,7 @@ index 94aa4fb9..47cbd2b7 100755
          util.SMlog('linstor-manager:check error: {}'.format(e))
          raise
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 17b7790e..fd2bc8be 100644
+index 17b7790..fd2bc8b 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -50,6 +50,16 @@ def call_remote_method(session, host_ref, method, device_path, args):

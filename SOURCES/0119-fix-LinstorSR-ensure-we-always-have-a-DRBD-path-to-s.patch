@@ -1,7 +1,7 @@
 From 05bc50d10da120a065fff476a0a0532058d8192e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 28 Apr 2023 10:43:27 +0200
-Subject: [PATCH 119/177] fix(LinstorSR): ensure we always have a DRBD path to
+Subject: [PATCH 119/178] fix(LinstorSR): ensure we always have a DRBD path to
  snap
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 324033a0..8c0b007d 100755
+index 324033a..8c0b007 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -2392,6 +2392,9 @@ class LinstorVDI(VDI.VDI):

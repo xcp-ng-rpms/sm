@@ -1,7 +1,7 @@
 From d607e5c450a9cbe39ea5826c2a4ec7f63751f805 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 19 Dec 2023 14:49:33 +0100
-Subject: [PATCH 153/177] feat(linstor-manager): add methods to
+Subject: [PATCH 153/178] feat(linstor-manager): add methods to
  modify/destroy/list net interfaces
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 152 insertions(+), 22 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 2469b506..6b45875d 100755
+index 2469b50..6b45875 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -265,6 +265,19 @@ def force_destroy_drbd_volume(minor):
@@ -125,7 +125,7 @@ index 2469b506..6b45875d 100755
          'setNodePreferredInterface': set_node_preferred_interface
      })
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index a41314e5..32d15334 100755
+index a41314e..32d1533 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -872,7 +872,6 @@ class LinstorVolumeManager(object):

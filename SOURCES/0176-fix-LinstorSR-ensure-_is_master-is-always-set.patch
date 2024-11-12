@@ -1,7 +1,7 @@
 From 0cbabd180b8fc5ecaf2ca8ff066f37bd18706b68 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 26 Jul 2024 11:32:20 +0200
-Subject: [PATCH 176/177] fix(LinstorSR): ensure `_is_master` is always set
+Subject: [PATCH 176/178] fix(LinstorSR): ensure `_is_master` is always set
 
 `_is_master` is not always initialized, and more precisely
 in the case of detach where LinstorSR.load method is not called.
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 21 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 21270570..fdcad17e 100755
+index 2127057..fdcad17 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -362,9 +362,6 @@ class LinstorSR(SR.SR):

@@ -1,7 +1,7 @@
 From c888113ede59c03474468767d28df14cb0e0bf73 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 24 Mar 2021 10:06:58 +0100
-Subject: [PATCH 039/177] feat(LinstorSR): add optional ips parameter
+Subject: [PATCH 039/178] feat(LinstorSR): add optional ips parameter
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 52 insertions(+), 18 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 9f2be58c..4b761b56 100755
+index 9f2be58..4b761b5 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -77,6 +77,7 @@ CAPABILITIES = [
@@ -65,7 +65,7 @@ index 9f2be58c..4b761b56 100755
          if len(ips) != len(self._hosts):
              raise xs_errors.XenError(
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 3aaffdf4..5c04d028 100755
+index 3aaffdf..5c04d02 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1313,22 +1313,36 @@ class LinstorVolumeManager(object):

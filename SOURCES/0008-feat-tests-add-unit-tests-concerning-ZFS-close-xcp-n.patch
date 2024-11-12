@@ -1,7 +1,7 @@
 From c756b29ce80da0cd38f88bbaaddf4e1130962af9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 27 Oct 2020 15:04:36 +0100
-Subject: [PATCH 008/177] feat(tests): add unit tests concerning ZFS (close
+Subject: [PATCH 008/178] feat(tests): add unit tests concerning ZFS (close
  xcp-ng/xcp#425)
 
 - Check if "create" doesn't succeed without zfs packages
@@ -13,7 +13,7 @@ Subject: [PATCH 008/177] feat(tests): add unit tests concerning ZFS (close
  create mode 100644 tests/test_ZFSSR.py
 
 diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
-index 1b2f398f..d3752101 100644
+index 1b2f398..d375210 100644
 --- a/drivers/ZFSSR.py
 +++ b/drivers/ZFSSR.py
 @@ -58,6 +58,18 @@ DRIVER_INFO = {
@@ -85,7 +85,7 @@ index 1b2f398f..d3752101 100644
  class ZFSFileVDI(FileSR.FileVDI):
 diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
 new file mode 100644
-index 00000000..6f8040dc
+index 0000000..6f8040d
 --- /dev/null
 +++ b/tests/test_ZFSSR.py
 @@ -0,0 +1,115 @@

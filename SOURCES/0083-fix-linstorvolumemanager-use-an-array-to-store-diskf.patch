@@ -1,7 +1,7 @@
 From 90cd3fd85ce5c73b4727a579acda75721252963a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 5 Oct 2022 10:45:50 +0200
-Subject: [PATCH 083/177] fix(linstorvolumemanager): use an array to store
+Subject: [PATCH 083/178] fix(linstorvolumemanager): use an array to store
  diskful volumes info
 
 Otherwise the `is_diskful` attr only reflects the info of one host
@@ -15,7 +15,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 8 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index ae253858..b8558077 100755
+index ae25385..b855807 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -39,6 +39,7 @@ import os
@@ -37,7 +37,7 @@ index ae253858..b8558077 100755
          drbd_path = None
          if must_get_device_path or self.sr._is_master:
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index efe5d53b..e577f63c 100755
+index efe5d53..e577f63 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -307,19 +307,19 @@ class LinstorVolumeManager(object):

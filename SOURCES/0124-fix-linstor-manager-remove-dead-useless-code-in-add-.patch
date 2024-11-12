@@ -1,7 +1,7 @@
 From 085905977ebf04aea99cc2301aaea15fd1f8ee4f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 20 Jul 2023 10:46:33 +0200
-Subject: [PATCH 124/177] fix(linstor-manager): remove dead/useless code in
+Subject: [PATCH 124/178] fix(linstor-manager): remove dead/useless code in
  add/remove_host helpers
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 15 insertions(+), 113 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 9e96aaca..45201eed 100755
+index 9e96aac..45201ee 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -555,7 +555,7 @@ def has_controller_running(session, args):

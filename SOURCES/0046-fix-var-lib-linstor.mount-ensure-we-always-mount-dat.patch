@@ -1,7 +1,7 @@
 From 7731198de9a684e000a7c70b19dca1cdd330e9c5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 21 Oct 2021 11:13:07 +0200
-Subject: [PATCH 046/177] fix(var-lib-linstor.mount): ensure we always mount
+Subject: [PATCH 046/178] fix(var-lib-linstor.mount): ensure we always mount
  database with RW flags
 
 Sometimes systemd fallback to read only FS if the volume can't be mounted, we must
@@ -19,7 +19,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100644 etc/systemd/system/var-lib-linstor.service
 
 diff --git a/Makefile b/Makefile
-index 43dd5692..2eb6a868 100755
+index 43dd569..2eb6a86 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -182,7 +182,7 @@ install: precheck
@@ -32,7 +32,7 @@ index 43dd5692..2eb6a868 100755
  	install -m 644 etc/minidrbdcluster.ini \
  	  $(SM_STAGING)/$(MINI_DRBD_CLUSTER_CONF_DIR)
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index afc4bfe5..af8d2b9e 100755
+index afc4bfe..af8d2b9 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -187,7 +187,7 @@ def destroy(session, args):
@@ -54,7 +54,7 @@ index afc4bfe5..af8d2b9e 100755
      return str(False)
  
 diff --git a/etc/minidrbdcluster.ini b/etc/minidrbdcluster.ini
-index 0126e862..9e523427 100644
+index 0126e86..9e52342 100644
 --- a/etc/minidrbdcluster.ini
 +++ b/etc/minidrbdcluster.ini
 @@ -5,7 +5,7 @@
@@ -68,7 +68,7 @@ index 0126e862..9e523427 100644
  systemd-units=
 diff --git a/etc/systemd/system/var-lib-linstor.mount b/etc/systemd/system/var-lib-linstor.mount
 deleted file mode 100644
-index a05a7f74..00000000
+index a05a7f7..0000000
 --- a/etc/systemd/system/var-lib-linstor.mount
 +++ /dev/null
 @@ -1,6 +0,0 @@
@@ -80,7 +80,7 @@ index a05a7f74..00000000
 -Where=/var/lib/linstor
 diff --git a/etc/systemd/system/var-lib-linstor.service b/etc/systemd/system/var-lib-linstor.service
 new file mode 100644
-index 00000000..d230d048
+index 0000000..d230d04
 --- /dev/null
 +++ b/etc/systemd/system/var-lib-linstor.service
 @@ -0,0 +1,21 @@

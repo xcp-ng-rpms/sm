@@ -1,7 +1,7 @@
 From 2d862e93882ff9d63aa75c39d671825aeeefeba7 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 25 Apr 2023 10:46:00 +0200
-Subject: [PATCH 117/177] fix(linstorvolumemanager): reduce peer-slots param to
+Subject: [PATCH 117/178] fix(linstorvolumemanager): reduce peer-slots param to
  3
 
 Because we use 3 backing disks at most, it's useless to increase the default linstor limit (8).
@@ -15,7 +15,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 91db3d80..6f20c02c 100755
+index 91db3d8..6f20c02 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -2089,7 +2089,7 @@ class LinstorVolumeManager(object):

@@ -1,7 +1,7 @@
 From 3b63e456318beb1746adab95136d142d1ee93f9e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 16 Feb 2023 14:24:07 +0100
-Subject: [PATCH 108/177] fix(minidrbdcluster): robustify to unmount correctly
+Subject: [PATCH 108/178] fix(minidrbdcluster): robustify to unmount correctly
  LINSTOR DB
 
 There is a small delay during which the database may not be unmounted
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100755 scripts/safe-umount
 
 diff --git a/Makefile b/Makefile
-index 42058c82..72d7be3f 100755
+index 42058c8..72d7be3 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -241,6 +241,7 @@ install: precheck
@@ -29,7 +29,7 @@ index 42058c82..72d7be3f 100755
  	install -m 755 scripts/check-device-sharing $(SM_STAGING)$(LIBEXEC)
  	install -m 755 scripts/usb_change $(SM_STAGING)$(LIBEXEC)
 diff --git a/etc/systemd/system/var-lib-linstor.service b/etc/systemd/system/var-lib-linstor.service
-index d230d048..e9deb904 100644
+index d230d04..e9deb90 100644
 --- a/etc/systemd/system/var-lib-linstor.service
 +++ b/etc/systemd/system/var-lib-linstor.service
 @@ -17,5 +17,5 @@ Description=Mount filesystem for the LINSTOR controller
@@ -41,7 +41,7 @@ index d230d048..e9deb904 100644
  RemainAfterExit=true
 diff --git a/scripts/safe-umount b/scripts/safe-umount
 new file mode 100755
-index 00000000..9c1dcc40
+index 0000000..9c1dcc4
 --- /dev/null
 +++ b/scripts/safe-umount
 @@ -0,0 +1,39 @@

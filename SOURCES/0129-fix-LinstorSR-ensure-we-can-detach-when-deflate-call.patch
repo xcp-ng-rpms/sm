@@ -1,7 +1,7 @@
 From 9a295973c226d411ab4276b5bee8a241dc7c555e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 31 Aug 2023 18:00:27 +0200
-Subject: [PATCH 129/177] fix(LinstorSR): ensure we can detach when deflate
+Subject: [PATCH 129/178] fix(LinstorSR): ensure we can detach when deflate
  call is not possible
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 30 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 17083703..a6ca8840 100755
+index 1708370..a6ca884 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -175,7 +175,7 @@ def attach_thin(session, journaler, linstor, sr_uuid, vdi_uuid):

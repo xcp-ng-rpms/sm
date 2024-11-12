@@ -1,7 +1,7 @@
 From 5273224cab21953acab55e07d2fa6941bfa19bba Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 21 Oct 2021 11:51:32 +0200
-Subject: [PATCH 047/177] feat(LinstorVolumeManager): add a fallback to find
+Subject: [PATCH 047/178] feat(LinstorVolumeManager): add a fallback to find
  node name (when len(hosts) >= 4)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 14 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 821ef420..e497afa6 100755
+index 821ef42..e497afa 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -210,19 +210,26 @@ def get_controller_uri():

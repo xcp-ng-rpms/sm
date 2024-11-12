@@ -1,7 +1,7 @@
 From 01efc1b1f0655e160932bb3667c0fa74733ec84c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 17 Jan 2023 11:55:00 +0100
-Subject: [PATCH 103/177] fix(linstor-manager): add a static iptables rule for
+Subject: [PATCH 103/178] fix(linstor-manager): add a static iptables rule for
  DRBD volumes
 
 Using the XAPI iptables firewall may drop DRBD packets when the connection
@@ -17,7 +17,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 38 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 5c4c5c90..6ee435c6 100755
+index 5c4c5c9..6ee435c 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -40,11 +40,12 @@ LVM_PLUGIN = 'lvm.py'

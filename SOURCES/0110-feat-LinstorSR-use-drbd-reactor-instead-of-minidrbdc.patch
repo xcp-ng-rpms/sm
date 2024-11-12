@@ -1,7 +1,7 @@
 From 180f9e933cad1eefb1d9694b4a98d912d70b8697 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 24 Feb 2023 14:28:29 +0100
-Subject: [PATCH 110/177] feat(LinstorSR): use drbd-reactor instead of
+Subject: [PATCH 110/178] feat(LinstorSR): use drbd-reactor instead of
  minidrbdcluster
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -19,7 +19,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  delete mode 100644 systemd/minidrbdcluster.service
 
 diff --git a/Makefile b/Makefile
-index 72d7be3f..bc3e97fe 100755
+index 72d7be3..bc3e97f 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -100,7 +100,6 @@ MPATH_CUSTOM_CONF_DIR := /etc/multipath/conf.d/
@@ -65,7 +65,7 @@ index 72d7be3f..bc3e97fe 100755
  .PHONY: clean
  clean:
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 94cf1b77..a3da28e7 100755
+index 94cf1b7..a3da28e 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -461,6 +461,10 @@ class LinstorSR(SR.SR):
@@ -187,7 +187,7 @@ index 94cf1b77..a3da28e7 100755
      # --------------------------------------------------------------------------
      # Metadata.
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 6ee435c6..7e34b5f6 100755
+index 6ee435c..7e34b5f 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -22,6 +22,7 @@ sys.path[0] = '/opt/xensource/sm/'
@@ -341,7 +341,7 @@ index 6ee435c6..7e34b5f6 100755
          'detach': detach,
          'destroy': destroy,
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index e0f39e71..4662043c 100755
+index e0f39e7..4662043 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1622,7 +1622,7 @@ class LinstorVolumeManager(object):
@@ -364,7 +364,7 @@ index e0f39e71..4662043c 100755
                  'DrbdOptions/auto-quorum': 'disabled',
 diff --git a/etc/minidrbdcluster.ini b/etc/minidrbdcluster.ini
 deleted file mode 100644
-index 9e523427..00000000
+index 9e52342..0000000
 --- a/etc/minidrbdcluster.ini
 +++ /dev/null
 @@ -1,14 +0,0 @@
@@ -384,7 +384,7 @@ index 9e523427..00000000
 -systemd-units=
 diff --git a/scripts/minidrbdcluster b/scripts/minidrbdcluster
 deleted file mode 100755
-index 03d6b010..00000000
+index 03d6b01..0000000
 --- a/scripts/minidrbdcluster
 +++ /dev/null
 @@ -1,203 +0,0 @@
@@ -593,7 +593,7 @@ index 03d6b010..00000000
 -    main()
 diff --git a/systemd/minidrbdcluster.service b/systemd/minidrbdcluster.service
 deleted file mode 100644
-index 1ddf91f3..00000000
+index 1ddf91f..0000000
 --- a/systemd/minidrbdcluster.service
 +++ /dev/null
 @@ -1,19 +0,0 @@

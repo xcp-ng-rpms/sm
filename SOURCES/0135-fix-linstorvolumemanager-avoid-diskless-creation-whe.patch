@@ -1,7 +1,7 @@
 From 69ddfe0cf317308e2097ef4cacb081b9c4c60c40 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 26 Sep 2023 11:48:38 +0200
-Subject: [PATCH 135/177] fix(linstorvolumemanager): avoid diskless creation
+Subject: [PATCH 135/178] fix(linstorvolumemanager): avoid diskless creation
  when a new resource is added
 
 Like said in this discussion https://github.com/xcp-ng/sm/pull/34 :
@@ -15,7 +15,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 9 insertions(+), 42 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 23e80d91..49ca83c0 100755
+index 23e80d9..49ca83c 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -614,8 +614,7 @@ class LinstorVolumeManager(object):

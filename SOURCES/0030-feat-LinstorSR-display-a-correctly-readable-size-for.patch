@@ -1,7 +1,7 @@
 From 6594b0cfd56df7d8beed5442b7932e6d46623f5f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Jan 2021 16:12:15 +0100
-Subject: [PATCH 030/177] feat(LinstorSR): display a correctly readable size
+Subject: [PATCH 030/178] feat(LinstorSR): display a correctly readable size
  for the user
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 83 insertions(+), 35 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 52131a59..16cb0d62 100755
+index 52131a5..16cb0d6 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -770,27 +770,19 @@ class LinstorSR(SR.SR):
@@ -155,7 +155,7 @@ index 52131a59..16cb0d62 100755
              # 10. Return info on the new user-visible leaf VDI.
              ret_vdi = snap_vdi
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index d617655f..a6f67d8d 100755
+index d617655..a6f67d8 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -131,20 +131,19 @@ class LinstorVolumeManager(object):

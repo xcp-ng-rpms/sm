@@ -1,7 +1,7 @@
 From 1d940461f9f408b93eef80c09156f74745d62570 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 15 Apr 2024 17:56:47 +0200
-Subject: [PATCH 168/177] feat(linstorvolumemanager): change logic of
+Subject: [PATCH 168/178] feat(linstorvolumemanager): change logic of
  `get_resources_info`: - Add a nested level "nodes" for each resource - Add a
  "uuid" attr on resources - Rename LINSTOR "uuid" to "linstor-uuid" - Optimize
  code
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 22 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index a2501d74..ed855257 100755
+index a2501d7..ed85525 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -884,6 +884,7 @@ def health_check(session, args):
@@ -25,7 +25,7 @@ index a2501d74..ed855257 100755
         'errors': []
      }
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 02059d81..25c226ac 100755
+index 02059d8..25c226a 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1624,7 +1624,7 @@ class LinstorVolumeManager(object):

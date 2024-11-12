@@ -1,7 +1,7 @@
 From 3cf1299c59cab4cf4f92a7a98db1757b0c876996 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Jun 2023 11:50:54 +0200
-Subject: [PATCH 122/177] fix(blktap2): ensure we can import this module when
+Subject: [PATCH 122/178] fix(blktap2): ensure we can import this module when
  LINSTOR is not installed
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 370f7fb8..fd7c643d 100755
+index 370f7fb..fd7c643 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -36,7 +36,6 @@ import json

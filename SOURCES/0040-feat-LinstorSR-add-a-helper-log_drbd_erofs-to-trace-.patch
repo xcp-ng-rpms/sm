@@ -1,7 +1,7 @@
 From f6ed0e05e330f28d09819bf8085d171dfee84d71 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 26 Mar 2021 16:13:20 +0100
-Subject: [PATCH 040/177] feat(LinstorSR): add a helper `log_drbd_erofs` to
+Subject: [PATCH 040/178] feat(LinstorSR): add a helper `log_drbd_erofs` to
  trace EROFS errno code with DRBD resources + check EROFS error
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  4 files changed, 119 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index e9305ce9..14c564e6 100755
+index e9305ce..14c564e 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -36,6 +36,7 @@ import json
@@ -50,7 +50,7 @@ index e9305ce9..14c564e6 100755
                          tapdisk = cls.__from_blktap(blktap)
                          node = '/sys/dev/block/%d:%d' % (tapdisk.major(), tapdisk.minor)
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index f82b73f2..a06ed201 100755
+index f82b73f..a06ed20 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -327,6 +327,22 @@ def lock_vdi(session, args):
@@ -85,7 +85,7 @@ index f82b73f2..a06ed201 100755
 +        'lsofResource': lsof_resource
      })
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 5c04d028..0357b92d 100755
+index 5c04d02..0357b92 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -16,6 +16,7 @@
@@ -200,7 +200,7 @@ index 5c04d028..0357b92d 100755
      # Default LVM extent size.
      BLOCK_SIZE = 4 * 1024 * 1024
 diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
-index 422834eb..0a8fe918 100755
+index 422834e..0a8fe91 100755
 --- a/drivers/vhdutil.py
 +++ b/drivers/vhdutil.py
 @@ -99,7 +99,7 @@ def fullSizeVHD(virtual_size):

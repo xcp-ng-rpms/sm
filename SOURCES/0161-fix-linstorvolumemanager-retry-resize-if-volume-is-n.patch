@@ -1,7 +1,7 @@
 From 0fc311b8ac8da92ba91f99a1ceb97ee7663c88ed Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Feb 2024 23:13:06 +0100
-Subject: [PATCH 161/177] fix(linstorvolumemanager): retry resize if volume is
+Subject: [PATCH 161/178] fix(linstorvolumemanager): retry resize if volume is
  not up to date
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 21 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 5f2e06ee..79ac84a4 100755
+index 5f2e06e..79ac84a 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -824,18 +824,30 @@ class LinstorVolumeManager(object):

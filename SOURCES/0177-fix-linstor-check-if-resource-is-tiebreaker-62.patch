@@ -1,7 +1,7 @@
 From 8d6cfc70d30e13cdf6a8ea2be3a534bace9fb936 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 26 Jul 2024 14:13:05 +0200
-Subject: [PATCH 177/177] fix(linstor): check if resource is tiebreaker (#62)
+Subject: [PATCH 177/178] fix(linstor): check if resource is tiebreaker (#62)
 
 We check if a resource is already a tiebreaker before trying to delete
 the resource.
@@ -13,7 +13,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  1 file changed, 7 insertions(+)
 
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 103f91b7..8bfd1c1b 100755
+index 103f91b..8bfd1c1 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -812,6 +812,13 @@ class LinstorVolumeManager(object):

@@ -1,7 +1,7 @@
 From 7e6f37fb95ad0974b7e4be3e336b348517fa0946 Mon Sep 17 00:00:00 2001
 From: Rene Peinthor <rene.peinthor@linbit.com>
 Date: Tue, 25 Jul 2023 11:19:39 +0200
-Subject: [PATCH 136/177] fix(LinstorSR): remove diskless after VDI.detach
+Subject: [PATCH 136/178] fix(LinstorSR): remove diskless after VDI.detach
  calls
 
 Signed-off-by: Rene Peinthor <rene.peinthor@linbit.com>
@@ -12,7 +12,7 @@ Co-authored-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 43 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index ed5998e8..7b9a8e57 100755
+index ed5998e..7b9a8e5 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1943,6 +1943,26 @@ class LinstorVDI(VDI.VDI):
@@ -43,7 +43,7 @@ index ed5998e8..7b9a8e57 100755
          util.SMlog('LinstorVDI.resize for {}'.format(self.uuid))
          if not self.sr._is_master:
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 49ca83c0..0f6fbcf3 100755
+index 49ca83c..0f6fbcf 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -781,6 +781,28 @@ class LinstorVolumeManager(object):

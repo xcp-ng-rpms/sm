@@ -1,7 +1,7 @@
 From fa743060d859c6bcdff75293bfee749b3eaf734c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 10 Dec 2020 17:56:15 +0100
-Subject: [PATCH 028/177] feat(LinstorSR): Improve LINSTOR performance
+Subject: [PATCH 028/178] feat(LinstorSR): Improve LINSTOR performance
 
 Details:
 - vdi_attach and vdi_detach are now exclusive
@@ -25,7 +25,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  5 files changed, 463 insertions(+), 238 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index a5bf5abd..548f4b17 100755
+index a5bf5ab..548f4b1 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -92,7 +92,8 @@ DRIVER_CONFIG = {'ATTACH_FROM_CONFIG_WITH_TAPDISK': False}
@@ -371,7 +371,7 @@ index a5bf5abd..548f4b17 100755
          )
  
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 926525f1..895f36e8 100755
+index 926525f..895f36e 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -449,7 +449,7 @@ class XAPI:
@@ -508,7 +508,7 @@ index 926525f1..895f36e8 100755
  
      def _checkSlaves(self, vdi):
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index f7ce1809..e7e58fd8 100755
+index f7ce180..e7e58fd 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -118,7 +118,9 @@ def detach(session, args):
@@ -543,7 +543,7 @@ index f7ce1809..e7e58fd8 100755
      return str(False)
  
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index f31c7525..ac858371 100644
+index f31c752..ac85837 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -89,13 +89,33 @@ def linstorhostcall(local_method, remote_method):
@@ -625,7 +625,7 @@ index f31c7525..ac858371 100644
      # Helpers.
      # --------------------------------------------------------------------------
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index d4004217..d617655f 100755
+index d400421..d617655 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -63,6 +63,16 @@ class LinstorVolumeManager(object):

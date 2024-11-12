@@ -1,7 +1,7 @@
 From 0125298399ffa92e214ed3b059d3f7cb5443e08b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 3 Nov 2021 14:59:31 +0100
-Subject: [PATCH 049/177] fix(LinstorSR): create diskless path if necessary
+Subject: [PATCH 049/178] fix(LinstorSR): create diskless path if necessary
  during VDI loading
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 519afb29..15b9dda3 100755
+index 519afb2..15b9dda 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1899,7 +1899,16 @@ class LinstorVDI(VDI.VDI):

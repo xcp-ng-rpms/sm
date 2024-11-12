@@ -1,7 +1,7 @@
 From 0065166fc2de0bb1368eb590d6a12762cabdda04 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 28 Sep 2023 16:00:02 +0200
-Subject: [PATCH 130/177] fix(LinstorSR): assume VDI is always a VHD when the
+Subject: [PATCH 130/178] fix(LinstorSR): assume VDI is always a VHD when the
  info is missing during cleanup
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 19d03d96..5353e9aa 100755
+index 19d03d9..5353e9a 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2995,11 +2995,11 @@ class LinstorSR(SR):

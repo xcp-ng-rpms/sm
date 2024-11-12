@@ -1,7 +1,7 @@
 From b49b91f7a56cc4e673fbc6edcc05bc40a14d1bea Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 1 Mar 2023 10:56:43 +0100
-Subject: [PATCH 111/177] fix(LinstorSR): ensure vhdutil calls are correctly
+Subject: [PATCH 111/178] fix(LinstorSR): ensure vhdutil calls are correctly
  executed on pools with > 3 hosts
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -12,7 +12,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 27 insertions(+), 20 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index a3da28e7..10e0f543 100755
+index a3da28e..10e0f54 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -1884,9 +1884,12 @@ class LinstorVDI(VDI.VDI):
@@ -50,7 +50,7 @@ index a3da28e7..10e0f543 100755
              self.size = vhd_info.sizeVirt
              self.parent = vhd_info.parentUuid
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 05225e88..c1b817d7 100644
+index 05225e8..c1b817d 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -47,7 +47,7 @@ def call_vhd_util_on_host(session, host_ref, method, device_path, args):
@@ -112,7 +112,7 @@ index 05225e88..c1b817d7 100644
              # Retry only locally if it's not an EROFS exception.
              return util.retry(local_call, 5, 2, exceptions=[util.CommandException])
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 4662043c..5ab83c41 100755
+index 4662043..5ab83c4 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1410,12 +1410,12 @@ class LinstorVolumeManager(object):

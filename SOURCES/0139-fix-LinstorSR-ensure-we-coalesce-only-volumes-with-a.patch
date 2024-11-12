@@ -1,7 +1,7 @@
 From c9ab4bc2198754e8eacc2fe4699eb5e6e5e4728e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 23 Oct 2023 15:52:23 +0200
-Subject: [PATCH 139/177] fix(LinstorSR): ensure we coalesce only volumes with
+Subject: [PATCH 139/178] fix(LinstorSR): ensure we coalesce only volumes with
  a valid size
 
 ---
@@ -11,7 +11,7 @@ Subject: [PATCH 139/177] fix(LinstorSR): ensure we coalesce only volumes with
  3 files changed, 47 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 376da3ec..4e4620f3 100755
+index 376da3e..4e4620f 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -1441,6 +1441,20 @@ class LinstorVDI(VDI):
@@ -36,7 +36,7 @@ index 376da3ec..4e4620f3 100755
  
      def getParent(self):
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 45201eed..9e5e1d6e 100755
+index 45201ee..9e5e1d6 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -485,6 +485,18 @@ def get_block_bitmap(session, args):
@@ -69,7 +69,7 @@ index 45201eed..9e5e1d6e 100755
          # is opened on a non-local host.
          'setParent': set_parent,
 diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 8b6985d9..5f3ae084 100644
+index 8b6985d..5f3ae08 100644
 --- a/drivers/linstorvhdutil.py
 +++ b/drivers/linstorvhdutil.py
 @@ -38,7 +38,7 @@ def call_vhd_util_on_host(session, host_ref, method, device_path, args):

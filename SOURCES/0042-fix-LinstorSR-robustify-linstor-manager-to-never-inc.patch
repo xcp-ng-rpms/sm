@@ -1,7 +1,7 @@
 From 262c9328fe625aa44416b2795047584de7611f18 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 26 Aug 2021 15:26:11 +0200
-Subject: [PATCH 042/177] fix(LinstorSR): robustify linstor-manager to never
+Subject: [PATCH 042/178] fix(LinstorSR): robustify linstor-manager to never
  include from plugins path
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index dcd4bc6f..f12747f1 100755
+index dcd4bc6..f12747f 100755
 --- a/drivers/linstor-manager
 +++ b/drivers/linstor-manager
 @@ -14,14 +14,18 @@

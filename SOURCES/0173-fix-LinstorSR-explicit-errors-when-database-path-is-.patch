@@ -1,7 +1,7 @@
 From 13ff45ec98437db8d85e3d9c52d6bb353f8f9656 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 6 May 2024 21:35:36 +0200
-Subject: [PATCH 173/177] fix(LinstorSR): explicit errors when database path is
+Subject: [PATCH 173/178] fix(LinstorSR): explicit errors when database path is
  fetched
 
 ---
@@ -10,7 +10,7 @@ Subject: [PATCH 173/177] fix(LinstorSR): explicit errors when database path is
  2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index c5ed7c58..9f0986cd 100755
+index c5ed7c5..9f0986c 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -766,7 +766,7 @@ class LinstorSR(SR.SR):
@@ -32,7 +32,7 @@ index c5ed7c58..9f0986cd 100755
  
          # Update the database before the restart of the GC to avoid
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 94d5c514..948d45df 100755
+index 94d5c51..948d45d 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -2648,7 +2648,7 @@ class LinstorVolumeManager(object):

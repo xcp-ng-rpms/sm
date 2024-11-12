@@ -1,7 +1,7 @@
 From c7030966d57e33747b6dde463f35e9d7d79e6fb5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 30 May 2023 11:19:13 +0200
-Subject: [PATCH 120/177] fix(LinstorSR): remove hosts/ips param
+Subject: [PATCH 120/178] fix(LinstorSR): remove hosts/ips param
 
 ---
  drivers/LinstorSR.py            | 47 +++++----------------------------
@@ -9,7 +9,7 @@ Subject: [PATCH 120/177] fix(LinstorSR): remove hosts/ips param
  2 files changed, 11 insertions(+), 47 deletions(-)
 
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 8c0b007d..7a9cbac6 100755
+index 8c0b007..7a9cbac 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -100,8 +100,6 @@ CAPABILITIES = [
@@ -115,7 +115,7 @@ index 8c0b007d..7a9cbac6 100755
                  self._redundancy,
                  thin_provisioning=self._provisioning == 'thin',
 diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index 6f20c02c..464ab2ce 100755
+index 6f20c02..464ab2c 100755
 --- a/drivers/linstorvolumemanager.py
 +++ b/drivers/linstorvolumemanager.py
 @@ -1588,14 +1588,13 @@ class LinstorVolumeManager(object):

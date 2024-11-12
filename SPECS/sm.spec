@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.7%{?xsrel}%{?dist}
+Release: 1.8%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -74,6 +74,7 @@ Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
 Patch1028: 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
 Patch1029: 0029-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
+Patch1030: 0030-linstor-Fix-to-add-sync-to-DD.patch
 
 %description
 This package contains storage backends used in XCP
@@ -385,6 +386,9 @@ Manager and some other packages
 
 
 %changelog
+* Tue Nov 12 2024 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.8
+- Add 0030-linstor-Fix-to-add-sync-to-DD.patch
+
 * Mon Sep 09 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.7
 - Import 8.2 LINSTOR changes on 8.3:
 - Robustify HA: use a specific group with a replication count of 3

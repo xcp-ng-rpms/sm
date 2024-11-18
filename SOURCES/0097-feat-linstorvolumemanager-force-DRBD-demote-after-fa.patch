@@ -1,7 +1,7 @@
 From be33740647adac8be43e998a0ce620524f43db24 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Dec 2022 18:40:11 +0100
-Subject: [PATCH 097/177] feat(linstorvolumemanager): force DRBD demote after
+Subject: [PATCH 097/180] feat(linstorvolumemanager): force DRBD demote after
  failed volume creation/clone
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

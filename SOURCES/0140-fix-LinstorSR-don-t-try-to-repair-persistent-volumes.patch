@@ -1,7 +1,7 @@
 From e615d0cc2f5dad974bec0de819fa3bf0a4b5d07a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 24 Oct 2023 11:57:40 +0200
-Subject: [PATCH 140/177] fix(LinstorSR): don't try to repair persistent
+Subject: [PATCH 140/180] fix(LinstorSR): don't try to repair persistent
  volumes in GC
 
 Use constants to simplify maintenance.

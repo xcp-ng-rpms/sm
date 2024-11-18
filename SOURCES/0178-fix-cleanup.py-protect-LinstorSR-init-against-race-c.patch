@@ -1,0 +1,50 @@
+From b7e68c234512d9f8cee7c4400ae20d67fba1cc4b Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 9 Jan 2025 17:40:54 +0100
+Subject: [PATCH 178/180] fix(cleanup.py): protect LinstorSR init against race
+ condition (#78)
+
+During `LinstorSR` init, only create the journaler to make `should_preempt` happy.
+The volume manager MUST always be created in a SR lock context. Otherwise,
+we can trigger major issues.
+
+For example, a volume can be deleted from the KV-store by `cleanup.py` during a
+snapshot rollback. Very rare situation but which allowed this problem to be discovered.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 8c16f689..48fac2bf 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3014,7 +3014,7 @@ class LinstorSR(SR):
+ 
+         SR.__init__(self, uuid, xapi, createLock, force)
+         self.path = LinstorVolumeManager.DEV_ROOT_PATH
+-        self._reloadLinstor()
++        self._reloadLinstor(journaler_only=True)
+ 
+     def deleteVDI(self, vdi):
+         self._checkSlaves(vdi)
+@@ -3045,7 +3045,7 @@ class LinstorSR(SR):
+         )
+         return super(LinstorSR, self).pauseVDIs(vdiList)
+ 
+-    def _reloadLinstor(self):
++    def _reloadLinstor(self, journaler_only=False):
+         session = self.xapi.session
+         host_ref = util.get_this_host_ref(session)
+         sr_ref = session.xenapi.SR.get_by_uuid(self.uuid)
+@@ -3062,6 +3062,9 @@ class LinstorSR(SR):
+             controller_uri, group_name, logger=util.SMlog
+         )
+ 
++        if journaler_only:
++            return
++
+         self._linstor = LinstorVolumeManager(
+             controller_uri,
+             group_name,

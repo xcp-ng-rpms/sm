@@ -1,7 +1,7 @@
 From f42a4f663b05544178d929d46740a16abc5d6ca9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 10 Oct 2022 14:33:24 +0200
-Subject: [PATCH 087/177] feat(linstorvhdutil): modify logic of local vhdutil
+Subject: [PATCH 087/180] feat(linstorvhdutil): modify logic of local vhdutil
  calls
 
 - Always log openers when we can't call vhdutil locally

@@ -1,7 +1,7 @@
 From 13ff45ec98437db8d85e3d9c52d6bb353f8f9656 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 6 May 2024 21:35:36 +0200
-Subject: [PATCH 173/177] fix(LinstorSR): explicit errors when database path is
+Subject: [PATCH 173/180] fix(LinstorSR): explicit errors when database path is
  fetched
 
 ---

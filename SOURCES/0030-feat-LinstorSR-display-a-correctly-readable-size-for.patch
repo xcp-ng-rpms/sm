@@ -1,7 +1,7 @@
 From 6594b0cfd56df7d8beed5442b7932e6d46623f5f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Jan 2021 16:12:15 +0100
-Subject: [PATCH 030/177] feat(LinstorSR): display a correctly readable size
+Subject: [PATCH 030/180] feat(LinstorSR): display a correctly readable size
  for the user
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

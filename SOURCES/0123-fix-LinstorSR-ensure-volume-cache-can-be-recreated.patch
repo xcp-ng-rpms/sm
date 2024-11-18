@@ -1,7 +1,7 @@
 From b06882d0cdb391ca92cd08146b935648cbb6ef6e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 21 Jun 2023 14:10:18 +0200
-Subject: [PATCH 123/177] fix(LinstorSR): ensure volume cache can be recreated
+Subject: [PATCH 123/180] fix(LinstorSR): ensure volume cache can be recreated
 
 After SR creation we may fail to load volumes with this exception:
 "Failed to get usable size of..." and so we can't plug the master PBD.

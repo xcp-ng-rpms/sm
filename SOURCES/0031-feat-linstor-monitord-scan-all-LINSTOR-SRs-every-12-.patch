@@ -1,7 +1,7 @@
 From bf497ab757571bdb722323cfb98aaa500ec68c44 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 12 Jan 2021 14:06:34 +0100
-Subject: [PATCH 031/177] feat(linstor-monitord): scan all LINSTOR SRs every 12
+Subject: [PATCH 031/180] feat(linstor-monitord): scan all LINSTOR SRs every 12
  minutes to update allocated size stats
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

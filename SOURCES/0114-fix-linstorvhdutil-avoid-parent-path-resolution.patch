@@ -1,7 +1,7 @@
 From e7550ad1ca7033adb3bb6dbc3c6a79fa2386d90b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 16 Mar 2023 18:54:46 +0100
-Subject: [PATCH 114/177] fix(linstorvhdutil): avoid parent path resolution
+Subject: [PATCH 114/180] fix(linstorvhdutil): avoid parent path resolution
 
 When many hosts are used (>= 4), we can fail to get
 VHD info (with parent option) because the local parent VDI

@@ -1,0 +1,78 @@
+From f9e99e64e75e343bd37fefc3e8100d82f6f750ac Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 9 Oct 2024 16:20:46 +0200
+Subject: [PATCH 30/30] linstor: Fix to add sync to DD
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/util.py    | 6 +++---
+ tests/test_util.py | 8 ++++----
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/util.py b/drivers/util.py
+index 5d7b320b..96280292 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -610,7 +610,7 @@ def zeroOut(path, fromByte, bytes):
+             bytesBefore = bytes
+         bytes -= bytesBefore
+         cmd = [CMD_DD, "if=/dev/zero", "of=%s" % path, "bs=1",
+-               "seek=%s" % fromByte, "count=%s" % bytesBefore]
++               "seek=%s" % fromByte, "count=%s" % bytesBefore, "conv=fsync"]
+         try:
+             pread2(cmd)
+         except CommandException:
+@@ -621,7 +621,7 @@ def zeroOut(path, fromByte, bytes):
+     fromByte = (fromBlock + blocks) * blockSize
+     if blocks:
+         cmd = [CMD_DD, "if=/dev/zero", "of=%s" % path, "bs=%s" % blockSize,
+-               "seek=%s" % fromBlock, "count=%s" % blocks]
++               "seek=%s" % fromBlock, "count=%s" % blocks, "conv=fsync"]
+         try:
+             pread2(cmd)
+         except CommandException:
+@@ -629,7 +629,7 @@ def zeroOut(path, fromByte, bytes):
+ 
+     if bytes:
+         cmd = [CMD_DD, "if=/dev/zero", "of=%s" % path, "bs=1",
+-               "seek=%s" % fromByte, "count=%s" % bytes]
++               "seek=%s" % fromByte, "count=%s" % bytes, "conv=fsync"]
+         try:
+             pread2(cmd)
+         except CommandException:
+diff --git a/tests/test_util.py b/tests/test_util.py
+index 965eec15..81445296 100644
+--- a/tests/test_util.py
++++ b/tests/test_util.py
+@@ -612,7 +612,7 @@ class TestUtil(unittest.TestCase):
+         # Arrange
+         self._add_process(
+             [DD_CMD, "if=/dev/zero", "of=/test/path/foo", "bs=4096",
+-             "seek=0", "count=2"],
++             "seek=0", "count=2", "conv=fsync"],
+             0, b"", b"")
+         # Act
+         result = util.zeroOut('/test/path/foo', 0, 8192)
+@@ -624,11 +624,11 @@ class TestUtil(unittest.TestCase):
+         # Arrange
+         self._add_process(
+             [DD_CMD, "if=/dev/zero", "of=/test/path/foo", "bs=1",
+-             "seek=1024", "count=3072"],
++             "seek=1024", "count=3072", "conv=fsync"],
+             0, b"", b"")
+         self._add_process(
+             [DD_CMD, "if=/dev/zero", "of=/test/path/foo", "bs=1",
+-             "seek=4096", "count=100"],
++             "seek=4096", "count=100", "conv=fsync"],
+             0, b"", b"")
+ 
+         # Act
+@@ -641,7 +641,7 @@ class TestUtil(unittest.TestCase):
+         # Arrange
+         self._add_process(
+             [DD_CMD, "if=/dev/zero", "of=/test/path/foo", "bs=1",
+-             "seek=1024", "count=2048"],
++             "seek=1024", "count=2048", "conv=fsync"],
+             0, b"", b"")
+ 
+         # Act

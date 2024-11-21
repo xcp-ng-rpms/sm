@@ -1,8 +1,8 @@
-From 93a8128e234613c4973d83bbb37c84d2a9cf5d87 Mon Sep 17 00:00:00 2001
+From 6d2b2d1b0dbe44f52033949d0a2f758c89972a97 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
-Date: Mon, 5 Feb 2024 23:16:16 +0100
-Subject: [PATCH 29/29] Synchronization with 8.2 LINSTOR before a stable
- release
+Date: Thu, 26 Sep 2024 18:53:04 +0200
+Subject: [PATCH 29/30] Synchronization with 8.2 LINSTOR before a stable
+ release (#68)
 
 Last commit: 9207abe1f2e1ff1795cdba1a0aeb76574412a583
 "fix(linstor): check if resource is tiebreaker (#62)"
@@ -10,13 +10,13 @@ Last commit: 9207abe1f2e1ff1795cdba1a0aeb76574412a583
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---
  dev_requirements.txt                       |   1 +
- drivers/LinstorSR.py                       | 100 +++---
+ drivers/LinstorSR.py                       | 102 +++---
  drivers/linstor-manager                    | 183 ++++++++---
  drivers/linstorvhdutil.py                  |  60 +++-
  drivers/linstorvolumemanager.py            | 349 +++++++++++++++------
  drivers/tapdisk-pause                      |   6 +-
  {tests/mocks => mocks}/linstor/__init__.py |   0
- 7 files changed, 497 insertions(+), 202 deletions(-)
+ 7 files changed, 499 insertions(+), 202 deletions(-)
  rename {tests/mocks => mocks}/linstor/__init__.py (100%)
 
 diff --git a/dev_requirements.txt b/dev_requirements.txt
@@ -29,7 +29,7 @@ index 104316ba..f25f7686 100644
  bitarray
 +python-linstor
 diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index fe6d01d4..8b8be6c9 100755
+index fe6d01d4..829c48f8 100755
 --- a/drivers/LinstorSR.py
 +++ b/drivers/LinstorSR.py
 @@ -362,9 +362,6 @@ class LinstorSR(SR.SR):
@@ -247,7 +247,23 @@ index fe6d01d4..8b8be6c9 100755
                  )
              raise xs_errors.XenError('VDIClone', opterr=str(e))
  
-@@ -2739,7 +2748,7 @@ class LinstorVDI(VDI.VDI):
+@@ -2550,6 +2559,7 @@ class LinstorVDI(VDI.VDI):
+                 [FORK_LOG_DAEMON] + arguments,
+                 stdout=subprocess.PIPE,
+                 stderr=subprocess.STDOUT,
++                universal_newlines=True,
+                 # Ensure we use another group id to kill this process without
+                 # touch the current one.
+                 preexec_fn=os.setsid
+@@ -2635,6 +2645,7 @@ class LinstorVDI(VDI.VDI):
+                 [FORK_LOG_DAEMON] + arguments,
+                 stdout=subprocess.PIPE,
+                 stderr=subprocess.STDOUT,
++                universal_newlines=True,
+                 # Ensure we use another group id to kill this process without
+                 # touch the current one.
+                 preexec_fn=os.setsid
+@@ -2739,7 +2750,7 @@ class LinstorVDI(VDI.VDI):
  
          # 0. Fetch drbd path.
          must_get_device_path = True
@@ -256,7 +272,7 @@ index fe6d01d4..8b8be6c9 100755
              # We are on a slave, we must try to find a diskful locally.
              try:
                  volume_info = self._linstor.get_volume_info(self.uuid)
-@@ -2754,7 +2763,7 @@ class LinstorVDI(VDI.VDI):
+@@ -2754,7 +2765,7 @@ class LinstorVDI(VDI.VDI):
              must_get_device_path = hostname in volume_info.diskful
  
          drbd_path = None
@@ -265,7 +281,7 @@ index fe6d01d4..8b8be6c9 100755
              # If we are master, we must ensure we have a diskless
              # or diskful available to init HA.
              # It also avoid this error in xensource.log
-@@ -2812,37 +2821,6 @@ class LinstorVDI(VDI.VDI):
+@@ -2812,37 +2823,6 @@ class LinstorVDI(VDI.VDI):
          self._kill_persistent_nbd_server(volume_name)
          self._kill_persistent_http_server(volume_name)
  

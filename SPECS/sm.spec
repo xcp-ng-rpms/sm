@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.13%{?xsrel}%{?dist}
+Release: 1.14%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -76,6 +76,7 @@ Patch1028: 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
 Patch1029: 0029-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
 # Upstream PR: https://github.com/xapi-project/sm/pull/719
 Patch1030: 0030-fix-getAllocatedSize-is-incorrect-75.patch
+Patch1031: 0031-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
 
 %description
 This package contains storage backends used in XCP
@@ -387,6 +388,10 @@ Manager and some other packages
 
 
 %changelog
+* Fri Nov 29 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.14
+- Sync fork-load-daemon script with http-nbd-transfer (v1.5.0)
+- WIP
+
 * Wed Nov 27 2024 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.13
 - Replace 0030-fix-cleanup.py-bad-live-coalesce-check-regarding-Fil.patch with 0030-fix-getAllocatedSize-is-incorrect-75.patch
 - Ensure correct allocatedSize for FileVDI in cleanup.py

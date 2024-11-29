@@ -1,7 +1,7 @@
 From 47d5d8691b40f9c4bd8a77c00d851443e68ac887 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 12 Apr 2024 15:08:59 +0200
-Subject: [PATCH 25/30] feat(LargeBlock): introduce largeblocksr (#51)
+Subject: [PATCH 25/31] feat(LargeBlock): introduce largeblocksr (#51)
 
 A SR inheriting from a EXTSR allowing to use a 4KiB blocksize device as
 SR.

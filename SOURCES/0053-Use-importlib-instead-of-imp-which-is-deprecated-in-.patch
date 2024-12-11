@@ -1,7 +1,7 @@
 From 03850cac616f61ea33f4280309d5f140702c9571 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 10 Oct 2024 14:58:02 +0200
-Subject: [PATCH 53/60] Use importlib instead of imp which is deprecated in
+Subject: [PATCH 53/61] Use importlib instead of imp which is deprecated in
  python 3.4
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

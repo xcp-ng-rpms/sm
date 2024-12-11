@@ -1,7 +1,7 @@
 From 04f353ceefd8612cef286ba11f81642771334be6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Nov 2024 13:44:57 +0100
-Subject: [PATCH 59/60] Use `override` everywhere!
+Subject: [PATCH 59/61] Use `override` everywhere!
 
 Also use return type annotations on these methods.
 

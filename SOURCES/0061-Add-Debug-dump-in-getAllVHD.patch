@@ -1,0 +1,26 @@
+From 4171e888526ee074ec14827e839b504f968be728 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 11 Dec 2024 16:11:39 +0100
+Subject: [PATCH 61/61] Add Debug dump in getAllVHD
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/vhdutil.py | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
+index 8ac7b08d..e8b54ba4 100755
+--- a/drivers/vhdutil.py
++++ b/drivers/vhdutil.py
+@@ -165,6 +165,11 @@ def getAllVHDs(pattern, extractUuidFunction, vgName=None, \
+             vhds[vhdInfo.uuid] = vhdInfo
+         else:
+             util.SMlog("WARN: vhdinfo line doesn't parse correctly: %s" % line)
++    util.SMlog("DEBUG SCAN {}".format(pattern))
++    for uuid in vhds:
++        vhdinfo = vhds[uuid]
++        util.SMlog("DEBUG: UUID {}: {}".format(uuid, vhdinfo.__dict__))
++    util.SMlog("DEBUG SCAN END")
+     return vhds
+ 
+ 

@@ -1,7 +1,7 @@
 From be79a5e9f3443eadb7b3c6ba510e2f1702849e2d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 22 Oct 2024 14:33:13 +0200
-Subject: [PATCH 40/60] Fix override of VDI.load in LVHDVDI cleanup.py
+Subject: [PATCH 40/61] Fix override of VDI.load in LVHDVDI cleanup.py
 
 It triggers warns in analyzers like mypy.
 

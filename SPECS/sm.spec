@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.14%{?xsrel}%{?dist}
+Release: 1.14.0.debug.1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -106,6 +106,7 @@ Patch1057: 0057-Use-static-analysis-tool-mypy.patch
 Patch1058: 0058-Add-mypy-stubs.patch
 Patch1059: 0059-Use-override-everywhere.patch
 Patch1060: 0060-Makefile-fix-don-t-execute-precheck-during-installat.patch
+Patch1061: 0061-Add-Debug-dump-in-getAllVHD.patch
 
 %description
 This package contains storage backends used in XCP
@@ -419,6 +420,9 @@ Manager and some other packages
 
 
 %changelog
+* Wed Dec 11 2024 Ronan Abhamon <damien.thenot@vates.tech> - 3.2.3-1.14.0.debug.1
+- Add a debug dump for vhdutil.getAllVHD
+
 * Wed Dec 11 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.14
 - Sync fork-load-daemon script with http-nbd-transfer (v1.5.0)
 - Fix coalesce process for LINSTOR SRs

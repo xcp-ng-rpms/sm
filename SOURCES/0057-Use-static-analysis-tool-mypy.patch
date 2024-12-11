@@ -1,7 +1,7 @@
 From 9cc1409b13bbc35aed4077eb2a3c8666811d808c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 17:51:25 +0200
-Subject: [PATCH 57/60] Use static analysis tool (mypy)
+Subject: [PATCH 57/61] Use static analysis tool (mypy)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

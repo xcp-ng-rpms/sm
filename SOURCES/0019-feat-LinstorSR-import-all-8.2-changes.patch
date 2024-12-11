@@ -1,7 +1,7 @@
 From 98d8c31104c3eae9ea62ea106d09fb801a784f4e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
-Subject: [PATCH 19/60] feat(LinstorSR): import all 8.2 changes
+Subject: [PATCH 19/61] feat(LinstorSR): import all 8.2 changes
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

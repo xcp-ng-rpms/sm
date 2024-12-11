@@ -1,7 +1,7 @@
 From c38e7eb660e94ac19beb4e23c4856bd62fce5a82 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 21 Oct 2024 17:49:20 +0200
-Subject: [PATCH 46/60] Use `for session` instead of `for e`
+Subject: [PATCH 46/61] Use `for session` instead of `for e`
 
 Avoid mypy error:
 ```

@@ -1,4 +1,4 @@
-From 04f353ceefd8612cef286ba11f81642771334be6 Mon Sep 17 00:00:00 2001
+From e4f2b5b8a7f8ad0c5642a78c6992e2685fb49e26 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Nov 2024 13:44:57 +0100
 Subject: [PATCH 59/60] Use `override` everywhere!
@@ -40,7 +40,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/linstorvolumemanager.py |   4 +-
  drivers/lock.py                 |   2 +-
  drivers/mpath_cli.py            |   5 +-
- drivers/nfs-on-slave            |   3 +-
+ drivers/nfs-on-slave            |   6 +-
  drivers/srmetadata.py           |  22 ++-
  drivers/udevSR.py               |  53 ++++--
  misc/fairlock/fairlock.py       |   7 +-
@@ -72,7 +72,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_storage_init.py      |  14 +-
  tests/test_util.py              |  16 +-
  tests/testlib.py                |  13 +-
- 65 files changed, 1293 insertions(+), 682 deletions(-)
+ 65 files changed, 1296 insertions(+), 682 deletions(-)
  create mode 100644 .mypy.ini
 
 diff --git a/.mypy.ini b/.mypy.ini
@@ -5086,10 +5086,20 @@ index 4c7ce54a..357e84a0 100755
  
  mpathcmd = ["/usr/sbin/multipathd", "-k"]
 diff --git a/drivers/nfs-on-slave b/drivers/nfs-on-slave
-index 3e2ee8d3..31d498be 100644
+index 3e2ee8d3..71837724 100644
 --- a/drivers/nfs-on-slave
 +++ b/drivers/nfs-on-slave
-@@ -31,7 +31,8 @@ class NfsCheckException(Exception):
+@@ -18,6 +18,9 @@
+ # A plugin for synchronizing slaves when something changes on the Master
+ 
+ import sys; sys.path.append("/opt/xensource/sm/")
++
++from sm_typing import override
++
+ import util
+ import os, glob, errno
+ 
+@@ -31,7 +34,8 @@ class NfsCheckException(Exception):
          except:
              self.exe = None
  

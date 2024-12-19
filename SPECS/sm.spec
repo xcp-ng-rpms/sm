@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.14%{?xsrel}%{?dist}
+Release: 1.15%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -419,6 +419,9 @@ Manager and some other packages
 
 
 %changelog
+* Thu Dec 19 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.15
+- Fix missing mypy "@override" import in nfs-on-slave script
+
 * Wed Dec 11 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.14
 - Sync fork-load-daemon script with http-nbd-transfer (v1.5.0)
 - Fix coalesce process for LINSTOR SRs

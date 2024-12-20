@@ -1,0 +1,293 @@
+From 5892e1a9fd7d7670f65bb5a734200a16b4f4100f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 23 Jan 2025 16:26:39 +0100
+Subject: [PATCH 82/89] fix import cycle
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LVMSR.py          |  3 ++-
+ drivers/blktap2.py        |  2 +-
+ drivers/cleanup.py        |  3 ++-
+ drivers/constants.py      |  9 +++++++++
+ drivers/lvhd-thin         |  2 ++
+ drivers/lvmanager.py      |  2 +-
+ drivers/lvmcache.py       |  2 +-
+ drivers/lvmcowutil.py     |  8 +-------
+ drivers/lvutil.py         |  3 +--
+ drivers/tapdisk-pause     |  3 ++-
+ drivers/trim_util.py      |  2 +-
+ drivers/verifyVHDsOnSR.py |  3 ++-
+ tests/test_on_slave.py    | 18 ++++++++++--------
+ 13 files changed, 35 insertions(+), 25 deletions(-)
+
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 293b2571..513f3e0e 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -39,8 +39,9 @@ import blktap2
+ from journaler import Journaler
+ from refcounter import RefCounter
+ from ipc import IPCFlag
++from constants import NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX
+ from cowutil import getCowUtil
+-from lvmcowutil import LV_PREFIX, NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX, LvmCowUtil
++from lvmcowutil import LV_PREFIX, LvmCowUtil
+ from lvmanager import LVActivator
+ from vditype import VdiType
+ import XenAPI # pylint: disable=import-error
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 9a01de90..6dc4202f 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -41,9 +41,9 @@ import json
+ import xs_errors
+ import XenAPI # pylint: disable=import-error
+ import scsiutil
++from constants import NS_PREFIX_LVM
+ from syslog import openlog, syslog
+ from stat import *  # S_ISBLK(), ...
+-from lvmcowutil import NS_PREFIX_LVM
+ from vditype import VdiType
+ import nfs
+ 
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 397d415b..7561bac3 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -50,8 +50,9 @@ from srmetadata import LVMMetadataHandler, VDI_TYPE_TAG
+ from functools import reduce
+ from time import monotonic as _time
+ 
++from constants import NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX
+ from cowutil import CowUtil, getCowUtil
+-from lvmcowutil import LV_PREFIX, NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX, LvmCowUtil
++from lvmcowutil import LV_PREFIX, LvmCowUtil
+ from vditype import VdiType, VdiTypeExtension, VDI_COW_TYPES, VDI_TYPE_TO_EXTENSION
+ 
+ try:
+diff --git a/drivers/constants.py b/drivers/constants.py
+index ed5ffc35..9ef79f33 100644
+--- a/drivers/constants.py
++++ b/drivers/constants.py
+@@ -1,4 +1,13 @@
++from sm_typing import Final
++
+ EXT_PREFIX = 'XSLocalEXT-'
+ CBT_BLOCK_SIZE = (64 * 1024)
+ CBTLOG_TAG = "cbtlog"
+ CBT_UTIL = "/usr/sbin/cbt-util"
++
++VG_LOCATION: Final = "/dev"
++VG_PREFIX: Final = "VG_XenStorage-"
++
++# Ref counting for VDI's: we need a ref count for LV activation/deactivation
++# on the master.
++NS_PREFIX_LVM: Final = "lvm-"
+diff --git a/drivers/lvhd-thin b/drivers/lvhd-thin
+index 5d04a9dd..fe29aab5 100755
+--- a/drivers/lvhd-thin
++++ b/drivers/lvhd-thin
+@@ -28,6 +28,8 @@ from journaler import Journaler
+ import lvutil
+ import os
+ 
++from constants import VG_PREFIX
++
+ def attach(session, args):
+     if util.is_master(session):
+         os.environ['LVM_SYSTEM_DIR'] = lvutil.MASTER_LVM_CONF
+diff --git a/drivers/lvmanager.py b/drivers/lvmanager.py
+index a27eabd6..c49a5d8c 100644
+--- a/drivers/lvmanager.py
++++ b/drivers/lvmanager.py
+@@ -19,7 +19,7 @@
+ import time
+ import util
+ 
+-from lvmcowutil import NS_PREFIX_LVM
++from constants import NS_PREFIX_LVM
+ 
+ class LVManagerException(util.SMException):
+     pass
+diff --git a/drivers/lvmcache.py b/drivers/lvmcache.py
+index 4e92fe2d..244ce2a6 100644
+--- a/drivers/lvmcache.py
++++ b/drivers/lvmcache.py
+@@ -19,8 +19,8 @@
+ import lvutil
+ import os
+ import util
++from constants import NS_PREFIX_LVM
+ from lock import Lock
+-from lvmcowutil import NS_PREFIX_LVM
+ from refcounter import RefCounter
+ 
+ 
+diff --git a/drivers/lvmcowutil.py b/drivers/lvmcowutil.py
+index 4c69006d..83a4f999 100755
+--- a/drivers/lvmcowutil.py
++++ b/drivers/lvmcowutil.py
+@@ -29,6 +29,7 @@ import lock
+ import util
+ import XenAPI
+ 
++from constants import NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX
+ from cowutil import CowImageInfo, CowUtil, getCowUtil
+ from journaler import Journaler
+ from lvmcache import LVInfo, LVMCache
+@@ -38,13 +39,6 @@ from vditype import VdiType, VDI_COW_TYPES
+ 
+ # ------------------------------------------------------------------------------
+ 
+-VG_LOCATION: Final = "/dev"
+-VG_PREFIX: Final = "VG_XenStorage-"
+-
+-# Ref counting for VDI's: we need a ref count for LV activation/deactivation
+-# on the master.
+-NS_PREFIX_LVM: Final = "lvm-"
+-
+ LOCK_RETRY_ATTEMPTS: Final = 20
+ 
+ LV_PREFIX: Final = {
+diff --git a/drivers/lvutil.py b/drivers/lvutil.py
+index 3abfe006..a19de850 100755
+--- a/drivers/lvutil.py
++++ b/drivers/lvutil.py
+@@ -26,8 +26,7 @@ from fairlock import Fairlock
+ import util
+ import xs_errors
+ import xml.dom.minidom
+-from lvmcowutil import VG_LOCATION, VG_PREFIX
+-from constants import EXT_PREFIX
++from constants import EXT_PREFIX, VG_LOCATION, VG_PREFIX
+ import lvmcache
+ import srmetadata
+ 
+diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
+index de168dd6..564793b9 100755
+--- a/drivers/tapdisk-pause
++++ b/drivers/tapdisk-pause
+@@ -27,8 +27,9 @@ import xs_errors
+ import XenAPI
+ import lvmcache
+ 
++from constants import NS_PREFIX_LVM, VG_PREFIX
+ from cowutil import getCowUtil
+-from lvmcowutil import LV_PREFIX, LV_PREFIX_TO_VDI_TYPE, NS_PREFIX_LVM, VG_PREFIX
++from lvmcowutil import LV_PREFIX, LV_PREFIX_TO_VDI_TYPE
+ from vditype import VdiType
+ 
+ try:
+diff --git a/drivers/trim_util.py b/drivers/trim_util.py
+index 520e8ef7..b340a7b1 100755
+--- a/drivers/trim_util.py
++++ b/drivers/trim_util.py
+@@ -23,7 +23,7 @@ import util
+ import lock
+ import lvutil
+ 
+-from lvmcowutil import VG_LOCATION, VG_PREFIX
++from constants import VG_LOCATION, VG_PREFIX
+ 
+ TRIM_LV_TAG = "_trim_lv"
+ TRIM_CAP = "SR_TRIM"
+diff --git a/drivers/verifyVHDsOnSR.py b/drivers/verifyVHDsOnSR.py
+index 38f3eab9..f6d31809 100755
+--- a/drivers/verifyVHDsOnSR.py
++++ b/drivers/verifyVHDsOnSR.py
+@@ -28,8 +28,9 @@ import vhdutil
+ 
+ import VDI
+ 
++from constants import NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX
+ from lock import Lock
+-from lvmcowutil import NS_PREFIX_LVM, LV_PREFIX, VG_LOCATION, VG_PREFIX
++from lvmcowutil import LV_PREFIX
+ from refcounter import RefCounter
+ from vditype import VdiType
+ 
+diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
+index 2802f05c..33792d8e 100644
+--- a/tests/test_on_slave.py
++++ b/tests/test_on_slave.py
+@@ -10,6 +10,8 @@ import lvmcowutil
+ import util
+ 
+ import on_slave
++
++from constants import NS_PREFIX_LVM
+ from vditype import VdiType
+ 
+ 
+@@ -184,7 +186,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         sr_uuid = str(uuid.uuid4())
+         vdi_uuid = str(uuid.uuid4())
+         vdi_fileName = "test-vdi.vhd"
+-        lock_ref = lvmcowutil.NS_PREFIX_LVM + sr_uuid
++        lock_ref = NS_PREFIX_LVM + sr_uuid
+ 
+         args = {"vgName": vgName,
+                 "action1": "deactivateNoRefcount",
+@@ -233,7 +235,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         origParentUuid = str(uuid.uuid4())
+         vdi_uuid = str(uuid.uuid4())
+ 
+-        lock_ref = lvmcowutil.NS_PREFIX_LVM + vdi_uuid
++        lock_ref = NS_PREFIX_LVM + vdi_uuid
+ 
+         args = {"vgName": vgName,
+                 "action1": "deactivateNoRefcount",
+@@ -257,7 +259,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         vdi_uuid = str(uuid.uuid4())
+         lv_name = 'test_lv'
+ 
+-        lock_ref = lvmcowutil.NS_PREFIX_LVM + sr_uuid
++        lock_ref = NS_PREFIX_LVM + sr_uuid
+ 
+         args = {"vgName": vgName,
+                 "action1": "activate",
+@@ -288,7 +290,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         origParentUuid = str(uuid.uuid4())
+         vdi_uuid = str(uuid.uuid4())
+ 
+-        lock_ref = lvmcowutil.NS_PREFIX_LVM + vdi_uuid
++        lock_ref = NS_PREFIX_LVM + vdi_uuid
+ 
+         self.mock_lvmcache.deactivateNoRefcount.side_effect = util.CommandException(errno.EIO, 'activate')
+ 
+@@ -317,7 +319,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         origParentUuid = str(uuid.uuid4())
+         vdi_uuid = str(uuid.uuid4())
+ 
+-        lock_ref = lvmcowutil.NS_PREFIX_LVM + vdi_uuid
++        lock_ref = NS_PREFIX_LVM + vdi_uuid
+ 
+         self.mock_lvmcache.activateNoRefcount.side_effect = util.CommandException(errno.EIO, 'activate')
+ 
+@@ -343,7 +345,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         vdi_uuid = str(uuid.uuid4())
+         lv_name = 'test_lv'
+ 
+-        lock_ref = lvmcowutil.NS_PREFIX_LVM + sr_uuid
++        lock_ref = NS_PREFIX_LVM + sr_uuid
+ 
+         self.mock_lvmcache.activate.side_effect = util.CommandException(errno.EIO, 'activate')
+ 
+@@ -373,7 +375,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         vdi_uuid = str(uuid.uuid4())
+         lv_name = 'test_lv'
+ 
+-        lock_ref = lvmcowutil.NS_PREFIX_LVM + sr_uuid
++        lock_ref = NS_PREFIX_LVM + sr_uuid
+ 
+         self.mock_lvmcache.activateNoRefcount.side_effect = util.CommandException(errno.EIO, 'activate')
+ 
+@@ -404,7 +406,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         vdi_uuid = str(uuid.uuid4())
+         lv_name = 'test_lv'
+ 
+-        lock_ref = lvmcowutil.NS_PREFIX_LVM + sr_uuid
++        lock_ref = NS_PREFIX_LVM + sr_uuid
+ 
+         self.mock_lvmcache.deactivate.side_effect = util.CommandException(errno.EIO, 'activate')
+ 

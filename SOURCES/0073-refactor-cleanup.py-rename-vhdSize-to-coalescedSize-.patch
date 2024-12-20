@@ -1,0 +1,40 @@
+From 9a77aafe29643a7555f4c67aefae0971f775cb91 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 20 Dec 2024 15:37:14 +0100
+Subject: [PATCH 73/89] refactor(cleanup.py): rename vhdSize to coalescedSize
+ (storage speed helpers)
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index a599e1b9..8e2e3e42 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2368,11 +2368,11 @@ class SR(object):
+                                        .format(uuid=vdi.uuid))
+         return self._liveLeafCoalesce(vdi)
+ 
+-    def calcStorageSpeed(self, startTime, endTime, vhdSize):
++    def calcStorageSpeed(self, startTime, endTime, coalescedSize):
+         speed = None
+         total_time = endTime - startTime
+         if total_time > 0:
+-            speed = float(vhdSize) / float(total_time)
++            speed = float(coalescedSize) / float(total_time)
+         return speed
+ 
+     def writeSpeedToFile(self, speed):
+@@ -2400,8 +2400,8 @@ class SR(object):
+             Util.log("Closing file: {myfile}".format(myfile=path))
+             self.unlock()
+ 
+-    def recordStorageSpeed(self, startTime, endTime, vhdSize):
+-        speed = self.calcStorageSpeed(startTime, endTime, vhdSize)
++    def recordStorageSpeed(self, startTime, endTime, coalescedSize):
++        speed = self.calcStorageSpeed(startTime, endTime, coalescedSize)
+         if speed is None:
+             return
+ 

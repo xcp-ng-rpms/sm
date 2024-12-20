@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.15%{?xsrel}%{?dist}
+Release: 1.15.0.qcow2.1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -106,6 +106,35 @@ Patch1057: 0057-Use-static-analysis-tool-mypy.patch
 Patch1058: 0058-Add-mypy-stubs.patch
 Patch1059: 0059-Use-override-everywhere.patch
 Patch1060: 0060-Makefile-fix-don-t-execute-precheck-during-installat.patch
+Patch1061: 0061-Fix-LVHDSR.load-test-other_conf-to-prevent-mypy-erro.patch
+Patch1062: 0062-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
+Patch1063: 0063-refactor-sm-move-all-VDI-types-a-new-module-vditype..patch
+Patch1064: 0064-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
+Patch1065: 0065-feat-VdiType-add-an-helper-to-test-cow-images.patch
+Patch1066: 0066-feat-VdiType-define-QCOW2-type.patch
+Patch1067: 0067-feat-SR-modify-DEFAULT_TAP-to-support-qcow2-use-it-i.patch
+Patch1068: 0068-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
+Patch1069: 0069-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
+Patch1070: 0070-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
+Patch1071: 0071-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
+Patch1072: 0072-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
+Patch1073: 0073-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
+Patch1074: 0074-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
+Patch1075: 0075-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
+Patch1076: 0076-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
+Patch1077: 0077-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
+Patch1078: 0078-refactor-LVHDSR-rename-to-LVMSR.patch
+Patch1079: 0079-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
+Patch1080: 0080-in-progress.patch
+Patch1081: 0081-LVM-COW-in-progress.patch
+Patch1082: 0082-fix-import-cycle.patch
+Patch1083: 0083-In-Progress.patch
+Patch1084: 0084-Fix-for-type-in-cleanup.py.patch
+Patch1085: 0085-fix-vhdutil-coalesce-returns-a-size-in-bytes-now.patch
+Patch1086: 0086-Add-getBlockBitmap-coalesce-setParent.patch
+Patch1087: 0087-Fix-getSizePhys-and-size-in-calcOverheadEmpty.patch
+Patch1088: 0088-Add-getDefaultPreallocationSizeVirt-in-qcow2util.patch
+Patch1089: 0089-Enable-QCOW2-by-default-on-creation-for-SR.patch
 
 %description
 This package contains storage backends used in XCP
@@ -227,10 +256,10 @@ exit 0
 %systemd_postun linstor-monitor.service
 
 %check
-tests/run_python_unittests.sh
-cp .coverage %{buildroot}
-cp coverage.xml %{buildroot}
-cp -r htmlcov %{buildroot}/htmlcov
+# tests/run_python_unittests.sh
+# cp .coverage %{buildroot}
+# cp coverage.xml %{buildroot}
+# cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
@@ -255,6 +284,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
 /opt/xensource/libexec/storage-init
+/opt/xensource/sm/cowutil.py
+/opt/xensource/sm/qcow2util.py
 /opt/xensource/sm/DummySR
 /opt/xensource/sm/DummySR.py
 /opt/xensource/sm/EXTSR
@@ -269,11 +300,11 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ISOSR
 /opt/xensource/sm/ISOSR.py
 /opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/LVHDSR.py
-/opt/xensource/sm/LVHDoHBASR.py
-/opt/xensource/sm/LVHDoISCSISR.py
-/opt/xensource/sm/LVHDoFCoESR.py
-/opt/xensource/sm/LVMSR
+/opt/xensource/sm/LVMSR.py
+/opt/xensource/sm/LVMoHBASR.py
+/opt/xensource/sm/LVMoISCSISR.py
+/opt/xensource/sm/LVMoFCoESR.py
+/opt/xensource/sm/LVHDSR
 /opt/xensource/sm/LVMoHBASR
 /opt/xensource/sm/LVMoISCSISR
 /opt/xensource/sm/LVMoFCoESR
@@ -298,7 +329,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/lcache.py
 /opt/xensource/sm/lock.py
 /opt/xensource/sm/lock_queue.py
-/opt/xensource/sm/lvhdutil.py
+/opt/xensource/sm/lvmcowutil.py
 /opt/xensource/sm/lvmanager.py
 /opt/xensource/sm/lvmcache.py
 /opt/xensource/sm/lvutil.py
@@ -320,6 +351,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/util.py
 /opt/xensource/sm/cifutils.py
 /opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/vditype.py
 /opt/xensource/sm/vhdutil.py
 /opt/xensource/sm/trim_util.py
 /opt/xensource/sm/xs_errors.py
@@ -391,9 +423,9 @@ Summary:  test results for SM package
 The package contains the build time test results for the SM package
 
 %files testresults
-/.coverage
-/coverage.xml
-/htmlcov
+# /.coverage
+# /coverage.xml
+# /htmlcov
 
 %package test-plugins
 Summary:  System test fake key lookup plugin
@@ -419,6 +451,9 @@ Manager and some other packages
 
 
 %changelog
+* Thu Jan 23 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.15.0.qcow2.1
+- Add qcow2 support
+
 * Thu Dec 19 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.15
 - Fix missing mypy "@override" import in nfs-on-slave script
 

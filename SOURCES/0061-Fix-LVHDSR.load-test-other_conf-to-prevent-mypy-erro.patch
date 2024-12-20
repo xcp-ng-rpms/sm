@@ -1,0 +1,39 @@
+From 85b9b23330607ecc90ff0d7301ee07565ef301cb Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 8 Jan 2025 11:12:13 +0100
+Subject: [PATCH 61/89] Fix LVHDSR.load: test other_conf to prevent mypy error
+
+Avoid:
+```
+drivers/LVHDSR.py:195: error: Item "None" of "Any | None" has no attribute "get"  [union-attr]
+drivers/LVHDSR.py:196: error: Value of type "Any | None" is not indexable  [index]
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LVHDSR.py | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index 3e9afcde..c5ed1907 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -167,8 +167,7 @@ class LVHDSR(SR.SR):
+         self.provision = self.PROVISIONING_DEFAULT
+ 
+         self.other_conf = None
+-        has_sr_ref = self.srcmd.params.get("sr_ref")
+-        if has_sr_ref:
++        if self.srcmd.params.get("sr_ref"):
+             self.other_conf = self.session.xenapi.SR.get_other_config(self.sr_ref)
+ 
+         self.lvm_conf = None
+@@ -182,7 +181,7 @@ class LVHDSR(SR.SR):
+                         opterr='Failed to initialise the LVMCache')
+         self.lvActivator = LVActivator(self.uuid, self.lvmCache)
+         self.journaler = Journaler(self.lvmCache)
+-        if not has_sr_ref:
++        if not self.other_conf:
+             return  # must be a probe call
+         # Test for thick vs thin provisioning conf parameter
+         if 'allocation' in self.dconf:

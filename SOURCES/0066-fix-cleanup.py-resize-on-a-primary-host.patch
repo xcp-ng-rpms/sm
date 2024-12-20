@@ -1,0 +1,32 @@
+From 9f970a60575c7613f203a63fd9cbb7c00c963b5f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 10 Feb 2025 11:37:10 +0100
+Subject: [PATCH] fix(cleanup.py): resize on a primary host
+
+Until now the cleanup VHD resize commands were performed on the master.
+But it doesn't work every time when a VHD of a chain is opened for reading on another host.
+
+As a reminder, this portion of code is only executed rarely.
+A user must have resized a VHD that must later be coalesced.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 0952cc93..80a650cb 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1743,7 +1743,11 @@ class LinstorVDI(VDI):
+             offset = self.drbd_size
+             if self.sizeVirt < size:
+                 oldSize = self.drbd_size
++<<<<<<< HEAD
+                 self.drbd_size = LinstorVolumeManager.round_up_volume_size(size)
++=======
++                self.drbd_size = util.roundup(LinstorVolumeManager.BLOCK_SIZE, size)
++>>>>>>> 2c746f78 (fix(cleanup.py): resize on a primary host)
+                 Util.log("  Growing %s: %d->%d" % (self.path, oldSize, self.drbd_size))
+                 self.sr._linstor.resize_volume(self.uuid, self.drbd_size)
+                 offset = oldSize

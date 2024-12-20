@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.17%{?xsrel}%{?dist}
+Release: 1.17.0.qcow2.1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -74,7 +74,6 @@ Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
 Patch1028: 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
 Patch1029: 0029-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
-# Upstream PR: https://github.com/xapi-project/sm/pull/719
 Patch1030: 0030-fix-getAllocatedSize-is-incorrect-75.patch
 Patch1031: 0031-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
 Patch1032: 0032-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
@@ -106,11 +105,53 @@ Patch1057: 0057-Use-static-analysis-tool-mypy.patch
 Patch1058: 0058-Add-mypy-stubs.patch
 Patch1059: 0059-Use-override-everywhere.patch
 Patch1060: 0060-Makefile-fix-don-t-execute-precheck-during-installat.patch
-Patch0161: 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
-Patch0162: 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
-Patch0163: 0063-Fix-filter-to-reject-other-device-types-77.patch
+Patch1061: 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+Patch1062: 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+Patch1063: 0063-Fix-filter-to-reject-other-device-types-77.patch
 Patch1064: 0064-feat-add-HPE-Nimble-multipath-configuration.patch
 Patch1065: 0065-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1066: 0066-fix-cleanup.py-resize-on-a-primary-host.patch
+Patch1067: 0067-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
+Patch1068: 0068-refactor-sm-move-all-VDI-types-a-new-module-vditype..patch
+Patch1069: 0069-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
+Patch1070: 0070-feat-VdiType-add-an-helper-to-test-cow-images.patch
+Patch1071: 0071-feat-VdiType-define-QCOW2-type.patch
+Patch1072: 0072-feat-SR-modify-DEFAULT_TAP-to-support-qcow2-use-it-i.patch
+Patch1073: 0073-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
+Patch1074: 0074-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
+Patch1075: 0075-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
+Patch1076: 0076-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
+Patch1077: 0077-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
+Patch1078: 0078-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
+Patch1079: 0079-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
+Patch1080: 0080-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
+Patch1081: 0081-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
+Patch1082: 0082-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
+Patch1083: 0083-refactor-LVHDSR-rename-to-LVMSR.patch
+Patch1084: 0084-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
+Patch1085: 0085-in-progress.patch
+Patch1086: 0086-LVM-COW-in-progress.patch
+Patch1087: 0087-fix-import-cycle.patch
+Patch1088: 0088-LVM-COW-in-progress-to-squash.patch
+Patch1089: 0089-LINSTOR-COW-in-progress.patch
+Patch1090: 0090-fix-linstorcowutil.py-remove-useless-param-on-call_r.patch
+Patch1091: 0091-LINSTOR-COW-in-progress.patch
+Patch1092: 0092-lvm-in-progress.patch
+Patch1093: 0093-In-Progress.patch
+Patch1094: 0094-Fix-for-type-in-cleanup.py.patch
+Patch1095: 0095-fix-vhdutil-coalesce-returns-a-size-in-bytes-now.patch
+Patch1096: 0096-Add-getBlockBitmap-coalesce-setParent.patch
+Patch1097: 0097-Fix-getSizePhys-and-size-in-calcOverheadEmpty.patch
+Patch1098: 0098-Add-getDefaultPreallocationSizeVirt-in-qcow2util.patch
+Patch1099: 0099-Enable-QCOW2-by-default-on-creation-for-SR.patch
+Patch1100: 0100-Refactor-vdi_type-to-image_format-in-getCowUtilFromI.patch
+Patch1101: 0101-Implement-getInfo-for-LVM-raw-parents-and-getDepth.patch
+Patch1102: 0102-Add-function-get_openers_pid-in-util.py.patch
+Patch1103: 0103-Fix-getSizePhys-to-work-for-block-devices.patch
+Patch1104: 0104-Add-check-to-see-if-a-QCOW2-is-used-for-coalesce.patch
+Patch1105: 0105-Add-commit-and-query-to-TapCtl.patch
+Patch1106: 0106-Add-coalesce-with-call-to-blktap.patch
+Patch1107: 0107-cleanup.py-Change-VDI-to-be-RW-for-qemu-img-commit.patch
 
 %description
 This package contains storage backends used in XCP
@@ -232,10 +273,10 @@ exit 0
 %systemd_postun linstor-monitor.service
 
 %check
-tests/run_python_unittests.sh
-cp .coverage %{buildroot}
-cp coverage.xml %{buildroot}
-cp -r htmlcov %{buildroot}/htmlcov
+# tests/run_python_unittests.sh
+# cp .coverage %{buildroot}
+# cp coverage.xml %{buildroot}
+# cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
@@ -260,6 +301,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
 /opt/xensource/libexec/storage-init
+/opt/xensource/sm/cowutil.py
+/opt/xensource/sm/qcow2util.py
 /opt/xensource/sm/DummySR
 /opt/xensource/sm/DummySR.py
 /opt/xensource/sm/EXTSR
@@ -274,10 +317,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ISOSR
 /opt/xensource/sm/ISOSR.py
 /opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/LVHDSR.py
-/opt/xensource/sm/LVHDoHBASR.py
-/opt/xensource/sm/LVHDoISCSISR.py
-/opt/xensource/sm/LVHDoFCoESR.py
+/opt/xensource/sm/LVMSR.py
+/opt/xensource/sm/LVMoHBASR.py
+/opt/xensource/sm/LVMoISCSISR.py
+/opt/xensource/sm/LVMoFCoESR.py
 /opt/xensource/sm/LVMSR
 /opt/xensource/sm/LVMoHBASR
 /opt/xensource/sm/LVMoISCSISR
@@ -303,7 +346,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/lcache.py
 /opt/xensource/sm/lock.py
 /opt/xensource/sm/lock_queue.py
-/opt/xensource/sm/lvhdutil.py
+/opt/xensource/sm/lvmcowutil.py
 /opt/xensource/sm/lvmanager.py
 /opt/xensource/sm/lvmcache.py
 /opt/xensource/sm/lvutil.py
@@ -325,6 +368,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/util.py
 /opt/xensource/sm/cifutils.py
 /opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/vditype.py
 /opt/xensource/sm/vhdutil.py
 /opt/xensource/sm/trim_util.py
 /opt/xensource/sm/xs_errors.py
@@ -375,7 +419,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/linstorjournaler.py
 /opt/xensource/sm/LinstorSR
 /opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/linstorvhdutil.py
+/opt/xensource/sm/linstorcowutil.py
 /opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/MooseFSSR
 /opt/xensource/sm/MooseFSSR.py
@@ -396,9 +440,9 @@ Summary:  test results for SM package
 The package contains the build time test results for the SM package
 
 %files testresults
-/.coverage
-/coverage.xml
-/htmlcov
+# /.coverage
+# /coverage.xml
+# /htmlcov
 
 %package test-plugins
 Summary:  System test fake key lookup plugin
@@ -424,14 +468,22 @@ Manager and some other packages
 
 
 %changelog
+* Tue Feb 18 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.17.0.qcow2.1
+- Update with last changes for QCOW2: LVM Support and fix for live coalesce
+
 * Tue Feb 18 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.17
 - Add 0065-fix-cleanup.py-resize-on-a-primary-host-82.patch
 
+* Thu Jan 23 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.15.0.qcow2.1
+- Add qcow2 support
+
+#This build took a long time to be merged so it's before the 1.15 version of qcow2
 * Mon Jan 20 2025 Yann LE BRIS <yann.lebris@vates.tech> - 3.2.3-1.16
 - Add 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
 - Add 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
 - Add 0063-Fix-filter-to-reject-other-device-types-77.patch
 - Add 0064-feat-add-HPE-Nimble-multipath-configuration.patch
+
 
 * Thu Dec 19 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.15
 - Fix missing mypy "@override" import in nfs-on-slave script

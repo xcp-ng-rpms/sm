@@ -1,0 +1,52 @@
+From a88b71993a91d1f5e071dcb4b0bc0b1026e9c7d3 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Sat, 14 Dec 2024 00:33:10 +0100
+Subject: [PATCH] feat(SR): modify DEFAULT_TAP to support qcow2 + use it in
+ FileSR
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/FileSR.py  | 2 +-
+ drivers/SR.py      | 2 +-
+ drivers/blktap2.py | 2 --
+ 3 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 05371ee0..88812ddc 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -97,7 +97,7 @@ class FileSR(SR.SR):
+     def load(self, sr_uuid) -> None:
+         self.ops_exclusive = OPS_EXCLUSIVE
+         self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+-        self.sr_vditype = VdiType.VHD
++        self.sr_vditype = SR.DEFAULT_TAP
+         if 'location' not in self.dconf or  not self.dconf['location']:
+             raise xs_errors.XenError('ConfigLocationMissing')
+         self.remotepath = self.dconf['location']
+diff --git a/drivers/SR.py b/drivers/SR.py
+index fb2798ea..c0350df6 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -29,7 +29,7 @@ import os
+ import traceback
+ 
+ MOUNT_BASE = '/var/run/sr-mount'
+-DEFAULT_TAP = 'vhd'
++DEFAULT_TAP = "vhd,qcow2"
+ TAPDISK_UTIL = '/usr/sbin/td-util'
+ MASTER_LVM_CONF = '/etc/lvm/master'
+ 
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 65684e5f..1a84f11b 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -1177,8 +1177,6 @@ class VDI(object):
+ 
+         def get_vdi_type(self):
+             _type = self.vdi.vdi_type
+-            if not _type:
+-                _type = self.vdi.sr.sr_vditype
+             if not _type:
+                 raise VDI.UnexpectedVDIType(_type, self.vdi)
+             return _type

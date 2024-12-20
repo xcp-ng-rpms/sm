@@ -1,0 +1,23 @@
+From faff7aa1500d4e1fd5243fec202e1f75d07913b3 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Wed, 22 Jan 2025 16:01:50 +0100
+Subject: [PATCH] fix(vhdutil): coalesce returns a size in bytes now
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ tests/test_vhdutil.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/test_vhdutil.py b/tests/test_vhdutil.py
+index 6e40b068..6c34276f 100644
+--- a/tests/test_vhdutil.py
++++ b/tests/test_vhdutil.py
+@@ -361,7 +361,7 @@ class TestVhdUtil(unittest.TestCase):
+         context.add_executable(VHD_UTIL, test_function)
+ 
+         # Act/Assert
+-        self.assertEqual(25 * self.vhdutil.VHD_SECTOR_SIZE, self.vhdutil.coalesce(TEST_VHD_PATH))
++        self.assertEqual(25 * self.vhdutil.SECTOR_SIZE, vhdutil.coalesce(TEST_VHD_PATH))
+ 
+     @testlib.with_context
+     def test_get_vhd_info_allocated_size(self, context):

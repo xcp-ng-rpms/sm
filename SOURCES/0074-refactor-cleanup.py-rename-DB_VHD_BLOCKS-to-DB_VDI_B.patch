@@ -1,0 +1,109 @@
+From b3b97aa7832844b92b9272310ede26db75656efe Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 19 Dec 2024 15:21:56 +0100
+Subject: [PATCH] refactor(cleanup.py): rename DB_VHD_BLOCKS to DB_VDI_BLOCKS
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/VDI.py     |  2 +-
+ drivers/cleanup.py | 18 +++++++++---------
+ 2 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index 50d1d6ed..c580ceda 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -511,7 +511,7 @@ class VDI(object):
+         # List of sm-config keys that should not be modifed by db_update
+         smconfig_protected_keys = [
+             cleanup.VDI.DB_VDI_PAUSED,
+-            cleanup.VDI.DB_VHD_BLOCKS,
++            cleanup.VDI.DB_VDI_BLOCKS,
+             cleanup.VDI.DB_VDI_RELINKING,
+             cleanup.VDI.DB_VDI_ACTIVATING]
+ 
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 8e11eb82..5c547843 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -492,7 +492,7 @@ class VDI(object):
+     # config keys & values
+     DB_VDI_PARENT = "vhd-parent"
+     DB_VDI_TYPE = "vdi_type"
+-    DB_VHD_BLOCKS = "vhd-blocks"
++    DB_VDI_BLOCKS = "vhd-blocks"
+     DB_VDI_PAUSED = "paused"
+     DB_VDI_RELINKING = "relinking"
+     DB_VDI_ACTIVATING = "activating"
+@@ -512,7 +512,7 @@ class VDI(object):
+     CONFIG_TYPE = {
+             DB_VDI_PARENT: XAPI.CONFIG_SM,
+             DB_VDI_TYPE: XAPI.CONFIG_SM,
+-            DB_VHD_BLOCKS: XAPI.CONFIG_SM,
++            DB_VDI_BLOCKS: XAPI.CONFIG_SM,
+             DB_VDI_PAUSED: XAPI.CONFIG_SM,
+             DB_VDI_RELINKING: XAPI.CONFIG_SM,
+             DB_VDI_ACTIVATING: XAPI.CONFIG_SM,
+@@ -749,7 +749,7 @@ class VDI(object):
+ 
+     def updateBlockInfo(self) -> Optional[str]:
+         val = base64.b64encode(self._queryVHDBlocks()).decode()
+-        self.setConfig(VDI.DB_VHD_BLOCKS, val)
++        self.setConfig(VDI.DB_VDI_BLOCKS, val)
+         return val
+ 
+     def rename(self, uuid) -> None:
+@@ -1095,7 +1095,7 @@ class VDI(object):
+         upper bound)"""
+         # make sure we don't use stale BAT info from vdi_rec since the child
+         # was writable all this time
+-        self.delConfig(VDI.DB_VHD_BLOCKS)
++        self.delConfig(VDI.DB_VDI_BLOCKS)
+         blocksChild = self.getVHDBlocks()
+         blocksParent = self.parent.getVHDBlocks()
+         numBlocks = Util.countBits(blocksChild, blocksParent)
+@@ -2264,7 +2264,7 @@ class SR(object):
+         for vdi in self.vdis.values():
+             if vdi.scanError or len(vdi.children) == 0:
+                 continue
+-            if not vdi.getConfig(vdi.DB_VHD_BLOCKS):
++            if not vdi.getConfig(vdi.DB_VDI_BLOCKS):
+                 return True
+         return False
+ 
+@@ -2272,7 +2272,7 @@ class SR(object):
+         for vdi in self.vdis.values():
+             if vdi.scanError or len(vdi.children) == 0:
+                 continue
+-            if not vdi.getConfig(vdi.DB_VHD_BLOCKS):
++            if not vdi.getConfig(vdi.DB_VDI_BLOCKS):
+                 vdi.updateBlockInfo()
+ 
+     def cleanupCoalesceJournals(self):
+@@ -2603,7 +2603,7 @@ class SR(object):
+         vdi.parent.delConfig(VDI.DB_VDI_PARENT)
+         if vdi.parent.vdi_type == VdiType.RAW:
+             vdi.parent.setConfig(VDI.DB_VDI_TYPE, VdiType.RAW)
+-        vdi.parent.delConfig(VDI.DB_VHD_BLOCKS)
++        vdi.parent.delConfig(VDI.DB_VDI_BLOCKS)
+         util.fistpoint.activate("LVHDRT_coaleaf_after_vdirec", self.uuid)
+ 
+         self._updateNode(vdi)
+@@ -2977,7 +2977,7 @@ class LVHDSR(SR):
+         for vdi in self.vdis.values():
+             if vdi.scanError or not VdiType.isCowImage(vdi.vdi_type) or len(vdi.children) == 0:
+                 continue
+-            if not vdi.getConfig(vdi.DB_VHD_BLOCKS):
++            if not vdi.getConfig(vdi.DB_VDI_BLOCKS):
+                 return True
+         return False
+ 
+@@ -2987,7 +2987,7 @@ class LVHDSR(SR):
+         for vdi in self.vdis.values():
+             if vdi.scanError or not VdiType.isCowImage(vdi.vdi_type) or len(vdi.children) == 0:
+                 continue
+-            if not vdi.getConfig(vdi.DB_VHD_BLOCKS):
++            if not vdi.getConfig(vdi.DB_VDI_BLOCKS):
+                 vdi.updateBlockInfo()
+                 numUpdated += 1
+         if numUpdated:

@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -121,6 +121,7 @@ Patch1020: 0020-Backport-NFS4-only-support.patch
 Patch1021: 0021-Backport-probe-for-NFS4-when-rpcinfo-does-not-includ.patch
 Patch1022: 0022-feat-LargeBlock-backport-of-largeblocksr-51-55.patch
 Patch1023: 0023-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-56.patch
+Patch1024: 0024-Fix-filter-to-reject-other-device-types-76.patch
 
 %description
 This package contains storage backends used in XCP
@@ -524,6 +525,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Fri Jan 17 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-13.2
+- Add 0024-Fix-filter-to-reject-other-device-types-76.patch
+
 * Thu Oct 03 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-13.1
 - Sync with hotfix XS82ECU1075
 - Sync patches with our latest 2.30.8-8.2 branch

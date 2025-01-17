@@ -1,7 +1,7 @@
 From 8ae786437072d4328825c97b0786d7caa1f4ca35 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 20 Oct 2021 14:33:04 +0200
-Subject: [PATCH 045/177] feat(LinstorVolumeManager): add a fallback to find
+Subject: [PATCH 045/180] feat(LinstorVolumeManager): add a fallback to find
  controller uri (when len(hosts) >= 4)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

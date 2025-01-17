@@ -1,7 +1,7 @@
 From 90cd3fd85ce5c73b4727a579acda75721252963a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 5 Oct 2022 10:45:50 +0200
-Subject: [PATCH 083/177] fix(linstorvolumemanager): use an array to store
+Subject: [PATCH 083/180] fix(linstorvolumemanager): use an array to store
  diskful volumes info
 
 Otherwise the `is_diskful` attr only reflects the info of one host

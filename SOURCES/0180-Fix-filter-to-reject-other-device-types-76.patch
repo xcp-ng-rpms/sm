@@ -1,0 +1,23 @@
+From fbef448eee94b08a7cfd2ba3685766943c08c7a0 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 9 Jan 2025 17:41:22 +0100
+Subject: [PATCH 180/180] Fix filter to reject other device types (#76)
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LargeBlockSR.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
+index 0fd1f345..e90108ed 100644
+--- a/drivers/LargeBlockSR.py
++++ b/drivers/LargeBlockSR.py
+@@ -215,7 +215,7 @@ class LargeBlockSR(EXTSR.EXTSR):
+         util.SMlog("Reconnecting VG {} to use emulated device".format(self.vgname))
+         try:
+             lvutil.setActiveVG(self.vgname, False)
+-            lvutil.setActiveVG(self.vgname, True, config="devices{ global_filter = [ \"r|^/dev/nvme.*|\", \"a|/dev/loop.*|\" ] }")
++            lvutil.setActiveVG(self.vgname, True, config="devices{ global_filter = [ \"a|/dev/loop.*|\", \"r|.*|\" ] }")
+         except util.CommandException as e:
+             xs_errors.XenError("LargeBlockVGReconnectFailed", opterr="Failed to reconnect the VolumeGroup {}, error: {}".format(self.vgname, e))
+ 

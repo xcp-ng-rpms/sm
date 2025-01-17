@@ -1,7 +1,7 @@
 From 65d5ff02da3d1c084573924a82735da84f1ec5c4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 4 Oct 2022 18:48:09 +0200
-Subject: [PATCH 082/177] fix(LinstorSR): start correctly HA servers (HTTP/NBD)
+Subject: [PATCH 082/180] fix(LinstorSR): start correctly HA servers (HTTP/NBD)
  after reboot
 
 Use a timeout call after a reboot to get a XAPI session because

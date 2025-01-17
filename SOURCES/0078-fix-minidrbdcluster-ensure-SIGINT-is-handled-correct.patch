@@ -1,7 +1,7 @@
 From 9c9b5a3ea111d22c550e6f983ca7539b14908737 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 15 Sep 2022 11:34:25 +0200
-Subject: [PATCH 078/177] fix(minidrbdcluster): ensure SIGINT is handled
+Subject: [PATCH 078/180] fix(minidrbdcluster): ensure SIGINT is handled
  correctly
 
 This patch is here to make sure no LINSTOR controller survives when

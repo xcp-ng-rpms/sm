@@ -1,7 +1,7 @@
 From 999ad04d864029992e45b11d26120a6ea2e07830 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:13:52 +0200
-Subject: [PATCH 51/60] Prevent bad mypy error in TestMultiLUNISCSISR using
+Subject: [PATCH 51/69] Prevent bad mypy error in TestMultiLUNISCSISR using
  formatted-string
 
 Avoid:

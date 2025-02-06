@@ -1,7 +1,7 @@
 From 32d0de18367a53e1e0f6c4d53615825cd1fa7833 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 28 Nov 2024 15:42:57 +0100
-Subject: [PATCH 30/60] fix: getAllocatedSize is incorrect (#75)
+Subject: [PATCH 30/69] fix: getAllocatedSize is incorrect (#75)
 
 The `VDI.canLiveCoalesce` method can manipulates sizes of different units because of this change:
 ```

@@ -1,7 +1,7 @@
 From 3ab297de5c982b5ac788b884a6354bc5c2fb8f4a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 14:41:58 +0200
-Subject: [PATCH 47/60] Define and `details` attr on `Failure` mock
+Subject: [PATCH 47/69] Define and `details` attr on `Failure` mock
 
 Required by mypy. Attr is referenced in ISOSR.py.
 

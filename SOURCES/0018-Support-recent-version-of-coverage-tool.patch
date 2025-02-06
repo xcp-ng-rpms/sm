@@ -1,7 +1,7 @@
 From 09aa72c4d2655ba1027dc831b1580bde87643447 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 4 May 2023 10:24:22 +0200
-Subject: [PATCH 18/60] Support recent version of coverage tool (coverage
+Subject: [PATCH 18/69] Support recent version of coverage tool (coverage
  7.2.5)
 
 Without these changes many warns/errors are emitted:

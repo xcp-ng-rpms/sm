@@ -1,7 +1,7 @@
 From 5d53761a96cdaeacc41fcfebe05366b70a7d3a26 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 14:48:38 +0200
-Subject: [PATCH 41/60] Use a specific var for NFS options in ISOSR.attach
+Subject: [PATCH 41/69] Use a specific var for NFS options in ISOSR.attach
 
 Prevent mypy errors when a variable type is changed dynamically from list to string.
 

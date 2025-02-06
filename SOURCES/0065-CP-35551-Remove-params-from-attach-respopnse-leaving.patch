@@ -1,0 +1,25 @@
+From 2ecac7b284f411c639c08b6afacf9a67a8565101 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Mon, 6 Jan 2025 10:26:02 +0000
+Subject: [PATCH 65/69] CP-35551: Remove params from attach respopnse, leaving
+ params_nbd
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+---
+ drivers/blktap2.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index bb2cbcac..5436f027 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -1599,8 +1599,7 @@ class VDI(object):
+         options = {"rdonly": not writable}
+         options.update(caching_params)
+         o_direct, o_direct_reason = self.get_o_direct_capability(options)
+-        struct = {'params': back_path,
+-                  'params_nbd': nbd_path,
++        struct = {'params_nbd': nbd_path,
+                   'o_direct': o_direct,
+                   'o_direct_reason': o_direct_reason,
+                   'xenstore_data': self.xenstore_data}

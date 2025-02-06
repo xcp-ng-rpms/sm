@@ -1,7 +1,7 @@
 From fc5b6d9b527aa15eca6e5c833aa348e5ecf89025 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 14:35:40 +0200
-Subject: [PATCH 37/60] Fix override of BaseISCSISR.detach
+Subject: [PATCH 37/69] Fix override of BaseISCSISR.detach
 
 The current detach method of BaseISCSISR doesn't correctly override the method of the SR class.
 It actually adds a "delete" parameter, which is seen as an error by analyzers like mypy.

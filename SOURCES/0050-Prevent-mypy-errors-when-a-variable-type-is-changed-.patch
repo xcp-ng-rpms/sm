@@ -1,7 +1,7 @@
 From c314b5ecfec796c2329f35d1ed3e913b360c21a1 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 14:58:18 +0200
-Subject: [PATCH 50/60] Prevent mypy errors when a variable type is changed in
+Subject: [PATCH 50/69] Prevent mypy errors when a variable type is changed in
  `BaseISCSISR`
 
 Log without this change on `chappasword` and `incoming_chappassword`:

@@ -1,0 +1,32 @@
+From 6eebc225a2b9021769e3567fa7a37924e144c081 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Mon, 6 Jan 2025 14:35:44 +0000
+Subject: [PATCH 69/69] CP-35551: add conflicts against blktap < 4.0.0 to spec
+ template
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+---
+ mk/sm.spec.in | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/mk/sm.spec.in b/mk/sm.spec.in
+index faee7bf1..c41233b2 100755
+--- a/mk/sm.spec.in
++++ b/mk/sm.spec.in
+@@ -2,7 +2,7 @@
+ 
+ Summary: sm - XCP storage managers
+ Name:    sm
+-Version: @SM_VERSION@ 
++Version: @SM_VERSION@
+ Release: @SM_RELEASE@
+ Group:   System/Hypervisor
+ License: LGPL
+@@ -24,6 +24,7 @@ Requires: xenserver-multipath
+ Requires: python3-bitarray
+ Requires: python3-future
+ Conflicts: kernel < 4.19.19-5.0.0
++Conflicts: blktap < 4.0.0
+ 
+ %description
+ This package contains storage backends used in XCP

@@ -1,7 +1,7 @@
 From 59ed5e3e899df39cc993aefee2edc6e5e80bb140 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 7 Nov 2024 15:50:22 +0100
-Subject: [PATCH 60/60] Makefile fix: don't execute precheck during
+Subject: [PATCH 60/69] Makefile fix: don't execute precheck during
  installation
 
 Due to mypy modifications, we can't build the sm RPM in Koji

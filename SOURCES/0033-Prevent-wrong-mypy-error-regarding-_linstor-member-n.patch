@@ -1,7 +1,7 @@
 From 94214801928d2a07fcc247cb8fa0bca07eb8b718 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:02:30 +0200
-Subject: [PATCH 33/60] Prevent wrong mypy error regarding `_linstor` member
+Subject: [PATCH 33/69] Prevent wrong mypy error regarding `_linstor` member
  not set
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

@@ -1,7 +1,7 @@
 From 40b2d2d9873cb0e38d0e6e92889558631db14dd4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 21 Oct 2024 18:44:42 +0200
-Subject: [PATCH 52/60] Count correctly IQN sessions during ISCSISR attach
+Subject: [PATCH 52/69] Count correctly IQN sessions during ISCSISR attach
 
 Before this change, IQNs were concatenated into a single string when `multiSession` was used.
 

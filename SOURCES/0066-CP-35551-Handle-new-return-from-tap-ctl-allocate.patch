@@ -1,0 +1,392 @@
+From ce0943248399fc19931a6615731ce4f4d6b1e4e2 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Mon, 6 Jan 2025 10:26:02 +0000
+Subject: [PATCH 66/69] CP-35551: Handle new return from tap-ctl allocate
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+---
+ drivers/blktap2.py    | 143 +++++++-----------------------------------
+ tests/test_blktap2.py |  84 ++++++++++++++++++++++---
+ 2 files changed, 97 insertions(+), 130 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 5436f027..240eefda 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -585,6 +585,7 @@ class ClassDevice(KObject):
+ class Blktap(ClassDevice):
+ 
+     DEV_BASEDIR = '/dev/xen/blktap-2'
++    TAP_MINOR_BASE = '/run/blktap-control/tapdisk'
+ 
+     SYSFS_CLASSTYPE = "blktap2"
+ 
+@@ -854,10 +855,7 @@ class Tapdisk(object):
+                                     log_drbd_openers(path)
+                             raise
+                     try:
+-                        tapdisk = cls.__from_blktap(blktap)
+-                        node = '/sys/dev/block/%d:%d' % (tapdisk.major(), tapdisk.minor)
+-                        util.set_scheduler_sysfs_node(node, ['none', 'noop'])
+-                        return tapdisk
++                        return cls.__from_blktap(blktap)
+                     except:
+                         TapCtl.close(pid, minor)
+                         raise
+@@ -986,14 +984,14 @@ class Tapdisk(object):
+ 
+     @staticmethod
+     def _parse_minor(devpath):
+-        regex = r'%s/(blktap|tapdev)(\d+)$' % Blktap.DEV_BASEDIR
++        regex = r'%s/tapdisk-(\d+)$' % Blktap.TAP_MINOR_BASE
+         pattern = re.compile(regex)
+         groups = pattern.search(devpath)
+         if not groups:
+             raise Exception("malformed tap device: '%s' (%s) " % (devpath, regex))
+ 
+-        minor = groups.group(2)
+-        return int(minor)
++        minor = int(groups.group(1))
++        return minor
+ 
+     _major = None
+ 
+@@ -1265,91 +1263,23 @@ class VDI(object):
+         def _equals(self, target) -> bool:
+             return self.readlink() == target
+ 
+-    class DeviceNode(Link):
+-        """Relink a block device node to a common name"""
+-
+-        @classmethod
+-        def _real_stat(cls, target):
+-            """stat() not on @target, but its realpath()"""
+-            _target = os.path.realpath(target)
+-            return os.stat(_target)
+-
+-        @classmethod
+-        def is_block(cls, target):
+-            """Whether @target refers to a block device."""
+-            return S_ISBLK(cls._real_stat(target).st_mode)
+-
+-        @override
+-        def _mklink(self, target) -> None:
+-
+-            st = self._real_stat(target)
+-            if not S_ISBLK(st.st_mode):
+-                raise self.NotABlockDevice(target, st)
+-
+-            # set group read for disk group as well as root
+-            os.mknod(self.path(), st.st_mode | stat.S_IRGRP, st.st_rdev)
+-            os.chown(self.path(), st.st_uid, grp.getgrnam("disk").gr_gid)
+-
+-        @override
+-        def _equals(self, target) -> bool:
+-            target_rdev = self._real_stat(target).st_rdev
+-            return self.stat().st_rdev == target_rdev
+-
+-        def rdev(self):
+-            st = self.stat()
+-            assert S_ISBLK(st.st_mode)
+-            return os.major(st.st_rdev), os.minor(st.st_rdev)
+-
+-        class NotABlockDevice(Exception):
+-
+-            def __init__(self, path, st):
+-                self.path = path
+-                self.st = st
+-
+-            @override
+-            def __str__(self) -> str:
+-                return "%s is not a block device: %s" % (self.path, self.st)
+-
+-    class Hybrid(Link):
+-
+-        def __init__(self, path):
+-            VDI.Link.__init__(self, path)
+-            self._devnode = VDI.DeviceNode(path)
+-            self._symlink = VDI.SymLink(path)
+-
+-        def rdev(self):
+-            st = self.stat()
+-            if S_ISBLK(st.st_mode):
+-                return self._devnode.rdev()
+-            raise self._devnode.NotABlockDevice(self.path(), st)
+-
+-        @override
+-        def mklink(self, target) -> None:
+-            if self._devnode.is_block(target):
+-                self._obj = self._devnode
+-            else:
+-                self._obj = self._symlink
+-            self._obj.mklink(target)
+-
+-        @override
+-        def _equals(self, target) -> bool:
+-            return self._obj._equals(target)
+ 
+     class PhyLink(SymLink):
+         BASEDIR = "/dev/sm/phy"
+-    # NB. Cannot use DeviceNodes, e.g. FileVDIs aren't bdevs.
++
+ 
+     class NBDLink(SymLink):
+ 
+         BASEDIR = "/run/blktap-control/nbd"
+ 
+-    class BackendLink(Hybrid):
+-        BASEDIR = "/dev/sm/backend"
+-    # NB. Could be SymLinks as well, but saving major,minor pairs in
+-    # Links enables neat state capturing when managing Tapdisks.  Note
+-    # that we essentially have a tap-ctl list replacement here. For
+-    # now make it a 'Hybrid'. Likely to collapse into a DeviceNode as
+-    # soon as ISOs are tapdisks.
++        def read_minor_from_path(self):
++            regex = r'.*/nbd\d+.(\d+)$'
++            match = re.search(regex, os.path.realpath(self._path))
++            if not match:
++                raise Exception("Failed to parse minor from %s" % self._path)
++
++            return int(match.group(1))
++
+ 
+     @staticmethod
+     def _tap_activate(phy_path, vdi_type, sr_uuid, options, pool_size=None):
+@@ -1357,9 +1287,6 @@ class VDI(object):
+         tapdisk = Tapdisk.find_by_path(phy_path)
+         if not tapdisk:
+             blktap = Blktap.allocate()
+-            blktap.set_pool_name(sr_uuid)
+-            if pool_size:
+-                blktap.set_pool_size(pool_size)
+ 
+             try:
+                 tapdisk = \
+@@ -1576,18 +1503,16 @@ class VDI(object):
+             VDI.NBDLink.from_uuid(sr_uuid, vdi_uuid).mklink(nbd_path)
+ 
+     def attach(self, sr_uuid, vdi_uuid, writable, activate=False, caching_params={}):
+-        """Return/dev/sm/backend symlink path"""
++        """Return attach details to allow access to storage datapath"""
+         self.xenstore_data.update(self._get_pool_config(sr_uuid))
+         if not self.target.has_cap("ATOMIC_PAUSE") or activate:
+             util.SMlog("Attach & activate")
+             self._attach(sr_uuid, vdi_uuid)
+             dev_path = self._activate(sr_uuid, vdi_uuid,
+                     {"rdonly": not writable})
+-            self.BackendLink.from_uuid(sr_uuid, vdi_uuid).mklink(dev_path)
+             self.linkNBD(sr_uuid, vdi_uuid)
+ 
+-        # Return backend/ link
+-        back_path = self.BackendLink.from_uuid(sr_uuid, vdi_uuid).path()
++        # Return NBD link
+         if self.tap_wanted():
+             # Only have NBD if we also have a tap
+             nbd_path = "nbd:unix:{}:exportname={}".format(
+@@ -1605,13 +1530,6 @@ class VDI(object):
+                   'xenstore_data': self.xenstore_data}
+         util.SMlog('result: %s' % struct)
+ 
+-        try:
+-            f = open("%s.attach_info" % back_path, 'a')
+-            f.write(xmlrpc.client.dumps((struct, ), "", True))
+-            f.close()
+-        except:
+-            pass
+-
+         return xmlrpc.client.dumps((struct, ), "", True)
+ 
+     def activate(self, sr_uuid, vdi_uuid, writable, caching_params):
+@@ -1721,7 +1639,6 @@ class VDI(object):
+             util.SMlog("Removed activating flag from %s" % vdi_uuid)
+ 
+         # Link result to backend/
+-        self.BackendLink.from_uuid(sr_uuid, vdi_uuid).mklink(dev_path)
+         self.linkNBD(sr_uuid, vdi_uuid)
+         return True
+ 
+@@ -1793,33 +1710,19 @@ class VDI(object):
+             pass  # nothing to do
+ 
+     def _deactivate(self, sr_uuid, vdi_uuid, caching_params):
+-        import VDI as sm
+-
+         # Shutdown tapdisk
+-        back_link = self.BackendLink.from_uuid(sr_uuid, vdi_uuid)
++        nbd_link = self.NBDLink.from_uuid(sr_uuid, vdi_uuid)
+ 
+-        if not util.pathexists(back_link.path()):
+-            util.SMlog("Backend path %s does not exist" % back_link.path())
++        if not util.pathexists(nbd_link.path()):
++            util.SMlog("Nbd path %s does not exist" % nbd_link.path())
+             return
+ 
+-        try:
+-            attach_info_path = "%s.attach_info" % (back_link.path())
+-            os.unlink(attach_info_path)
+-        except:
+-            util.SMlog("unlink of attach_info failed")
+-
+-        try:
+-            major, minor = back_link.rdev()
+-        except self.DeviceNode.NotABlockDevice:
+-            pass
+-        else:
+-            if major == Tapdisk.major():
+-                self._tap_deactivate(minor)
+-                self.remove_cache(sr_uuid, vdi_uuid, caching_params)
++        minor = nbd_link.read_minor_from_path()
++        self._tap_deactivate(minor)
++        self.remove_cache(sr_uuid, vdi_uuid, caching_params)
+ 
+         # Remove the backend link
+-        back_link.unlink()
+-        VDI.NBDLink.from_uuid(sr_uuid, vdi_uuid).unlink()
++        nbd_link.unlink()
+ 
+         # Deactivate & detach the physical node
+         if self.tap_wanted() and self.target.vdi.session is not None:
+diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
+index 81311fb9..f27fdbe9 100644
+--- a/tests/test_blktap2.py
++++ b/tests/test_blktap2.py
+@@ -193,10 +193,9 @@ class TestVDI(unittest.TestCase):
+     @mock.patch('blktap2.util.get_this_host', autospec=True)
+     @mock.patch('blktap2.VDI._attach', autospec=True)
+     @mock.patch('blktap2.VDI.PhyLink', autospec=True)
+-    @mock.patch('blktap2.VDI.BackendLink', autospec=True)
+     @mock.patch('blktap2.VDI.NBDLink', autospec=True)
+     @mock.patch('blktap2.Tapdisk')
+-    def test_activate(self, mock_tapdisk, mock_nbd_link, mock_backend,
++    def test_activate(self, mock_tapdisk, mock_nbd_link,
+                       mock_phy, mock_attach,
+                       mock_this_host, mock_sleep):
+         """
+@@ -222,11 +221,10 @@ class TestVDI(unittest.TestCase):
+     @mock.patch('blktap2.util.get_this_host', autospec=True)
+     @mock.patch('blktap2.VDI._attach', autospec=True)
+     @mock.patch('blktap2.VDI.PhyLink', autospec=True)
+-    @mock.patch('blktap2.VDI.BackendLink', autospec=True)
+     @mock.patch('blktap2.VDI.NBDLink', autospec=True)
+     @mock.patch('blktap2.Tapdisk')
+     def test_activate_relink_retry(
+-            self, mock_tapdisk, mock_nbd_link, mock_backend,
++            self, mock_tapdisk, mock_nbd_link,
+             mock_phy, mock_attach,
+             mock_this_host, mock_sleep):
+         """
+@@ -250,11 +248,10 @@ class TestVDI(unittest.TestCase):
+     @mock.patch('blktap2.util.get_this_host', autospec=True)
+     @mock.patch('blktap2.VDI._attach', autospec=True)
+     @mock.patch('blktap2.VDI.PhyLink', autospec=True)
+-    @mock.patch('blktap2.VDI.BackendLink', autospec=True)
+     @mock.patch('blktap2.VDI.NBDLink', autospec=True)
+     @mock.patch('blktap2.Tapdisk')
+     def test_activate_pause_retry(
+-            self, mock_tapdisk, mock_nbd_link, mock_backend,
++            self, mock_tapdisk, mock_nbd_link,
+             mock_phy, mock_attach,
+             mock_this_host, mock_sleep):
+         """
+@@ -277,11 +274,10 @@ class TestVDI(unittest.TestCase):
+     @mock.patch('blktap2.util.get_this_host', autospec=True)
+     @mock.patch('blktap2.VDI._attach', autospec=True)
+     @mock.patch('blktap2.VDI.PhyLink', autospec=True)
+-    @mock.patch('blktap2.VDI.BackendLink', autospec=True)
+     @mock.patch('blktap2.VDI.NBDLink', autospec=True)
+     @mock.patch('blktap2.Tapdisk')
+     def test_activate_paused_while_tagging(
+-            self, mock_tapdisk, mock_nbd_link, mock_backend,
++            self, mock_tapdisk, mock_nbd_link,
+             mock_phy, mock_attach,
+             mock_this_host, mock_sleep):
+         """
+@@ -310,11 +306,10 @@ class TestVDI(unittest.TestCase):
+     @mock.patch('blktap2.util.get_this_host', autospec=True)
+     @mock.patch('blktap2.VDI._attach', autospec=True)
+     @mock.patch('blktap2.VDI.PhyLink', autospec=True)
+-    @mock.patch('blktap2.VDI.BackendLink', autospec=True)
+     @mock.patch('blktap2.VDI.NBDLink', autospec=True)
+     @mock.patch('blktap2.Tapdisk')
+     def test_activate_relink_while_tagging(
+-            self, mock_tapdisk, mock_nbd_link, mock_backend,
++            self, mock_tapdisk, mock_nbd_link,
+             mock_phy, mock_attach,
+             mock_this_host, mock_sleep):
+         """
+@@ -339,6 +334,75 @@ class TestVDI(unittest.TestCase):
+              mock.call('vref1', 'activating')],
+             any_order=True)
+ 
++    @mock.patch('blktap2.time.sleep', autospec=True)
++    @mock.patch('blktap2.util.get_this_host', autospec=True)
++    @mock.patch('blktap2.VDI._attach', autospec=True)
++    @mock.patch('blktap2.VDI.PhyLink', autospec=True)
++    @mock.patch('blktap2.VDI.NBDLink', autospec=True)
++    @mock.patch('blktap2.Tapdisk')
++    def test_activate_ro_already_activating_retry(
++            self, mock_tapdisk, mock_nbd_link,
++            mock_phy, mock_attach,
++            mock_this_host, mock_sleep):
++        """
++        If we're activating for read-only access, with someone else (let's
++        say, another host in the pool) also being in the process of
++        activating, should result in a retry.
++        """
++        mock_this_host.return_value = str(uuid.uuid4())
++
++        self.mock_session.xenapi.VDI.get_sm_config.return_value = {}
++        self.mock_session.xenapi.host.get_by_uuid.return_value = 'href1'
++        self.mock_session.xenapi.VDI.get_by_uuid.return_value = 'vref1'
++
++        self.mock_session.xenapi.VDI.add_to_sm_config.side_effect = [
++            XenAPI.Failure(['MAP_DUPLICATE_KEY', 'VDI', 'sm_config',
++                            'href1', 'activating']),
++            None,
++            None
++        ]
++
++        self.vdi.activate(self.sr_uuid, self.vdi_uuid, False, {})
++
++        self.mock_session.xenapi.VDI.add_to_sm_config.assert_has_calls(
++            [mock.call('vref1', 'activating', 'True'),
++             mock.call('vref1', 'activating', 'True'),
++             mock.call('vref1', 'host_href1', "RO")])
++        self.mock_session.xenapi.VDI.remove_from_sm_config.assert_has_calls(
++            [mock.call('vref1', 'activating')])
++
++    @mock.patch('blktap2.time.sleep', autospec=True)
++    @mock.patch('blktap2.util.get_this_host', autospec=True)
++    @mock.patch('blktap2.VDI._attach', autospec=True)
++    @mock.patch('blktap2.VDI.PhyLink', autospec=True)
++    @mock.patch('blktap2.VDI.NBDLink', autospec=True)
++    @mock.patch('blktap2.Tapdisk')
++    def test_activate_rw_already_activating_fail(
++            self, mock_tapdisk, mock_nbd_link,
++            mock_phy, mock_attach,
++            mock_this_host, mock_sleep):
++        """
++        If we're activating for read-write access, with someone else (let's
++        say, another host in the pool) also being in the process of
++        activating, should result in a failure.
++        """
++        mock_this_host.return_value = str(uuid.uuid4())
++
++        self.mock_session.xenapi.VDI.get_sm_config.return_value = {}
++        self.mock_session.xenapi.host.get_by_uuid.return_value = 'href1'
++        self.mock_session.xenapi.VDI.get_by_uuid.return_value = 'vref1'
++
++        self.mock_session.xenapi.VDI.add_to_sm_config.side_effect = [
++            XenAPI.Failure(['MAP_DUPLICATE_KEY', 'VDI', 'sm_config',
++                            'href1', 'activating']),
++        ]
++
++        with self.assertRaises(xs_errors.SROSError) as srose:
++            self.vdi.activate(self.sr_uuid, self.vdi_uuid, True, {})
++
++        self.assertEqual(46, srose.exception.errno)
++        self.assertIn( 'MAP_DUPLICATE_KEY', str(srose.exception))
++
+ 
+ class TestTapCtl(unittest.TestCase):
+     @override

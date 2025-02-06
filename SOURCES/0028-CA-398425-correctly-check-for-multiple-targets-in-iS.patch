@@ -1,7 +1,7 @@
 From 006a3727a18eed16a581251553b829667efceefd Mon Sep 17 00:00:00 2001
 From: Mark Syms <mark.syms@cloud.com>
 Date: Fri, 30 Aug 2024 10:13:27 +0100
-Subject: [PATCH 28/60] CA-398425: correctly check for multiple targets in
+Subject: [PATCH 28/69] CA-398425: correctly check for multiple targets in
  iSCSI
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>

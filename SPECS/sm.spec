@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.15%{?xsrel}%{?dist}
+Release: 1.16%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -106,6 +106,10 @@ Patch1057: 0057-Use-static-analysis-tool-mypy.patch
 Patch1058: 0058-Add-mypy-stubs.patch
 Patch1059: 0059-Use-override-everywhere.patch
 Patch1060: 0060-Makefile-fix-don-t-execute-precheck-during-installat.patch
+Patch0161: 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+Patch0162: 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+Patch0163: 0063-Fix-filter-to-reject-other-device-types-77.patch
+Patch1064: 0064-feat-add-HPE-Nimble-multipath-configuration.patch
 
 %description
 This package contains storage backends used in XCP
@@ -419,6 +423,12 @@ Manager and some other packages
 
 
 %changelog
+* Mon Jan 20 2025 Yann LE BRIS <yann.lebris@vates.tech> - 3.2.3-1.16
+- Add 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+- Add 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+- Add 0063-Fix-filter-to-reject-other-device-types-77.patch
+- Add 0064-feat-add-HPE-Nimble-multipath-configuration.patch
+
 * Thu Dec 19 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.15
 - Fix missing mypy "@override" import in nfs-on-slave script
 

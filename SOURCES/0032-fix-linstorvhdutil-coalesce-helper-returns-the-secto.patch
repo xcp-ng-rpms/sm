@@ -1,8 +1,8 @@
 From 65021acb5918cfe002dc53232a1b5569efce0d13 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 11 Dec 2024 11:14:27 +0100
-Subject: [PATCH 32/60] fix(linstorvhdutil): coalesce helper returns the sector
- count now
+Subject: [PATCH] fix(linstorvhdutil): coalesce helper returns the sector count
+ now
 
 Without this change we have an error in cleanup.py that interrupts
 the coalesce algorithm.

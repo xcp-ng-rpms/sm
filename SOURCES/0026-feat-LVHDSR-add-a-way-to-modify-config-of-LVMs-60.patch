@@ -1,7 +1,7 @@
 From db0a6cb684e3a24ef1c47094154d19c03a6f0a5c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 30 Jul 2024 15:31:23 +0200
-Subject: [PATCH 26/60] feat(LVHDSR): add a way to modify config of LVMs (#60)
+Subject: [PATCH] feat(LVHDSR): add a way to modify config of LVMs (#60)
 
 With this change the driver supports a "lvm-conf" param on "other-config".
 For now The configuration is only used by "remove" calls from LVMCache.

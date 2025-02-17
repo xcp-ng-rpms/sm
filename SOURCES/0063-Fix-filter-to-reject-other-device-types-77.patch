@@ -1,7 +1,7 @@
 From ba46ff91ed0bc9d4002bd7fb06e46f08ca4a4c8a Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 9 Jan 2025 17:41:32 +0100
-Subject: [PATCH 63/64] Fix filter to reject other device types (#77)
+Subject: [PATCH] Fix filter to reject other device types (#77)
 
 Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
-index fa66cfc..449b2cf 100644
+index fa66cfce..449b2cf1 100644
 --- a/drivers/LargeBlockSR.py
 +++ b/drivers/LargeBlockSR.py
 @@ -224,7 +224,7 @@ class LargeBlockSR(EXTSR.EXTSR):
@@ -20,3 +20,4 @@ index fa66cfc..449b2cf 100644
 +            lvutil.setActiveVG(self.vgname, True, config="devices{ global_filter = [ \"a|/dev/loop.*|\", \"r|.*|\" ] }")
          except util.CommandException as e:
              xs_errors.XenError("LargeBlockVGReconnectFailed", opterr="Failed to reconnect the VolumeGroup {}, error: {}".format(self.vgname, e))
+ 

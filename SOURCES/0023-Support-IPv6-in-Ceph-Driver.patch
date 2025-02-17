@@ -1,7 +1,7 @@
 From e46f99246bd1c9d1e06e6dbc49b1d95dbaaf8eac Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Mon, 25 Sep 2023 16:13:13 +0200
-Subject: [PATCH 23/60] Support IPv6 in Ceph Driver
+Subject: [PATCH] Support IPv6 in Ceph Driver
 
 Signed-off-by: BenjiReis <benjamin.reis@vates.fr>
 ---

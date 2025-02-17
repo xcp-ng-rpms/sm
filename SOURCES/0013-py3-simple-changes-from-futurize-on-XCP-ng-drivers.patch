@@ -1,7 +1,7 @@
 From 395daa86f0b4dcbc4eeabb42fed4f818d46afc36 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:13:18 +0100
-Subject: [PATCH 13/60] py3: simple changes from futurize on XCP-ng drivers
+Subject: [PATCH] py3: simple changes from futurize on XCP-ng drivers
 
 * `except` syntax fixes
 * drop `has_key()` usage

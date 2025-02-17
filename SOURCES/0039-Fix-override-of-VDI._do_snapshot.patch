@@ -1,7 +1,7 @@
 From 04b406d1ff3a4f04d60f86803de01b5244a4aaf7 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 14:52:40 +0200
-Subject: [PATCH 39/60] Fix override of `VDI._do_snapshot`
+Subject: [PATCH] Fix override of `VDI._do_snapshot`
 
 `cloneOp` must be present. Parameters like `snapType` must must be written in the same way
 between the parent class and the child class. Otherwise a linter like mypy may return an error.

@@ -1,8 +1,8 @@
 From a91b15c95f80fb1a67c7ad6ce061b00caf26d493 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 8 Jan 2025 11:12:13 +0100
-Subject: [PATCH 61/64] Fix LVHDSR.load: set other_conf in cond-branch to
- prevent mypy error
+Subject: [PATCH] Fix LVHDSR.load: set other_conf in cond-branch to prevent
+ mypy error
 
 Avoid:
 ```
@@ -16,19 +16,19 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 3e9afcd..66f9aac 100755
+index 3e9afcde..66f9aac0 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -166,10 +166,11 @@ class LVHDSR(SR.SR):
          self.mdpath = os.path.join(self.path, self.MDVOLUME_NAME)
          self.provision = self.PROVISIONING_DEFAULT
-
+ 
 -        self.other_conf = None
          has_sr_ref = self.srcmd.params.get("sr_ref")
          if has_sr_ref:
              self.other_conf = self.session.xenapi.SR.get_other_config(self.sr_ref)
 +        else:
 +            self.other_conf = None
-
+ 
          self.lvm_conf = None
          if self.other_conf:

@@ -1,7 +1,7 @@
 From c5ddfc7a86d9eff5d5622c6bb66b3cc10182d955 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 15:15:02 +0200
-Subject: [PATCH 42/60] Modernize Lock class using `staticmethod` decorator
+Subject: [PATCH] Modernize Lock class using `staticmethod` decorator
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

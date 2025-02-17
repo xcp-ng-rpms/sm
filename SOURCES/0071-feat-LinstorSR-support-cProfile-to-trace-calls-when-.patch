@@ -1,8 +1,8 @@
 From 7af2ef8980077fc54ee58661502c9b49f7b973c9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 25 Aug 2022 12:11:18 +0200
-Subject: [PATCH 071/180] feat(LinstorSR): support cProfile to trace calls when
- a command is executed
+Subject: [PATCH] feat(LinstorSR): support cProfile to trace calls when a
+ command is executed
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

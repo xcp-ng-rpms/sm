@@ -1,8 +1,7 @@
 From 1c0757759ea80cbf9ff35cc487a0b7d3cc2bfeb6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Jun 2022 09:28:32 +0200
-Subject: [PATCH 064/180] fix(linstorvhdutil): fix boolean params of `check`
- call
+Subject: [PATCH] fix(linstorvhdutil): fix boolean params of `check` call
 
 `ignoreMissingFooter` and `fast` must be string types to be used with XAPI plugin API.
 

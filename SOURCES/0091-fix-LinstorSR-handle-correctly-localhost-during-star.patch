@@ -1,8 +1,8 @@
 From 196dce016c304f57e9e60a60397fc58c992d459f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Nov 2022 12:12:12 +0100
-Subject: [PATCH 091/180] fix(LinstorSR): handle correctly localhost during
- start/stop of minidrbdcluster
+Subject: [PATCH] fix(LinstorSR): handle correctly localhost during start/stop
+ of minidrbdcluster
 
 Otherwise another controller can be started during `xe sr-destroy` call.
 And in this case we can get an exception during the umount/remount of /var/lib/linstor

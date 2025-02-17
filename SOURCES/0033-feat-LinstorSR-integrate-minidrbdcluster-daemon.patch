@@ -1,7 +1,7 @@
 From 2390152b1ccf081874356ded5ee9ae5bad0f00b6 Mon Sep 17 00:00:00 2001
 From: Wescoeur <ronan.abhamon@vates.fr>
 Date: Wed, 20 Jan 2021 18:04:26 +0100
-Subject: [PATCH 033/180] feat(LinstorSR): integrate minidrbdcluster daemon
+Subject: [PATCH] feat(LinstorSR): integrate minidrbdcluster daemon
 
 Now, we can:
 - Start a controller on any node

@@ -1,8 +1,8 @@
 From 21f073b1a262414c1910773a02ca54cd6f92c57e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Jul 2022 14:52:25 +0200
-Subject: [PATCH 066/180] fix(cleanup): print LINSTOR VDI UUID if error during
- info loading (not SR UUID)
+Subject: [PATCH] fix(cleanup): print LINSTOR VDI UUID if error during info
+ loading (not SR UUID)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

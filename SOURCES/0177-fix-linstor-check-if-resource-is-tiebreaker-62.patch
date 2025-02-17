@@ -1,7 +1,7 @@
 From 8d6cfc70d30e13cdf6a8ea2be3a534bace9fb936 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 26 Jul 2024 14:13:05 +0200
-Subject: [PATCH 177/180] fix(linstor): check if resource is tiebreaker (#62)
+Subject: [PATCH] fix(linstor): check if resource is tiebreaker (#62)
 
 We check if a resource is already a tiebreaker before trying to delete
 the resource.

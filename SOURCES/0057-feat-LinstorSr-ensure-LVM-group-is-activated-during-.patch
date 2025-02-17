@@ -1,7 +1,7 @@
 From c241c1495897b952e6ea11fd062cac28109394aa Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 14 Apr 2022 15:45:20 +0200
-Subject: [PATCH 057/180] feat(LinstorSr): ensure LVM group is activated during
+Subject: [PATCH] feat(LinstorSr): ensure LVM group is activated during
  SR.attach/create
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

@@ -1,0 +1,215 @@
+From a05838d6fafac98cd2c1c49e5f9d378f25009b59 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, 18 Feb 2025 00:42:55 +0100
+Subject: [PATCH] fix(cleanup.py): resize on a primary host (#81)
+
+Until now the cleanup VHD resize commands were performed on the master.
+But it doesn't work every time when a VHD of a chain is opened for reading on another host.
+
+As a reminder, this portion of code is only executed rarely.
+A user must have resized a VHD that must later be coalesced.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py          | 54 +++++++++++++++++++++++++++++++++++++
+ drivers/linstor-manager     | 35 ++++++++++++++++++++++++
+ drivers/linstorjournaler.py |  1 +
+ drivers/linstorvhdutil.py   | 27 +++++++++++++------
+ 4 files changed, 109 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 48fac2bf..2107adde 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1567,6 +1567,60 @@ class LinstorVDI(VDI):
+         else:
+             VDI._setHidden(self, hidden)
+ 
++    def _increaseSizeVirt(self, size, atomic=True):
++        if self.raw:
++            offset = self.drbd_size
++            if self.sizeVirt < size:
++                oldSize = self.drbd_size
++                self.drbd_size = LinstorVolumeManager.round_up_volume_size(size)
++                Util.log("  Growing %s: %d->%d" % (self.path, oldSize, self.drbd_size))
++                self.sr._linstor.resize_volume(self.uuid, self.drbd_size)
++                offset = oldSize
++            unfinishedZero = False
++            jval = self.sr.journaler.get(LinstorJournaler.ZERO, self.uuid)
++            if jval:
++                unfinishedZero = True
++                offset = int(jval)
++            length = self.drbd_size - offset
++            if not length:
++                return
++
++            if unfinishedZero:
++                Util.log("  ==> Redoing unfinished zeroing out")
++            else:
++                self.sr.journaler.create(LinstorJournaler.ZERO, self.uuid, str(offset))
++            Util.log("  Zeroing %s: from %d, %dB" % (self.path, offset, length))
++            abortTest = lambda: IPCFlag(self.sr.uuid).test(FLAG_TYPE_ABORT)
++            func = lambda: util.zeroOut(self.path, offset, length)
++            Util.runAbortable(func, True, self.sr.uuid, abortTest, VDI.POLL_INTERVAL, 0)
++            self.sr.journaler.remove(LinstorJournaler.ZERO, self.uuid)
++            return
++
++        if self.sizeVirt >= size:
++            return
++        Util.log("  Expanding VHD virt size for VDI %s: %s -> %s" % \
++                (self, Util.num2str(self.sizeVirt), Util.num2str(size)))
++
++        msize = self.sr._vhdutil.get_max_resize_size(self.uuid) * 1024 * 1024
++        if (size <= msize):
++            self.sr._vhdutil.set_size_virt_fast(self.path, size)
++        else:
++            if atomic:
++                vdiList = self._getAllSubtree()
++                self.sr.lock()
++                try:
++                    self.sr.pauseVDIs(vdiList)
++                    try:
++                        self._setSizeVirt(size)
++                    finally:
++                        self.sr.unpauseVDIs(vdiList)
++                finally:
++                    self.sr.unlock()
++            else:
++                self._setSizeVirt(size)
++
++        self.sizeVirt = self.sr._vhdutil.get_size_virt(self.uuid)
++
+     def _setSizeVirt(self, size):
+         jfile = self.uuid + '-jvhd'
+         self.sr._linstor.create_volume(
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index f0404b80..1521beb8 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -477,6 +477,15 @@ def get_size_phys(session, args):
+         raise
+ 
+ 
++def get_max_resize_size(session, args):
++    try:
++        device_path = args['devicePath']
++        return str(vhdutil.getMaxResizeSize(device_path))
++    except Exception as e:
++        util.SMlog('linstor-manager:get_size_phys error: {}'.format(e))
++        raise
++
++
+ def get_depth(session, args):
+     try:
+         device_path = args['devicePath']
+@@ -516,6 +525,29 @@ def get_drbd_size(session, args):
+         raise
+ 
+ 
++def set_size_virt(session, args):
++    try:
++        device_path = args['devicePath']
++        size = int(args['size'])
++        jfile = args['jfile']
++        vhdutil.setSizeVirt(device_path, size, jfile)
++        return ''
++    except Exception as e:
++        util.SMlog('linstor-manager:set_size_virt error: {}'.format(e))
++        raise
++
++
++def set_size_virt_fast(session, args):
++    try:
++        device_path = args['devicePath']
++        size = int(args['size'])
++        vhdutil.setSizeVirtFast(device_path, size)
++        return ''
++    except Exception as e:
++        util.SMlog('linstor-manager:set_size_virt_fast error: {}'.format(e))
++        raise
++
++
+ def set_parent(session, args):
+     try:
+         device_path = args['devicePath']
+@@ -1204,6 +1236,7 @@ if __name__ == '__main__':
+         'hasParent': has_parent,
+         'getParent': get_parent,
+         'getSizeVirt': get_size_virt,
++        'getMaxResizeSize': get_max_resize_size,
+         'getSizePhys': get_size_phys,
+         'getDepth': get_depth,
+         'getKeyHash': get_key_hash,
+@@ -1214,6 +1247,8 @@ if __name__ == '__main__':
+ 
+         # Called by cleanup.py to coalesce when a primary
+         # is opened on a non-local host.
++        'setSizeVirt': set_size_virt,
++        'setSizeVirtFast': set_size_virt_fast,
+         'setParent': set_parent,
+         'coalesce': coalesce,
+         'repair': repair,
+diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
+index 1e85ec96..073ef69d 100755
+--- a/drivers/linstorjournaler.py
++++ b/drivers/linstorjournaler.py
+@@ -44,6 +44,7 @@ class LinstorJournaler:
+     """
+     CLONE = 'clone'
+     INFLATE = 'inflate'
++    ZERO = 'zero'
+ 
+     @staticmethod
+     def default_logger(*args):
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index 7f8efa12..ea246a06 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -249,6 +249,10 @@ class LinstorVhdUtil:
+     def get_size_virt(self, vdi_uuid, response):
+         return int(response)
+ 
++    @linstorhostcall(vhdutil.getMaxResizeSize, 'getMaxResizeSize')
++    def get_max_resize_size(self, vdi_uuid, response):
++        return int(response)
++
+     @linstorhostcall(vhdutil.getSizePhys, 'getSizePhys')
+     def get_size_phys(self, vdi_uuid, response):
+         return int(response)
+@@ -283,14 +287,6 @@ class LinstorVhdUtil:
+     def create(self, path, size, static, msize=0):
+         return self._call_local_method_or_fail(vhdutil.create, path, size, static, msize)
+ 
+-    @linstormodifier()
+-    def set_size_virt(self, path, size, jfile):
+-        return self._call_local_method_or_fail(vhdutil.setSizeVirt, path, size, jfile)
+-
+-    @linstormodifier()
+-    def set_size_virt_fast(self, path, size):
+-        return self._call_local_method_or_fail(vhdutil.setSizeVirtFast, path, size)
+-
+     @linstormodifier()
+     def set_size_phys(self, path, size, debug=True):
+         return self._call_local_method_or_fail(vhdutil.setSizePhys, path, size, debug)
+@@ -365,6 +361,21 @@ class LinstorVhdUtil:
+     # Remote setters: write locally and try on another host in case of failure.
+     # --------------------------------------------------------------------------
+ 
++    @linstormodifier()
++    def set_size_virt(self, path, size, jfile):
++        kwargs = {
++            'size': size,
++            'jfile': jfile
++        }
++        return self._call_method(vhdutil.setSizeVirt, 'setSizeVirt', path, use_parent=False, **kwargs)
++
++    @linstormodifier()
++    def set_size_virt_fast(self, path, size):
++        kwargs = {
++            'size': size
++        }
++        return self._call_method(vhdutil.setSizeVirtFast, 'setSizeVirtFast', path, use_parent=False, **kwargs)
++
+     @linstormodifier()
+     def force_parent(self, path, parentPath, parentRaw=False):
+         kwargs = {

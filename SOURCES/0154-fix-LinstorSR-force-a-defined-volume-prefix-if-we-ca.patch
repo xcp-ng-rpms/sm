@@ -1,8 +1,8 @@
 From 0fcc4fbd4814578062bf83d7e26f3975cc120cd1 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 12 Jan 2024 10:28:20 +0100
-Subject: [PATCH 154/180] fix(LinstorSR): force a defined volume prefix if we
- can't import libs
+Subject: [PATCH] fix(LinstorSR): force a defined volume prefix if we can't
+ import libs
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

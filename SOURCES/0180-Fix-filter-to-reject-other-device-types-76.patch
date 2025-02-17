@@ -1,7 +1,7 @@
 From fbef448eee94b08a7cfd2ba3685766943c08c7a0 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 9 Jan 2025 17:41:22 +0100
-Subject: [PATCH 180/180] Fix filter to reject other device types (#76)
+Subject: [PATCH] Fix filter to reject other device types (#76)
 
 Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
 ---

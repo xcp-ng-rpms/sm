@@ -1,8 +1,7 @@
 From 5232782abcfd52a3ff75a8f83906af61c5a0a77d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 14 Sep 2022 10:17:18 +0200
-Subject: [PATCH 077/180] fix(LinstorSR): disable VHD key hash usage to limit
- exec time
+Subject: [PATCH] fix(LinstorSR): disable VHD key hash usage to limit exec time
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

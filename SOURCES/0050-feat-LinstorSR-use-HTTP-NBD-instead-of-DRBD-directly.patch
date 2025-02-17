@@ -1,8 +1,8 @@
 From 7983be637bf274036cd89552891cc406bf20ea0a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 12 May 2022 17:52:35 +0200
-Subject: [PATCH 050/180] feat(LinstorSR): use HTTP/NBD instead of DRBD
- directly with heartbeat VDI
+Subject: [PATCH] feat(LinstorSR): use HTTP/NBD instead of DRBD directly with
+ heartbeat VDI
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

@@ -1,8 +1,8 @@
 From ac881521fa06183435435e47933c6e7f034dfed8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 9 Oct 2023 10:37:32 +0200
-Subject: [PATCH 134/180] fix(linstorvolumemanager): retry in case of failure
- during mkfs call on database
+Subject: [PATCH] fix(linstorvolumemanager): retry in case of failure during
+ mkfs call on database
 
 The device is not always ready after creation.
 So we must retry the mkfs call in case of failure.

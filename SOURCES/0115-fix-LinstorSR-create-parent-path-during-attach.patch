@@ -1,7 +1,7 @@
 From 03a0c875d8ee453743237f36e9dcd9715f4a07d2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 17 Mar 2023 12:06:08 +0100
-Subject: [PATCH 115/180] fix(LinstorSR): create parent path during attach
+Subject: [PATCH] fix(LinstorSR): create parent path during attach
 
 It's necessary to force DRBD diskless path creation when
 a VDI is attached. Otherwise the attach can fail on pool with

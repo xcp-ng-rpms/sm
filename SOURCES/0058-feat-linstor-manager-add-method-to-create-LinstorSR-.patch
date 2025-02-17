@@ -1,8 +1,8 @@
 From cac2dda720b05ba479b272c9c65b5f14af180956 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 25 Apr 2022 14:47:51 +0200
-Subject: [PATCH 058/180] feat(linstor-manager): add method to create LinstorSR
- + to list/destroy DRBD volumes
+Subject: [PATCH] feat(linstor-manager): add method to create LinstorSR + to
+ list/destroy DRBD volumes
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

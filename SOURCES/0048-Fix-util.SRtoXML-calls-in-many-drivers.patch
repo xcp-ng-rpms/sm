@@ -1,7 +1,7 @@
 From 4f662048c143ff6fc95f1fda8ddcb21ca0df032b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 14:44:19 +0200
-Subject: [PATCH 48/60] Fix util.SRtoXML calls in many drivers
+Subject: [PATCH] Fix util.SRtoXML calls in many drivers
 
 Without this change, mypy triggers an error `var-annoted`:
 `Need type annotation for "sr_dict"`

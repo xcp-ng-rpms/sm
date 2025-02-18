@@ -1,7 +1,7 @@
 From 5e62373419a9cd468b3230e31854ececbd96415b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 17:12:57 +0200
-Subject: [PATCH 38/60] Fix override of VDI.delete in many subclasses
+Subject: [PATCH] Fix override of VDI.delete in many subclasses
 
 It triggers warns in analyzers like mypy.
 

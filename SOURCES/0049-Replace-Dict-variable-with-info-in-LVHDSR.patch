@@ -1,7 +1,7 @@
 From 7568d2b9e4d5985fa21c6c22371c9f0cc06c2e1e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:10:55 +0200
-Subject: [PATCH 49/60] Replace `Dict` variable with `info` in `LVHDSR`
+Subject: [PATCH] Replace `Dict` variable with `info` in `LVHDSR`
 
 Prevent reuse of the `Dict` symbol from the `typing` module.
 

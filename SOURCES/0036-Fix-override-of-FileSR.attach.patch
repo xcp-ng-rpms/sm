@@ -1,7 +1,7 @@
 From 2be912d548cf8104d9b170e52a10bca5cbfae41d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 14 Oct 2024 17:33:49 +0200
-Subject: [PATCH 36/60] Fix override of FileSR.attach
+Subject: [PATCH] Fix override of FileSR.attach
 
 The current attach method of FileSR doesn't correctly override the method of the SR class.
 It actually adds a "bind" parameter, which is seen as an error by analyzers like mypy.

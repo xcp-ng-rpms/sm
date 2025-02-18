@@ -1,7 +1,7 @@
 From dbf1312383c2a8923ce6bbc21ad12d1e00dcf4cf Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 9 Oct 2024 15:44:05 +0200
-Subject: [PATCH 58/60] Add mypy stubs
+Subject: [PATCH] Add mypy stubs
 
 Co-authored-by: Damien Thenot <damien.thenot@vates.tech>
 Co-authored-by: Ronan Abhamon <ronan.abhamon@vates.fr>

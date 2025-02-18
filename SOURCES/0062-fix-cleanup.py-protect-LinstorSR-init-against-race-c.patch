@@ -1,7 +1,7 @@
 From 23df6a7fe591ba0a96f5f18a632168a2b3566344 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 9 Jan 2025 17:41:02 +0100
-Subject: [PATCH 62/64] fix(cleanup.py): protect LinstorSR init against race
+Subject: [PATCH] fix(cleanup.py): protect LinstorSR init against race
  condition (#79)
 
 During `LinstorSR` init, only create the journaler to make `should_preempt` happy.
@@ -17,22 +17,22 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index f1341dc..01d44df 100755
+index f1341dc9..01d44dfb 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3221,7 +3221,7 @@ class LinstorSR(SR):
-
+ 
          SR.__init__(self, uuid, xapi, createLock, force)
          self.path = LinstorVolumeManager.DEV_ROOT_PATH
 -        self._reloadLinstor()
 +        self._reloadLinstor(journaler_only=True)
-
+ 
      @override
      def deleteVDI(self, vdi) -> None:
 @@ -3256,7 +3256,7 @@ class LinstorSR(SR):
          )
          return super(LinstorSR, self).pauseVDIs(vdiList)
-
+ 
 -    def _reloadLinstor(self):
 +    def _reloadLinstor(self, journaler_only=False):
          session = self.xapi.session
@@ -41,7 +41,7 @@ index f1341dc..01d44df 100755
 @@ -3273,6 +3273,9 @@ class LinstorSR(SR):
              controller_uri, group_name, logger=util.SMlog
          )
-
+ 
 +        if journaler_only:
 +            return
 +

@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.16%{?xsrel}%{?dist}
+Release: 1.17%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -44,7 +44,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.3..3.2.3-8.3 --no-signature
+# git format-patch v3.2.3..3.2.3-8.3 --no-signature --no-numbered
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -110,6 +110,7 @@ Patch0161: 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
 Patch0162: 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
 Patch0163: 0063-Fix-filter-to-reject-other-device-types-77.patch
 Patch1064: 0064-feat-add-HPE-Nimble-multipath-configuration.patch
+Patch1065: 0065-fix-cleanup.py-resize-on-a-primary-host-82.patch
 
 %description
 This package contains storage backends used in XCP
@@ -423,6 +424,9 @@ Manager and some other packages
 
 
 %changelog
+* Tue Feb 18 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.17
+- Add 0065-fix-cleanup.py-resize-on-a-primary-host-82.patch
+
 * Mon Jan 20 2025 Yann LE BRIS <yann.lebris@vates.tech> - 3.2.3-1.16
 - Add 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
 - Add 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch

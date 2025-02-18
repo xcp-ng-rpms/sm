@@ -1,8 +1,8 @@
 From 69ddfe0cf317308e2097ef4cacb081b9c4c60c40 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 26 Sep 2023 11:48:38 +0200
-Subject: [PATCH 135/180] fix(linstorvolumemanager): avoid diskless creation
- when a new resource is added
+Subject: [PATCH] fix(linstorvolumemanager): avoid diskless creation when a new
+ resource is added
 
 Like said in this discussion https://github.com/xcp-ng/sm/pull/34 :
 "Instead of using diskless_on_remaing, only place a resource on demand on a node.

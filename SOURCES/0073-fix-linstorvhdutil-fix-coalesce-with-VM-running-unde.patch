@@ -1,8 +1,8 @@
 From 3bda00e34c79c8448b61d3f02c09ae7d910eb9ce Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 25 Aug 2022 10:54:56 +0200
-Subject: [PATCH 073/180] fix(linstorvhdutil): fix coalesce with VM running
- under specific scenario:
+Subject: [PATCH] fix(linstorvhdutil): fix coalesce with VM running under
+ specific scenario:
 
 When a VM is running, we can't coalesce without this patch with a long chain
 of VHDs because a parent can be in use on another host, and so a EROFS

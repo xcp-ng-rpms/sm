@@ -1,8 +1,8 @@
 From 17e39c0d21e3e0385d51d27c3192f8a28022bb3c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 22 Jul 2022 10:26:20 +0200
-Subject: [PATCH 068/180] feat(linstorvhdutil): trace DRBD openers in case of
- EROFS errors
+Subject: [PATCH] feat(linstorvhdutil): trace DRBD openers in case of EROFS
+ errors
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

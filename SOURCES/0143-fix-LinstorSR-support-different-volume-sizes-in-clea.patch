@@ -1,8 +1,7 @@
 From d1e3ace3c5c16ba428c4151482f4065d09930621 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 14 Nov 2023 18:08:26 +0100
-Subject: [PATCH 143/180] fix(LinstorSR): support different volume sizes in
- cleanup.py
+Subject: [PATCH] fix(LinstorSR): support different volume sizes in cleanup.py
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

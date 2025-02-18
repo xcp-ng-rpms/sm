@@ -1,8 +1,8 @@
 From 9a688cb7ccdf0d6dacda5f92caff8fe6a058967d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 7 Dec 2022 17:56:39 +0100
-Subject: [PATCH 099/180] fix(linstorvhdutil): don't retry local vhdutil call
- when EROFS is detected
+Subject: [PATCH] fix(linstorvhdutil): don't retry local vhdutil call when
+ EROFS is detected
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

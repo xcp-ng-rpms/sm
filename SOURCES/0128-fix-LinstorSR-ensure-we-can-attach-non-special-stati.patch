@@ -1,8 +1,7 @@
 From 54bca8660c18628ec36c1835b9f14aec80c187a8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 18 Aug 2023 11:06:56 +0200
-Subject: [PATCH 128/180] fix(LinstorSR): ensure we can attach non-special
- static VDIs
+Subject: [PATCH] fix(LinstorSR): ensure we can attach non-special static VDIs
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

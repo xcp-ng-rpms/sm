@@ -1,7 +1,7 @@
 From b8e4a29597f8dc8034e4ea307cd5e347d6a3b631 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.tech>
 Date: Wed, 29 Nov 2023 15:45:32 +0100
-Subject: [PATCH 148/180] fix(linstorvolumemanager): robustify SR destroy (#46)
+Subject: [PATCH] fix(linstorvolumemanager): robustify SR destroy (#46)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 Co-authored-by: BenjiReis <benjamin.reis@vates.fr>

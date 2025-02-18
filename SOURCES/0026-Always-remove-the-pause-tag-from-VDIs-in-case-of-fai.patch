@@ -1,8 +1,7 @@
 From 7ebdef745b90fe8479555bc44d8d7ce594fc209f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 5 Feb 2024 23:16:16 +0100
-Subject: [PATCH 026/180] Always remove the pause tag from VDIs in case of
- failure
+Subject: [PATCH] Always remove the pause tag from VDIs in case of failure
 
 During VDI activation in the blktap module and in case of failure
 in "sm.VDI.from_uuid" call, the pause tag is never removed.

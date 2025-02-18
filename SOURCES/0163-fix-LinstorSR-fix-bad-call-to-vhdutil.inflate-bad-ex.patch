@@ -1,7 +1,7 @@
 From 574d72fc61a205b0a037cfe6a0002f2602f8e99d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 6 Feb 2024 00:14:11 +0100
-Subject: [PATCH 163/180] fix(LinstorSR): fix bad call to vhdutil.inflate + bad
+Subject: [PATCH] fix(LinstorSR): fix bad call to vhdutil.inflate + bad
  exception
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>

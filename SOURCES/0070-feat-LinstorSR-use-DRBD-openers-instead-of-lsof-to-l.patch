@@ -1,8 +1,8 @@
 From 97e4f95765285fcd3a860d66a8f02f170a4e8e73 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 9 Aug 2022 11:07:57 +0200
-Subject: [PATCH 070/180] feat(LinstorSR): use DRBD openers instead of lsof to
- log in blktap2
+Subject: [PATCH] feat(LinstorSR): use DRBD openers instead of lsof to log in
+ blktap2
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

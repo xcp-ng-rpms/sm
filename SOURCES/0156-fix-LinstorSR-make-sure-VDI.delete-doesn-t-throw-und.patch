@@ -1,8 +1,8 @@
 From a428724082121c6a61de9636efdeb3b0f2aead49 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 18 Jan 2024 11:18:11 +0100
-Subject: [PATCH 156/180] fix(LinstorSR): make sure VDI.delete doesn't throw
- under specific conditions
+Subject: [PATCH] fix(LinstorSR): make sure VDI.delete doesn't throw under
+ specific conditions
 
 If we can update the volume state in the KV-store, there is no reason to raise
 in case of future failure for another reason. Why? Because the volume will be

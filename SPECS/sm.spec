@@ -11,7 +11,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 2.30.8
-Release: %{?xsrel}.2.0.linstor.1%{?dist}
+Release: %{?xsrel}.2.0.linstor.2%{?dist}
 Group:   System/Hypervisor
 License: LGPL
 URL:  https://github.com/xapi-project/sm
@@ -92,7 +92,7 @@ Provides: sm-linstor
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v2.30.8-13-xcpng..2.30.8-8.2
+# git format-patch v2.30.8-13-xcpng..2.30.8-8.2 --no-signature --no-numbered
 # Note: the v2.30.8-13-xcpng tag was manually created by us on our fork because
 # the upstream sm doesn't provide maintenance updates anymore
 # To create this tag in the sources, you must create a 2.30.8-8.2 branch from the
@@ -282,6 +282,7 @@ Patch1177: 0177-fix-linstor-check-if-resource-is-tiebreaker-62.patch
 Patch1178: 0178-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
 Patch1179: 0179-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
 Patch1180: 0180-Fix-filter-to-reject-other-device-types-76.patch
+Patch1181: 0181-fix-cleanup.py-resize-on-a-primary-host-81.patch
 
 %description
 This package contains storage backends used in XCP
@@ -699,6 +700,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/linstor-monitor.service
 
 %changelog
+* Tue Feb 18 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-13.2.0.linstor.2
+- Add 0181-fix-cleanup.py-resize-on-a-primary-host-81.patch
+
 * Fri Jan 17 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 2.30.8-13.2.0.linstor.1
 - Add 0178-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
 - Sync fork-load-daemon script with http-nbd-transfer (v1.5.0)

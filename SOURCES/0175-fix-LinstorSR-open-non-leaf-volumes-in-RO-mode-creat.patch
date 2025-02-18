@@ -1,7 +1,7 @@
 From 383d6484765a0b316402f1899bc9a2ec2cf81521 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 20 Jun 2024 22:37:40 +0200
-Subject: [PATCH 175/180] fix(LinstorSR): open non-leaf volumes in RO mode
+Subject: [PATCH] fix(LinstorSR): open non-leaf volumes in RO mode
  (create_chain_paths)
 
 We must never open non-leaf volumes with the write option.

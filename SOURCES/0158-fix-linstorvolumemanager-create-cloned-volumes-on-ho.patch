@@ -1,8 +1,8 @@
 From 4dbb05941ce89601e4766452e87e75a8abfbc63c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 22 Jan 2024 11:25:25 +0100
-Subject: [PATCH 158/180] fix(linstorvolumemanager): create cloned volumes on
- host selected by LINSTOR
+Subject: [PATCH] fix(linstorvolumemanager): create cloned volumes on host
+ selected by LINSTOR
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

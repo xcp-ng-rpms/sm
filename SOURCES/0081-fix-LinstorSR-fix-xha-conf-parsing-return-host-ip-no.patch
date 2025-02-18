@@ -1,8 +1,8 @@
 From a5be376a1404d031c41abd728e758f8d296a09db Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 4 Oct 2022 11:01:33 +0200
-Subject: [PATCH 081/180] fix(LinstorSR): fix xha conf parsing => return host
- ip, not the UUID
+Subject: [PATCH] fix(LinstorSR): fix xha conf parsing => return host ip, not
+ the UUID
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

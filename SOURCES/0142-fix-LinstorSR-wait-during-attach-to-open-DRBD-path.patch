@@ -1,7 +1,7 @@
 From 7d872f79b8857c2db490cf0c77a5c1c647af59e2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 24 Oct 2023 23:07:23 +0200
-Subject: [PATCH 142/180] fix(LinstorSR): wait during attach to open DRBD path
+Subject: [PATCH] fix(LinstorSR): wait during attach to open DRBD path
 
 ENODATA and other errors like EROFS can be raised when
 a new DRBD path is created on the fly. So ensure to block before tapdisk starts.

@@ -1,8 +1,8 @@
 From 972954832674cdd9c4792868a2fe4771a5c7eda0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 31 Mar 2022 11:21:19 +0200
-Subject: [PATCH 053/180] fix(LinstorVolumeManager): ensure we always use IPs
- in _get_controller_uri
+Subject: [PATCH] fix(LinstorVolumeManager): ensure we always use IPs in
+ _get_controller_uri
 
 Otherwise if a hostname is returned, we can't use it if the XCP-ng pool
 is configurer using static IPs instead of DHCP.

@@ -1,8 +1,8 @@
 From 2031020847e5f8f69bc5ed855e3bbaee7ea2975a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 9 Jan 2025 17:42:46 +0100
-Subject: [PATCH 179/180] fix(LinstorSR): sync fork-load-daemon with
- http-nbd-transfer (v1.5.0) (#74)
+Subject: [PATCH] fix(LinstorSR): sync fork-load-daemon with http-nbd-transfer
+ (v1.5.0) (#74)
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 ---

@@ -1,8 +1,8 @@
 From 01efc1b1f0655e160932bb3667c0fa74733ec84c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 17 Jan 2023 11:55:00 +0100
-Subject: [PATCH 103/180] fix(linstor-manager): add a static iptables rule for
- DRBD volumes
+Subject: [PATCH] fix(linstor-manager): add a static iptables rule for DRBD
+ volumes
 
 Using the XAPI iptables firewall may drop DRBD packets when the connection
 tracking subsystem runs out of entries temporarily.

@@ -6,7 +6,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.3
-Release: 1.17.0.qcow2.2%{?xsrel}%{?dist}
+Release: 1.17.0.qcow2.3%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.3.tar.gz
@@ -153,6 +153,7 @@ Patch1105: 0105-Add-commit-and-query-to-TapCtl.patch
 Patch1106: 0106-Add-coalesce-with-call-to-blktap.patch
 Patch1107: 0107-cleanup.py-Change-VDI-to-be-RW-for-qemu-img-commit.patch
 Patch1108: 0108-Add-parents-for-getAllInfoFromVG.patch
+Patch1109: 0109-blktap2.py-correct-TapCtl.commit-call.patch
 
 %description
 This package contains storage backends used in XCP
@@ -469,6 +470,9 @@ Manager and some other packages
 
 
 %changelog
+* Fri Feb 21 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.17.0.qcow2.3
+- Add 0109-blktap2.py-correct-TapCtl.commit-call.patch
+
 * Wed Feb 19 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.17.0.qcow2.2
 - Add 0108-Add-parents-for-getAllInfoFromVG.patch
 

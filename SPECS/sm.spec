@@ -1,15 +1,16 @@
-%global package_speccommit eb20118552753e3d609cbdbd8102ecfc2a31f4fa
-%global package_srccommit v3.2.3
+%global package_speccommit 6041ef4a60fa49d96a27c370aa7390f76b832bc2
+%global package_srccommit v3.2.11
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.3
+Version: 3.2.11
 Release: 1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.3.tar.gz
+Source0: sm-3.2.11.tar.gz
+Source1: update-cgrules.patch
 
 %define __python python3
 
@@ -31,6 +32,8 @@ Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
+Conflicts: blktap < 3.55.3
+Requires: sg3_utils
 
 %description
 This package contains storage backends used in XCP
@@ -45,20 +48,20 @@ make -C misc/fairlock
 %install
 make -C misc/fairlock install DESTDIR=%{buildroot}
 make install DESTDIR=%{buildroot}
+mkdir -p %{buildroot}%{_datadir}/%{name}/
+install -m 400 %SOURCE1 %{buildroot}%{_datadir}/%{name}/
 
 # Mark processes that should be moved to the data path
 %triggerin -- libcgroup-tools
-( patch -tsN -r - -d / -p0 )>/dev/null << 'EOF'
---- /etc/cgrules.conf	2018-04-11 02:33:52.000000000 +0000
-+++ /tmp/cgrules.conf	2024-01-26 17:30:29.204242549 +0000
-@@ -7,4 +7,6 @@
- #@student	cpu,memory	usergroup/student/
- #peter		cpu		test1/
- #%		memory		test2/
-+*:tapdisk	cpu,cpuacct	vm.slice/
-+%		blkio		vm.slice/
- # End of file
-EOF
+# Do not apply patch if it was already applied
+if ! patch --dry-run -RsN -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch >/dev/null; then
+    # Apply patch. Output NOT redirected to /dev/null so that error messages are displayed
+    if ! patch -tsN -r - -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch; then
+        echo "Error: failed to apply patch:"
+        cat %{_datadir}/%{name}/update-cgrules.patch
+        false
+    fi
+fi
 
 %pre
 # Remove sm-multipath on install or upgrade, to ensure it goes
@@ -138,6 +141,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /etc/xapi.d/plugins/testing-hooks
 /etc/xapi.d/plugins/intellicache-clean
 /etc/xapi.d/plugins/trim
+/etc/xapi.d/xapi-pre-shutdown/*
 /etc/xensource/master.d/02-vhdcleanup
 /opt/xensource/bin/blktap2
 /opt/xensource/bin/tapdisk-cache-stats
@@ -249,6 +253,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
+%{_datadir}/%{name}/update-cgrules.patch
 
 %package testresults
 Summary:  test results for SM package
@@ -283,8 +288,58 @@ Manager and some other packages
 %{_unitdir}/fairlock@.service
 %{_libexecdir}/fairlock
 
+%post fairlock
+## On upgrade, shut down existing lock services so new ones will
+## be started. There should be no locks held during upgrade operations
+## so this is safe.
+if [ $1 -gt 1 ];
+then
+    /usr/bin/systemctl list-units fairlock@* --all --no-legend | /usr/bin/cut -d' ' -f1 | while read service;
+    do
+        /usr/bin/systemctl stop "$service"
+    done
+fi
 
 %changelog
+* Tue Nov 19 2024 Mark Syms <mark.syms@cloud.com> - 3.2.11-1
+- CP-42675: send messages to Xapi if GC has insufficient space
+- CP-52620: enable read-through cache on persistent leaf
+
+* Tue Nov 05 2024 Mark Syms <mark.syms@cloud.com> - 3.2.10-1
+- CA-397084: SR scan tries to deactivate LV in use by tapdisk
+- CA-399644: if we make progress do not abort the GC or evaluate criteria
+- CA-400743: perform post snapshot rename in ioretry
+- CA-401068: if iSCSI device path is not found scan the bus
+
+* Wed Oct 09 2024 Mark Syms <mark.syms@cloud.com> - 3.2.9-3
+- CP-51658: install stop gc helper script
+- CA-399643 Use full paths when stopping fairlock on upgrade
+- CA-396655: check xapi is enabled before starting multipath reporting
+- CA-396658: check xapi is enabled before checking SR health
+- CA-400106: disable leaf coalesce with VDI snapshot secondary
+
+* Tue Sep 24 2024 Tim Smith <tim.smith@cloud.com> - 3.2.8-2
+- CA-399643 Use full paths when stopping fairlock on upgrade
+
+* Fri Sep 06 2024 Robin Newton <robin.newton@cloud.com> - 3.2.8-1
+- CA-398958 Cope with concurrent read-only activations
+
+* Wed Sep 04 2024 Mark Syms <mark.syms@cloud.com> - 3.2.7-1
+- CA-398425: correctly check for multiple targets in iSCSI
+
+* Wed Aug 21 2024 Mark Syms <mark.syms@cloud.com> - 3.2.6-1
+- CA-395560: Log exception details when LUN refresh fails
+- CA-396124: amend criteria under which the garbage collector aborts
+- CA-397084: Log any user of LV at deactivate
+- CP-51214: stop cgrules triggering errors on update
+
+* Tue Jul 23 2024 Tim Smith <tim.smith@cloud.com> - 3.2.5-1
+- CA-395554 Stop fairlock services on package upgrade
+
+* Mon Jul 22 2024 Mark Syms <mark.syms@cloud.com> - 3.2.4-1
+- Add missing sg3_utils dependency
+- Update multipath config for Dell, IBM and Nimble arrays
+
 * Thu Jul 04 2024 Mark Syms <mark.syms@cloud.com> - 3.2.3-1
 - CA-393194: Fix pvremove failure
 

@@ -1,4 +1,4 @@
-From 98d8c31104c3eae9ea62ea106d09fb801a784f4e Mon Sep 17 00:00:00 2001
+From bd2d6a0502aca188a4d90ed949b315111666e23a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
 Subject: [PATCH] feat(LinstorSR): import all 8.2 changes
@@ -35,7 +35,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100755 scripts/safe-umount
 
 diff --git a/Makefile b/Makefile
-index c2f6f463..075f4603 100755
+index 5255a583..9a8a0314 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -86,6 +86,7 @@ PLUGIN_SCRIPT_DEST := /etc/xapi.d/plugins/
@@ -2200,7 +2200,7 @@ index e7022ca9..52d5c26e 100755
  else:
      SR.registerSR(LinstorSR)
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 5712d8f2..669b9f65 100755
+index e9887c8e..c900f57d 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -50,6 +50,12 @@ import VDI as sm
@@ -2242,7 +2242,7 @@ index 5712d8f2..669b9f65 100755
                          tapdisk = cls.__from_blktap(blktap)
                          node = '/sys/dev/block/%d:%d' % (tapdisk.major(), tapdisk.minor)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 90611b3d..03bdc94d 100755
+index b9855a43..cd354d04 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -53,8 +53,11 @@ from time import monotonic as _time
@@ -2259,7 +2259,7 @@ index 90611b3d..03bdc94d 100755
      LINSTOR_AVAILABLE = True
  except ImportError:
      LINSTOR_AVAILABLE = False
-@@ -476,7 +479,7 @@ class XAPI:
+@@ -491,7 +494,7 @@ class XAPI:
  #
  #  VDI
  #
@@ -2268,7 +2268,7 @@ index 90611b3d..03bdc94d 100755
      """Object representing a VDI of a VHD-based SR"""
  
      POLL_INTERVAL = 1
-@@ -764,6 +767,12 @@ class VDI:
+@@ -781,6 +784,12 @@ class VDI:
          lock.Lock.cleanupAll(self.uuid)
          self._clear()
  
@@ -2281,7 +2281,7 @@ index 90611b3d..03bdc94d 100755
      def __str__(self):
          strHidden = ""
          if self.hidden:
-@@ -881,12 +890,15 @@ class VDI:
+@@ -898,12 +907,15 @@ class VDI:
              xapi.message.create(msg_name, "3", "SR", vdi.sr.uuid, msg_body)
      _reportCoalesceError = staticmethod(_reportCoalesceError)
  
@@ -2299,7 +2299,7 @@ index 90611b3d..03bdc94d 100755
              endTime = time.time()
              vdi.sr.recordStorageSpeed(startTime, endTime, coalesced_size)
          except util.CommandException as ce:
-@@ -925,12 +937,12 @@ class VDI:
+@@ -942,12 +954,12 @@ class VDI:
              # Try a repair and reraise the exception
              parent = ""
              try:
@@ -2314,7 +2314,7 @@ index 90611b3d..03bdc94d 100755
              except Exception as e:
                  util.SMlog('(error ignored) Failed to repair parent %s ' \
                             'after failed coalesce on %s, err: %s' %
-@@ -1032,10 +1044,10 @@ class VDI:
+@@ -1049,10 +1061,10 @@ class VDI:
          self.hidden = hidden
  
      def _increaseSizeVirt(self, size, atomic=True):
@@ -2327,7 +2327,7 @@ index 90611b3d..03bdc94d 100755
          operations. If the caller is already in the atomic context, it must
          call with atomic = False"""
          if self.sizeVirt >= size:
-@@ -1484,8 +1496,6 @@ class LVHDVDI(VDI):
+@@ -1506,8 +1518,6 @@ class LVHDVDI(VDI):
  class LinstorVDI(VDI):
      """Object representing a VDI in a LINSTOR SR"""
  
@@ -2336,7 +2336,7 @@ index 90611b3d..03bdc94d 100755
      VOLUME_LOCK_TIMEOUT = 30
  
      def load(self, info=None):
-@@ -1496,11 +1506,6 @@ class LinstorVDI(VDI):
+@@ -1518,11 +1528,6 @@ class LinstorVDI(VDI):
  
          self.fileName = self.sr._linstor.get_volume_name(self.uuid)
          self.path = self.sr._linstor.build_device_path(self.fileName)
@@ -2348,7 +2348,7 @@ index 90611b3d..03bdc94d 100755
  
          if not info:
              try:
-@@ -1513,9 +1518,62 @@ class LinstorVDI(VDI):
+@@ -1535,9 +1540,62 @@ class LinstorVDI(VDI):
  
          self.parentUuid = info.parentUuid
          self.sizeVirt = info.sizeVirt
@@ -2412,7 +2412,7 @@ index 90611b3d..03bdc94d 100755
  
      def rename(self, uuid):
          Util.log('Renaming {} -> {} (path={})'.format(
-@@ -1537,17 +1595,30 @@ class LinstorVDI(VDI):
+@@ -1559,17 +1617,30 @@ class LinstorVDI(VDI):
              self.sr.unlock()
          VDI.delete(self)
  
@@ -2451,7 +2451,7 @@ index 90611b3d..03bdc94d 100755
  
      def _relinkSkip(self):
          abortFlag = IPCFlag(self.sr.uuid)
-@@ -1573,6 +1644,40 @@ class LinstorVDI(VDI):
+@@ -1595,6 +1666,40 @@ class LinstorVDI(VDI):
                  blktap2.VDI.tap_unpause(session, sr_uuid, vdi_uuid)
          self.children = []
  
@@ -2492,7 +2492,7 @@ index 90611b3d..03bdc94d 100755
      def _setHidden(self, hidden=True):
          HIDDEN_TAG = 'hidden'
  
-@@ -1584,14 +1689,57 @@ class LinstorVDI(VDI):
+@@ -1606,14 +1711,57 @@ class LinstorVDI(VDI):
          else:
              VDI._setHidden(self, hidden)
  
@@ -2551,7 +2551,7 @@ index 90611b3d..03bdc94d 100755
      class LogFilter:
          def __init__(self, sr):
              self.sr = sr
-@@ -2165,7 +2313,7 @@ class SR:
+@@ -2264,7 +2412,7 @@ class SR:
  
      def _coalesceLeaf(self, vdi):
          """Leaf-coalesce VDI vdi. Return true if we succeed, false if we cannot
@@ -2560,7 +2560,7 @@ index 90611b3d..03bdc94d 100755
          that alter leaf-coalescibility of vdi"""
          tracker = self.CoalesceTracker(self)
          while not vdi.canLiveCoalesce(self.getStorageSpeed()):
-@@ -2381,7 +2529,7 @@ class SR:
+@@ -2481,7 +2629,7 @@ class SR:
          self.forgetVDI(origParentUuid)
          self._finishCoalesceLeaf(parent)
          self._updateSlavesOnResize(parent)
@@ -2569,7 +2569,7 @@ index 90611b3d..03bdc94d 100755
      def _calcExtraSpaceNeeded(self, child, parent):
          assert(not parent.raw)  # raw parents not supported
          extra = child.getSizeVHD() - parent.getSizeVHD()
-@@ -2415,9 +2563,9 @@ class SR:
+@@ -2515,9 +2663,9 @@ class SR:
                  del self.vdis[uuid]
  
      def _handleInterruptedCoalesceLeaf(self):
@@ -2582,7 +2582,7 @@ index 90611b3d..03bdc94d 100755
          finish the operation"""
          # abstract
          pass
-@@ -2498,10 +2646,10 @@ class FileSR(SR):
+@@ -2598,10 +2746,10 @@ class FileSR(SR):
              self.xapi.markCacheSRsDirty()
  
      def cleanupCache(self, maxAge=-1):
@@ -2597,7 +2597,7 @@ index 90611b3d..03bdc94d 100755
          <maxAge> hours.
          Return number of caches removed.
          """
-@@ -2991,7 +3139,6 @@ class LinstorSR(SR):
+@@ -3091,7 +3239,6 @@ class LinstorSR(SR):
              )
  
          SR.__init__(self, uuid, xapi, createLock, force)
@@ -2605,7 +2605,7 @@ index 90611b3d..03bdc94d 100755
          self.path = LinstorVolumeManager.DEV_ROOT_PATH
          self._reloadLinstor()
  
-@@ -3018,6 +3165,12 @@ class LinstorSR(SR):
+@@ -3118,6 +3265,12 @@ class LinstorSR(SR):
          self.logFilter.logState()
          self._handleInterruptedCoalesceLeaf()
  
@@ -2618,7 +2618,7 @@ index 90611b3d..03bdc94d 100755
      def _reloadLinstor(self):
          session = self.xapi.session
          host_ref = util.get_this_host_ref(session)
-@@ -3030,12 +3183,13 @@ class LinstorSR(SR):
+@@ -3130,12 +3283,13 @@ class LinstorSR(SR):
          dconf = session.xenapi.PBD.get_device_config(pbd)
          group_name = dconf['group-name']
  
@@ -2634,7 +2634,7 @@ index 90611b3d..03bdc94d 100755
              group_name,
              repair=True,
              logger=util.SMlog
-@@ -3068,40 +3222,79 @@ class LinstorSR(SR):
+@@ -3168,40 +3322,79 @@ class LinstorSR(SR):
  
          # TODO: Ensure metadata contains the right info.
  
@@ -2731,7 +2731,7 @@ index 90611b3d..03bdc94d 100755
  
      def _hasValidDevicePath(self, uuid):
          try:
-@@ -3111,6 +3304,16 @@ class LinstorSR(SR):
+@@ -3211,6 +3404,16 @@ class LinstorSR(SR):
              return False
          return True
  
@@ -2748,7 +2748,7 @@ index 90611b3d..03bdc94d 100755
      def _handleInterruptedCoalesceLeaf(self):
          entries = self.journaler.get_all(VDI.JRN_LEAF)
          for uuid, parentUuid in entries.items():
-@@ -3137,7 +3340,6 @@ class LinstorSR(SR):
+@@ -3237,7 +3440,6 @@ class LinstorSR(SR):
                  'Renaming parent back: {} -> {}'.format(childUuid, parentUuid)
              )
              parent.rename(parentUuid)
@@ -2756,7 +2756,7 @@ index 90611b3d..03bdc94d 100755
  
          child = self.getVDI(childUuid)
          if not child:
-@@ -3153,9 +3355,6 @@ class LinstorSR(SR):
+@@ -3253,9 +3455,6 @@ class LinstorSR(SR):
              Util.log('Updating the VDI record')
              child.setConfig(VDI.DB_VHD_PARENT, parentUuid)
              child.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_VHD)
@@ -2766,7 +2766,7 @@ index 90611b3d..03bdc94d 100755
  
          # TODO: Maybe deflate here.
  
-@@ -3164,10 +3363,7 @@ class LinstorSR(SR):
+@@ -3264,10 +3463,7 @@ class LinstorSR(SR):
          if not parent.hidden:
              parent._setHidden(True)
          self._updateSlavesOnUndoLeafCoalesce(parent, child)
@@ -2777,7 +2777,7 @@ index 90611b3d..03bdc94d 100755
  
      def _finishInterruptedCoalesceLeaf(self, childUuid, parentUuid):
          Util.log('*** FINISH LEAF-COALESCE')
-@@ -3180,32 +3376,21 @@ class LinstorSR(SR):
+@@ -3280,32 +3476,21 @@ class LinstorSR(SR):
          except XenAPI.Failure:
              pass
          self._updateSlavesOnResize(vdi)
@@ -2817,7 +2817,7 @@ index 90611b3d..03bdc94d 100755
  
  ################################################################################
  #
-@@ -3533,9 +3718,9 @@ def abort(srUuid, soft=False):
+@@ -3638,9 +3823,9 @@ def abort(srUuid, soft=False):
  
  
  def gc(session, srUuid, inBackground, dryRun=False):
@@ -7576,10 +7576,10 @@ index 932fc3ca..75328757 100755
                  logger=util.SMlog
              ).get_device_path(self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index a64512f4..9db6994b 100755
+index a913fcf5..98b21ae1 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -699,32 +699,10 @@ def get_master_ref(session):
+@@ -704,32 +704,10 @@ def get_master_ref(session):
      return session.xenapi.pool.get_master(pools[0])
  
  
@@ -7612,7 +7612,7 @@ index a64512f4..9db6994b 100755
  def get_localhost_ref(session):
      filename = '/etc/xensource-inventory'
      try:
-@@ -765,6 +743,17 @@ def get_hosts_attached_on(session, vdi_uuids):
+@@ -770,6 +748,17 @@ def get_hosts_attached_on(session, vdi_uuids):
              host_refs[key[len('host_'):]] = True
      return host_refs.keys()
  
@@ -7630,7 +7630,7 @@ index a64512f4..9db6994b 100755
  
  def get_this_host_ref(session):
      host_uuid = get_this_host()
-@@ -2005,3 +1994,95 @@ def sessions_less_than_targets(other_config, device_config):
+@@ -2010,3 +1999,95 @@ def sessions_less_than_targets(other_config, device_config):
          return (sessions < targets)
      else:
          return False
@@ -7727,11 +7727,11 @@ index a64512f4..9db6994b 100755
 +    finally:
 +        SMlog('* End profiling of {} ({}) *'.format(name, filename))
 diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
-index 40807e84..723f3af2 100755
+index c4be0eef..6a71804c 100755
 --- a/drivers/vhdutil.py
 +++ b/drivers/vhdutil.py
-@@ -94,13 +94,16 @@ def ioretry(cmd, text=True):
-                         errlist=[errno.EIO, errno.EAGAIN])
+@@ -99,13 +99,16 @@ def convertAllocatedSizeToBytes(size):
+     return size * 2 * 1024 * 1024
  
  
 -def getVHDInfo(path, extractUuidFunction, includeParent=True):
@@ -8118,7 +8118,7 @@ index 8161813d..47740598 100644
  
    const int inotifyFd = createInotifyInstance();
 diff --git a/multipath/multipath.conf b/multipath/multipath.conf
-index 744b6461..00a8f488 100644
+index 166bd847..38cc8a8b 100644
 --- a/multipath/multipath.conf
 +++ b/multipath/multipath.conf
 @@ -23,6 +23,7 @@ blacklist {

@@ -1,4 +1,4 @@
-From 1dc43ae24403979db03fb7bbf90aeffe81d6c28b Mon Sep 17 00:00:00 2001
+From d53d40e78471324ce9ec2a3034cc6639e123949f Mon Sep 17 00:00:00 2001
 From: Aleksander Wieliczko <aleksander.wieliczko@moosefs.pro>
 Date: Fri, 29 Jan 2021 15:21:23 +0100
 Subject: [PATCH] Added SM Driver for MooseFS
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  create mode 100644 tests/test_MooseFSSR.py
 
 diff --git a/Makefile b/Makefile
-index dc370cfd..c2f6f463 100755
+index 3cacbff2..5255a583 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -19,6 +19,7 @@ SM_DRIVERS += CephFS
@@ -305,10 +305,10 @@ index 00000000..53485a0c
 +else:
 +    SR.registerSR(MooseFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 3bf84d5e..9fa6f27b 100755
+index 74b28674..02e1a4ea 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3245,7 +3245,7 @@ def normalizeType(type):
+@@ -3345,7 +3345,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

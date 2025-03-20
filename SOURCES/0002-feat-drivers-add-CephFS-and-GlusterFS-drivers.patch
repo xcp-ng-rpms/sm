@@ -1,4 +1,4 @@
-From 1809f021bf3af5fa18419e248469cd970bded9f3 Mon Sep 17 00:00:00 2001
+From 45816fb084f4027104b90e7e478eb44dae8e7764 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
 Subject: [PATCH] feat(drivers): add CephFS and GlusterFS drivers
@@ -13,7 +13,7 @@ Subject: [PATCH] feat(drivers): add CephFS and GlusterFS drivers
  create mode 100644 drivers/GlusterFSSR.py
 
 diff --git a/Makefile b/Makefile
-index ad81be40..07504828 100755
+index e6ff5a7a..d4f540f4 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -14,6 +14,8 @@ SM_DRIVERS += LVHDoHBA
@@ -621,10 +621,10 @@ index 00000000..72c482ae
 +else:
 +    SR.registerSR(GlusterFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 042fe998..d3dfc0e4 100755
+index 76fcb8d1..24496ac4 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2887,7 +2887,9 @@ def normalizeType(type):
+@@ -2987,7 +2987,9 @@ def normalizeType(type):
      if type in ["lvm", "lvmoiscsi", "lvmohba", "lvmofcoe"]:
          # temporary while LVHD is symlinked as LVM
          type = SR.TYPE_LVHD

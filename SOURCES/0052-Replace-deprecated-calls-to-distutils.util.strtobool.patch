@@ -1,0 +1,225 @@
+From 5325a3b459fcd37305c58b94967658cb3e1551f9 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 11 Oct 2024 15:52:18 +0200
+Subject: [PATCH] Replace deprecated calls to distutils.util.strtobool
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/LinstorSR.py            |  3 +--
+ drivers/MooseFSSR.py            |  7 ++-----
+ drivers/linstor-manager         | 15 +++++++--------
+ drivers/linstorvhdutil.py       |  5 ++---
+ drivers/linstorvolumemanager.py |  5 ++---
+ drivers/util.py                 | 17 +++++++++++++++++
+ 6 files changed, 31 insertions(+), 21 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 81c4b7e0..1197723a 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -34,7 +34,6 @@ except ImportError:
+ from lock import Lock, LOCK_TYPE_GC_RUNNING
+ import blktap2
+ import cleanup
+-import distutils
+ import errno
+ import functools
+ import lvutil
+@@ -337,7 +336,7 @@ class LinstorSR(SR.SR):
+ 
+         monitor_db_quorum = self.dconf.get('monitor-db-quorum')
+         self._monitor_db_quorum = (monitor_db_quorum is None) or \
+-            distutils.util.strtobool(monitor_db_quorum)
++            util.strtobool(monitor_db_quorum)
+ 
+         # Note: We don't have access to the session field if the
+         # 'vdi_attach_from_config' command is executed.
+diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
+index e4dc4ad6..8fc4a4ad 100755
+--- a/drivers/MooseFSSR.py
++++ b/drivers/MooseFSSR.py
+@@ -18,7 +18,6 @@
+ #
+ # MooseFSSR: Based on CEPHFSSR and FileSR, mounts MooseFS share
+ 
+-import distutils.util
+ import errno
+ import os
+ import syslog as _syslog
+@@ -113,9 +112,7 @@ class MooseFSSR(FileSR.FileSR):
+             self.sm_config = self.srcmd.params.get('sr_sm_config') or {}
+ 
+         if self.srcmd.cmd != 'sr_create':
+-            self.subdir = distutils.util.strtobool(
+-                self.sm_config.get('subdir') or '0'
+-            )
++            self.subdir = util.strtobool(self.sm_config.get('subdir'))
+             if self.subdir:
+                 self.remotepath = os.path.join(self.remotepath, sr_uuid)
+ 
+@@ -228,7 +225,7 @@ class MooseFSSR(FileSR.FileSR):
+             if self.subdir is None:
+                 self.subdir = True
+             else:
+-                self.subdir = distutils.util.strtobool(self.subdir)
++                self.subdir = util.strtobool(self.subdir)
+ 
+             self.sm_config['subdir'] = str(self.subdir)
+             self.session.xenapi.SR.set_sm_config(self.sr_ref, self.sm_config)
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index 8ee6f149..fb2b9fe6 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -21,7 +21,6 @@ import sys
+ sys.path[0] = '/opt/xensource/sm/'
+ 
+ import base64
+-import distutils.util
+ import os
+ import socket
+ import XenAPI
+@@ -313,7 +312,7 @@ def release_sr(session, args):
+ 
+ def update_drbd_reactor(session, args):
+     try:
+-        enabled = distutils.util.strtobool(args['enabled'])
++        enabled = util.strtobool(args['enabled'])
+         update_drbd_reactor_service(start=enabled)
+         return str(True)
+     except Exception as e:
+@@ -389,10 +388,10 @@ def destroy(session, args):
+ def check(session, args):
+     try:
+         device_path = args['devicePath']
+-        ignore_missing_footer = distutils.util.strtobool(
++        ignore_missing_footer = util.strtobool(
+             args['ignoreMissingFooter']
+         )
+-        fast = distutils.util.strtobool(args['fast'])
++        fast = util.strtobool(args['fast'])
+         check_ex(device_path, ignore_missing_footer, fast)
+         return str(True)
+     except Exception as e:
+@@ -404,7 +403,7 @@ def get_vhd_info(session, args):
+     try:
+         device_path = args['devicePath']
+         group_name = args['groupName']
+-        include_parent = distutils.util.strtobool(args['includeParent'])
++        include_parent = util.strtobool(args['includeParent'])
+ 
+         linstor = LinstorVolumeManager(
+             get_controller_uri(),
+@@ -560,7 +559,7 @@ def deflate(session, args):
+         device_path = args['devicePath']
+         new_size = int(args['newSize'])
+         old_size = int(args['oldSize'])
+-        zeroize = distutils.util.strtobool(args['zeroize'])
++        zeroize = util.strtobool(args['zeroize'])
+         group_name = args['groupName']
+ 
+         linstor = LinstorVolumeManager(
+@@ -581,7 +580,7 @@ def lock_vdi(session, args):
+         sr_uuid = args['srUuid']
+         vdi_uuid = args['vdiUuid']
+         group_name = args['groupName']
+-        locked = distutils.util.strtobool(args['locked'])
++        locked = util.strtobool(args['locked'])
+ 
+         # We must lock to mark the VDI.
+         lock = Lock(vhdutil.LOCK_TYPE_SR, sr_uuid)
+@@ -824,7 +823,7 @@ def create_sr(session, args):
+         elif provisioning != 'thin' and provisioning != 'thick':
+             raise Exception('unsupported provisioning')
+ 
+-        force = distutils.util.strtobool(args.get('force') or '0')
++        force = util.strtobool(args.get('force'))
+ 
+         return exec_create_sr(
+             session, name, description, disks, volume_group, redundancy, provisioning, force
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index b3df004a..6ad4787d 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -17,7 +17,6 @@
+ from linstorjournaler import LinstorJournaler
+ from linstorvolumemanager import LinstorVolumeManager
+ import base64
+-import distutils.util
+ import errno
+ import json
+ import socket
+@@ -205,7 +204,7 @@ class LinstorVhdUtil:
+ 
+     @linstorhostcall(check_ex, 'check')
+     def _check(self, vdi_uuid, response):
+-        return distutils.util.strtobool(response)
++        return util.strtobool(response)
+ 
+     def get_vhd_info(self, vdi_uuid, include_parent=True):
+         kwargs = {
+@@ -233,7 +232,7 @@ class LinstorVhdUtil:
+ 
+     @linstorhostcall(vhdutil.hasParent, 'hasParent')
+     def has_parent(self, vdi_uuid, response):
+-        return distutils.util.strtobool(response)
++        return util.strtobool(response)
+ 
+     def get_parent(self, vdi_uuid):
+         return self._get_parent(vdi_uuid, self._extract_uuid)
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index a470dfec..55327254 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -16,7 +16,6 @@
+ #
+ 
+ 
+-import distutils.util
+ import errno
+ import json
+ import linstor
+@@ -183,7 +182,7 @@ def _get_controller_uri():
+         for host_ref, host_record in session.xenapi.host.get_all_records().items():
+             node_name = host_record['hostname']
+             try:
+-                if distutils.util.strtobool(
++                if util.strtobool(
+                     session.xenapi.host.call_plugin(host_ref, PLUGIN, PLUGIN_CMD, {})
+                 ):
+                     return 'linstor://' + host_record['address']
+@@ -234,7 +233,7 @@ def get_controller_node_name():
+             )['live']:
+                 continue
+ 
+-            if distutils.util.strtobool(session.xenapi.host.call_plugin(
++            if util.strtobool(session.xenapi.host.call_plugin(
+                 host_ref, PLUGIN, PLUGIN_CMD, {}
+             )):
+                 return node_name
+diff --git a/drivers/util.py b/drivers/util.py
+index ccea5c52..262c895d 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -2098,5 +2098,22 @@ def make_profile(name, function):
+         SMlog('* End profiling of {} ({}) *'.format(name, filename))
+ 
+ 
++def strtobool(str):
++    # Note: `distutils` package is deprecated and slated for removal in Python 3.12.
++    # There is not alternative for strtobool.
++    # See: https://peps.python.org/pep-0632/#migration-advice
++    # So this is a custom implementation with differences:
++    # - A boolean is returned instead of integer
++    # - Empty string and None are supported (False is returned in this case)
++    if not str:
++        return False
++    str = str.lower()
++    if str in ('y', 'yes', 't', 'true', 'on', '1'):
++        return True
++    if str in ('n', 'no', 'f', 'false', 'off', '0'):
++        return False
++    raise ValueError("invalid truth value '{}'".format(str))
++
++
+ def find_executable(name):
+     return shutil.which(name)

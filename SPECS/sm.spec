@@ -52,8 +52,68 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.3..3.2.3-8.3 --no-signature --no-numbered
-TODO
+# git format-patch v3.2.12-xcpng..3.2.12-8.3 --no-signature --no-numbered
+Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
+Patch1003: 0003-feat-drivers-add-XFS-driver.patch
+Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
+Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
+Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
+Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
+Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
+Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
+Patch1015: 0015-py3-use-of-integer-division-operator.patch
+Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
+Patch1017: 0017-py3-switch-interpreter-to-python3.patch
+Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
+Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
+Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
+Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
+Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
+Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
+Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
+Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
+Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
+Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
+Patch1028: 0028-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
+Patch1029: 0029-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
+Patch1030: 0030-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
+Patch1031: 0031-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
+Patch1032: 0032-Fix-many-invalid-escape-sequences.patch
+Patch1033: 0033-Fix-many-invalid-escape-sequences-on-regexes.patch
+Patch1034: 0034-Fix-override-of-FileSR.attach.patch
+Patch1035: 0035-Fix-override-of-BaseISCSISR.detach.patch
+Patch1036: 0036-Fix-override-of-VDI.delete-in-many-subclasses.patch
+Patch1037: 0037-Fix-override-of-VDI._do_snapshot.patch
+Patch1038: 0038-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
+Patch1039: 0039-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
+Patch1040: 0040-Modernize-Lock-class-using-staticmethod-decorator.patch
+Patch1041: 0041-Modernize-GC-using-staticmethod-decorator.patch
+Patch1042: 0042-Modernize-RefCounter-using-staticmethod-decorator.patch
+Patch1043: 0043-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
+Patch1044: 0044-Use-for-session-instead-of-for-e.patch
+Patch1045: 0045-Fix-util.SRtoXML-calls-in-many-drivers.patch
+Patch1046: 0046-Replace-Dict-variable-with-info-in-LVHDSR.patch
+Patch1047: 0047-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
+Patch1048: 0048-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
+Patch1049: 0049-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
+Patch1050: 0050-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
+Patch1051: 0051-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
+Patch1052: 0052-Replace-deprecated-calls-to-distutils.util.strtobool.patch
+Patch1053: 0053-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
+Patch1054: 0054-Use-static-analysis-tool-mypy.patch
+Patch1055: 0055-Add-mypy-stubs.patch
+Patch1056: 0056-Use-override-everywhere.patch
+Patch1057: 0057-Makefile-fix-don-t-execute-precheck-during-installat.patch
+Patch1058: 0058-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+Patch1059: 0059-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+Patch1060: 0060-Fix-filter-to-reject-other-device-types-77.patch
+Patch1061: 0061-fix-cleanup.py-resize-on-a-primary-host-82.patch
 
 %description
 This package contains storage backends used in XCP
@@ -371,7 +431,12 @@ fi
 %changelog
 * Thu Mar 20 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.1
 - Rebase on 3.2.12-3
-- TODO: Update XCP-ng patches
+- Sync patches with our latest 3.2.12-8.3 branch
+- Remove patches merged upstream:
+  - 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
+  - 0030-fix-getAllocatedSize-is-incorrect-75.patch
+  - 0047-Define-and-details-attr-on-Failure-mock.patch
+  - 0064-feat-add-HPE-Nimble-multipath-configuration.patch
 - *** Upstream changelog ***
   * Tue Feb 11 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-3
   - CA-405381: update mpathcount while xapi is not enabled

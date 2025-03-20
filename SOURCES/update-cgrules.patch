@@ -1,0 +1,9 @@
+--- /etc/cgrules.conf	2018-04-11 02:33:52.000000000 +0000
++++ /tmp/cgrules.conf	2024-01-26 17:30:29.204242549 +0000
+@@ -7,4 +7,6 @@
+ #@student	cpu,memory	usergroup/student/
+ #peter		cpu		test1/
+ #%		memory		test2/
++*:tapdisk	cpu,cpuacct	vm.slice/
++%		blkio		vm.slice/
+ # End of file

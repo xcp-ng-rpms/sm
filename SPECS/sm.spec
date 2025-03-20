@@ -1,16 +1,21 @@
-%global package_speccommit 6041ef4a60fa49d96a27c370aa7390f76b832bc2
-%global package_srccommit v3.2.11
+%global package_speccommit f1b3ef576666b1b4a3805704f1ce2198094d6392
+%global usver 3.2.12
+%global xsver 3
+%global xsrel %{xsver}%{?xscount}%{?xshash}
+%global package_srccommit v3.2.12
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.11
-Release: 1%{?xsrel}%{?dist}
+Version: 3.2.12
+Release: %{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.11.tar.gz
+Source0: sm-3.2.12.tar.gz
 Source1: update-cgrules.patch
+Patch0: ca-403593__dont_log_the_session_ref.patch
+Patch1: ca-405381_mpathcount_info_does_not_automatically_refresh_in_xencenter_after_disabling_and_enabling_multipath.patch
 
 %define __python python3
 
@@ -301,6 +306,18 @@ then
 fi
 
 %changelog
+* Tue Feb 11 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-3
+- CA-405381: update mpathcount while xapi is not enabled
+
+* Thu Feb 06 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-2
+- CA-403593: don't log session refs
+
+* Mon Jan 06 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-1
+- CA-400789: Do not exclude parentless VDIs from cacheing
+- CP-52844: allow for open session to be passed to sr_get_capability
+- CP-52852: add handler for xmlrpc ProtocolError
+- fix(cleanup.py): bad live coalesce check regarding FileSR
+
 * Tue Nov 19 2024 Mark Syms <mark.syms@cloud.com> - 3.2.11-1
 - CP-42675: send messages to Xapi if GC has insufficient space
 - CP-52620: enable read-through cache on persistent leaf

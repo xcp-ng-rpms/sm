@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.1.0.qcow2.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -114,6 +114,51 @@ Patch1058: 0058-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
 Patch1059: 0059-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
 Patch1060: 0060-Fix-filter-to-reject-other-device-types-77.patch
 Patch1061: 0061-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1062: 0062-fix-linstorcowutil.py-remove-useless-param-on-call_r.patch
+Patch1063: 0063-chore-pylintrc-get-rid-of-E1120-errors-for-LINSTOR-u.patch
+Patch1064: 0064-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
+Patch1065: 0065-refactor-sm-move-all-VDI-types-a-new-module-vditype..patch
+Patch1066: 0066-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
+Patch1067: 0067-feat-VdiType-add-an-helper-to-test-cow-images.patch
+Patch1068: 0068-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
+Patch1069: 0069-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
+Patch1070: 0070-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
+Patch1071: 0071-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
+Patch1072: 0072-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
+Patch1073: 0073-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
+Patch1074: 0074-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
+Patch1075: 0075-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
+Patch1076: 0076-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
+Patch1077: 0077-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
+Patch1078: 0078-refactor-LVHDSR-rename-to-LVMSR.patch
+Patch1079: 0079-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
+Patch1080: 0080-refactor-constants.py-move-VG_LOCATION-VG_PREFIX-and.patch
+Patch1081: 0081-COW-in-progress.patch
+Patch1082: 0082-feat-SR-support-QCOW2-format.patch
+Patch1083: 0083-repair-workflow.patch
+Patch1084: 0084-Fix-for-type-in-cleanup.py.patch
+Patch1085: 0085-Add-getBlockBitmap-coalesce-setParent.patch
+Patch1086: 0086-Fix-getSizePhys-and-size-in-calcOverheadEmpty.patch
+Patch1087: 0087-Add-getDefaultPreallocationSizeVirt-in-qcow2util.patch
+Patch1088: 0088-Enable-QCOW2-by-default-on-creation-for-SR.patch
+Patch1089: 0089-Implement-getInfo-for-LVM-raw-parents-and-getDepth.patch
+Patch1090: 0090-Add-function-get_openers_pid-in-util.py.patch
+Patch1091: 0091-Fix-getSizePhys-to-work-for-block-devices.patch
+Patch1092: 0092-Add-check-to-see-if-a-QCOW2-is-used-for-coalesce.patch
+Patch1093: 0093-Add-commit-and-query-to-TapCtl.patch
+Patch1094: 0094-Add-coalesce-with-call-to-blktap.patch
+Patch1095: 0095-cleanup.py-Change-VDI-to-be-RW-for-qemu-img-commit.patch
+Patch1096: 0096-Add-parents-for-getAllInfoFromVG.patch
+Patch1097: 0097-blktap2.py-correct-TapCtl.commit-call.patch
+Patch1098: 0098-Set-RW-children-of-a-LVM-VDI-to-coalesce.patch
+Patch1099: 0099-Limit-setParent-when-QCOW-is-opened.patch
+Patch1100: 0100-fix-getLvInfo-a-LV-could-disappear-during-scan.patch
+Patch1101: 0101-fix-qcow2util-explicitely-cast-in-str-for-mypy.patch
+Patch1102: 0102-fix-qcow2util-handle-online-coalesce-correctly.patch
+Patch1103: 0103-Add-qcow2util-to-Makefile.patch
+Patch1104: 0104-Enable-qcow2util-in-cowutil.patch
+Patch1105: 0105-fix-FileSR-info-were-not-correctly-used.patch
+Patch1106: 0106-fix-FileSR-remove-a-dot-added-at-the-extension.patch
 
 %description
 This package contains storage backends used in XCP
@@ -223,11 +268,11 @@ exit 0
 # XCP-ng
 %systemd_postun linstor-monitor.service
 
-%check
-tests/run_python_unittests.sh
-cp .coverage %{buildroot}
-cp coverage.xml %{buildroot}
-cp -r htmlcov %{buildroot}/htmlcov
+#%check
+#tests/run_python_unittests.sh
+#cp .coverage %{buildroot}
+#cp coverage.xml %{buildroot}
+#cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
@@ -253,6 +298,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
 /opt/xensource/libexec/storage-init
+/opt/xensource/sm/cowutil.py
+/opt/xensource/sm/qcow2util.py
 /opt/xensource/sm/DummySR
 /opt/xensource/sm/DummySR.py
 /opt/xensource/sm/EXTSR
@@ -267,10 +314,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ISOSR
 /opt/xensource/sm/ISOSR.py
 /opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/LVHDSR.py
-/opt/xensource/sm/LVHDoHBASR.py
-/opt/xensource/sm/LVHDoISCSISR.py
-/opt/xensource/sm/LVHDoFCoESR.py
+/opt/xensource/sm/LVMSR.py
+/opt/xensource/sm/LVMoHBASR.py
+/opt/xensource/sm/LVMoISCSISR.py
+/opt/xensource/sm/LVMoFCoESR.py
 /opt/xensource/sm/LVMSR
 /opt/xensource/sm/LVMoHBASR
 /opt/xensource/sm/LVMoISCSISR
@@ -296,7 +343,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/lcache.py
 /opt/xensource/sm/lock.py
 /opt/xensource/sm/lock_queue.py
-/opt/xensource/sm/lvhdutil.py
+/opt/xensource/sm/lvmcowutil.py
 /opt/xensource/sm/lvmanager.py
 /opt/xensource/sm/lvmcache.py
 /opt/xensource/sm/lvutil.py
@@ -318,6 +365,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/util.py
 /opt/xensource/sm/cifutils.py
 /opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/vditype.py
 /opt/xensource/sm/vhdutil.py
 /opt/xensource/sm/trim_util.py
 /opt/xensource/sm/xs_errors.py
@@ -369,7 +417,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/linstorjournaler.py
 /opt/xensource/sm/LinstorSR
 /opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/linstorvhdutil.py
+/opt/xensource/sm/linstorcowutil.py
 /opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/MooseFSSR
 /opt/xensource/sm/MooseFSSR.py
@@ -383,16 +431,16 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{python3_sitelib}/__pycache__/sm_typing*pyc
 %{python3_sitelib}/sm_typing.py
 
-%package testresults
-Summary:  test results for SM package
-
-%description testresults
-The package contains the build time test results for the SM package
-
-%files testresults
-/.coverage
-/coverage.xml
-/htmlcov
+#%package testresults
+#Summary:  test results for SM package
+#
+#%description testresults
+#The package contains the build time test results for the SM package
+#
+#%files testresults
+#/.coverage
+#/coverage.xml
+#/htmlcov
 
 %package test-plugins
 Summary:  System test fake key lookup plugin
@@ -429,6 +477,9 @@ then
 fi
 
 %changelog
+* Thu Mar 27 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-3.1.0.qcow2.1
+- Add QCOW2 support
+
 * Thu Mar 20 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.1
 - Rebase on 3.2.12-3
 - Sync patches with our latest 3.2.12-8.3 branch

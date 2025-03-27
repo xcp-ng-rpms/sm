@@ -1,0 +1,31 @@
+From f10af6aec96979b271b0d7e0ef2af8bcdbd69b66 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 27 Mar 2025 14:34:31 +0100
+Subject: [PATCH] Enable qcow2util in cowutil
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cowutil.py | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/cowutil.py b/drivers/cowutil.py
+index f5441df1..a7b6d3e0 100755
+--- a/drivers/cowutil.py
++++ b/drivers/cowutil.py
+@@ -324,11 +324,15 @@ def getVdiTypeFromImageFormat(image_format: ImageFormat) -> str:
+ 
+ def getCowUtilFromImageFormat(image_format: ImageFormat) -> CowUtil:
+     import vhdutil
++    import qcow2util
+ 
+     if image_format in (ImageFormat.RAW, ImageFormat.VHD):
+         return vhdutil.VhdUtil()
+ 
+-    assert False, f"Unsupported image format: {image_format}"
++    if image_format == ImageFormat.QCOW2:
++        return qcow2util.QCowUtil()
++
++    assert False, f"Unsupported image format: {getVdiTypeFromImageFormat(image_format)}"
+ 
+ def getCowUtil(vdi_type: str) -> CowUtil:
+     return getCowUtilFromImageFormat(getImageFormatFromVdiType(vdi_type))

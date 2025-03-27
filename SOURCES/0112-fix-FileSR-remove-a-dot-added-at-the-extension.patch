@@ -1,0 +1,32 @@
+From 9d786f6fcd4a60847f504de2b3eedd2edec54a1a Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 28 Mar 2025 11:03:31 +0100
+Subject: [PATCH] fix(FileSR): remove a dot added at the extension
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/FileSR.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index a75b6b7a..87c9cc41 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -825,7 +825,7 @@ class FileVDI(VDI.VDI):
+         extension = VDI_TYPE_TO_EXTENSION[self.vdi_type]
+         if snap_type == VDI.SNAPSHOT_DOUBLE:
+             dest = util.gen_uuid()
+-            dst = os.path.join(self.sr.path, "%s.%s" % (dest, extension))
++            dst = os.path.join(self.sr.path, "%s%s" % (dest, extension))
+             args.append(dest)
+ 
+         if self.hidden:
+@@ -841,7 +841,7 @@ class FileVDI(VDI.VDI):
+         newuuid = util.gen_uuid()
+         src = self.path
+         newsrc = os.path.join(self.sr.path, "%s%s" % (newuuid, extension))
+-        newsrcname = "%s.%s" % (newuuid, extension)
++        newsrcname = "%s%s" % (newuuid, extension)
+ 
+         if not self._checkpath(src):
+             raise xs_errors.XenError('VDIUnavailable', \

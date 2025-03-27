@@ -1,0 +1,123 @@
+From 38201cc6110adf1862b15d1de92ace1b5143f9ea Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, 22 Apr 2025 10:43:24 +0200
+Subject: [PATCH] Always store image-format in sm-config
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/FileSR.py    | 7 ++++++-
+ drivers/LVMSR.py     | 3 ++-
+ drivers/LinstorSR.py | 3 ++-
+ drivers/SR.py        | 9 ++++++++-
+ drivers/cowutil.py   | 3 +++
+ 5 files changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index eb7ed047..e9446980 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -33,7 +33,8 @@ import blktap2
+ import time
+ import glob
+ from uuid import uuid4
+-from cowutil import CowImageInfo, CowUtil, ImageFormat, getCowUtil, getVdiTypeFromImageFormat
++from cowutil import \
++    CowImageInfo, CowUtil, ImageFormat, getCowUtil, getImageStringFromVdiType, getVdiTypeFromImageFormat
+ from vditype import VdiType, VdiTypeExtension, VDI_COW_TYPES, VDI_TYPE_TO_EXTENSION
+ import xmlrpc.client
+ import XenAPI # pylint: disable=import-error
+@@ -622,7 +623,11 @@ class FileVDI(VDI.VDI):
+         st = util.ioretry(lambda: os.stat(self.path))
+         self.utilisation = int(st.st_size)
+         if self.vdi_type == VdiType.RAW:
++            # Legacy code.
+             self.sm_config = {"type": self.PARAM_RAW}
++        if not hasattr(self, 'sm_config'):
++            self.sm_config = {}
++        self.sm_config = {"image-format": getImageStringFromVdiType(self.vdi_type)}
+ 
+         self._db_introduce()
+         self.sr._update(self.sr.uuid, self.size)
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 656679f2..fd41367c 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -40,7 +40,7 @@ from journaler import Journaler
+ from refcounter import RefCounter
+ from ipc import IPCFlag
+ from constants import NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX
+-from cowutil import CowUtil, getCowUtil, getVdiTypeFromImageFormat
++from cowutil import CowUtil, getCowUtil, getImageStringFromVdiType, getVdiTypeFromImageFormat
+ from lvmcowutil import LV_PREFIX, LvmCowUtil
+ from lvmanager import LVActivator
+ from vditype import VdiType
+@@ -1432,6 +1432,7 @@ class LVMVDI(VDI.VDI):
+ 
+         self.utilisation = lvSize
+         self.sm_config["vdi_type"] = self.vdi_type
++        self.sm_config["image-format"] = getImageStringFromVdiType(self.vdi_type)
+ 
+         if not self.sr.legacyMode:
+             LVMMetadataHandler(self.sr.mdpath).ensureSpaceIsAvailableForVdis(1)
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 4d0a371d..6a717e1e 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -56,7 +56,7 @@ import xml.etree.ElementTree as xml_parser
+ import xmlrpc.client
+ import xs_errors
+ 
+-from cowutil import CowUtil, getVdiTypeFromImageFormat
++from cowutil import CowUtil, getImageStringFromVdiType, getVdiTypeFromImageFormat
+ from srmetadata import \
+     NAME_LABEL_TAG, NAME_DESCRIPTION_TAG, IS_A_SNAPSHOT_TAG, SNAPSHOT_OF_TAG, \
+     TYPE_TAG, VDI_TYPE_TAG, READ_ONLY_TAG, SNAPSHOT_TIME_TAG, \
+@@ -1726,6 +1726,7 @@ class LinstorVDI(VDI.VDI):
+ 
+         self.utilisation = volume_info.allocated_size
+         self.sm_config['vdi_type'] = self.vdi_type
++        self.sm_config['image-format'] = getImageStringFromVdiType(self.vdi_type)
+ 
+         self.ref = self._db_introduce()
+         self.sr._update_stats(self.size)
+diff --git a/drivers/SR.py b/drivers/SR.py
+index 3a2bbb4f..2d193c89 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -28,7 +28,8 @@ import copy
+ import os
+ import traceback
+ 
+-from cowutil import ImageFormat, getCowUtilFromImageFormat, getVdiTypeFromImageFormat, parseImageFormats
++from cowutil import \
++    ImageFormat, getCowUtilFromImageFormat, getImageStringFromVdiType, getVdiTypeFromImageFormat, parseImageFormats
+ from vditype import VdiType
+ 
+ MOUNT_BASE = '/var/run/sr-mount'
+@@ -556,6 +557,12 @@ class ScanRecord:
+                 util.SMlog("missing config for vdi: %s" % vdi.location)
+                 vdi.sm_config = {}
+ 
++            if "image-format" not in vdi.sm_config:
++                try:
++                    vdi.sm_config["image-format"] = getImageStringFromVdiType(vdi.vdi_type)
++                except:
++                    pass # No image format for this VDI type.
++
+             vdi._override_sm_config(vdi.sm_config)
+ 
+             self.__sm_records[vdi.location] = vdi
+diff --git a/drivers/cowutil.py b/drivers/cowutil.py
+index 42cc8273..0da7e651 100755
+--- a/drivers/cowutil.py
++++ b/drivers/cowutil.py
+@@ -306,6 +306,9 @@ def getImageFormatFromVdiType(vdi_type: str) -> ImageFormat:
+ 
+     assert False, f"Unsupported vdi type: {vdi_type}"
+ 
++def getImageStringFromVdiType(vdi_type: str) -> str:
++    return IMAGE_FORMAT_TO_STR[getImageFormatFromVdiType(vdi_type)]
++
+ def getVdiTypeFromImageFormat(image_format: ImageFormat) -> str:
+     if image_format == ImageFormat.RAW:
+         return VdiType.RAW

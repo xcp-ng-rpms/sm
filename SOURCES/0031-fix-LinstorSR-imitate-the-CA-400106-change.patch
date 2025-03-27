@@ -1,0 +1,22 @@
+From 3049aee5c4fe506b812468097196d53c77d58837 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Thu, 10 Apr 2025 10:44:28 +0200
+Subject: [PATCH] fix(LinstorSR): imitate the CA-400106 change
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/LinstorSR.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 1ff3d963..d5d807d1 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -2319,6 +2319,7 @@ class LinstorVDI(VDI.VDI):
+         try:
+             return self._snapshot(snap_type, cbtlog, consistency_state)
+         finally:
++            self.disable_leaf_on_secondary(vdi_uuid, secondary=secondary)
+             blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid, secondary)
+ 
+     def _snapshot(self, snap_type, cbtlog=None, cbt_consistency=None):

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.1.0.qcow2.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -82,38 +82,84 @@ Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
 Patch1028: 0028-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
 Patch1029: 0029-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
-Patch1030: 0030-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
-Patch1031: 0031-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
-Patch1032: 0032-Fix-many-invalid-escape-sequences.patch
-Patch1033: 0033-Fix-many-invalid-escape-sequences-on-regexes.patch
-Patch1034: 0034-Fix-override-of-FileSR.attach.patch
-Patch1035: 0035-Fix-override-of-BaseISCSISR.detach.patch
-Patch1036: 0036-Fix-override-of-VDI.delete-in-many-subclasses.patch
-Patch1037: 0037-Fix-override-of-VDI._do_snapshot.patch
-Patch1038: 0038-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
-Patch1039: 0039-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
-Patch1040: 0040-Modernize-Lock-class-using-staticmethod-decorator.patch
-Patch1041: 0041-Modernize-GC-using-staticmethod-decorator.patch
-Patch1042: 0042-Modernize-RefCounter-using-staticmethod-decorator.patch
-Patch1043: 0043-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
-Patch1044: 0044-Use-for-session-instead-of-for-e.patch
-Patch1045: 0045-Fix-util.SRtoXML-calls-in-many-drivers.patch
-Patch1046: 0046-Replace-Dict-variable-with-info-in-LVHDSR.patch
-Patch1047: 0047-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
-Patch1048: 0048-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
-Patch1049: 0049-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
-Patch1050: 0050-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
-Patch1051: 0051-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
-Patch1052: 0052-Replace-deprecated-calls-to-distutils.util.strtobool.patch
-Patch1053: 0053-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
-Patch1054: 0054-Use-static-analysis-tool-mypy.patch
-Patch1055: 0055-Add-mypy-stubs.patch
-Patch1056: 0056-Use-override-everywhere.patch
-Patch1057: 0057-Makefile-fix-don-t-execute-precheck-during-installat.patch
-Patch1058: 0058-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
-Patch1059: 0059-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
-Patch1060: 0060-Fix-filter-to-reject-other-device-types-77.patch
-Patch1061: 0061-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1030: 0030-fix-LinstorSR-simplify-_kick_gc-code-using-systemd-s.patch
+Patch1031: 0031-fix-LinstorSR-imitate-the-CA-400106-change.patch
+Patch1032: 0032-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
+Patch1033: 0033-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
+Patch1034: 0034-Fix-many-invalid-escape-sequences.patch
+Patch1035: 0035-Fix-many-invalid-escape-sequences-on-regexes.patch
+Patch1036: 0036-Fix-override-of-FileSR.attach.patch
+Patch1037: 0037-Fix-override-of-BaseISCSISR.detach.patch
+Patch1038: 0038-Fix-override-of-VDI.delete-in-many-subclasses.patch
+Patch1039: 0039-Fix-override-of-VDI._do_snapshot.patch
+Patch1040: 0040-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
+Patch1041: 0041-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
+Patch1042: 0042-Modernize-Lock-class-using-staticmethod-decorator.patch
+Patch1043: 0043-Modernize-GC-using-staticmethod-decorator.patch
+Patch1044: 0044-Modernize-RefCounter-using-staticmethod-decorator.patch
+Patch1045: 0045-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
+Patch1046: 0046-Use-for-session-instead-of-for-e.patch
+Patch1047: 0047-Fix-util.SRtoXML-calls-in-many-drivers.patch
+Patch1048: 0048-Replace-Dict-variable-with-info-in-LVHDSR.patch
+Patch1049: 0049-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
+Patch1050: 0050-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
+Patch1051: 0051-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
+Patch1052: 0052-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
+Patch1053: 0053-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
+Patch1054: 0054-Replace-deprecated-calls-to-distutils.util.strtobool.patch
+Patch1055: 0055-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
+Patch1056: 0056-Use-static-analysis-tool-mypy.patch
+Patch1057: 0057-Add-mypy-stubs.patch
+Patch1058: 0058-Use-override-everywhere.patch
+Patch1059: 0059-Makefile-fix-don-t-execute-precheck-during-installat.patch
+Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
+Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1064: 0064-fix-linstorcowutil.py-remove-useless-param-on-call_r.patch
+Patch1065: 0065-chore-pylintrc-get-rid-of-E1120-errors-for-LINSTOR-u.patch
+Patch1066: 0066-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
+Patch1067: 0067-refactor-sm-move-all-VDI-types-a-new-module-vditype..patch
+Patch1068: 0068-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
+Patch1069: 0069-feat-VdiType-add-an-helper-to-test-cow-images.patch
+Patch1070: 0070-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
+Patch1071: 0071-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
+Patch1072: 0072-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
+Patch1073: 0073-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
+Patch1074: 0074-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
+Patch1075: 0075-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
+Patch1076: 0076-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
+Patch1077: 0077-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
+Patch1078: 0078-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
+Patch1079: 0079-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
+Patch1080: 0080-refactor-LVHDSR-rename-to-LVMSR.patch
+Patch1081: 0081-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
+Patch1082: 0082-refactor-constants.py-move-VG_LOCATION-VG_PREFIX-and.patch
+Patch1083: 0083-COW-in-progress.patch
+Patch1084: 0084-feat-SR-support-QCOW2-format.patch
+Patch1085: 0085-Fix-for-type-in-cleanup.py.patch
+Patch1086: 0086-Add-getBlockBitmap-coalesce-setParent.patch
+Patch1087: 0087-Fix-getSizePhys-and-size-in-calcOverheadEmpty.patch
+Patch1088: 0088-Add-getDefaultPreallocationSizeVirt-in-qcow2util.patch
+Patch1089: 0089-Enable-QCOW2-by-default-on-creation-for-SR.patch
+Patch1090: 0090-Implement-getInfo-for-LVM-raw-parents-and-getDepth.patch
+Patch1091: 0091-Add-function-get_openers_pid-in-util.py.patch
+Patch1092: 0092-Fix-getSizePhys-to-work-for-block-devices.patch
+Patch1093: 0093-Add-check-to-see-if-a-QCOW2-is-used-for-coalesce.patch
+Patch1094: 0094-Add-commit-and-query-to-TapCtl.patch
+Patch1095: 0095-Add-coalesce-with-call-to-blktap.patch
+Patch1096: 0096-cleanup.py-Change-VDI-to-be-RW-for-qemu-img-commit.patch
+Patch1097: 0097-Add-parents-for-getAllInfoFromVG.patch
+Patch1098: 0098-blktap2.py-correct-TapCtl.commit-call.patch
+Patch1099: 0099-Set-RW-children-of-a-LVM-VDI-to-coalesce.patch
+Patch1100: 0100-Limit-setParent-when-QCOW-is-opened.patch
+Patch1101: 0101-fix-getLvInfo-a-LV-could-disappear-during-scan.patch
+Patch1102: 0102-fix-qcow2util-explicitely-cast-in-str-for-mypy.patch
+Patch1103: 0103-fix-qcow2util-handle-online-coalesce-correctly.patch
+Patch1104: 0104-Add-qcow2util-to-Makefile.patch
+Patch1105: 0105-Enable-qcow2util-in-cowutil.patch
+Patch1106: 0106-fix-FileSR-info-were-not-correctly-used.patch
+Patch1107: 0107-fix-FileSR-remove-a-dot-added-at-the-extension.patch
 
 %description
 This package contains storage backends used in XCP
@@ -223,11 +269,11 @@ exit 0
 # XCP-ng
 %systemd_postun linstor-monitor.service
 
-%check
-tests/run_python_unittests.sh
-cp .coverage %{buildroot}
-cp coverage.xml %{buildroot}
-cp -r htmlcov %{buildroot}/htmlcov
+#%check
+#tests/run_python_unittests.sh
+#cp .coverage %{buildroot}
+#cp coverage.xml %{buildroot}
+#cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
@@ -253,6 +299,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
 /opt/xensource/libexec/storage-init
+/opt/xensource/sm/cowutil.py
+/opt/xensource/sm/qcow2util.py
 /opt/xensource/sm/DummySR
 /opt/xensource/sm/DummySR.py
 /opt/xensource/sm/EXTSR
@@ -267,10 +315,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ISOSR
 /opt/xensource/sm/ISOSR.py
 /opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/LVHDSR.py
-/opt/xensource/sm/LVHDoHBASR.py
-/opt/xensource/sm/LVHDoISCSISR.py
-/opt/xensource/sm/LVHDoFCoESR.py
+/opt/xensource/sm/LVMSR.py
+/opt/xensource/sm/LVMoHBASR.py
+/opt/xensource/sm/LVMoISCSISR.py
+/opt/xensource/sm/LVMoFCoESR.py
 /opt/xensource/sm/LVMSR
 /opt/xensource/sm/LVMoHBASR
 /opt/xensource/sm/LVMoISCSISR
@@ -296,7 +344,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/lcache.py
 /opt/xensource/sm/lock.py
 /opt/xensource/sm/lock_queue.py
-/opt/xensource/sm/lvhdutil.py
+/opt/xensource/sm/lvmcowutil.py
 /opt/xensource/sm/lvmanager.py
 /opt/xensource/sm/lvmcache.py
 /opt/xensource/sm/lvutil.py
@@ -318,6 +366,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/util.py
 /opt/xensource/sm/cifutils.py
 /opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/vditype.py
 /opt/xensource/sm/vhdutil.py
 /opt/xensource/sm/trim_util.py
 /opt/xensource/sm/xs_errors.py
@@ -369,7 +418,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/linstorjournaler.py
 /opt/xensource/sm/LinstorSR
 /opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/linstorvhdutil.py
+/opt/xensource/sm/linstorcowutil.py
 /opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/MooseFSSR
 /opt/xensource/sm/MooseFSSR.py
@@ -383,16 +432,16 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{python3_sitelib}/__pycache__/sm_typing*pyc
 %{python3_sitelib}/sm_typing.py
 
-%package testresults
-Summary:  test results for SM package
-
-%description testresults
-The package contains the build time test results for the SM package
-
-%files testresults
-/.coverage
-/coverage.xml
-/htmlcov
+#%package testresults
+#Summary:  test results for SM package
+#
+#%description testresults
+#The package contains the build time test results for the SM package
+#
+#%files testresults
+#/.coverage
+#/coverage.xml
+#/htmlcov
 
 %package test-plugins
 Summary:  System test fake key lookup plugin
@@ -429,6 +478,9 @@ then
 fi
 
 %changelog
+* Thu Mar 27 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-3.1.0.qcow2.1
+- Add QCOW2 support
+
 * Thu Mar 20 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.1
 - Rebase on 3.2.12-3
 - Sync patches with our latest 3.2.12-8.3 branch

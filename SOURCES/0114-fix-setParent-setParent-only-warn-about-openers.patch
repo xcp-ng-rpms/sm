@@ -1,0 +1,47 @@
+From 113bacf887f510ac9e785c76024ebe6d171bf6a5 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 21 May 2025 17:58:32 +0200
+Subject: [PATCH] fix(setParent): setParent only warn about openers
+
+The GC in case of migration would try to setParent while tapdisk was
+still active but only pause/unpause the tapdisk after calling setParent
+to refresh it.
+Meaning we ended up not doing the change of parent correctly and the
+image would become invalid.
+We haven't observed corruption from changing parent and refresh tapdisk
+yet so we reverted to not checking opener but we kept a warning in the
+logs.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index cf05cb56..09e349fc 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -583,15 +583,14 @@ class QCowUtil(CowUtil):
+     @override
+     def setParent(self, path: str, parentPath: str, parentRaw: bool) -> None:
+         pid_openers = util.get_openers_pid(path)
+-        if not pid_openers:
+-            parentType = QCOW2_TYPE
+-            if parentRaw:
+-                parentType = RAW_TYPE
+-            cmd = [QEMU_IMG, "rebase", "-u", "-f", QCOW2_TYPE, "-F", parentType, "-b", parentPath, path]
+-            self._ioretry(cmd)
+-        else:
+-            util.SMlog("Could not rebase because openers {}".format(pid_openers))
+-            # Maybe check the parent is already the correct one thanks to tapdisk coalesce
++        if pid_openers:
++            util.SMlog("Rebasing while process {} has the VDI opened".format(pid_openers))
++
++        parentType = QCOW2_TYPE
++        if parentRaw:
++            parentType = RAW_TYPE
++        cmd = [QEMU_IMG, "rebase", "-u", "-f", QCOW2_TYPE, "-F", parentType, "-b", parentPath, path]
++        self._ioretry(cmd)
+ 
+     @override
+     def getHidden(self, path: str) -> bool:

@@ -1,0 +1,35 @@
+From d8bd10914565ae558f2eb462f8b92317262e59eb Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 14 Feb 2025 17:01:16 +0100
+Subject: [PATCH] Add commit and query to TapCtl
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/blktap2.py | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 7c37c8ea..7f264dbb 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -446,6 +446,20 @@ class TapCtl(object):
+         major = cls._pread(args)
+         return int(major)
+ 
++    @classmethod
++    def commit(cls, pid, minor, vdi_type, path):
++        args = ["commit", "-p", pid, "-m", minor, "-a", "{}:{}".format(vdi_type, path)]
++        cls._pread(args)
++
++    @classmethod
++    def query(cls, pid, minor):
++        args = ["query", "-p", pid, "-m", minor]
++        output = cls._pread(args)
++        m = re.match(r"Commit status '(.+)' \((\d+)\/(\d+)\)", output)
++        status = m.group(1)
++        coalesced = int(m.group(2))
++        total_coalesce = int(m.group(3))
++        return (status, coalesced, total_coalesce)
+ 
+ class TapdiskExists(Exception):
+     """Tapdisk already running."""

@@ -1,0 +1,267 @@
+From 3a4e216534ac4e00f57a1fcc38779b7af6874e19 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 13 Dec 2024 11:23:05 +0100
+Subject: [PATCH] refactor(sm): move all vhdutil.FILE_EXTN* helpers in
+ vditype.py
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/FileSR.py     | 18 +++++++++---------
+ drivers/cleanup.py    | 30 +++++++++++++++---------------
+ drivers/vditype.py    | 18 ++++++++++++++++++
+ drivers/vhdutil.py    |  7 -------
+ sm_typing/__init__.py |  3 +++
+ tests/test_cleanup.py |  4 ----
+ 6 files changed, 45 insertions(+), 35 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 2f9da575..15837ef2 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -34,7 +34,7 @@ import blktap2
+ import time
+ import glob
+ from uuid import uuid4
+-from vditype import VdiType
++from vditype import VdiType, VdiTypeExtension, VDI_TYPE_TO_EXTENSION
+ import xmlrpc.client
+ import XenAPI # pylint: disable=import-error
+ from constants import CBTLOG_TAG
+@@ -277,7 +277,7 @@ class FileSR(SR.SR):
+         if self.vdis:
+             return
+ 
+-        pattern = os.path.join(self.path, "*%s" % vhdutil.FILE_EXTN_VHD)
++        pattern = os.path.join(self.path, "*%s" % VdiTypeExtension.VHD)
+         try:
+             self.vhds = vhdutil.getAllVHDs(pattern, FileVDI.extractUuid)
+         except util.CommandException as inst:
+@@ -302,8 +302,8 @@ class FileSR(SR.SR):
+         # raw VDIs and CBT log files
+         files = util.ioretry(lambda: util.listdir(self.path))
+         for fn in files:
+-            if fn.endswith(vhdutil.FILE_EXTN_RAW):
+-                uuid = fn[:-(len(vhdutil.FILE_EXTN_RAW))]
++            if fn.endswith(VdiTypeExtension.RAW):
++                uuid = fn[:-(len(VdiTypeExtension.RAW))]
+                 self.vdis[uuid] = self.vdi(uuid)
+             elif fn.endswith(CBTLOG_TAG):
+                 cbt_uuid = fn.split(".")[0]
+@@ -477,7 +477,7 @@ class FileVDI(VDI.VDI):
+                                 opterr='Invalid VDI type %s' % vdi_type)
+                     self.vdi_type = self.VDI_TYPE[vdi_type]
+             self.path = os.path.join(self.sr.path, "%s%s" %
+-                (vdi_uuid, vhdutil.FILE_EXTN[self.vdi_type]))
++                (vdi_uuid, VDI_TYPE_TO_EXTENSION[self.vdi_type]))
+         else:
+             found = self._find_path_with_retries(vdi_uuid)
+             if not found:
+@@ -708,7 +708,7 @@ class FileVDI(VDI.VDI):
+     def compose(self, sr_uuid, vdi1, vdi2) -> None:
+         if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+-        parent_fn = vdi1 + vhdutil.FILE_EXTN[VdiType.VHD]
++        parent_fn = vdi1 + VDI_TYPE_TO_EXTENSION[VdiType.VHD]
+         parent_path = os.path.join(self.sr.path, parent_fn)
+         assert(util.pathexists(parent_path))
+         vhdutil.setParent(self.path, parent_path, False)
+@@ -988,7 +988,7 @@ class FileVDI(VDI.VDI):
+         parent = util.pread(cmd)
+         parent = parent[:-1]
+         ls = parent.split('/')
+-        return ls[len(ls) - 1].replace(vhdutil.FILE_EXTN_VHD, '')
++        return ls[len(ls) - 1].replace(VdiTypeExtension.VHD, '')
+ 
+     def _query_info(self, path, use_bkp_footer=False):
+         diskinfo = {}
+@@ -998,7 +998,7 @@ class FileVDI(VDI.VDI):
+         cmd = [SR.TAPDISK_UTIL, "query", VdiType.VHD, qopts, path]
+         txt = util.pread(cmd).split('\n')
+         diskinfo['size'] = txt[0]
+-        lst = [txt[1].split('/')[-1].replace(vhdutil.FILE_EXTN_VHD, "")]
++        lst = [txt[1].split('/')[-1].replace(VdiTypeExtension.VHD, "")]
+         for val in filter(util.exactmatch_uuid, lst):
+             diskinfo['parent'] = val
+         diskinfo['hidden'] = txt[2].split()[1]
+@@ -1019,7 +1019,7 @@ class FileVDI(VDI.VDI):
+ 
+     def extractUuid(path):
+         fileName = os.path.basename(path)
+-        uuid = fileName.replace(vhdutil.FILE_EXTN_VHD, "")
++        uuid = fileName.replace(VdiTypeExtension.VHD, "")
+         return uuid
+     extractUuid = staticmethod(extractUuid)
+ 
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 0aac3626..603f8812 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -51,7 +51,7 @@ from lvmanager import LVActivator
+ from srmetadata import LVMMetadataHandler, VDI_TYPE_TAG
+ from functools import reduce
+ from time import monotonic as _time
+-from vditype import VdiType
++from vditype import VdiType, VdiTypeExtension
+ 
+ try:
+     from linstorjournaler import LinstorJournaler
+@@ -1156,20 +1156,20 @@ class FileVDI(VDI):
+     @staticmethod
+     def extractUuid(path):
+         path = os.path.basename(path.strip())
+-        if not (path.endswith(vhdutil.FILE_EXTN_VHD) or \
+-                path.endswith(vhdutil.FILE_EXTN_RAW)):
++        if not (path.endswith(VdiTypeExtension.VHD) or \
++                path.endswith(VdiTypeExtension.RAW)):
+             return None
+-        uuid = path.replace(vhdutil.FILE_EXTN_VHD, "").replace( \
+-                vhdutil.FILE_EXTN_RAW, "")
++        uuid = path.replace(VdiTypeExtension.VHD, "").replace( \
++                VdiTypeExtension.RAW, "")
+         # TODO: validate UUID format
+         return uuid
+ 
+     def __init__(self, sr, uuid, raw):
+         VDI.__init__(self, sr, uuid, raw)
+         if self.raw:
+-            self.fileName = "%s%s" % (self.uuid, vhdutil.FILE_EXTN_RAW)
++            self.fileName = "%s%s" % (self.uuid, VdiTypeExtension.RAW)
+         else:
+-            self.fileName = "%s%s" % (self.uuid, vhdutil.FILE_EXTN_VHD)
++            self.fileName = "%s%s" % (self.uuid, VdiTypeExtension.VHD)
+ 
+     @override
+     def load(self, info=None) -> None:
+@@ -1190,13 +1190,13 @@ class FileVDI(VDI):
+         self.hidden = info.hidden
+         self.scanError = False
+         self.path = os.path.join(self.sr.path, "%s%s" % \
+-                (self.uuid, vhdutil.FILE_EXTN_VHD))
++                (self.uuid, VdiTypeExtension.VHD))
+ 
+     @override
+     def rename(self, uuid) -> None:
+         oldPath = self.path
+         VDI.rename(self, uuid)
+-        self.fileName = "%s%s" % (self.uuid, vhdutil.FILE_EXTN_VHD)
++        self.fileName = "%s%s" % (self.uuid, VdiTypeExtension.VHD)
+         self.path = os.path.join(self.sr.path, self.fileName)
+         assert(not util.pathexists(self.path))
+         Util.log("Renaming %s -> %s" % (oldPath, self.path))
+@@ -2825,7 +2825,7 @@ class FileSR(SR):
+                 self.vdis[uuid] = vdi
+             vdi.load(vhdInfo)
+         uuidsPresent = list(vhds.keys())
+-        rawList = [x for x in os.listdir(self.path) if x.endswith(vhdutil.FILE_EXTN_RAW)]
++        rawList = [x for x in os.listdir(self.path) if x.endswith(VdiTypeExtension.RAW)]
+         for rawName in rawList:
+             uuid = FileVDI.extractUuid(rawName)
+             uuidsPresent.append(uuid)
+@@ -2931,7 +2931,7 @@ class FileSR(SR):
+     def _scan(self, force):
+         for i in range(SR.SCAN_RETRY_ATTEMPTS):
+             error = False
+-            pattern = os.path.join(self.path, "*%s" % vhdutil.FILE_EXTN_VHD)
++            pattern = os.path.join(self.path, "*%s" % VdiTypeExtension.VHD)
+             vhds = vhdutil.getAllVHDs(pattern, FileVDI.extractUuid)
+             for uuid, vhdInfo in vhds.items():
+                 if vhdInfo.error:
+@@ -2975,10 +2975,10 @@ class FileSR(SR):
+         entries = self.journaler.getAll(VDI.JRN_LEAF)
+         for uuid, parentUuid in entries.items():
+             fileList = os.listdir(self.path)
+-            childName = uuid + vhdutil.FILE_EXTN_VHD
+-            tmpChildName = self.TMP_RENAME_PREFIX + uuid + vhdutil.FILE_EXTN_VHD
+-            parentName1 = parentUuid + vhdutil.FILE_EXTN_VHD
+-            parentName2 = parentUuid + vhdutil.FILE_EXTN_RAW
++            childName = uuid + VdiTypeExtension.VHD
++            tmpChildName = self.TMP_RENAME_PREFIX + uuid + VdiTypeExtension.VHD
++            parentName1 = parentUuid + VdiTypeExtension.VHD
++            parentName2 = parentUuid + VdiTypeExtension.RAW
+             parentPresent = (parentName1 in fileList or parentName2 in fileList)
+             if parentPresent or tmpChildName in fileList:
+                 self._undoInterruptedCoalesceLeaf(uuid, parentUuid)
+diff --git a/drivers/vditype.py b/drivers/vditype.py
+index 27a8d034..8e05ab73 100644
+--- a/drivers/vditype.py
++++ b/drivers/vditype.py
+@@ -14,6 +14,8 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ 
++from sm_typing import Final
++
+ # TODO: Use StrEnum in python 3.11.
+ class VdiType(object):
+     RAW = "aio"
+@@ -21,3 +23,19 @@ class VdiType(object):
+     ISO = "iso"
+     FILE = "file"
+     CBTLOG = "cbtlog"
++
++# TODO: Use StrEnum in python 3.11.
++class VdiTypeExtension(object):
++    RAW = ".raw"
++    VHD = ".vhd"
++    ISO = ".iso"
++    FILE = ".file"
++    CBTLOG = ".cbtlog"
++
++VDI_TYPE_TO_EXTENSION: Final = {
++    VdiType.RAW: VdiTypeExtension.RAW,
++    VdiType.VHD: VdiTypeExtension.VHD,
++    VdiType.ISO: VdiTypeExtension.ISO,
++    VdiType.FILE: VdiTypeExtension.FILE,
++    VdiType.CBTLOG: VdiTypeExtension.CBTLOG
++}
+diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
+index e4f43fee..5484ad2e 100755
+--- a/drivers/vhdutil.py
++++ b/drivers/vhdutil.py
+@@ -37,13 +37,6 @@ VHD_FOOTER_SIZE = 512
+ # lock to lock the entire SR for short ops
+ LOCK_TYPE_SR = "sr"
+ 
+-FILE_EXTN_VHD = ".vhd"
+-FILE_EXTN_RAW = ".raw"
+-FILE_EXTN = {
+-        VdiType.VHD: FILE_EXTN_VHD,
+-        VdiType.RAW: FILE_EXTN_RAW
+-}
+-
+ 
+ class VHDInfo:
+     uuid = ""
+diff --git a/sm_typing/__init__.py b/sm_typing/__init__.py
+index 2042dea6..2b842871 100644
+--- a/sm_typing/__init__.py
++++ b/sm_typing/__init__.py
+@@ -12,3 +12,6 @@ if not hasattr(typing, 'override'):
+ 
+ if not hasattr(typing, 'Never'):
+     Never = None # type: ignore
++
++if not hasattr(typing, 'Final'):
++    Final = None # type: ignore
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index a1472c53..d80a4e98 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -1561,8 +1561,6 @@ class TestSR(unittest.TestCase):
+         vdis = self.add_vdis_for_coalesce(sr)
+         mock_journaler.get.return_value = None
+ 
+-        mock_vhdutil.FILE_EXTN_VHD = vhdutil.FILE_EXTN_VHD
+-        mock_vhdutil.FILE_EXTN_RAW = vhdutil.FILE_EXTN_RAW
+         mock_vhdutil.getParent.return_value = vdis['parent'].path
+ 
+         sr.coalesce(vdis['vdi'], False)
+@@ -1602,8 +1600,6 @@ class TestSR(unittest.TestCase):
+         vdis['parent'].raw = True
+         mock_journaler.get.return_value = None
+ 
+-        mock_vhdutil.FILE_EXTN_VHD = vhdutil.FILE_EXTN_VHD
+-        mock_vhdutil.FILE_EXTN_RAW = vhdutil.FILE_EXTN_RAW
+         mock_vhdutil.getParent.return_value = vdis['parent'].path
+ 
+         sr.coalesce(vdis['vdi'], False)

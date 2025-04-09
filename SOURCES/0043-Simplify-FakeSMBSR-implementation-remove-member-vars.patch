@@ -1,0 +1,34 @@
+From 8b61de58354bf183e659c5be0117dfbc0633a32f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 21 Oct 2024 17:10:39 +0200
+Subject: [PATCH] Simplify FakeSMBSR implementation (remove member vars in
+ class)
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ tests/test_SMBSR.py | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/tests/test_SMBSR.py b/tests/test_SMBSR.py
+index 0bb6cfb8..4cfd2733 100644
+--- a/tests/test_SMBSR.py
++++ b/tests/test_SMBSR.py
+@@ -12,17 +12,10 @@ import xs_errors
+ 
+ 
+ class FakeSMBSR(SMBSR.SMBSR):
+-    uuid = None
+-    sr_ref = None
+-    mountpoint = None
+-    linkpath = None
+-    path = None
+-    session = None
+-    remoteserver = None
+-
+     def __init__(self, srcmd, none):
+         self.dconf = srcmd.dconf
+         self.srcmd = srcmd
++        self.session = None
+         self.uuid = 'auuid'
+         self.sr_ref = 'asr_ref'
+         self.mountpoint = 'aMountpoint'

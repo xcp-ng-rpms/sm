@@ -1,15 +1,21 @@
-%global package_speccommit eb20118552753e3d609cbdbd8102ecfc2a31f4fa
-%global package_srccommit v3.2.3
+%global package_speccommit f1b3ef576666b1b4a3805704f1ce2198094d6392
+%global usver 3.2.12
+%global xsver 3
+%global xsrel %{xsver}%{?xscount}%{?xshash}
+%global package_srccommit v3.2.12
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.3
-Release: 1.17%{?xsrel}%{?dist}
+Version: 3.2.12
+Release: %{?xsrel}.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.3.tar.gz
+Source0: sm-3.2.12.tar.gz
+Source1: update-cgrules.patch
+Patch0: ca-403593__dont_log_the_session_ref.patch
+Patch1: ca-405381_mpathcount_info_does_not_automatically_refresh_in_xencenter_after_disabling_and_enabling_multipath.patch
 
 %define __python python3
 
@@ -39,12 +45,14 @@ Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
+Conflicts: blktap < 3.55.3
+Requires: sg3_utils
 
 Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.3..3.2.3-8.3 --no-signature --no-numbered
+# git format-patch v3.2.12-xcpng..3.2.12-8.3 --no-signature --no-numbered
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -72,45 +80,40 @@ Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
 Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
 Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
-Patch1028: 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
-Patch1029: 0029-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
-# Upstream PR: https://github.com/xapi-project/sm/pull/719
-Patch1030: 0030-fix-getAllocatedSize-is-incorrect-75.patch
-Patch1031: 0031-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
-Patch1032: 0032-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
-Patch1033: 0033-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
-Patch1034: 0034-Fix-many-invalid-escape-sequences.patch
-Patch1035: 0035-Fix-many-invalid-escape-sequences-on-regexes.patch
-Patch1036: 0036-Fix-override-of-FileSR.attach.patch
-Patch1037: 0037-Fix-override-of-BaseISCSISR.detach.patch
-Patch1038: 0038-Fix-override-of-VDI.delete-in-many-subclasses.patch
-Patch1039: 0039-Fix-override-of-VDI._do_snapshot.patch
-Patch1040: 0040-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
-Patch1041: 0041-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
-Patch1042: 0042-Modernize-Lock-class-using-staticmethod-decorator.patch
-Patch1043: 0043-Modernize-GC-using-staticmethod-decorator.patch
-Patch1044: 0044-Modernize-RefCounter-using-staticmethod-decorator.patch
-Patch1045: 0045-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
-Patch1046: 0046-Use-for-session-instead-of-for-e.patch
-Patch1047: 0047-Define-and-details-attr-on-Failure-mock.patch
-Patch1048: 0048-Fix-util.SRtoXML-calls-in-many-drivers.patch
-Patch1049: 0049-Replace-Dict-variable-with-info-in-LVHDSR.patch
-Patch1050: 0050-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
-Patch1051: 0051-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
-Patch1052: 0052-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
-Patch1053: 0053-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
-Patch1054: 0054-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
-Patch1055: 0055-Replace-deprecated-calls-to-distutils.util.strtobool.patch
-Patch1056: 0056-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
-Patch1057: 0057-Use-static-analysis-tool-mypy.patch
-Patch1058: 0058-Add-mypy-stubs.patch
-Patch1059: 0059-Use-override-everywhere.patch
-Patch1060: 0060-Makefile-fix-don-t-execute-precheck-during-installat.patch
-Patch0161: 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
-Patch0162: 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
-Patch0163: 0063-Fix-filter-to-reject-other-device-types-77.patch
-Patch1064: 0064-feat-add-HPE-Nimble-multipath-configuration.patch
-Patch1065: 0065-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1028: 0028-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
+Patch1029: 0029-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
+Patch1030: 0030-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
+Patch1031: 0031-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
+Patch1032: 0032-Fix-many-invalid-escape-sequences.patch
+Patch1033: 0033-Fix-many-invalid-escape-sequences-on-regexes.patch
+Patch1034: 0034-Fix-override-of-FileSR.attach.patch
+Patch1035: 0035-Fix-override-of-BaseISCSISR.detach.patch
+Patch1036: 0036-Fix-override-of-VDI.delete-in-many-subclasses.patch
+Patch1037: 0037-Fix-override-of-VDI._do_snapshot.patch
+Patch1038: 0038-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
+Patch1039: 0039-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
+Patch1040: 0040-Modernize-Lock-class-using-staticmethod-decorator.patch
+Patch1041: 0041-Modernize-GC-using-staticmethod-decorator.patch
+Patch1042: 0042-Modernize-RefCounter-using-staticmethod-decorator.patch
+Patch1043: 0043-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
+Patch1044: 0044-Use-for-session-instead-of-for-e.patch
+Patch1045: 0045-Fix-util.SRtoXML-calls-in-many-drivers.patch
+Patch1046: 0046-Replace-Dict-variable-with-info-in-LVHDSR.patch
+Patch1047: 0047-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
+Patch1048: 0048-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
+Patch1049: 0049-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
+Patch1050: 0050-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
+Patch1051: 0051-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
+Patch1052: 0052-Replace-deprecated-calls-to-distutils.util.strtobool.patch
+Patch1053: 0053-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
+Patch1054: 0054-Use-static-analysis-tool-mypy.patch
+Patch1055: 0055-Add-mypy-stubs.patch
+Patch1056: 0056-Use-override-everywhere.patch
+Patch1057: 0057-Makefile-fix-don-t-execute-precheck-during-installat.patch
+Patch1058: 0058-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+Patch1059: 0059-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+Patch1060: 0060-Fix-filter-to-reject-other-device-types-77.patch
+Patch1061: 0061-fix-cleanup.py-resize-on-a-primary-host-82.patch
 
 %description
 This package contains storage backends used in XCP
@@ -125,28 +128,17 @@ make -C misc/fairlock
 %install
 make -C misc/fairlock install DESTDIR=%{buildroot}
 make install DESTDIR=%{buildroot}
+mkdir -p %{buildroot}%{_datadir}/%{name}/
+install -m 400 %SOURCE1 %{buildroot}%{_datadir}/%{name}/
 
 # Mark processes that should be moved to the data path
 %triggerin -- libcgroup-tools
-CGRULES_PATCH=$(cat << 'EOF'
---- /etc/cgrules.conf	2018-04-11 02:33:52.000000000 +0000
-+++ /tmp/cgrules.conf	2024-01-26 17:30:29.204242549 +0000
-@@ -7,4 +7,6 @@
- #@student	cpu,memory	usergroup/student/
- #peter		cpu		test1/
- #%		memory		test2/
-+*:tapdisk	cpu,cpuacct	vm.slice/
-+%		blkio		vm.slice/
- # End of file
-EOF
-)
-
 # Do not apply patch if it was already applied
-if ! echo "$CGRULES_PATCH" | patch --dry-run -RsN -d / -p1 >/dev/null; then
+if ! patch --dry-run -RsN -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch >/dev/null; then
     # Apply patch. Output NOT redirected to /dev/null so that error messages are displayed
-    if ! echo "$CGRULES_PATCH" | patch -tsN -r - -d / -p1; then
+    if ! patch -tsN -r - -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch; then
         echo "Error: failed to apply patch:"
-        echo "$CGRULES_PATCH"
+        cat %{_datadir}/%{name}/update-cgrules.patch
         false
     fi
 fi
@@ -248,6 +240,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /etc/xapi.d/plugins/testing-hooks
 /etc/xapi.d/plugins/intellicache-clean
 /etc/xapi.d/plugins/trim
+/etc/xapi.d/xapi-pre-shutdown/*
 /etc/xensource/master.d/02-vhdcleanup
 /opt/xensource/bin/blktap2
 /opt/xensource/bin/tapdisk-cache-stats
@@ -359,6 +352,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
+%{_datadir}/%{name}/update-cgrules.patch
 # XCP-ng
 /etc/systemd/system/drbd-reactor.service.d/override.conf
 /etc/systemd/system/linstor-satellite.service.d/override.conf
@@ -422,8 +416,68 @@ Manager and some other packages
 %{_unitdir}/fairlock@.service
 %{_libexecdir}/fairlock
 
+%post fairlock
+## On upgrade, shut down existing lock services so new ones will
+## be started. There should be no locks held during upgrade operations
+## so this is safe.
+if [ $1 -gt 1 ];
+then
+    /usr/bin/systemctl list-units fairlock@* --all --no-legend | /usr/bin/cut -d' ' -f1 | while read service;
+    do
+        /usr/bin/systemctl stop "$service"
+    done
+fi
 
 %changelog
+* Thu Mar 20 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.1
+- Rebase on 3.2.12-3
+- Sync patches with our latest 3.2.12-8.3 branch
+- Remove patches merged upstream:
+  - 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
+  - 0030-fix-getAllocatedSize-is-incorrect-75.patch
+  - 0047-Define-and-details-attr-on-Failure-mock.patch
+  - 0064-feat-add-HPE-Nimble-multipath-configuration.patch
+- *** Upstream changelog ***
+  * Tue Feb 11 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-3
+  - CA-405381: update mpathcount while xapi is not enabled
+  * Thu Feb 06 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-2
+  - CA-403593: don't log session refs
+  * Mon Jan 06 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-1
+  - CA-400789: Do not exclude parentless VDIs from cacheing
+  - CP-52844: allow for open session to be passed to sr_get_capability
+  - CP-52852: add handler for xmlrpc ProtocolError
+  - fix(cleanup.py): bad live coalesce check regarding FileSR
+  * Tue Nov 19 2024 Mark Syms <mark.syms@cloud.com> - 3.2.11-1
+  - CP-42675: send messages to Xapi if GC has insufficient space
+  - CP-52620: enable read-through cache on persistent leaf
+  * Tue Nov 05 2024 Mark Syms <mark.syms@cloud.com> - 3.2.10-1
+  - CA-397084: SR scan tries to deactivate LV in use by tapdisk
+  - CA-399644: if we make progress do not abort the GC or evaluate criteria
+  - CA-400743: perform post snapshot rename in ioretry
+  - CA-401068: if iSCSI device path is not found scan the bus
+  * Wed Oct 09 2024 Mark Syms <mark.syms@cloud.com> - 3.2.9-3
+  - CP-51658: install stop gc helper script
+  - CA-399643 Use full paths when stopping fairlock on upgrade
+  - CA-396655: check xapi is enabled before starting multipath reporting
+  - CA-396658: check xapi is enabled before checking SR health
+  - CA-400106: disable leaf coalesce with VDI snapshot secondary
+  * Tue Sep 24 2024 Tim Smith <tim.smith@cloud.com> - 3.2.8-2
+  - CA-399643 Use full paths when stopping fairlock on upgrade
+  * Fri Sep 06 2024 Robin Newton <robin.newton@cloud.com> - 3.2.8-1
+  - CA-398958 Cope with concurrent read-only activations
+  * Wed Sep 04 2024 Mark Syms <mark.syms@cloud.com> - 3.2.7-1
+  - CA-398425: correctly check for multiple targets in iSCSI
+  * Wed Aug 21 2024 Mark Syms <mark.syms@cloud.com> - 3.2.6-1
+  - CA-395560: Log exception details when LUN refresh fails
+  - CA-396124: amend criteria under which the garbage collector aborts
+  - CA-397084: Log any user of LV at deactivate
+  - CP-51214: stop cgrules triggering errors on update
+  * Tue Jul 23 2024 Tim Smith <tim.smith@cloud.com> - 3.2.5-1
+  - CA-395554 Stop fairlock services on package upgrade
+  * Mon Jul 22 2024 Mark Syms <mark.syms@cloud.com> - 3.2.4-1
+  - Add missing sg3_utils dependency
+  - Update multipath config for Dell, IBM and Nimble arrays
+
 * Tue Feb 18 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.17
 - Add 0065-fix-cleanup.py-resize-on-a-primary-host-82.patch
 

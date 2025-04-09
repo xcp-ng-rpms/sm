@@ -1,4 +1,4 @@
-From 47d5d8691b40f9c4bd8a77c00d851443e68ac887 Mon Sep 17 00:00:00 2001
+From ad42020aacbd31f149a867dff0ad5c86bebd8e68 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 12 Apr 2024 15:08:59 +0200
 Subject: [PATCH] feat(LargeBlock): introduce largeblocksr (#51)
@@ -47,7 +47,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  create mode 100644 drivers/LargeBlockSR.py
 
 diff --git a/Makefile b/Makefile
-index 075f4603..472413e5 100755
+index 9a8a0314..d33c0605 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -20,6 +20,7 @@ SM_DRIVERS += GlusterFS
@@ -314,10 +314,10 @@ index 00000000..ba0ac1d1
 +else:
 +    SR.registerSR(LargeBlockSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index f1497ca3..0ec1fa1b 100755
+index 3578dd55..b5813153 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -963,4 +963,26 @@
+@@ -968,4 +968,26 @@
              <description>LINSTOR SR delete error</description>
              <value>5007</value>
          </code>
@@ -345,10 +345,10 @@ index f1497ca3..0ec1fa1b 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 02435db8..99d73872 100755
+index e3b78e52..9713ffe5 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3430,7 +3430,7 @@ def normalizeType(type):
+@@ -3530,7 +3530,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -358,7 +358,7 @@ index 02435db8..99d73872 100755
          type = SR.TYPE_FILE
      if type in ["linstor"]:
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 54d30d6d..9bf9d1e9 100755
+index 2d990a9b..dfd9d5c5 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
 @@ -569,12 +569,16 @@ def resizePV(dev):

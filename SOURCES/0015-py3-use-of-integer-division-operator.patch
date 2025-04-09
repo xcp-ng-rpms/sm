@@ -1,4 +1,4 @@
-From e1335b1ca83771142e6a6f831b5b4aa888e2ff18 Mon Sep 17 00:00:00 2001
+From 2ae1223604a6c727c17e0adf94073f4e1ef43e2f Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:32:37 +0100
 Subject: [PATCH] py3: use of integer division operator

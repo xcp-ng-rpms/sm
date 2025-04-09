@@ -1,4 +1,4 @@
-From d32bf0ccfe58c67ba87e9bab5b76f9eead92735d Mon Sep 17 00:00:00 2001
+From 36830da8767f0fa96b8759b7c60318def42c3d77 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:36:36 +0200
 Subject: [PATCH] Fix is_open call for many drivers (#25)

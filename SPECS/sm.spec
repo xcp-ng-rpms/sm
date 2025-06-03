@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -82,38 +82,40 @@ Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
 Patch1028: 0028-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
 Patch1029: 0029-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
-Patch1030: 0030-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
-Patch1031: 0031-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
-Patch1032: 0032-Fix-many-invalid-escape-sequences.patch
-Patch1033: 0033-Fix-many-invalid-escape-sequences-on-regexes.patch
-Patch1034: 0034-Fix-override-of-FileSR.attach.patch
-Patch1035: 0035-Fix-override-of-BaseISCSISR.detach.patch
-Patch1036: 0036-Fix-override-of-VDI.delete-in-many-subclasses.patch
-Patch1037: 0037-Fix-override-of-VDI._do_snapshot.patch
-Patch1038: 0038-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
-Patch1039: 0039-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
-Patch1040: 0040-Modernize-Lock-class-using-staticmethod-decorator.patch
-Patch1041: 0041-Modernize-GC-using-staticmethod-decorator.patch
-Patch1042: 0042-Modernize-RefCounter-using-staticmethod-decorator.patch
-Patch1043: 0043-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
-Patch1044: 0044-Use-for-session-instead-of-for-e.patch
-Patch1045: 0045-Fix-util.SRtoXML-calls-in-many-drivers.patch
-Patch1046: 0046-Replace-Dict-variable-with-info-in-LVHDSR.patch
-Patch1047: 0047-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
-Patch1048: 0048-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
-Patch1049: 0049-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
-Patch1050: 0050-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
-Patch1051: 0051-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
-Patch1052: 0052-Replace-deprecated-calls-to-distutils.util.strtobool.patch
-Patch1053: 0053-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
-Patch1054: 0054-Use-static-analysis-tool-mypy.patch
-Patch1055: 0055-Add-mypy-stubs.patch
-Patch1056: 0056-Use-override-everywhere.patch
-Patch1057: 0057-Makefile-fix-don-t-execute-precheck-during-installat.patch
-Patch1058: 0058-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
-Patch1059: 0059-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
-Patch1060: 0060-Fix-filter-to-reject-other-device-types-77.patch
-Patch1061: 0061-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1030: 0030-fix-LinstorSR-simplify-_kick_gc-code-using-systemd-s.patch
+Patch1031: 0031-fix-LinstorSR-imitate-the-CA-400106-change.patch
+Patch1032: 0032-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
+Patch1033: 0033-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
+Patch1034: 0034-Fix-many-invalid-escape-sequences.patch
+Patch1035: 0035-Fix-many-invalid-escape-sequences-on-regexes.patch
+Patch1036: 0036-Fix-override-of-FileSR.attach.patch
+Patch1037: 0037-Fix-override-of-BaseISCSISR.detach.patch
+Patch1038: 0038-Fix-override-of-VDI.delete-in-many-subclasses.patch
+Patch1039: 0039-Fix-override-of-VDI._do_snapshot.patch
+Patch1040: 0040-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
+Patch1041: 0041-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
+Patch1042: 0042-Modernize-Lock-class-using-staticmethod-decorator.patch
+Patch1043: 0043-Modernize-GC-using-staticmethod-decorator.patch
+Patch1044: 0044-Modernize-RefCounter-using-staticmethod-decorator.patch
+Patch1045: 0045-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
+Patch1046: 0046-Use-for-session-instead-of-for-e.patch
+Patch1047: 0047-Fix-util.SRtoXML-calls-in-many-drivers.patch
+Patch1048: 0048-Replace-Dict-variable-with-info-in-LVHDSR.patch
+Patch1049: 0049-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
+Patch1050: 0050-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
+Patch1051: 0051-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
+Patch1052: 0052-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
+Patch1053: 0053-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
+Patch1054: 0054-Replace-deprecated-calls-to-distutils.util.strtobool.patch
+Patch1055: 0055-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
+Patch1056: 0056-Use-static-analysis-tool-mypy.patch
+Patch1057: 0057-Add-mypy-stubs.patch
+Patch1058: 0058-Use-override-everywhere.patch
+Patch1059: 0059-Makefile-fix-don-t-execute-precheck-during-installat.patch
+Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
+Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
 
 %description
 This package contains storage backends used in XCP
@@ -429,6 +431,10 @@ then
 fi
 
 %changelog
+* Tue Jun 03 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.2
+- Prevent leaf coalesce during migration for LINSTOR (CA-400106)
+- Use GC daemon code for LINSTOR like other drivers
+
 * Thu Mar 20 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.1
 - Rebase on 3.2.12-3
 - Sync patches with our latest 3.2.12-8.3 branch

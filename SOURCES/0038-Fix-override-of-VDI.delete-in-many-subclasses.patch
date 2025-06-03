@@ -1,0 +1,53 @@
+From 8e7cde1413c150feb8a539a6fe0ea9f44bb7e84a Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Tue, 15 Oct 2024 17:12:57 +0200
+Subject: [PATCH] Fix override of VDI.delete in many subclasses
+
+It triggers warns in analyzers like mypy.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/DummySR.py   | 2 +-
+ drivers/ISOSR.py     | 2 +-
+ drivers/LUNperVDI.py | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/DummySR.py b/drivers/DummySR.py
+index 44f571e5..c733fdf7 100755
+--- a/drivers/DummySR.py
++++ b/drivers/DummySR.py
+@@ -159,7 +159,7 @@ class DummyVDI(VDI.VDI):
+         self.run_corner_cases_tests()
+         return self.get_params()
+ 
+-    def delete(self, sr_uuid, vdi_uuid):
++    def delete(self, sr_uuid, vdi_uuid, data_only=False):
+         self.sr._assertValues(['sr_uuid', 'args', 'host_ref', 'device_config', 'command', 'sr_ref', 'vdi_ref', 'vdi_location', 'vdi_uuid'])
+         assert(len(self.sr.srcmd.params['args']) == 0)
+ 
+diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
+index 9ca44506..cbe0b658 100755
+--- a/drivers/ISOSR.py
++++ b/drivers/ISOSR.py
+@@ -757,7 +757,7 @@ class ISOVDI(VDI.VDI):
+             raise xs_errors.XenError('VDICreate', \
+                      opterr='could not create file: "%s"' % self.path)
+ 
+-    def delete(self, sr_uuid, vdi_uuid):
++    def delete(self, sr_uuid, vdi_uuid, data_only=False):
+         util.SMlog("Deleting...")
+ 
+         self.uuid = vdi_uuid
+diff --git a/drivers/LUNperVDI.py b/drivers/LUNperVDI.py
+index 306d7041..497ba6b5 100755
+--- a/drivers/LUNperVDI.py
++++ b/drivers/LUNperVDI.py
+@@ -98,7 +98,7 @@ class RAWVDI(VDI.VDI):
+             return super(RAWVDI, self.sr.vdis[v['uuid']]).get_params()
+         raise xs_errors.XenError('SRNoSpace')
+ 
+-    def delete(self, sr_uuid, vdi_uuid):
++    def delete(self, sr_uuid, vdi_uuid, data_only=False):
+         try:
+             vdi = util._getVDI(self.sr, vdi_uuid)
+             if not vdi['managed']:

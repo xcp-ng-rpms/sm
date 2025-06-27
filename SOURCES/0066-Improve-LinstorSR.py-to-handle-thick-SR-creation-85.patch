@@ -1,0 +1,44 @@
+From 97e2083e48f635353e71dcd47cc35e50dcc3a697 Mon Sep 17 00:00:00 2001
+From: Rushikesh Jadhav <rushikesh7@gmail.com>
+Date: Wed, 25 Jun 2025 15:01:05 +0530
+Subject: [PATCH] Improve LinstorSR.py to handle `thick` SR creation (#85)
+
+Check enabled hosts instead of online during SR creation
+
+Added `get_enabled_hosts` to get enabled hosts during SR operations. In some drivers e.g. LINSTOR, we need to ensure that hosts are enabled before performing operations, hence this function is needed. In some cases `thick` SR creation may fail due to `get_online_hosts` as the metrics could take time.
+
+Signed-off-by: Rushikesh Jadhav <rushikesh7@gmail.com>
+---
+ drivers/LinstorSR.py | 2 +-
+ drivers/util.py      | 5 +++++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 2ecb0e38..dbfda35e 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -586,7 +586,7 @@ class LinstorSR(SR.SR):
+                 opterr='LINSTOR SR must be unique in a pool'
+             )
+ 
+-        online_hosts = util.get_online_hosts(self.session)
++        online_hosts = util.get_enabled_hosts(self.session)
+         if len(online_hosts) < len(host_adresses):
+             raise xs_errors.XenError(
+                 'LinstorSRCreate',
+diff --git a/drivers/util.py b/drivers/util.py
+index 4053c9a3..b663c76a 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -777,6 +777,11 @@ def get_slaves_attached_on(session, vdi_uuids):
+     master_ref = get_this_host_ref(session)
+     return [x for x in host_refs if x != master_ref]
+ 
++def get_enabled_hosts(session):
++    """
++    Returns a list of host refs that are enabled in the pool.
++    """
++    return list(session.xenapi.host.get_all_records_where('field "enabled" = "true"').keys())
+ 
+ def get_online_hosts(session):
+     online_hosts = []

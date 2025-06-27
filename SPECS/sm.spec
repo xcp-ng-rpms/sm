@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.2.0.noblktap.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -116,6 +116,13 @@ Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
 Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
 Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
 Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1064: 0064-chore-.github-workflows-use-ubuntu-24.04.patch
+Patch1065: 0065-Fix-warns-reported-by-new-github-workflow.patch
+Patch1066: 0066-Improve-LinstorSR.py-to-handle-thick-SR-creation-85.patch
+Patch1067: 0067-CP-35551-Remove-params-from-attach-respopnse-leaving.patch
+Patch1068: 0068-CP-35551-Handle-new-return-from-tap-ctl-allocate.patch
+Patch1069: 0069-CP-35551-tapdisk-pause-check-for-nbd-socket-path.patch
+Patch1070: 0070-CA-376860-remove-kernel-driver-memory-pools.patch
 
 %description
 This package contains storage backends used in XCP
@@ -431,6 +438,9 @@ then
 fi
 
 %changelog
+* Fri Jun 27 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-3.2.0.noblktap.1
+- Add patches for not using blktap driver
+
 * Tue Jun 03 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.2
 - Prevent leaf coalesce during migration for LINSTOR (CA-400106)
 - Use GC daemon code for LINSTOR like other drivers

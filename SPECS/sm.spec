@@ -24,7 +24,6 @@ BuildRequires: python3-devel
 BuildRequires: python36-pylint
 BuildRequires: python3-coverage
 BuildRequires: python36-bitarray
-BuildRequires: python3-future
 
 # XCP-ng: python36-mock for %%check
 BuildRequires: python36-mock
@@ -434,6 +433,7 @@ fi
 %changelog
 * Fri Jul 04 2025 Yann Dirson <yann.dirson@vates.fr> - 3.2.12-3.3
 - Add missing dependency on libcgroup-tools, uses cgclassify(1)
+- Drop dependency on old and unused python3-future
 
 * Tue Jun 03 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.2
 - Prevent leaf coalesce during migration for LINSTOR (CA-400106)

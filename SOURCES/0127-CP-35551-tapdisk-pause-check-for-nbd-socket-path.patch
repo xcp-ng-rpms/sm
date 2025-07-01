@@ -1,0 +1,70 @@
+From 30b5ac7f8c0f3b73592574b7ce4d47129d4e2ab9 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Mon, 6 Jan 2025 10:26:02 +0000
+Subject: [PATCH] CP-35551: tapdisk-pause check for nbd socket path
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+---
+ drivers/tapdisk-pause | 17 ++++-------------
+ 1 file changed, 4 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
+index a2d0c833..4ca78d47 100755
+--- a/drivers/tapdisk-pause
++++ b/drivers/tapdisk-pause
+@@ -40,6 +40,7 @@ except ImportError:
+     LINSTOR_AVAILABLE = False
+ 
+ TAPDEV_BACKPATH_PFX = "/dev/sm/backend"
++NBD_BACKPATH_PFX = "/run/blktap-control/nbd/"
+ TAPDEV_PHYPATH_PFX = "/dev/sm/phy"
+ 
+ def locking(excType, override=True):
+@@ -73,10 +74,6 @@ def locking(excType, override=True):
+         return wrapper
+     return locking2
+ 
+-def _getDevMajor_minor(dev):
+-    st = os.stat(dev)
+-    return [os.major(st.st_rdev),os.minor(st.st_rdev)]
+-
+ def _mkphylink(sr_uuid, vdi_uuid, path):
+     sympath = "/dev/sm/phy/%s/%s" % (sr_uuid,vdi_uuid)
+     cmd = ['ln', '-sf', path, sympath]
+@@ -108,7 +105,7 @@ class Tapdisk:
+         else:
+             self.failfast = False
+         self.session = session
+-        self.path = os.path.join(TAPDEV_BACKPATH_PFX,self.sr_uuid,self.vdi_uuid)
++        self.path = os.path.join(NBD_BACKPATH_PFX,self.sr_uuid,self.vdi_uuid)
+         self.phypath = os.path.join(TAPDEV_PHYPATH_PFX,self.sr_uuid,self.vdi_uuid)
+         self.lock = Lock("vdi", self.vdi_uuid)
+         self.realpath = None
+@@ -187,10 +184,7 @@ class Tapdisk:
+         if not os.path.exists(self.path):
+             util.SMlog("No %s: nothing to pause" % self.path)
+             return str(True)
+-        self.major, self.minor = _getDevMajor_minor(self.path)
+-        if self.major != blktap2.Tapdisk.major():
+-            util.SMlog("Non-tap major number: %d" % self.major)
+-            return str(False)
++        self.minor = blktap2.VDI.NBDLink(self.path).read_minor_from_path()
+         tapargs = {"minor":self.minor}
+         util.SMlog("Calling tap pause with minor %d" % self.minor)
+         tapdisk = blktap2.Tapdisk.get(**tapargs)
+@@ -204,14 +198,11 @@ class Tapdisk:
+             util.SMlog("No %s: nothing to unpause" % self.path)
+             return str(True)
+         self._pathRefresh()
+-        self.major, self.minor = _getDevMajor_minor(self.path)
+-        if self.major != blktap2.Tapdisk.major():
+-            util.SMlog("Non-tap major number: %d" % self.major)
+-            return str(False)
+ 
+         import VDI
+         vdi = VDI.VDI.from_uuid(self.session, self.vdi_uuid)
+ 
++        self.minor = blktap2.VDI.NBDLink(self.path).read_minor_from_path()
+         if self.activate_parents:
+             util.SMlog("Activating parents of %s" % self.vdi_uuid)
+             vg_name = VG_PREFIX + self.sr_uuid

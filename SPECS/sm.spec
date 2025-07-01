@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2.0.qcow2.1%{?dist}
+Release: %{?xsrel}.2.0.noblktap.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -176,6 +176,11 @@ Patch1120: 0120-fix-blktap2.py-change-chain-check-position-to-be-aft.patch
 Patch1121: 0121-fix-on-slave-temporary-fix-for-linstor-import-error.patch
 Patch1122: 0122-Add-qcow2helper-to-compute-allocated-blocks.patch
 Patch1123: 0123-fix-cleanup.py-call-correctly-isCoalesceableOnRemote.patch
+Patch1124: 0124-fix-qcow2util-refactor-coalesce-online.patch
+Patch1125: 0125-CP-35551-Remove-params-from-attach-respopnse-leaving.patch
+Patch1126: 0126-CP-35551-Handle-new-return-from-tap-ctl-allocate.patch
+Patch1127: 0127-CP-35551-tapdisk-pause-check-for-nbd-socket-path.patch
+Patch1128: 0128-CA-376860-remove-kernel-driver-memory-pools.patch
 
 
 %description

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2.0.qcow2.1%{?dist}
+Release: %{?xsrel}.2.0.qcow2.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -176,7 +176,21 @@ Patch1120: 0120-fix-blktap2.py-change-chain-check-position-to-be-aft.patch
 Patch1121: 0121-fix-on-slave-temporary-fix-for-linstor-import-error.patch
 Patch1122: 0122-fix-cleanup.py-call-correctly-isCoalesceableOnRemote.patch
 Patch1123: 0123-fix-qcow2util-refactor-coalesce-online.patch
-
+Patch1124: 0124-Add-qcow2helper-to-compute-allocated-blocks.patch
+Patch1125: 0125-qcow2_helper-create-qcow2_helper.h.patch
+Patch1126: 0126-Add-some-type-hints-fixes.patch
+Patch1127: 0127-Type-fixes-on-cowutil.patch
+Patch1128: 0128-MooseFSSR-type-hint-fix.patch
+Patch1129: 0129-qcow2util.py-reduce-log-spam-for-onlinecoalesce.patch
+Patch1130: 0130-cowutil-add-a-comment-for-isCoalesceableOnRemote.patch
+Patch1131: 0131-lvmcowutil-fix-sr_uuid-handling.patch
+Patch1132: 0132-Redo-LV-activation-in-qcow2-case.patch
+Patch1133: 0133-Fix-unit-tests-with-QCOW2-changes.patch
+Patch1134: 0134-Fix-lvutil.extractUuid.patch
+Patch1135: 0135-fix-qcow2util-add-size-limit-for-qcow2.patch
+Patch1136: 0136-Optimize-qcow2-helper-with-OpenMP.patch
+Patch1137: 0137-fix-cleanup-remove-running-file-before-relink.patch
+Patch1138: 0138-fix-qcow2util-read-clusters-with-kill-data.patch
 
 %description
 This package contains storage backends used in XCP
@@ -286,11 +300,11 @@ exit 0
 # XCP-ng
 %systemd_postun linstor-monitor.service
 
-#%check
-#tests/run_python_unittests.sh
-#cp .coverage %{buildroot}
-#cp coverage.xml %{buildroot}
-#cp -r htmlcov %{buildroot}/htmlcov
+%check
+tests/run_python_unittests.sh
+cp .coverage %{buildroot}
+cp coverage.xml %{buildroot}
+cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
@@ -316,7 +330,7 @@ exit 0
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
 /opt/xensource/libexec/storage-init
-#/opt/xensource/libexec/qcow2_helper
+/opt/xensource/libexec/qcow2_helper
 /opt/xensource/sm/cowutil.py
 /opt/xensource/sm/qcow2util.py
 /opt/xensource/sm/DummySR
@@ -450,16 +464,16 @@ exit 0
 %{python3_sitelib}/__pycache__/sm_typing*pyc
 %{python3_sitelib}/sm_typing.py
 
-#%package testresults
-#Summary:  test results for SM package
-#
-#%description testresults
-#The package contains the build time test results for the SM package
-#
-#%files testresults
-#/.coverage
-#/coverage.xml
-#/htmlcov
+%package testresults
+Summary:  test results for SM package
+
+%description testresults
+The package contains the build time test results for the SM package
+
+%files testresults
+/.coverage
+/coverage.xml
+/htmlcov
 
 %package test-plugins
 Summary:  System test fake key lookup plugin
@@ -496,6 +510,12 @@ then
 fi
 
 %changelog
+* Mon Aug 11 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-3.2.0.qcow2.2
+- Add qcow2_helper binary to more quickly get allocated size of a QCOW2
+- Add LV activation fix that should correctly handle LV activation, especially during VDI migration
+- Re-enable unittests
+- Fix deadlock with relink and blktap2 activation coalesce cancel
+
 * Mon Jun 30 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-3.2.0.qcow2.1
 - Add QCOW2 support
 

@@ -434,6 +434,7 @@ fi
 * Fri Jul 04 2025 Yann Dirson <yann.dirson@vates.fr> - 3.2.12-3.3
 - Add missing dependency on libcgroup-tools, uses cgclassify(1)
 - Drop dependency on old and unused python3-future
+- Refresh patch not applying on Alma10 due to fuzz
 
 * Tue Jun 03 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.2
 - Prevent leaf coalesce during migration for LINSTOR (CA-400106)

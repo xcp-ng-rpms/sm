@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -47,6 +47,7 @@ Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
 Conflicts: blktap < 3.55.3
 Requires: sg3_utils
+Requires: libcgroup-tools
 
 Obsoletes: sm-additional-drivers
 
@@ -431,6 +432,9 @@ then
 fi
 
 %changelog
+* Fri Jul 04 2025 Yann Dirson <yann.dirson@vates.fr> - 3.2.12-3.3
+- Add missing dependency on libcgroup-tools, uses cgclassify(1)
+
 * Tue Jun 03 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-3.2
 - Prevent leaf coalesce during migration for LINSTOR (CA-400106)
 - Use GC daemon code for LINSTOR like other drivers

@@ -14,11 +14,11 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_ISOSR.py | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
-index 760c566a..9dec459c 100644
---- a/tests/test_ISOSR.py
-+++ b/tests/test_ISOSR.py
-@@ -80,7 +80,7 @@ class TestISOSR_overLocal(unittest.TestCase):
+Index: sm-3.2.12/tests/test_ISOSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_ISOSR.py
++++ sm-3.2.12/tests/test_ISOSR.py
+@@ -80,7 +80,7 @@ class TestISOSR_overLocal(unittest.TestC
          isosr = self.create_isosr()
          with self.assertRaises(SR.SROSError) as ose:
              isosr.attach(None)

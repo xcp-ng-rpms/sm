@@ -8,10 +8,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/LinstorSR.py | 9 +++++----
  1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index d5d807d1..c65533f8 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -613,16 +613,16 @@ class LinstorSR(SR.SR):
                  logger=util.SMlog
              )

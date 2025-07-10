@@ -21,11 +21,11 @@ This change is backward-compatible, introduces no breaking changes and only affe
 
 Signed-off-by: Yann LE BRIS <yann.lebris@vates.tech>
 
-diff --git a/Makefile b/Makefile
-index 6caa608..82e5ef9 100755
---- a/Makefile
-+++ b/Makefile
-@@ -59,7 +59,7 @@ SM_LIBS += constants
+Index: sm-3.2.12/Makefile
+===================================================================
+--- sm-3.2.12.orig/Makefile
++++ sm-3.2.12/Makefile
+@@ -61,7 +61,7 @@ SM_LIBS += constants
  SM_LIBS += cbtutil
  SM_LIBS += sr_health_check
  
@@ -34,11 +34,11 @@ index 6caa608..82e5ef9 100755
  MPATH_DAEMON = sm-multipath
  MPATH_CONF = multipath.conf
  MPATH_CUSTOM_CONF = custom.conf
-diff --git a/mk/sm.spec.in b/mk/sm.spec.in
-index 83358da..e9bd29b 100755
---- a/mk/sm.spec.in
-+++ b/mk/sm.spec.in
-@@ -221,6 +221,8 @@ tests/run_python_unittests.sh
+Index: sm-3.2.12/mk/sm.spec.in
+===================================================================
+--- sm-3.2.12.orig/mk/sm.spec.in
++++ sm-3.2.12/mk/sm.spec.in
+@@ -224,6 +224,8 @@ tests/run_python_unittests.sh
  %config /etc/udev/rules.d/69-dm-lvm-metad.rules
  %config /etc/logrotate.d/SMlog
  %config /etc/udev/rules.d/57-usb.rules
@@ -47,11 +47,10 @@ index 83358da..e9bd29b 100755
  %doc CONTRIB LICENSE MAINTAINERS README.md
  
  %package fairlock
-diff --git a/udev/99-purestorage.rules b/udev/99-purestorage.rules
-new file mode 100644
-index 0000000..86ea916
+Index: sm-3.2.12/udev/99-purestorage.rules
+===================================================================
 --- /dev/null
-+++ b/udev/99-purestorage.rules
++++ sm-3.2.12/udev/99-purestorage.rules
 @@ -0,0 +1,15 @@
 +# Recommended settings for Pure Storage FlashArray.
 +# Use none scheduler for high-performance solid-state storage for SCSI devices

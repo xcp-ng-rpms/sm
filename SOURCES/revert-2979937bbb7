@@ -8,10 +8,10 @@ This reverts commit 2979937bbb747280e76aa69cef43f78ddd68353c.
  drivers/lvutil.py | 7 -------
  1 file changed, 7 deletions(-)
 
-diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 48767ea..2f2a68e 100755
---- a/drivers/lvutil.py
-+++ b/drivers/lvutil.py
+Index: sm-3.2.12/drivers/lvutil.py
+===================================================================
+--- sm-3.2.12.orig/drivers/lvutil.py
++++ sm-3.2.12/drivers/lvutil.py
 @@ -704,13 +704,6 @@ def deactivateNoRefcount(path):
  
  @lvmretry
@@ -26,6 +26,3 @@ index 48767ea..2f2a68e 100755
      text = cmd_lvm([CMD_LVCHANGE, "-an", path])
  
  
--- 
-2.48.1
-

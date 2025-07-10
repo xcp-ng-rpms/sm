@@ -13,10 +13,10 @@ subsequent SR scan removes it. To satisfy both use cases remove the
 `vhd-parent` property if and only if the coalesced VHD has no parent.
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 13da555..a62d5f1 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
 @@ -2335,6 +2335,9 @@ class SR:
          vdi.parent.children = []
          vdi.parent = None
@@ -27,10 +27,10 @@ index 13da555..a62d5f1 100755
          extraSpace = self._calcExtraSpaceNeeded(vdi, parent)
          freeSpace = self.getFreeSpace()
          if freeSpace < extraSpace:
-diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
-index 679b93b..eef170f 100644
---- a/tests/test_cleanup.py
-+++ b/tests/test_cleanup.py
+Index: sm-3.2.12/tests/test_cleanup.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_cleanup.py
++++ sm-3.2.12/tests/test_cleanup.py
 @@ -7,6 +7,7 @@ import uuid
  from uuid import uuid4
  

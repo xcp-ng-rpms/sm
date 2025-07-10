@@ -20,10 +20,10 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  drivers/linstorvolumemanager.py |  2 +-
  6 files changed, 30 insertions(+), 33 deletions(-)
 
-diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index f334bb30..f83beb3d 100644
---- a/drivers/CephFSSR.py
-+++ b/drivers/CephFSSR.py
+Index: sm-3.2.12/drivers/CephFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/CephFSSR.py
++++ sm-3.2.12/drivers/CephFSSR.py
 @@ -132,18 +132,18 @@ class CephFSSR(FileSR.FileSR):
          try:
              if not util.ioretry(lambda: util.isdir(mountpoint)):
@@ -88,10 +88,10 @@ index f334bb30..f83beb3d 100644
              self.detach(sr_uuid)
              if inst.code != errno.ENOENT:
                  raise xs_errors.SROSError(114, "Failed to remove CephFS mount point")
-diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 290a3312..6d5e0614 100644
---- a/drivers/GlusterFSSR.py
-+++ b/drivers/GlusterFSSR.py
+Index: sm-3.2.12/drivers/GlusterFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/GlusterFSSR.py
++++ sm-3.2.12/drivers/GlusterFSSR.py
 @@ -122,7 +122,7 @@ class GlusterFSSR(FileSR.FileSR):
          try:
              if not util.ioretry(lambda: util.isdir(mountpoint)):
@@ -152,10 +152,10 @@ index 290a3312..6d5e0614 100644
              self.detach(sr_uuid)
              if inst.code != errno.ENOENT:
                  raise xs_errors.SROSError(114, "Failed to remove GlusterFS mount point")
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index ffd70abf..4e8888e2 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -460,7 +460,7 @@ class LinstorSR(SR.SR):
          srs = xenapi.SR.get_all_records_where(
              'field "type" = "{}"'.format(self.DRIVER_TYPE)
@@ -195,10 +195,10 @@ index ffd70abf..4e8888e2 100755
                  active_vdi.sm_config[key] = sm_config[key]
  
              # 7. Verify parent locator field of both children and
-diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index 504e8503..05a42640 100755
---- a/drivers/MooseFSSR.py
-+++ b/drivers/MooseFSSR.py
+Index: sm-3.2.12/drivers/MooseFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/MooseFSSR.py
++++ sm-3.2.12/drivers/MooseFSSR.py
 @@ -139,12 +139,12 @@ class MooseFSSR(FileSR.FileSR):
          try:
              if not util.ioretry(lambda: util.isdir(mountpoint)):
@@ -256,11 +256,11 @@ index 504e8503..05a42640 100755
              self.detach(sr_uuid)
              if inst.code != errno.ENOENT:
                  raise xs_errors.SROSError(114, "Failed to remove MooseFS mount point")
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 02e1a4ea..b9855a43 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
-@@ -3104,7 +3104,7 @@ class LinstorSR(SR):
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
+@@ -3108,7 +3108,7 @@ class LinstorSR(SR):
  
      def scan(self, force=False):
          all_vdi_info = self._scan(force)
@@ -269,7 +269,7 @@ index 02e1a4ea..b9855a43 100755
              # When vdiInfo is None, the VDI is RAW.
              vdi = self.getVDI(uuid)
              if not vdi:
-@@ -3148,7 +3148,7 @@ class LinstorSR(SR):
+@@ -3152,7 +3152,7 @@ class LinstorSR(SR):
              error = False
              try:
                  all_vdi_info = self._load_vdi_info()
@@ -278,7 +278,7 @@ index 02e1a4ea..b9855a43 100755
                      if vdiInfo and vdiInfo.error:
                          error = True
                          break
-@@ -3213,7 +3213,7 @@ class LinstorSR(SR):
+@@ -3217,7 +3217,7 @@ class LinstorSR(SR):
  
      def _handleInterruptedCoalesceLeaf(self):
          entries = self.journaler.get_all(VDI.JRN_LEAF)
@@ -287,10 +287,10 @@ index 02e1a4ea..b9855a43 100755
              if self._hasValidDevicePath(parentUuid) or \
                      self._hasValidDevicePath(self.TMP_RENAME_PREFIX + uuid):
                  self._undoInterruptedCoalesceLeaf(uuid, parentUuid)
-diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index d4004217..dca96456 100755
---- a/drivers/linstorvolumemanager.py
-+++ b/drivers/linstorvolumemanager.py
+Index: sm-3.2.12/drivers/linstorvolumemanager.py
+===================================================================
+--- sm-3.2.12.orig/drivers/linstorvolumemanager.py
++++ sm-3.2.12/drivers/linstorvolumemanager.py
 @@ -1053,7 +1053,7 @@ class LinstorVolumeManager(object):
          # we can try to use it directly.
          pools = pools.storage_pools

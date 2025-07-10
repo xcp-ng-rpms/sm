@@ -11,11 +11,11 @@ Remove unnecessary line end breaks and realign indentation.
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
 
-diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index e9887c8..a2adfe9 100755
---- a/drivers/blktap2.py
-+++ b/drivers/blktap2.py
-@@ -38,7 +38,6 @@ import XenAPI # pylint: disable=import-error
+Index: sm-3.2.12/drivers/blktap2.py
+===================================================================
+--- sm-3.2.12.orig/drivers/blktap2.py
++++ sm-3.2.12/drivers/blktap2.py
+@@ -38,7 +38,6 @@ import XenAPI # pylint: disable=import-e
  import scsiutil
  from syslog import openlog, syslog
  from stat import *  # S_ISBLK(), ...

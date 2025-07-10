@@ -16,10 +16,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/MooseFSSR.py   | 2 +-
  3 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index 415152f7..f334bb30 100644
---- a/drivers/CephFSSR.py
-+++ b/drivers/CephFSSR.py
+Index: sm-3.2.12/drivers/CephFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/CephFSSR.py
++++ sm-3.2.12/drivers/CephFSSR.py
 @@ -38,7 +38,7 @@ import vhdutil
  import xs_errors
  from lock import Lock
@@ -29,10 +29,10 @@ index 415152f7..f334bb30 100644
                  "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
                  "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
                  "VDI_GENERATE_CONFIG",
-diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 750eb233..290a3312 100644
---- a/drivers/GlusterFSSR.py
-+++ b/drivers/GlusterFSSR.py
+Index: sm-3.2.12/drivers/GlusterFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/GlusterFSSR.py
++++ sm-3.2.12/drivers/GlusterFSSR.py
 @@ -35,7 +35,7 @@ import vhdutil
  import xs_errors
  from lock import Lock
@@ -42,10 +42,10 @@ index 750eb233..290a3312 100644
                  "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
                  "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
                  "VDI_GENERATE_CONFIG",
-diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index b2e056af..504e8503 100755
---- a/drivers/MooseFSSR.py
-+++ b/drivers/MooseFSSR.py
+Index: sm-3.2.12/drivers/MooseFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/MooseFSSR.py
++++ sm-3.2.12/drivers/MooseFSSR.py
 @@ -39,7 +39,7 @@ import vhdutil
  import xs_errors
  from lock import Lock

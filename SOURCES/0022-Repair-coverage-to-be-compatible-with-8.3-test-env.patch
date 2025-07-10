@@ -17,10 +17,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_ZFSSR.py     | 4 ++--
  4 files changed, 7 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 1c9bd54a..fe6d01d4 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -779,9 +779,8 @@ class LinstorSR(SR.SR):
  
          # Update the database before the restart of the GC to avoid
@@ -32,10 +32,10 @@ index 1c9bd54a..fe6d01d4 100755
  
      @_locked_load
      def vdi(self, uuid):
-diff --git a/tests/pylintrc b/tests/pylintrc
-index a982913b..4588675b 100644
---- a/tests/pylintrc
-+++ b/tests/pylintrc
+Index: sm-3.2.12/tests/pylintrc
+===================================================================
+--- sm-3.2.12.orig/tests/pylintrc
++++ sm-3.2.12/tests/pylintrc
 @@ -84,7 +84,7 @@ ignored-classes=SQLObject
  
  # List of members which are set dynamically and missed by pylint inference
@@ -45,10 +45,10 @@ index a982913b..4588675b 100644
  
  # List of module names for which member attributes should not be checked
  # # (useful for modules/projects where namespaces are manipulated during runtime
-diff --git a/tests/test_MooseFSSR.py b/tests/test_MooseFSSR.py
-index feaac626..f4e0a852 100644
---- a/tests/test_MooseFSSR.py
-+++ b/tests/test_MooseFSSR.py
+Index: sm-3.2.12/tests/test_MooseFSSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_MooseFSSR.py
++++ sm-3.2.12/tests/test_MooseFSSR.py
 @@ -1,4 +1,6 @@
 -import mock
 +from unittest import mock
@@ -57,10 +57,10 @@ index feaac626..f4e0a852 100644
  import MooseFSSR
  import unittest
  
-diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
-index d0cca935..544ea39a 100644
---- a/tests/test_ZFSSR.py
-+++ b/tests/test_ZFSSR.py
+Index: sm-3.2.12/tests/test_ZFSSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_ZFSSR.py
++++ sm-3.2.12/tests/test_ZFSSR.py
 @@ -1,10 +1,10 @@
 +from unittest import mock
 +import unittest

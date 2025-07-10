@@ -10,10 +10,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/BaseISCSI.py | 3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/BaseISCSI.py b/drivers/BaseISCSI.py
-index 750b40b0..e6092514 100755
---- a/drivers/BaseISCSI.py
-+++ b/drivers/BaseISCSI.py
+Index: sm-3.2.12/drivers/BaseISCSI.py
+===================================================================
+--- sm-3.2.12.orig/drivers/BaseISCSI.py
++++ sm-3.2.12/drivers/BaseISCSI.py
 @@ -391,10 +391,9 @@ class BaseISCSISR(SR.SR):
          util._incr_iscsiSR_refcount(self.targetIQN, sr_uuid)
          IQNs = []

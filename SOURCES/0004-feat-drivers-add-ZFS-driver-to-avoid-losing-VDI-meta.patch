@@ -12,10 +12,10 @@ Subject: [PATCH] feat(drivers): add ZFS driver to avoid losing VDI metadata
  4 files changed, 149 insertions(+), 1 deletion(-)
  create mode 100644 drivers/ZFSSR.py
 
-diff --git a/Makefile b/Makefile
-index cdf39f32..95aa5b2b 100755
---- a/Makefile
-+++ b/Makefile
+Index: sm-3.2.12/Makefile
+===================================================================
+--- sm-3.2.12.orig/Makefile
++++ sm-3.2.12/Makefile
 @@ -17,6 +17,7 @@ SM_DRIVERS += LVHDoFCoE
  SM_DRIVERS += CephFS
  SM_DRIVERS += GlusterFS
@@ -24,11 +24,11 @@ index cdf39f32..95aa5b2b 100755
  
  SM_LIBS := SR
  SM_LIBS += SRCommand
-diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 47fefd83..120b92fc 100755
---- a/drivers/XE_SR_ERRORCODES.xml
-+++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -915,5 +915,15 @@
+Index: sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+===================================================================
+--- sm-3.2.12.orig/drivers/XE_SR_ERRORCODES.xml
++++ sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+@@ -921,5 +921,15 @@
              <value>1200</value>
          </code>
  
@@ -44,11 +44,10 @@ index 47fefd83..120b92fc 100755
 +            <value>5001</value>
 +        </code>
  </SM-errorcodes>
-diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
-new file mode 100644
-index 00000000..1b2f398f
+Index: sm-3.2.12/drivers/ZFSSR.py
+===================================================================
 --- /dev/null
-+++ b/drivers/ZFSSR.py
++++ sm-3.2.12/drivers/ZFSSR.py
 @@ -0,0 +1,137 @@
 +#!/usr/bin/env python
 +#
@@ -187,11 +186,11 @@ index 00000000..1b2f398f
 +    SRCommand.run(ZFSSR, DRIVER_INFO)
 +else:
 +    SR.registerSR(ZFSSR)
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 7fb8f8fa..62e283ab 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
-@@ -2989,7 +2989,7 @@ def normalizeType(type):
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
+@@ -2993,7 +2993,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

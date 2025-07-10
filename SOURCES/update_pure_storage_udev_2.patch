@@ -6,11 +6,11 @@ More details: https://github.com/xapi-project/sm/pull/729#discussion_r1967525880
 
 Signed-off-by: Yann LE BRIS <yann.lebris@vates.tech>
 
-diff --git a/udev/99-purestorage.rules b/udev/99-purestorage.rules
-index 49b4295..6194950 100644
---- a/udev/99-purestorage.rules
-+++ b/udev/99-purestorage.rules
-@@ -9,7 +9,5 @@ ACTION=="add|change", KERNEL=="dm-[0-9]*", SUBSYSTEM=="block", ENV{DM_NAME}=="36
+Index: sm-3.2.12/udev/99-purestorage.rules
+===================================================================
+--- sm-3.2.12.orig/udev/99-purestorage.rules
++++ sm-3.2.12/udev/99-purestorage.rules
+@@ -9,7 +9,5 @@ ACTION=="add|change", KERNEL=="dm-[0-9]*
  
  # Spread CPU load by redirecting completions to originating CPU
  ACTION=="add|change", KERNEL=="sd*[!0-9]", SUBSYSTEM=="block", ENV{ID_VENDOR}=="PURE", ATTR{queue/rq_affinity}="2"

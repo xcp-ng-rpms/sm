@@ -7,10 +7,10 @@ No error logging is present in two error paths which make diagnosis
 difficult/impossible.
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 2b0ca5a..13da555 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
 @@ -2637,10 +2637,12 @@ class FileSR(SR):
          Util.log("*** FINISH LEAF-COALESCE")
          vdi = self.getVDI(childUuid)
@@ -24,10 +24,10 @@ index 2b0ca5a..13da555 100755
              pass
          self._updateSlavesOnResize(vdi)
          util.fistpoint.activate("LVHDRT_coaleaf_finish_end", self.uuid)
-diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
-index a2b14d6..00b3e2a 100644
---- a/tests/test_cleanup.py
-+++ b/tests/test_cleanup.py
+Index: sm-3.2.12/tests/test_cleanup.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_cleanup.py
++++ sm-3.2.12/tests/test_cleanup.py
 @@ -15,6 +15,8 @@ import vhdutil
  import ipc
  
@@ -37,7 +37,7 @@ index a2b14d6..00b3e2a 100644
  
  
  class FakeFile(object):
-@@ -1985,3 +1987,46 @@ class TestLockGCActive(unittest.TestCase):
+@@ -1985,3 +1987,46 @@ class TestLockGCActive(unittest.TestCase
          # When
          with self.assertRaises(BlockingIOError):
              gcLock.acquireNoblock()

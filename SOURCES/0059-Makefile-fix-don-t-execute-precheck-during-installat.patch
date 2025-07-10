@@ -12,10 +12,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  Makefile | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile b/Makefile
-index 293e5faa..3748226c 100755
---- a/Makefile
-+++ b/Makefile
+Index: sm-3.2.12/Makefile
+===================================================================
+--- sm-3.2.12.orig/Makefile
++++ sm-3.2.12/Makefile
 @@ -127,7 +127,7 @@ precheck: build
  	echo "Precheck succeeded with no outstanding issues found."
  

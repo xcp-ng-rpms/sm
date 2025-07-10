@@ -4,10 +4,10 @@ From: Mark Syms <mark.syms@cloud.com>
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
 
-diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
-index f1f0c92..e192022 100644
---- a/tests/test_blktap2.py
-+++ b/tests/test_blktap2.py
+Index: sm-3.2.12/tests/test_blktap2.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_blktap2.py
++++ sm-3.2.12/tests/test_blktap2.py
 @@ -141,22 +141,50 @@ class TestVDI(unittest.TestCase):
          self.mock_target.vdi.sr.handles.side_effect = mock_handles
          self.mock_target.session = self.mock_session

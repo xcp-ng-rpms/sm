@@ -9,10 +9,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/SR.py | 7 +++++--
  1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/SR.py b/drivers/SR.py
-index 9ca0045c..d1aacdb3 100755
---- a/drivers/SR.py
-+++ b/drivers/SR.py
+Index: sm-3.2.12/drivers/SR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/SR.py
++++ sm-3.2.12/drivers/SR.py
 @@ -153,7 +153,7 @@ class SR(object):
  
      @staticmethod

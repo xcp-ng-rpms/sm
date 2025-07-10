@@ -13,10 +13,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/util.py        | 4 ++++
  6 files changed, 9 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index ca79a6a3..80884767 100644
---- a/drivers/CephFSSR.py
-+++ b/drivers/CephFSSR.py
+Index: sm-3.2.12/drivers/CephFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/CephFSSR.py
++++ sm-3.2.12/drivers/CephFSSR.py
 @@ -264,8 +264,7 @@ class CephFSSR(FileSR.FileSR):
  
      @staticmethod
@@ -27,10 +27,10 @@ index ca79a6a3..80884767 100644
  
  class CephFSFileVDI(FileSR.FileVDI):
      def attach(self, sr_uuid, vdi_uuid):
-diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 8adfe700..041a9142 100644
---- a/drivers/GlusterFSSR.py
-+++ b/drivers/GlusterFSSR.py
+Index: sm-3.2.12/drivers/GlusterFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/GlusterFSSR.py
++++ sm-3.2.12/drivers/GlusterFSSR.py
 @@ -244,8 +244,7 @@ class GlusterFSSR(FileSR.FileSR):
  
      @staticmethod
@@ -41,10 +41,10 @@ index 8adfe700..041a9142 100644
  
  
  class GlusterFSFileVDI(FileSR.FileVDI):
-diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index 6f86054f..e4dc4ad6 100755
---- a/drivers/MooseFSSR.py
-+++ b/drivers/MooseFSSR.py
+Index: sm-3.2.12/drivers/MooseFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/MooseFSSR.py
++++ sm-3.2.12/drivers/MooseFSSR.py
 @@ -276,8 +276,7 @@ class MooseFSSR(FileSR.FileSR):
  
      @staticmethod
@@ -55,10 +55,10 @@ index 6f86054f..e4dc4ad6 100755
  
  class MooseFSFileVDI(FileSR.FileVDI):
      def attach(self, sr_uuid, vdi_uuid):
-diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
-index 1dfde095..ad4aca74 100755
---- a/drivers/XFSSR.py
-+++ b/drivers/XFSSR.py
+Index: sm-3.2.12/drivers/XFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/XFSSR.py
++++ sm-3.2.12/drivers/XFSSR.py
 @@ -229,8 +229,7 @@ class XFSSR(FileSR.FileSR):
  
      @staticmethod
@@ -69,10 +69,10 @@ index 1dfde095..ad4aca74 100755
  
  
  class XFSFileVDI(FileSR.FileVDI):
-diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
-index 5301d5ec..cf5eb12d 100644
---- a/drivers/ZFSSR.py
-+++ b/drivers/ZFSSR.py
+Index: sm-3.2.12/drivers/ZFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/ZFSSR.py
++++ sm-3.2.12/drivers/ZFSSR.py
 @@ -58,8 +58,7 @@ DRIVER_INFO = {
  
  
@@ -83,11 +83,11 @@ index 5301d5ec..cf5eb12d 100644
          util.pathexists('/sys/module/zfs/initstate')
  
  
-diff --git a/drivers/util.py b/drivers/util.py
-index 65b23f64..ccea5c52 100755
---- a/drivers/util.py
-+++ b/drivers/util.py
-@@ -2096,3 +2096,7 @@ def make_profile(name, function):
+Index: sm-3.2.12/drivers/util.py
+===================================================================
+--- sm-3.2.12.orig/drivers/util.py
++++ sm-3.2.12/drivers/util.py
+@@ -2107,3 +2107,7 @@ def make_profile(name, function):
          cProfile.runctx('function()', None, locals(), profile_path)
      finally:
          SMlog('* End profiling of {} ({}) *'.format(name, filename))

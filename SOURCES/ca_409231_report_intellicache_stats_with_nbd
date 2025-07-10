@@ -10,10 +10,10 @@ exit with error 1. As a result no IntelliCache stats are produced,
 fix this by adding support for the remote to be nbd to a defined path.
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
-diff --git a/drivers/lcache.py b/drivers/lcache.py
-index f1e25c3..f9c9061 100755
---- a/drivers/lcache.py
-+++ b/drivers/lcache.py
+Index: sm-3.2.12/drivers/lcache.py
+===================================================================
+--- sm-3.2.12.orig/drivers/lcache.py
++++ sm-3.2.12/drivers/lcache.py
 @@ -18,6 +18,7 @@
  import os
  import blktap2
@@ -36,11 +36,10 @@ index f1e25c3..f9c9061 100755
  
          __assert(0)
  
-diff --git a/tests/test_lcache.py b/tests/test_lcache.py
-new file mode 100644
-index 0000000..36ec1fb
+Index: sm-3.2.12/tests/test_lcache.py
+===================================================================
 --- /dev/null
-+++ b/tests/test_lcache.py
++++ sm-3.2.12/tests/test_lcache.py
 @@ -0,0 +1,64 @@
 +import unittest
 +

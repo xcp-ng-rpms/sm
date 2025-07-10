@@ -8,10 +8,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  drivers/LinstorSR.py | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 1ff3d963..d5d807d1 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -2319,6 +2319,7 @@ class LinstorVDI(VDI.VDI):
          try:
              return self._snapshot(snap_type, cbtlog, consistency_state)

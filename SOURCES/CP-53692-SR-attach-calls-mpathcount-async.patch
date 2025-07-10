@@ -8,11 +8,11 @@ Signed-off-by: Lunfan Zhang <Lunfan.Zhang@cloud.com>
  drivers/SR.py | 3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/SR.py b/drivers/SR.py
-index ebfaac4..66ad927 100755
---- a/drivers/SR.py
-+++ b/drivers/SR.py
-@@ -496,8 +496,7 @@ class SR(object):
+Index: sm-3.2.12/drivers/SR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/SR.py
++++ sm-3.2.12/drivers/SR.py
+@@ -492,8 +492,7 @@ class SR(object):
              self.session.xenapi.SR.set_sm_config(self.sr_ref, sm_config)
  
              if self.mpath == "true" and len(SCSIid):
@@ -22,6 +22,3 @@ index ebfaac4..66ad927 100755
          except:
              pass
  
--- 
-1.8.3.1
-

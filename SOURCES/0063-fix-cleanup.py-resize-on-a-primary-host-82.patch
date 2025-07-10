@@ -17,15 +17,14 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/linstorvhdutil.py   | 27 ++++++++++++------
  4 files changed, 110 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e6e2956f..7bba0a05 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
-@@ -1754,6 +1754,61 @@ class LinstorVDI(VDI):
-         else:
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
+@@ -1755,6 +1755,61 @@ class LinstorVDI(VDI):
              VDI._setHidden(self, hidden)
  
-+    @override
+     @override
 +    def _increaseSizeVirt(self, size, atomic=True):
 +        if self.raw:
 +            offset = self.drbd_size
@@ -80,13 +79,14 @@ index e6e2956f..7bba0a05 100755
 +
 +        self.sizeVirt = self.sr._vhdutil.get_size_virt(self.uuid)
 +
-     @override
++    @override
      def _setSizeVirt(self, size) -> None:
          jfile = self.uuid + '-jvhd'
-diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index fb2b9fe6..9cef5f82 100755
---- a/drivers/linstor-manager
-+++ b/drivers/linstor-manager
+         self.sr._linstor.create_volume(
+Index: sm-3.2.12/drivers/linstor-manager
+===================================================================
+--- sm-3.2.12.orig/drivers/linstor-manager
++++ sm-3.2.12/drivers/linstor-manager
 @@ -485,6 +485,15 @@ def get_allocated_size(session, args):
          raise
  
@@ -150,10 +150,10 @@ index fb2b9fe6..9cef5f82 100755
          'setParent': set_parent,
          'coalesce': coalesce,
          'repair': repair,
-diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
-index a61d9f11..2475ae1e 100755
---- a/drivers/linstorjournaler.py
-+++ b/drivers/linstorjournaler.py
+Index: sm-3.2.12/drivers/linstorjournaler.py
+===================================================================
+--- sm-3.2.12.orig/drivers/linstorjournaler.py
++++ sm-3.2.12/drivers/linstorjournaler.py
 @@ -44,6 +44,7 @@ class LinstorJournaler:
      """
      CLONE = 'clone'
@@ -162,10 +162,10 @@ index a61d9f11..2475ae1e 100755
  
      @staticmethod
      def default_logger(*args):
-diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index c33c24c0..76996e38 100644
---- a/drivers/linstorvhdutil.py
-+++ b/drivers/linstorvhdutil.py
+Index: sm-3.2.12/drivers/linstorvhdutil.py
+===================================================================
+--- sm-3.2.12.orig/drivers/linstorvhdutil.py
++++ sm-3.2.12/drivers/linstorvhdutil.py
 @@ -248,6 +248,10 @@ class LinstorVhdUtil:
      def get_size_virt(self, vdi_uuid, response):
          return int(response)
@@ -177,11 +177,10 @@ index c33c24c0..76996e38 100644
      @linstorhostcall(vhdutil.getSizePhys, 'getSizePhys')
      def get_size_phys(self, vdi_uuid, response):
          return int(response)
-@@ -286,14 +290,6 @@ class LinstorVhdUtil:
-     def create(self, path, size, static, msize=0):
+@@ -287,14 +291,6 @@ class LinstorVhdUtil:
          return self._call_local_method_or_fail(vhdutil.create, path, size, static, msize)
  
--    @linstormodifier()
+     @linstormodifier()
 -    def set_size_virt(self, path, size, jfile):
 -        return self._call_local_method_or_fail(vhdutil.setSizeVirt, path, size, jfile)
 -
@@ -189,14 +188,14 @@ index c33c24c0..76996e38 100644
 -    def set_size_virt_fast(self, path, size):
 -        return self._call_local_method_or_fail(vhdutil.setSizeVirtFast, path, size)
 -
-     @linstormodifier()
+-    @linstormodifier()
      def set_size_phys(self, path, size, debug=True):
          return self._call_local_method_or_fail(vhdutil.setSizePhys, path, size, debug)
-@@ -368,6 +364,21 @@ class LinstorVhdUtil:
-     # Remote setters: write locally and try on another host in case of failure.
+ 
+@@ -369,6 +365,21 @@ class LinstorVhdUtil:
      # --------------------------------------------------------------------------
  
-+    @linstormodifier()
+     @linstormodifier()
 +    def set_size_virt(self, path, size, jfile):
 +        kwargs = {
 +            'size': size,
@@ -211,6 +210,7 @@ index c33c24c0..76996e38 100644
 +        }
 +        return self._call_method(vhdutil.setSizeVirtFast, 'setSizeVirtFast', path, use_parent=False, **kwargs)
 +
-     @linstormodifier()
++    @linstormodifier()
      def force_parent(self, path, parentPath, parentRaw=False):
          kwargs = {
+             'parentPath': str(parentPath),

@@ -8,10 +8,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/lock.py | 13 ++++++-------
  1 file changed, 6 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/lock.py b/drivers/lock.py
-index ceb48fe1..56bf9fcc 100755
---- a/drivers/lock.py
-+++ b/drivers/lock.py
+Index: sm-3.2.12/drivers/lock.py
+===================================================================
+--- sm-3.2.12.orig/drivers/lock.py
++++ sm-3.2.12/drivers/lock.py
 @@ -64,6 +64,7 @@ class Lock(object):
      def held(self):
          raise NotImplementedError("Lock methods implemented in LockImplementation")

@@ -10,11 +10,11 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_storage_init.py | 4 ++--
  3 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/util.py b/drivers/util.py
-index e5d5da0a..65b23f64 100755
---- a/drivers/util.py
-+++ b/drivers/util.py
-@@ -1085,7 +1085,7 @@ def diskFromPartition(partition):
+Index: sm-3.2.12/drivers/util.py
+===================================================================
+--- sm-3.2.12.orig/drivers/util.py
++++ sm-3.2.12/drivers/util.py
+@@ -1096,7 +1096,7 @@ def diskFromPartition(partition):
          return m.group(2)
  
      numlen = 0  # number of digit characters
@@ -23,7 +23,7 @@ index e5d5da0a..65b23f64 100755
      if m is not None:
          numlen = len(m.group(1))
  
-@@ -1096,7 +1096,7 @@ def diskFromPartition(partition):
+@@ -1107,7 +1107,7 @@ def diskFromPartition(partition):
      # is it a mapper path?
      if partition.startswith("mapper"):
          if re.search("p[0-9]*$", partition):
@@ -32,10 +32,10 @@ index e5d5da0a..65b23f64 100755
              SMlog("Found mapper part, len %d" % numlen)
          else:
              numlen = 0
-diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
-index 6a71804c..8ac7b08d 100755
---- a/drivers/vhdutil.py
-+++ b/drivers/vhdutil.py
+Index: sm-3.2.12/drivers/vhdutil.py
+===================================================================
+--- sm-3.2.12.orig/drivers/vhdutil.py
++++ sm-3.2.12/drivers/vhdutil.py
 @@ -206,7 +206,7 @@ def hasParent(path):
      cmd = [VHD_UTIL, "read", OPT_LOG_ERR, "-p", "-n", path]
      ret = ioretry(cmd)
@@ -45,10 +45,10 @@ index 6a71804c..8ac7b08d 100755
      vhd_type = m.group(1)
      assert(vhd_type == "Differencing" or vhd_type == "Dynamic")
      return vhd_type == "Differencing"
-diff --git a/tests/test_storage_init.py b/tests/test_storage_init.py
-index 9b7138a4..d91d9089 100644
---- a/tests/test_storage_init.py
-+++ b/tests/test_storage_init.py
+Index: sm-3.2.12/tests/test_storage_init.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_storage_init.py
++++ sm-3.2.12/tests/test_storage_init.py
 @@ -355,7 +355,7 @@ sys.exit(resp.get("returncode", 0))
          combined_args = " ".join(sorted(args[1:]))
  

@@ -38,12 +38,12 @@ Patch18: ca_411163_verify_pv_scsi_ids
 
 BuildRequires: python3
 BuildRequires: python3-devel
-BuildRequires: python36-pylint
+BuildRequires: python3-pylint
 BuildRequires: python3-coverage
-BuildRequires: python36-bitarray
+BuildRequires: python3-bitarray
 
 # XCP-ng: python36-mock for %%check
-BuildRequires: python36-mock
+BuildRequires: python3-mock
 
 # XCP-ng: gcc must be explicitly required in our build system
 BuildRequires: gcc
@@ -56,7 +56,7 @@ Requires: xenserver-multipath
 Requires(post): xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
-Requires: python36-bitarray
+Requires: python3-bitarray
 Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
@@ -450,6 +450,7 @@ fi
 
 %changelog
 * Thu Jul 10 2025 Yann Dirson <yann.dirson@vates.tech> - 3.2.12-8.0.ydi.1
+- Adjust deps for Almalinux 9
 - Rebase on 3.2.12-8
 - *** Upstream changelog ***
   * Tue May 27 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-8

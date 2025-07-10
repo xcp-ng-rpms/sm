@@ -13,10 +13,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/util.py                 | 17 +++++++++++++++++
  6 files changed, 31 insertions(+), 21 deletions(-)
 
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 287c15e8..acc6a44e 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -34,7 +34,6 @@ except ImportError:
  from lock import Lock
  import blktap2
@@ -34,10 +34,10 @@ index 287c15e8..acc6a44e 100755
  
          # Note: We don't have access to the session field if the
          # 'vdi_attach_from_config' command is executed.
-diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index e4dc4ad6..8fc4a4ad 100755
---- a/drivers/MooseFSSR.py
-+++ b/drivers/MooseFSSR.py
+Index: sm-3.2.12/drivers/MooseFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/MooseFSSR.py
++++ sm-3.2.12/drivers/MooseFSSR.py
 @@ -18,7 +18,6 @@
  #
  # MooseFSSR: Based on CEPHFSSR and FileSR, mounts MooseFS share
@@ -66,10 +66,10 @@ index e4dc4ad6..8fc4a4ad 100755
  
              self.sm_config['subdir'] = str(self.subdir)
              self.session.xenapi.SR.set_sm_config(self.sr_ref, self.sm_config)
-diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 8ee6f149..fb2b9fe6 100755
---- a/drivers/linstor-manager
-+++ b/drivers/linstor-manager
+Index: sm-3.2.12/drivers/linstor-manager
+===================================================================
+--- sm-3.2.12.orig/drivers/linstor-manager
++++ sm-3.2.12/drivers/linstor-manager
 @@ -21,7 +21,6 @@ import sys
  sys.path[0] = '/opt/xensource/sm/'
  
@@ -136,10 +136,10 @@ index 8ee6f149..fb2b9fe6 100755
  
          return exec_create_sr(
              session, name, description, disks, volume_group, redundancy, provisioning, force
-diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index b3df004a..6ad4787d 100644
---- a/drivers/linstorvhdutil.py
-+++ b/drivers/linstorvhdutil.py
+Index: sm-3.2.12/drivers/linstorvhdutil.py
+===================================================================
+--- sm-3.2.12.orig/drivers/linstorvhdutil.py
++++ sm-3.2.12/drivers/linstorvhdutil.py
 @@ -17,7 +17,6 @@
  from linstorjournaler import LinstorJournaler
  from linstorvolumemanager import LinstorVolumeManager
@@ -166,10 +166,10 @@ index b3df004a..6ad4787d 100644
  
      def get_parent(self, vdi_uuid):
          return self._get_parent(vdi_uuid, self._extract_uuid)
-diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index a470dfec..55327254 100755
---- a/drivers/linstorvolumemanager.py
-+++ b/drivers/linstorvolumemanager.py
+Index: sm-3.2.12/drivers/linstorvolumemanager.py
+===================================================================
+--- sm-3.2.12.orig/drivers/linstorvolumemanager.py
++++ sm-3.2.12/drivers/linstorvolumemanager.py
 @@ -16,7 +16,6 @@
  #
  
@@ -196,11 +196,11 @@ index a470dfec..55327254 100755
                  host_ref, PLUGIN, PLUGIN_CMD, {}
              )):
                  return node_name
-diff --git a/drivers/util.py b/drivers/util.py
-index ccea5c52..262c895d 100755
---- a/drivers/util.py
-+++ b/drivers/util.py
-@@ -2098,5 +2098,22 @@ def make_profile(name, function):
+Index: sm-3.2.12/drivers/util.py
+===================================================================
+--- sm-3.2.12.orig/drivers/util.py
++++ sm-3.2.12/drivers/util.py
+@@ -2109,5 +2109,22 @@ def make_profile(name, function):
          SMlog('* End profiling of {} ({}) *'.format(name, filename))
  
  

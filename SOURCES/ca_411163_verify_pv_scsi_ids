@@ -16,10 +16,10 @@ detect this condition and refuse to attach the SR.
  tests/test_lvutil.py         | 20 ++++++++++++++++++++
  5 files changed, 53 insertions(+)
 
-diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
-index dabf65a..d016269 100755
---- a/drivers/LVHDoISCSISR.py
-+++ b/drivers/LVHDoISCSISR.py
+Index: sm-3.2.12/drivers/LVHDoISCSISR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LVHDoISCSISR.py
++++ sm-3.2.12/drivers/LVHDoISCSISR.py
 @@ -478,11 +478,21 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
                      scsiutil.rescan([self.iscsi.adapter[a]])
  
@@ -42,10 +42,10 @@ index dabf65a..d016269 100755
          self._setMultipathableFlag(SCSIid=self.SCSIid)
  
      def detach(self, sr_uuid):
-diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 47fefd8..792fe17 100755
---- a/drivers/XE_SR_ERRORCODES.xml
-+++ b/drivers/XE_SR_ERRORCODES.xml
+Index: sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+===================================================================
+--- sm-3.2.12.orig/drivers/XE_SR_ERRORCODES.xml
++++ sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
 @@ -513,6 +513,12 @@
                  <value>117</value>
          </code>
@@ -59,10 +59,10 @@ index 47fefd8..792fe17 100755
         <!-- Agent database query errors 150+ -->
          <code>
                  <name>APISession</name>
-diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 2f2a68e..ad844aa 100755
---- a/drivers/lvutil.py
-+++ b/drivers/lvutil.py
+Index: sm-3.2.12/drivers/lvutil.py
+===================================================================
+--- sm-3.2.12.orig/drivers/lvutil.py
++++ sm-3.2.12/drivers/lvutil.py
 @@ -22,6 +22,7 @@ import os
  import errno
  import time
@@ -91,10 +91,10 @@ index 2f2a68e..ad844aa 100755
  @lvmretry
  def create(name, size, vgname, tag=None, size_in_percentage=None):
      if size_in_percentage:
-diff --git a/tests/test_LVHDoISCSISR.py b/tests/test_LVHDoISCSISR.py
-index 3b5e1c4..61ee479 100644
---- a/tests/test_LVHDoISCSISR.py
-+++ b/tests/test_LVHDoISCSISR.py
+Index: sm-3.2.12/tests/test_LVHDoISCSISR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_LVHDoISCSISR.py
++++ sm-3.2.12/tests/test_LVHDoISCSISR.py
 @@ -157,6 +157,9 @@ class TestLVHDoISCSISR(ISCSITestCase):
          lvlock_patcher = mock.patch('LVHDSR.lvutil.Fairlock')
          self.mock_lvlock = lvlock_patcher.start()
@@ -105,10 +105,10 @@ index 3b5e1c4..61ee479 100644
          self.addCleanup(mock.patch.stopall)
  
          super().setUp()
-diff --git a/tests/test_lvutil.py b/tests/test_lvutil.py
-index 2df8300..89569a6 100644
---- a/tests/test_lvutil.py
-+++ b/tests/test_lvutil.py
+Index: sm-3.2.12/tests/test_lvutil.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_lvutil.py
++++ sm-3.2.12/tests/test_lvutil.py
 @@ -6,6 +6,7 @@ import unittest
  import testlib
  import lvmlib
@@ -140,6 +140,3 @@ index 2df8300..89569a6 100644
 +        mock_get_scsi_id.side_effect = ['36001405fdd436fa7f854cd685fc3b1fd']
 +        lvutil.checkPVScsiIds('VG_XenStorage-401d198b-60ab-1f21-1359-bd4f127b8f38',
 +                              '36001405fdd436fa7f854cd685fc3b1fd')
--- 
-2.49.0
-

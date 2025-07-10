@@ -9,10 +9,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  scripts/fork-log-daemon | 9 ++++++++-
  1 file changed, 8 insertions(+), 1 deletion(-)
 
-diff --git a/scripts/fork-log-daemon b/scripts/fork-log-daemon
-index 986de63f..bdc95fd2 100755
---- a/scripts/fork-log-daemon
-+++ b/scripts/fork-log-daemon
+Index: sm-3.2.12/scripts/fork-log-daemon
+===================================================================
+--- sm-3.2.12.orig/scripts/fork-log-daemon
++++ sm-3.2.12/scripts/fork-log-daemon
 @@ -1,5 +1,6 @@
  #!/usr/bin/env python3
  

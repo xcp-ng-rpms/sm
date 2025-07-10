@@ -4,10 +4,10 @@ From: Mark Syms <mark.syms@cloud.com>
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
 
-diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
-index e192022..bd47892 100644
---- a/tests/test_blktap2.py
-+++ b/tests/test_blktap2.py
+Index: sm-3.2.12/tests/test_blktap2.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_blktap2.py
++++ sm-3.2.12/tests/test_blktap2.py
 @@ -182,6 +182,12 @@ class TestVDI(unittest.TestCase):
          mkdir_patcher = mock.patch('blktap2.os.mkdir', autospec=True)
          self.mock_mkdir = mkdir_patcher.start()

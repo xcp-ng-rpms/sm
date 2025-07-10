@@ -4,10 +4,10 @@ From: Lunfan Zhang <Lunfan.Zhang@cloud.com>
 
 Signed-off-by: Lunfan Zhang <Lunfan.Zhang@cloud.com>
 
-diff --git a/drivers/mpathcount.py b/drivers/mpathcount.py
-index 2bdac1b..6be7e3c 100755
---- a/drivers/mpathcount.py
-+++ b/drivers/mpathcount.py
+Index: sm-3.2.12/drivers/mpathcount.py
+===================================================================
+--- sm-3.2.12.orig/drivers/mpathcount.py
++++ sm-3.2.12/drivers/mpathcount.py
 @@ -22,6 +22,7 @@ import re
  import xs_errors
  import mpath_cli
@@ -72,10 +72,10 @@ index 2bdac1b..6be7e3c 100755
      # Check whether multipathing is enabled (either for root dev or SRs)
      try:
          if get_root_dev_major() != get_dm_major():
-diff --git a/tests/test_mpathcount.py b/tests/test_mpathcount.py
-index c024780..922e1f2 100644
---- a/tests/test_mpathcount.py
-+++ b/tests/test_mpathcount.py
+Index: sm-3.2.12/tests/test_mpathcount.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_mpathcount.py
++++ sm-3.2.12/tests/test_mpathcount.py
 @@ -211,27 +211,37 @@ class TestMpathCount(unittest.TestCase):
          session.xenapi.session.logout.assert_called_once()
  

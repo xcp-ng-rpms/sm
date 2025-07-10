@@ -12,10 +12,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/LinstorSR.py | 7 +++----
  2 files changed, 6 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 4de359bf..04a6543e 100755
---- a/drivers/FileSR.py
-+++ b/drivers/FileSR.py
+Index: sm-3.2.12/drivers/FileSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/FileSR.py
++++ sm-3.2.12/drivers/FileSR.py
 @@ -709,8 +709,8 @@ class FileVDI(VDI.VDI):
  
          vhdutil.killData(self.path)
@@ -36,10 +36,10 @@ index 4de359bf..04a6543e 100755
          finally:
              self.disable_leaf_on_secondary(vdi_uuid, secondary=secondary)
              blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid, secondary)
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index c65533f8..287c15e8 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -2296,9 +2296,8 @@ class LinstorVDI(VDI.VDI):
          volume_uuid = self._linstor.get_volume_uuid_from_device_path(oldpath)
          self._linstor.update_volume_name(volume_uuid, newpath)

@@ -2,10 +2,10 @@ CP-51843: advertise SR_CACHING on LVHDoISCSI and HBA
 
 From: Mark Syms <mark.syms@cloud.com>
 
-diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 6e0d71e..7b745af 100755
---- a/drivers/LVHDSR.py
-+++ b/drivers/LVHDSR.py
+Index: sm-3.2.12/drivers/LVHDSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LVHDSR.py
++++ sm-3.2.12/drivers/LVHDSR.py
 @@ -2012,12 +2012,16 @@ class LVHDVDI(VDI.VDI):
              self.sm_config_override["vdi_type"] = self.vdi_type
          else:
@@ -24,10 +24,10 @@ index 6e0d71e..7b745af 100755
          self.hidden = vhdInfo.hidden
          self.loaded = True
  
-diff --git a/drivers/LVHDoHBASR.py b/drivers/LVHDoHBASR.py
-index 1eb8fb6..0d9f377 100755
---- a/drivers/LVHDoHBASR.py
-+++ b/drivers/LVHDoHBASR.py
+Index: sm-3.2.12/drivers/LVHDoHBASR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LVHDoHBASR.py
++++ sm-3.2.12/drivers/LVHDoHBASR.py
 @@ -34,7 +34,7 @@ import scsiutil
  import mpath_cli
  import glob
@@ -37,10 +37,10 @@ index 1eb8fb6..0d9f377 100755
                  "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
                  "VDI_GENERATE_CONFIG", "VDI_SNAPSHOT", "VDI_CLONE", "VDI_MIRROR",
                  "VDI_RESIZE", "ATOMIC_PAUSE", "VDI_RESET_ON_BOOT/2",
-diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
-index 442ec30..dabf65a 100755
---- a/drivers/LVHDoISCSISR.py
-+++ b/drivers/LVHDoISCSISR.py
+Index: sm-3.2.12/drivers/LVHDoISCSISR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LVHDoISCSISR.py
++++ sm-3.2.12/drivers/LVHDoISCSISR.py
 @@ -37,7 +37,7 @@ import copy
  import scsiutil
  import xml.dom.minidom

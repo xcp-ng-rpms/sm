@@ -9,10 +9,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_ZFSSR.py     | 12 +++---------
  2 files changed, 3 insertions(+), 11 deletions(-)
 
-diff --git a/tests/test_MooseFSSR.py b/tests/test_MooseFSSR.py
-index 3349a449..feaac626 100644
---- a/tests/test_MooseFSSR.py
-+++ b/tests/test_MooseFSSR.py
+Index: sm-3.2.12/tests/test_MooseFSSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_MooseFSSR.py
++++ sm-3.2.12/tests/test_MooseFSSR.py
 @@ -23,8 +23,6 @@ class TestMooseFSSR(unittest.TestCase):
              'masterhost': masterhost,
              'rootpath': rootpath
@@ -22,10 +22,10 @@ index 3349a449..feaac626 100644
          srcmd.params = {
              'command': 'some_command',
              'device_config': {}
-diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
-index 879ea372..d0cca935 100644
---- a/tests/test_ZFSSR.py
-+++ b/tests/test_ZFSSR.py
+Index: sm-3.2.12/tests/test_ZFSSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_ZFSSR.py
++++ sm-3.2.12/tests/test_ZFSSR.py
 @@ -53,9 +53,7 @@ class TestZFSSR(unittest.TestCase):
              self.create_zfs_sr()
          except SR.SROSError as e:

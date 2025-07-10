@@ -4,10 +4,10 @@ From: Mark Syms <mark.syms@cloud.com>
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
 
-diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index d55e0f8..96ae76f 100755
---- a/drivers/blktap2.py
-+++ b/drivers/blktap2.py
+Index: sm-3.2.12/drivers/blktap2.py
+===================================================================
+--- sm-3.2.12.orig/drivers/blktap2.py
++++ sm-3.2.12/drivers/blktap2.py
 @@ -1945,7 +1945,7 @@ class VDI(object):
                  raise
  

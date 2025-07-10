@@ -8,10 +8,10 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  drivers/LargeBlockSR.py | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
-index fa66cfce..449b2cf1 100644
---- a/drivers/LargeBlockSR.py
-+++ b/drivers/LargeBlockSR.py
+Index: sm-3.2.12/drivers/LargeBlockSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LargeBlockSR.py
++++ sm-3.2.12/drivers/LargeBlockSR.py
 @@ -224,7 +224,7 @@ class LargeBlockSR(EXTSR.EXTSR):
          util.SMlog("Reconnecting VG {} to use emulated device".format(self.vgname))
          try:

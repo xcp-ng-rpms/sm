@@ -15,10 +15,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/RawISCSISR.py | 2 +-
  2 files changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/BaseISCSI.py b/drivers/BaseISCSI.py
-index 71e43ddc..a52442c5 100755
---- a/drivers/BaseISCSI.py
-+++ b/drivers/BaseISCSI.py
+Index: sm-3.2.12/drivers/BaseISCSI.py
+===================================================================
+--- sm-3.2.12.orig/drivers/BaseISCSI.py
++++ sm-3.2.12/drivers/BaseISCSI.py
 @@ -433,7 +433,10 @@ class BaseISCSISR(SR.SR):
                  realdev = os.path.realpath(os.path.join(dev_path, dev))
                  util.set_scheduler(os.path.basename(realdev))
@@ -31,10 +31,10 @@ index 71e43ddc..a52442c5 100755
          keys = []
          pbdref = None
          try:
-diff --git a/drivers/RawISCSISR.py b/drivers/RawISCSISR.py
-index 0b17cfa9..1df1c7a2 100644
---- a/drivers/RawISCSISR.py
-+++ b/drivers/RawISCSISR.py
+Index: sm-3.2.12/drivers/RawISCSISR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/RawISCSISR.py
++++ sm-3.2.12/drivers/RawISCSISR.py
 @@ -64,7 +64,7 @@ class RawISCSISR(BaseISCSI.BaseISCSISR):
          self.managed = True
  

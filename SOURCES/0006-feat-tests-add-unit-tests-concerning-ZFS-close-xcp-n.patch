@@ -12,10 +12,10 @@ Subject: [PATCH] feat(tests): add unit tests concerning ZFS (close
  2 files changed, 137 insertions(+), 16 deletions(-)
  create mode 100644 tests/test_ZFSSR.py
 
-diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
-index 1b2f398f..d3752101 100644
---- a/drivers/ZFSSR.py
-+++ b/drivers/ZFSSR.py
+Index: sm-3.2.12/drivers/ZFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/ZFSSR.py
++++ sm-3.2.12/drivers/ZFSSR.py
 @@ -58,6 +58,18 @@ DRIVER_INFO = {
  }
  
@@ -83,11 +83,10 @@ index 1b2f398f..d3752101 100644
  
  
  class ZFSFileVDI(FileSR.FileVDI):
-diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
-new file mode 100644
-index 00000000..879ea372
+Index: sm-3.2.12/tests/test_ZFSSR.py
+===================================================================
 --- /dev/null
-+++ b/tests/test_ZFSSR.py
++++ sm-3.2.12/tests/test_ZFSSR.py
 @@ -0,0 +1,121 @@
 +import uuid
 +

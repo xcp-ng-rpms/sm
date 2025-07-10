@@ -4,10 +4,10 @@ From: Mark Syms <mark.syms@cloud.com>
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
 
-diff --git a/drivers/SRCommand.py b/drivers/SRCommand.py
-index 6afbdfb..72694c0 100755
---- a/drivers/SRCommand.py
-+++ b/drivers/SRCommand.py
+Index: sm-3.2.12/drivers/SRCommand.py
+===================================================================
+--- sm-3.2.12.orig/drivers/SRCommand.py
++++ sm-3.2.12/drivers/SRCommand.py
 @@ -182,12 +182,16 @@ class SRCommand:
          dconf_type = sr.dconf.get("type")
          if not dconf_type or not NO_LOGGING.get(dconf_type) or \

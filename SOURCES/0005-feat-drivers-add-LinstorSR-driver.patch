@@ -77,10 +77,10 @@ module imports are protected by try.. except... blocks.
  create mode 100644 systemd/linstor-monitor.service
  create mode 100644 tests/mocks/linstor/__init__.py
 
-diff --git a/Makefile b/Makefile
-index 95aa5b2b..3cacbff2 100755
---- a/Makefile
-+++ b/Makefile
+Index: sm-3.2.12/Makefile
+===================================================================
+--- sm-3.2.12.orig/Makefile
++++ sm-3.2.12/Makefile
 @@ -8,6 +8,7 @@ SM_DRIVERS += Dummy
  SM_DRIVERS += udev
  SM_DRIVERS += ISO
@@ -99,7 +99,7 @@ index 95aa5b2b..3cacbff2 100755
  SM_LIBS += lvhdutil
  SM_LIBS += cifutils
  SM_LIBS += xs_errors
-@@ -96,7 +100,8 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS), drivers/$(LIB).py) $(foreach DRIVER, $(
+@@ -96,7 +100,8 @@ SM_PY_FILES = $(foreach LIB, $(SM_LIBS),
  
  .PHONY: build
  build:
@@ -139,11 +139,10 @@ index 95aa5b2b..3cacbff2 100755
  clean:
  	rm -rf $(SM_STAGING)
 -
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-new file mode 100755
-index 00000000..ffd70abf
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
 --- /dev/null
-+++ b/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -0,0 +1,2100 @@
 +#!/usr/bin/env python
 +#
@@ -2245,11 +2244,11 @@ index 00000000..ffd70abf
 +    SRCommand.run(LinstorSR, DRIVER_INFO)
 +else:
 +    SR.registerSR(LinstorSR)
-diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 120b92fc..1986bc55 100755
---- a/drivers/XE_SR_ERRORCODES.xml
-+++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -926,4 +926,40 @@
+Index: sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+===================================================================
+--- sm-3.2.12.orig/drivers/XE_SR_ERRORCODES.xml
++++ sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+@@ -932,4 +932,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -2290,10 +2289,10 @@ index 120b92fc..1986bc55 100755
 +            <value>5007</value>
 +        </code>
  </SM-errorcodes>
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 62e283ab..74b28674 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
  from refcounter import RefCounter
  from ipc import IPCFlag
@@ -2468,7 +2467,7 @@ index 62e283ab..74b28674 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2951,6 +3081,232 @@ class LVHDSR(SR):
+@@ -2955,6 +3085,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2701,7 +2700,7 @@ index 62e283ab..74b28674 100755
  ################################################################################
  #
  #  Helpers
-@@ -2992,7 +3348,9 @@ def normalizeType(type):
+@@ -2996,7 +3352,9 @@ def normalizeType(type):
          "xfs", "zfs"
      ]:
          type = SR.TYPE_FILE
@@ -2712,11 +2711,10 @@ index 62e283ab..74b28674 100755
          raise util.SMException("Unsupported SR type: %s" % type)
      return type
  
-diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-new file mode 100755
-index 00000000..f7ce1809
+Index: sm-3.2.12/drivers/linstor-manager
+===================================================================
 --- /dev/null
-+++ b/drivers/linstor-manager
++++ sm-3.2.12/drivers/linstor-manager
 @@ -0,0 +1,272 @@
 +#!/usr/bin/env python
 +#
@@ -2990,11 +2988,10 @@ index 00000000..f7ce1809
 +        'getBlockBitmap': get_block_bitmap,
 +        'lockVdi': lock_vdi
 +    })
-diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
-new file mode 100755
-index 00000000..74953305
+Index: sm-3.2.12/drivers/linstorjournaler.py
+===================================================================
 --- /dev/null
-+++ b/drivers/linstorjournaler.py
++++ sm-3.2.12/drivers/linstorjournaler.py
 @@ -0,0 +1,155 @@
 +#!/usr/bin/env python
 +#
@@ -3151,11 +3148,10 @@ index 00000000..74953305
 +    @staticmethod
 +    def _get_key(type, identifier):
 +        return '{}/{}'.format(type, identifier)
-diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-new file mode 100644
-index 00000000..f31c7525
+Index: sm-3.2.12/drivers/linstorvhdutil.py
+===================================================================
 --- /dev/null
-+++ b/drivers/linstorvhdutil.py
++++ sm-3.2.12/drivers/linstorvhdutil.py
 @@ -0,0 +1,186 @@
 +#!/usr/bin/env python
 +#
@@ -3343,11 +3339,10 @@ index 00000000..f31c7525
 +            opterr='Unable to find a valid host from VDI: {} (path={})'
 +            .format(vdi_uuid, device_path)
 +        )
-diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-new file mode 100755
-index 00000000..d4004217
+Index: sm-3.2.12/drivers/linstorvolumemanager.py
+===================================================================
 --- /dev/null
-+++ b/drivers/linstorvolumemanager.py
++++ sm-3.2.12/drivers/linstorvolumemanager.py
 @@ -0,0 +1,1713 @@
 +#!/usr/bin/env python
 +#
@@ -5062,10 +5057,10 @@ index 00000000..d4004217
 +                if err.is_error(code):
 +                    return True
 +        return False
-diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 6b7fc09f..932fc3ca 100755
---- a/drivers/tapdisk-pause
-+++ b/drivers/tapdisk-pause
+Index: sm-3.2.12/drivers/tapdisk-pause
+===================================================================
+--- sm-3.2.12.orig/drivers/tapdisk-pause
++++ sm-3.2.12/drivers/tapdisk-pause
 @@ -29,6 +29,12 @@ import lvhdutil
  import vhdutil
  import lvmcache
@@ -5132,11 +5127,11 @@ index 6b7fc09f..932fc3ca 100755
      @locking("VDIUnavailable")
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
-diff --git a/drivers/util.py b/drivers/util.py
-index 3a568d59..a913fcf5 100755
---- a/drivers/util.py
-+++ b/drivers/util.py
-@@ -699,10 +699,35 @@ def get_this_host():
+Index: sm-3.2.12/drivers/util.py
+===================================================================
+--- sm-3.2.12.orig/drivers/util.py
++++ sm-3.2.12/drivers/util.py
+@@ -700,10 +700,35 @@ def get_this_host():
      return uuid
  
  
@@ -5175,7 +5170,7 @@ index 3a568d59..a913fcf5 100755
  
  
  def get_localhost_ref(session):
-@@ -1548,13 +1573,21 @@ def get_connected_sockets(pid):
+@@ -1559,13 +1584,21 @@ def get_connected_sockets(pid):
      return sockets
  
  
@@ -5199,11 +5194,10 @@ index 3a568d59..a913fcf5 100755
  
          retries += 1
          if retries >= maxretry:
-diff --git a/linstor/Makefile b/linstor/Makefile
-new file mode 100644
-index 00000000..c329ca30
+Index: sm-3.2.12/linstor/Makefile
+===================================================================
 --- /dev/null
-+++ b/linstor/Makefile
++++ sm-3.2.12/linstor/Makefile
 @@ -0,0 +1,22 @@
 +PREFIX ?= /opt/xensource/libexec
 +DESTDIR ?= 
@@ -5227,11 +5221,10 @@ index 00000000..c329ca30
 +
 +clean: 
 +	rm -f linstor-monitord
-diff --git a/linstor/linstor-monitord.c b/linstor/linstor-monitord.c
-new file mode 100644
-index 00000000..8161813d
+Index: sm-3.2.12/linstor/linstor-monitord.c
+===================================================================
 --- /dev/null
-+++ b/linstor/linstor-monitord.c
++++ sm-3.2.12/linstor/linstor-monitord.c
 @@ -0,0 +1,402 @@
 +/*
 + * Copyright (C) 2020  Vates SAS - ronan.abhamon@vates.fr
@@ -5635,11 +5628,10 @@ index 00000000..8161813d
 +  close(inotifyFd);
 +  return -ret;
 +}
-diff --git a/systemd/linstor-monitor.service b/systemd/linstor-monitor.service
-new file mode 100644
-index 00000000..5f8f0a76
+Index: sm-3.2.12/systemd/linstor-monitor.service
+===================================================================
 --- /dev/null
-+++ b/systemd/linstor-monitor.service
++++ sm-3.2.12/systemd/linstor-monitor.service
 @@ -0,0 +1,13 @@
 +[Unit]
 +Description=LINSTOR Monitor
@@ -5654,6 +5646,3 @@ index 00000000..5f8f0a76
 +
 +[Install]
 +WantedBy=multi-user.target
-diff --git a/tests/mocks/linstor/__init__.py b/tests/mocks/linstor/__init__.py
-new file mode 100644
-index 00000000..e69de29b

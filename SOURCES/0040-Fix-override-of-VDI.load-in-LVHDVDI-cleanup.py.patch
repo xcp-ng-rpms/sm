@@ -10,10 +10,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/cleanup.py | 22 ++++++++++++----------
  1 file changed, 12 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 577ff4bb..b9c3f5b4 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
 @@ -1222,20 +1222,22 @@ class LVHDVDI(VDI):
      JRN_ZERO = "zero"  # journal entry type for zeroing out end of parent
      DRIVER_NAME_RAW = "aio"

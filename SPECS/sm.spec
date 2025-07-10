@@ -1,6 +1,6 @@
-%global package_speccommit 79ebd59762f759772a213ff42272bfd7ca17bd5f
+%global package_speccommit be6914b365fb794f0ef2d4ef9bd209283e12e737
 %global usver 3.2.12
-%global xsver 4
+%global xsver 7
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -22,6 +22,15 @@ Patch4: cp-50026_ensure_mpathcount_runs_after_multipath_deactivate.patch
 Patch5: add_udev_rules_for_purestorage_-_best_practices.patch
 Patch6: update_pure_storage_udev_1.patch
 Patch7: update_pure_storage_udev_2.patch
+Patch8: CA-408105_add_logging_to__finishInterruptedCoalesceLeaf
+Patch9: CA-408452_remove_vhd_parent_if_it_does_not_have_one
+Patch10: cp-51633__tidy_up_intellicache_code.patch
+Patch11: cp-51843__advertise_sr_caching_on_lvhdoiscsi_and_hba.patch
+Patch12: cp-51843__add_unit_tests_for_setup_cache.patch
+Patch13: cp-51843__remove_unused_params.patch
+Patch14: cp-51843__add_unit_tests_for_remove_cache.patch
+Patch15: cp-51843__disable_read-caching_on_block.patch
+Patch16: ca_409231_report_intellicache_stats_with_nbd
 
 %define __python python3
 
@@ -313,6 +322,17 @@ then
 fi
 
 %changelog
+* Tue Apr 08 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-7
+- CA-409231: Report IntelliCache stats when parent is NBD.
+
+* Mon Mar 31 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-6
+- CA-407743: do not try to add memory caching and intellicache
+
+* Tue Mar 25 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-5
+- CA-408105: add logging to failure paths
+- CA-408452: remove VDI parent if it does not have one
+- CP-51843:  extend IntelliCache coverage
+
 * Tue Mar 04 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-4
 - CA-407343: do not remove the parent's vhd-parent in leaf GC
 - Revert the changes in 2979937bbb7 (CA-397084)

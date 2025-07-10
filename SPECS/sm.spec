@@ -15,13 +15,13 @@ Source0: sm-4.1.12.tar.gz
 
 BuildRequires: python3
 BuildRequires: python3-devel
-BuildRequires: python36-pylint
+BuildRequires: python3-pylint
 BuildRequires: python3-coverage
-BuildRequires: python36-bitarray
+BuildRequires: python3-bitarray
 BuildRequires: python3-future
 
-# XCP-ng: python36-mock for %%check
-BuildRequires: python36-mock
+# XCP-ng: python3-mock for %%check
+BuildRequires: python3-mock
 
 # XCP-ng: gcc must be explicitly required in our build system
 BuildRequires: gcc
@@ -324,6 +324,7 @@ in /opt/xensource
 %changelog
 * Tue May 05 2026 Yann Dirson <yann.dirson@vates.tech> - 4.1.12-1.1
 - Rebase on 4.1.12-1
+- Adjust deps for Almalinux 9
 - TODO: XCP-ng patches were not ported yet to 4.x, XCP-ng-specific files commented out
 - *** Upstream changelog ***
   * Mon Jan 26 2026 Mark Syms <mark.syms@citrix.com> - 4.1.12-1

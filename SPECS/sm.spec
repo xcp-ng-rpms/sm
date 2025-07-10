@@ -1,6 +1,6 @@
-%global package_speccommit f1b3ef576666b1b4a3805704f1ce2198094d6392
+%global package_speccommit 79ebd59762f759772a213ff42272bfd7ca17bd5f
 %global usver 3.2.12
-%global xsver 3
+%global xsver 4
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -16,6 +16,12 @@ Source0: sm-3.2.12.tar.gz
 Source1: update-cgrules.patch
 Patch0: ca-403593__dont_log_the_session_ref.patch
 Patch1: ca-405381_mpathcount_info_does_not_automatically_refresh_in_xencenter_after_disabling_and_enabling_multipath.patch
+Patch2: ca_407343_do_not_remove_vhd_parent_in_leaf_gc
+Patch3: revert-2979937bbb7
+Patch4: cp-50026_ensure_mpathcount_runs_after_multipath_deactivate.patch
+Patch5: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch6: update_pure_storage_udev_1.patch
+Patch7: update_pure_storage_udev_2.patch
 
 %define __python python3
 
@@ -257,6 +263,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/69-dm-lvm-metad.rules
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
+%config /etc/udev/rules.d/99-purestorage.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 %{_datadir}/%{name}/update-cgrules.patch
 
@@ -306,6 +313,11 @@ then
 fi
 
 %changelog
+* Tue Mar 04 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-4
+- CA-407343: do not remove the parent's vhd-parent in leaf GC
+- Revert the changes in 2979937bbb7 (CA-397084)
+- CP-50026 Ensure mpathcount runs after multipath deactivate
+
 * Tue Feb 11 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-3
 - CA-405381: update mpathcount while xapi is not enabled
 

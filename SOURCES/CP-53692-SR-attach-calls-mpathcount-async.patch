@@ -1,0 +1,27 @@
+From 4a7ed6747fef1e06dee9ba685a08dc580a427ca5 Mon Sep 17 00:00:00 2001
+From: Lunfan Zhang <Lunfan.Zhang@cloud.com>
+Date: Thu, 6 Mar 2025 10:11:32 +0000
+Subject: [PATCH] CP-53692 SR attach calls mpathcount async
+
+Signed-off-by: Lunfan Zhang <Lunfan.Zhang@cloud.com>
+---
+ drivers/SR.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/SR.py b/drivers/SR.py
+index ebfaac4..66ad927 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -496,8 +496,7 @@ class SR(object):
+             self.session.xenapi.SR.set_sm_config(self.sr_ref, sm_config)
+ 
+             if self.mpath == "true" and len(SCSIid):
+-                cmd = ['/opt/xensource/sm/mpathcount.py', SCSIid]
+-                util.pread2(cmd)
++                util.kickpipe_mpathcount()
+         except:
+             pass
+ 
+-- 
+1.8.3.1
+

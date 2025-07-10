@@ -1,0 +1,145 @@
+From 8e0b7797038aaf3d1f8e53c72dd91c07312dda59 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Thu, 15 May 2025 11:38:57 +0100
+Subject: [PATCH] CA-411163: verify SCSI ids for SR PVs
+
+If the iSCSI target exposes multiple LUNs which contain Volume Groups
+with the same ID as is required by an SR it is somewhat
+non-deterministic as to which actual PV will be used by the LVM
+subsystem when attaching the SR. To prevent unexpected failures,
+detect this condition and refuse to attach the SR.
+---
+ drivers/LVHDoISCSISR.py      | 10 ++++++++++
+ drivers/XE_SR_ERRORCODES.xml |  6 ++++++
+ drivers/lvutil.py            | 14 ++++++++++++++
+ tests/test_LVHDoISCSISR.py   |  3 +++
+ tests/test_lvutil.py         | 20 ++++++++++++++++++++
+ 5 files changed, 53 insertions(+)
+
+diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
+index dabf65a..d016269 100755
+--- a/drivers/LVHDoISCSISR.py
++++ b/drivers/LVHDoISCSISR.py
+@@ -478,11 +478,21 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+                     scsiutil.rescan([self.iscsi.adapter[a]])
+ 
+             self._pathrefresh(LVHDoISCSISR)
++
++            # Check that we only have PVs for the volume group with the expected SCSI ID
++            lvutil.checkPVScsiIds(self.vgname, self.SCSIid)
++
+             LVHDSR.LVHDSR.attach(self, sr_uuid)
+         except Exception as inst:
+             for i in self.iscsiSRs:
+                 i.detach(sr_uuid)
++
++            # If we already have a proper error just raise it
++            if isinstance(inst, xs_errors.SROSError):
++                raise
++
+             raise xs_errors.XenError("SRUnavailable", opterr=inst)
++
+         self._setMultipathableFlag(SCSIid=self.SCSIid)
+ 
+     def detach(self, sr_uuid):
+diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
+index 47fefd8..792fe17 100755
+--- a/drivers/XE_SR_ERRORCODES.xml
++++ b/drivers/XE_SR_ERRORCODES.xml
+@@ -513,6 +513,12 @@
+                 <value>117</value>
+         </code>
+ 
++        <code>
++                <name>PVMultiIDs</name>
++                <description>PVs found with multiple SCSI IDs</description>
++                <value>119</value>
++        </code>
++
+        <!-- Agent database query errors 150+ -->
+         <code>
+                 <name>APISession</name>
+diff --git a/drivers/lvutil.py b/drivers/lvutil.py
+index 2f2a68e..ad844aa 100755
+--- a/drivers/lvutil.py
++++ b/drivers/lvutil.py
+@@ -22,6 +22,7 @@ import os
+ import errno
+ import time
+ 
++import scsiutil
+ from fairlock import Fairlock
+ import util
+ import xs_errors
+@@ -589,6 +590,19 @@ def setActiveVG(path, active):
+     text = cmd_lvm([CMD_VGCHANGE, "-a" + val, path])
+ 
+ 
++def checkPVScsiIds(vgname, SCSIid):
++    # Get all the PVs for the specified vgName even if not active
++    cmd = [CMD_PVS, '-a', '--select', f'vgname={vgname}', '--no-headings']
++    text = cmd_lvm(cmd)
++    pv_paths = [x.split()[0] for x in text.splitlines()]
++    for pv_path in pv_paths:
++        pv_scsi_id = scsiutil.getSCSIid(pv_path)
++        if pv_scsi_id != SCSIid:
++            raise xs_errors.XenError(
++                'PVMultiIDs',
++                opterr=f'Found PVs {",".join(pv_paths)} and unexpected '
++                       f'SCSI ID {pv_scsi_id}, expected {SCSIid}')
++
+ @lvmretry
+ def create(name, size, vgname, tag=None, size_in_percentage=None):
+     if size_in_percentage:
+diff --git a/tests/test_LVHDoISCSISR.py b/tests/test_LVHDoISCSISR.py
+index 3b5e1c4..61ee479 100644
+--- a/tests/test_LVHDoISCSISR.py
++++ b/tests/test_LVHDoISCSISR.py
+@@ -157,6 +157,9 @@ class TestLVHDoISCSISR(ISCSITestCase):
+         lvlock_patcher = mock.patch('LVHDSR.lvutil.Fairlock')
+         self.mock_lvlock = lvlock_patcher.start()
+ 
++        pv_check_patcher = mock.patch('LVHDoISCSISR.lvutil.checkPVScsiIds', autospec=True)
++        self.mock_pv_check = pv_check_patcher.start()
++
+         self.addCleanup(mock.patch.stopall)
+ 
+         super().setUp()
+diff --git a/tests/test_lvutil.py b/tests/test_lvutil.py
+index 2df8300..89569a6 100644
+--- a/tests/test_lvutil.py
++++ b/tests/test_lvutil.py
+@@ -6,6 +6,7 @@ import unittest
+ import testlib
+ import lvmlib
+ import util
++import xs_errors
+ 
+ import lvutil
+ 
+@@ -393,3 +394,22 @@ class TestGetPVsInVG(unittest.TestCase):
+             mock.call("PVs in VG vg1: []")
+         ])
+         mock_smlog.assert_called_with("PVs in VG vg1: []")
++
++    @mock.patch('lvutil.scsiutil.getSCSIid', autospec=True)
++    def test_check_PV_SCSI_IDs_failure(self, mock_get_scsi_id, mock_smlog, mock_cmd_lvm):
++        mock_cmd_lvm.return_value = """  /dev/disk/by-id/scsi-360014057b7f26e2962843fa8a0645fbd VG_XenStorage-401d198b-60ab-1f21-1359-bd4f127b8f38 lvm2 d--       0      0
++  /dev/disk/by-id/scsi-36001405fdd436fa7f854cd685fc3b1fd VG_XenStorage-401d198b-60ab-1f21-1359-bd4f127b8f38 lvm2 a--  <49.99g 49.98g
++"""  # noqa: E501
++        mock_get_scsi_id.side_effect = ['36001405fdd436fa7f854cd685fc3b1fd',
++                                        '360014057b7f26e2962843fa8a0645fbd']
++        with self.assertRaises(xs_errors.SROSError) as srose:
++            lvutil.checkPVScsiIds('VG_XenStorage-401d198b-60ab-1f21-1359-bd4f127b8f38',
++                                  '36001405fdd436fa7f854cd685fc3b1fd')
++        self.assertEqual(119, srose.exception.errno)
++
++    @mock.patch('lvutil.scsiutil.getSCSIid', autospec=True)
++    def test_check_PV_SCSI_IDs_success(self, mock_get_scsi_id, mock_smlog, mock_cmd_lvm):
++        mock_cmd_lvm.return_value = """  /dev/disk/by-id/scsi-360014057b7f26e2962843fa8a0645fbd VG_XenStorage-401d198b-60ab-1f21-1359-bd4f127b8f38 lvm2 d--       0      0"""  # noqa: E501
++        mock_get_scsi_id.side_effect = ['36001405fdd436fa7f854cd685fc3b1fd']
++        lvutil.checkPVScsiIds('VG_XenStorage-401d198b-60ab-1f21-1359-bd4f127b8f38',
++                              '36001405fdd436fa7f854cd685fc3b1fd')
+-- 
+2.49.0
+

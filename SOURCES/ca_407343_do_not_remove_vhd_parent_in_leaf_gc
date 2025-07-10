@@ -1,0 +1,40 @@
+From c6b1902dab971570defce543304143eb37da18d6 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Thu, 27 Feb 2025 15:30:26 +0000
+Subject: [PATCH] CA-407343: do not remove the VHD parent property after leaf
+ coalesce
+
+Long standing bug, introduced in
+
+```
+changeset:   1508:3c5a651ef2e4
+user:        Andrei Lifchits <andrei.lifchits@citrix.com>
+date:        Wed Feb 10 09:41:59 2010 -0800
+summary:     CA-36637: fix the free space requirements calculation for the inline- and leaf-coalesce; plus:
+```
+
+The act of coalescing a leaf VHD into a parent does not make any
+structural changes to the parentage of the VHD into which the data has
+been coalesced. This, unnecessarily, introduced a race where a VDI
+would report not having a parent until the next SR scan fixed it up.
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+---
+ drivers/cleanup.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 76fcb8d..2b0ca5a 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2321,7 +2321,6 @@ class SR:
+         # garbage
+ 
+         # update the VDI record
+-        vdi.parent.delConfig(VDI.DB_VHD_PARENT)
+         if vdi.parent.raw:
+             vdi.parent.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_RAW)
+         vdi.parent.delConfig(VDI.DB_VHD_BLOCKS)
+-- 
+2.48.1
+

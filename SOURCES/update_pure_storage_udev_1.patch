@@ -1,0 +1,17 @@
+As resquested: change to be aligned with the vendor KB
+
+From: Yann LE BRIS <yann.lebris@vates.tech>
+
+Signed-off-by: Yann LE BRIS <yann.lebris@vates.tech>
+
+diff --git a/udev/99-purestorage.rules b/udev/99-purestorage.rules
+index 86ea916..49b4295 100644
+--- a/udev/99-purestorage.rules
++++ b/udev/99-purestorage.rules
+@@ -12,4 +12,4 @@ ACTION=="add|change", KERNEL=="sd*[!0-9]", SUBSYSTEM=="block", ENV{ID_VENDOR}=="
+ ACTION=="add|change", KERNEL=="dm-[0-9]*", SUBSYSTEM=="block", ENV{DM_NAME}=="3624a937*", ATTR{queue/rq_affinity}="2"
+ 
+ # Set the HBA timeout to 60 seconds
+-ACTION=="add|change", KERNEL=="sd*[!0-9]", SUBSYSTEM=="block", ENV{ID_VENDOR}=="PURE", ATTR{device/timeout}="60"
+\ No newline at end of file
++ACTION=="add", SUBSYSTEMS=="scsi", ATTRS{model}=="FlashArray      ", RUN+="/bin/sh -c 'echo 60 > /sys/$DEVPATH/device/timeout'"

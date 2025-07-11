@@ -469,7 +469,7 @@ in /opt/xensource
 /opt/xensource/libexec/dcopy
 
 %changelog
-* Fri Jul 11 2025 Yann Dirson <yann.dirson@vates.tech> - 4.1.3-0.ydi.2
+* Fri Jul 11 2025 Yann Dirson <yann.dirson@vates.tech> - 4.1.3-0.0.ydi.2
 - New upstream
 - Dropped all XS patches, all assumed integrated upstream
 - Skipped all XCP-ng patches for now

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 4.1.3
-Release: %{?xsrel}.0.ydi.1%{?dist}
+Release: %{?xsrel}.0.ydi.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-%{version}.tar.gz
@@ -143,17 +143,17 @@ make install DESTDIR=%{buildroot}
 mkdir -p %{buildroot}%{_datadir}/%{name}/
 install -m 400 %SOURCE1 %{buildroot}%{_datadir}/%{name}/
 
-# Mark processes that should be moved to the data path
-%triggerin -- libcgroup-tools
-# Do not apply patch if it was already applied
-if ! patch --dry-run -RsN -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch >/dev/null; then
-    # Apply patch. Output NOT redirected to /dev/null so that error messages are displayed
-    if ! patch -tsN -r - -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch; then
-        echo "Error: failed to apply patch:"
-        cat %{_datadir}/%{name}/update-cgrules.patch
-        false
-    fi
-fi
+# # Mark processes that should be moved to the data path
+# %triggerin -- libcgroup-tools
+# # Do not apply patch if it was already applied
+# if ! patch --dry-run -RsN -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch >/dev/null; then
+#     # Apply patch. Output NOT redirected to /dev/null so that error messages are displayed
+#     if ! patch -tsN -r - -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch; then
+#         echo "Error: failed to apply patch:"
+#         cat %{_datadir}/%{name}/update-cgrules.patch
+#         false
+#     fi
+# fi
 
 %pre
 # Remove sm-multipath on install or upgrade, to ensure it goes
@@ -469,13 +469,14 @@ in /opt/xensource
 /opt/xensource/libexec/dcopy
 
 %changelog
-* Fri Jul 11 2025 Yann Dirson <yann.dirson@vates.tech> - 4.1.3-0.ydi.1
+* Fri Jul 11 2025 Yann Dirson <yann.dirson@vates.tech> - 4.1.3-0.ydi.2
 - New upstream
 - Dropped all XS patches, all assumed integrated upstream
 - Skipped all XCP-ng patches for now
 - New patch: install relative symlinks
 - TEMP HACK remove dependency on device-mapper-multipath, which needs work
 - TEMP HACK depend on lvm2 not xenserver-lvm2, which needs work
+- HACK disable patching of non-existant cgrules.conf
 
 * Thu Jul 10 2025 Yann Dirson <yann.dirson@vates.tech> - 3.2.12-8.0.ydi.1
 - Adjust deps for Almalinux 9

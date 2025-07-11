@@ -119,6 +119,8 @@ Obsoletes: sm-additional-drivers
 # Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
 # Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
 
+Patch2000: install-relative-symlinks.patch
+
 %description
 This package contains storage backends used in XCP
 
@@ -465,6 +467,7 @@ in /opt/xensource
 - New upstream
 - Dropped all XS patches, all assumed integrated upstream
 - Skipped all XCP-ng patches for now
+- New patch: install relative symlinks
 
 * Thu Jul 10 2025 Yann Dirson <yann.dirson@vates.tech> - 3.2.12-8.0.ydi.1
 - Adjust deps for Almalinux 9

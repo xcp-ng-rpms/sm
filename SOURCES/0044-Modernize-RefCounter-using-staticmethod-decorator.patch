@@ -8,10 +8,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/refcounter.py | 35 +++++++++++++++++------------------
  1 file changed, 17 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/refcounter.py b/drivers/refcounter.py
-index 5418c858..20585da8 100644
---- a/drivers/refcounter.py
-+++ b/drivers/refcounter.py
+Index: sm-3.2.12/drivers/refcounter.py
+===================================================================
+--- sm-3.2.12.orig/drivers/refcounter.py
++++ sm-3.2.12/drivers/refcounter.py
 @@ -39,6 +39,7 @@ class RefCounter:
  
      BASE_DIR = "/var/run/sm/refcount"

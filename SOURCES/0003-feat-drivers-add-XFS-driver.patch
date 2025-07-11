@@ -20,10 +20,10 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  3 files changed, 251 insertions(+)
  create mode 100755 drivers/XFSSR.py
 
-diff --git a/Makefile b/Makefile
-index d4f540f4..cdf39f32 100755
---- a/Makefile
-+++ b/Makefile
+Index: sm-3.2.12/Makefile
+===================================================================
+--- sm-3.2.12.orig/Makefile
++++ sm-3.2.12/Makefile
 @@ -16,6 +16,7 @@ SM_DRIVERS += SMB
  SM_DRIVERS += LVHDoFCoE
  SM_DRIVERS += CephFS
@@ -32,11 +32,10 @@ index d4f540f4..cdf39f32 100755
  
  SM_LIBS := SR
  SM_LIBS += SRCommand
-diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
-new file mode 100755
-index 00000000..1dfde095
+Index: sm-3.2.12/drivers/XFSSR.py
+===================================================================
 --- /dev/null
-+++ b/drivers/XFSSR.py
++++ sm-3.2.12/drivers/XFSSR.py
 @@ -0,0 +1,249 @@
 +#!/usr/bin/python3
 +#
@@ -287,11 +286,11 @@ index 00000000..1dfde095
 +    SRCommand.run(XFSSR, DRIVER_INFO)
 +else:
 +    SR.registerSR(XFSSR)
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 24496ac4..7fb8f8fa 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
-@@ -2989,6 +2989,7 @@ def normalizeType(type):
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
+@@ -2993,6 +2993,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

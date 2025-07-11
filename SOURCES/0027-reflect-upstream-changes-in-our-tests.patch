@@ -9,11 +9,11 @@ Signed-off-by: Benjamin Reis <benjamin.reis@vates.tech>
  tests/test_ZFSSR.py | 7 ++++---
  2 files changed, 6 insertions(+), 8 deletions(-)
 
-diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
-index 9dec459c..ad5d99dc 100644
---- a/tests/test_ISOSR.py
-+++ b/tests/test_ISOSR.py
-@@ -68,17 +68,14 @@ class TestISOSR_overLocal(unittest.TestCase):
+Index: sm-3.2.12/tests/test_ISOSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_ISOSR.py
++++ sm-3.2.12/tests/test_ISOSR.py
+@@ -68,17 +68,14 @@ class TestISOSR_overLocal(unittest.TestC
          isosr.detach(None)
          self.assertFalse(pread.called)
  
@@ -33,10 +33,10 @@ index 9dec459c..ad5d99dc 100644
              isosr.attach(None)
          self.assertEqual(ose.exception.errno, 226)
          self.assertFalse(pread.called)
-diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
-index 544ea39a..47d72b89 100644
---- a/tests/test_ZFSSR.py
-+++ b/tests/test_ZFSSR.py
+Index: sm-3.2.12/tests/test_ZFSSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_ZFSSR.py
++++ sm-3.2.12/tests/test_ZFSSR.py
 @@ -6,6 +6,7 @@ import FileSR
  import os
  import SR

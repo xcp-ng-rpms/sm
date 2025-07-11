@@ -8,10 +8,10 @@ Signed-off-by: BenjiReis <benjamin.reis@vates.fr>
  drivers/CephFSSR.py | 13 ++++++++++++-
  1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index bd6a4b14..f7c26336 100644
---- a/drivers/CephFSSR.py
-+++ b/drivers/CephFSSR.py
+Index: sm-3.2.12/drivers/CephFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/CephFSSR.py
++++ sm-3.2.12/drivers/CephFSSR.py
 @@ -20,6 +20,7 @@
  
  import errno

@@ -8,10 +8,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/cleanup.py | 24 ++++++++++++------------
  1 file changed, 12 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index b9c3f5b4..7129a208 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
 @@ -123,10 +123,11 @@ class Util:
  
      PREFIX = {"G": 1024 * 1024 * 1024, "M": 1024 * 1024, "K": 1024}

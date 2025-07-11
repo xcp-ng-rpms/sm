@@ -21,10 +21,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/lvmcache.py |  5 +++--
  3 files changed, 21 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 6e0d71eb..23adf3a9 100755
---- a/drivers/LVHDSR.py
-+++ b/drivers/LVHDSR.py
+Index: sm-3.2.12/drivers/LVHDSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LVHDSR.py
++++ sm-3.2.12/drivers/LVHDSR.py
 @@ -161,14 +161,24 @@ class LVHDSR(SR.SR):
          self.path = os.path.join(lvhdutil.VG_LOCATION, self.vgname)
          self.mdpath = os.path.join(self.path, self.MDVOLUME_NAME)
@@ -60,11 +60,11 @@ index 6e0d71eb..23adf3a9 100755
          if self.other_conf.get(self.TEST_MODE_KEY):
              self.testMode = self.other_conf[self.TEST_MODE_KEY]
              self._prepareTestMode()
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 9713ffe5..577ff4bb 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
-@@ -2934,7 +2934,12 @@ class LVHDSR(SR):
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
+@@ -2938,7 +2938,12 @@ class LVHDSR(SR):
          SR.__init__(self, uuid, xapi, createLock, force)
          self.vgName = "%s%s" % (lvhdutil.VG_PREFIX, self.uuid)
          self.path = os.path.join(lvhdutil.VG_LOCATION, self.vgName)
@@ -78,10 +78,10 @@ index 9713ffe5..577ff4bb 100755
          self.lvActivator = LVActivator(self.uuid, self.lvmCache)
          self.journaler = journaler.Journaler(self.lvmCache)
  
-diff --git a/drivers/lvmcache.py b/drivers/lvmcache.py
-index 8c63d45a..6e21568e 100644
---- a/drivers/lvmcache.py
-+++ b/drivers/lvmcache.py
+Index: sm-3.2.12/drivers/lvmcache.py
+===================================================================
+--- sm-3.2.12.orig/drivers/lvmcache.py
++++ sm-3.2.12/drivers/lvmcache.py
 @@ -59,10 +59,11 @@ class LVMCache:
      """Per-VG object to store LV information. Can be queried for cached LVM
      information and refreshed"""

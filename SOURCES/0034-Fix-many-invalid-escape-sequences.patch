@@ -10,10 +10,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_cifutils.py | 16 ++++++++--------
  3 files changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/cifutils.py b/drivers/cifutils.py
-index c183fe61..be82a37c 100755
---- a/drivers/cifutils.py
-+++ b/drivers/cifutils.py
+Index: sm-3.2.12/drivers/cifutils.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cifutils.py
++++ sm-3.2.12/drivers/cifutils.py
 @@ -60,7 +60,7 @@ def splitDomainAndUsername(uname):
          username = dom_username[1]
      else:
@@ -23,10 +23,10 @@ index c183fe61..be82a37c 100755
                              .format(len(dom_username)))
      return username, domain
  
-diff --git a/tests/test_SMBSR.py b/tests/test_SMBSR.py
-index d20bcc0c..0bb6cfb8 100644
---- a/tests/test_SMBSR.py
-+++ b/tests/test_SMBSR.py
+Index: sm-3.2.12/tests/test_SMBSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_SMBSR.py
++++ sm-3.2.12/tests/test_SMBSR.py
 @@ -135,7 +135,7 @@ class Test_SMBSR(unittest.TestCase):
      def test_attach_with_cifs_password_and_domain(
              self, symlink, mock_lock, makeMountPoint,
@@ -36,10 +36,10 @@ index d20bcc0c..0bb6cfb8 100644
          mock_checkmount.return_value = False
          makeMountPoint.return_value = "/var/mount"
          smbsr.attach('asr_uuid')
-diff --git a/tests/test_cifutils.py b/tests/test_cifutils.py
-index 924aa3c6..0b8bf835 100644
---- a/tests/test_cifutils.py
-+++ b/tests/test_cifutils.py
+Index: sm-3.2.12/tests/test_cifutils.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_cifutils.py
++++ sm-3.2.12/tests/test_cifutils.py
 @@ -44,7 +44,7 @@ class TestCreate(unittest.TestCase):
          self.assertEqual(domain, None)
  

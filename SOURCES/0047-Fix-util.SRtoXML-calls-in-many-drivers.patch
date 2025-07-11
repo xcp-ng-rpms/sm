@@ -14,10 +14,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/SMBSR.py       | 5 +----
  4 files changed, 4 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index f7c26336..ca79a6a3 100644
---- a/drivers/CephFSSR.py
-+++ b/drivers/CephFSSR.py
+Index: sm-3.2.12/drivers/CephFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/CephFSSR.py
++++ sm-3.2.12/drivers/CephFSSR.py
 @@ -197,8 +197,7 @@ class CephFSSR(FileSR.FileSR):
          except (util.CommandException, xs_errors.XenError):
              raise
@@ -28,10 +28,10 @@ index f7c26336..ca79a6a3 100644
  
      def detach(self, sr_uuid):
          if not self.checkmount():
-diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 42e5ab52..8adfe700 100644
---- a/drivers/GlusterFSSR.py
-+++ b/drivers/GlusterFSSR.py
+Index: sm-3.2.12/drivers/GlusterFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/GlusterFSSR.py
++++ sm-3.2.12/drivers/GlusterFSSR.py
 @@ -177,8 +177,7 @@ class GlusterFSSR(FileSR.FileSR):
          except (util.CommandException, xs_errors.XenError):
              raise
@@ -42,10 +42,10 @@ index 42e5ab52..8adfe700 100644
  
      def detach(self, sr_uuid):
          if not self.checkmount():
-diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index 3911b096..6f86054f 100755
---- a/drivers/MooseFSSR.py
-+++ b/drivers/MooseFSSR.py
+Index: sm-3.2.12/drivers/MooseFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/MooseFSSR.py
++++ sm-3.2.12/drivers/MooseFSSR.py
 @@ -195,8 +195,7 @@ class MooseFSSR(FileSR.FileSR):
          except (util.CommandException, xs_errors.XenError):
              raise
@@ -56,10 +56,10 @@ index 3911b096..6f86054f 100755
  
      def detach(self, sr_uuid):
          if not self.checkmount():
-diff --git a/drivers/SMBSR.py b/drivers/SMBSR.py
-index aa9bda38..962060cd 100755
---- a/drivers/SMBSR.py
-+++ b/drivers/SMBSR.py
+Index: sm-3.2.12/drivers/SMBSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/SMBSR.py
++++ sm-3.2.12/drivers/SMBSR.py
 @@ -220,11 +220,8 @@ class SMBSR(FileSR.SharedFileSR):
              raise xs_errors.XenError(err, opterr=inst.errstr)
          except (util.CommandException, xs_errors.XenError):

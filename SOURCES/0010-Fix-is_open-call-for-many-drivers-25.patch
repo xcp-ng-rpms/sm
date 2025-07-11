@@ -19,10 +19,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/on_slave.py    | 17 +++++++++++++++--
  3 files changed, 25 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 72c482ae..750eb233 100644
---- a/drivers/GlusterFSSR.py
-+++ b/drivers/GlusterFSSR.py
+Index: sm-3.2.12/drivers/GlusterFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/GlusterFSSR.py
++++ sm-3.2.12/drivers/GlusterFSSR.py
 @@ -96,7 +96,8 @@ class GlusterFSSR(FileSR.FileSR):
          self.driver_config = DRIVER_CONFIG
          if 'server' not in self.dconf:
@@ -33,10 +33,10 @@ index 72c482ae..750eb233 100644
          if self.sr_ref and self.session is not None:
              self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
          else:
-diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
-index b499cc90..ef73e1b4 100755
---- a/drivers/NFSSR.py
-+++ b/drivers/NFSSR.py
+Index: sm-3.2.12/drivers/NFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/NFSSR.py
++++ sm-3.2.12/drivers/NFSSR.py
 @@ -88,9 +88,12 @@ class NFSSR(FileSR.SharedFileSR):
              self.sm_config = self.srcmd.params.get('sr_sm_config') or {}
              self.other_config = self.srcmd.params.get('sr_other_config') or {}
@@ -63,10 +63,10 @@ index b499cc90..ef73e1b4 100755
              if scan:
                  try:
                      self.scan_exports(self.dconf['server'])
-diff --git a/drivers/on_slave.py b/drivers/on_slave.py
-index b4f33de2..bb3f5db6 100755
---- a/drivers/on_slave.py
-+++ b/drivers/on_slave.py
+Index: sm-3.2.12/drivers/on_slave.py
+===================================================================
+--- sm-3.2.12.orig/drivers/on_slave.py
++++ sm-3.2.12/drivers/on_slave.py
 @@ -76,9 +76,14 @@ def _is_open(session, args):
      """Check if VDI <args["vdiUuid"]> is open by a tapdisk on this host"""
      import SRCommand

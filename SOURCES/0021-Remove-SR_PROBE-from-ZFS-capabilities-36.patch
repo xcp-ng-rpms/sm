@@ -11,10 +11,10 @@ Signed-off-by: BenjiReis <benjamin.reis@vates.fr>
  drivers/ZFSSR.py | 1 -
  1 file changed, 1 deletion(-)
 
-diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
-index 354ca90e..5301d5ec 100644
---- a/drivers/ZFSSR.py
-+++ b/drivers/ZFSSR.py
+Index: sm-3.2.12/drivers/ZFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/ZFSSR.py
++++ sm-3.2.12/drivers/ZFSSR.py
 @@ -23,7 +23,6 @@ import util
  import xs_errors
  

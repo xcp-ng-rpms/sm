@@ -11,28 +11,28 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  drivers/util.py              |  5 +++++
  3 files changed, 15 insertions(+), 16 deletions(-)
 
-diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 1986bc55..3578dd55 100755
---- a/drivers/XE_SR_ERRORCODES.xml
-+++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -909,6 +909,12 @@
-             <value>461</value>
+Index: sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+===================================================================
+--- sm-3.2.12.orig/drivers/XE_SR_ERRORCODES.xml
++++ sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+@@ -916,6 +916,12 @@
          </code>
  
-+        <code>
+         <code>
 +            <name>WipefsFailure</name>
 +            <description>Failed to wipe pre-existing filesystem signature.</description>
 +            <value>462</value>
 +        </code>
 +
-         <code>
++        <code>
              <name>GenericException</name>
              <description>SM has thrown a generic python exception</description>
-diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 48767ead..2d990a9b 100755
---- a/drivers/lvutil.py
-+++ b/drivers/lvutil.py
-@@ -478,24 +478,12 @@ def createVG(root, vgname):
+             <value>1200</value>
+Index: sm-3.2.12/drivers/lvutil.py
+===================================================================
+--- sm-3.2.12.orig/drivers/lvutil.py
++++ sm-3.2.12/drivers/lvutil.py
+@@ -479,24 +479,12 @@ def createVG(root, vgname):
  
          f = _openExclusive(dev, True)
          os.close(f)
@@ -61,11 +61,11 @@ index 48767ead..2d990a9b 100755
  
          if not (dev == rootdev):
              try:
-diff --git a/drivers/util.py b/drivers/util.py
-index 4590a46c..e5d5da0a 100755
---- a/drivers/util.py
-+++ b/drivers/util.py
-@@ -643,6 +643,11 @@ def zeroOut(path, fromByte, bytes):
+Index: sm-3.2.12/drivers/util.py
+===================================================================
+--- sm-3.2.12.orig/drivers/util.py
++++ sm-3.2.12/drivers/util.py
+@@ -644,6 +644,11 @@ def zeroOut(path, fromByte, bytes):
      return True
  
  

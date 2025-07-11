@@ -19,19 +19,19 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  7 files changed, 499 insertions(+), 202 deletions(-)
  rename {tests/mocks => mocks}/linstor/__init__.py (100%)
 
-diff --git a/dev_requirements.txt b/dev_requirements.txt
-index 104316ba..f25f7686 100644
---- a/dev_requirements.txt
-+++ b/dev_requirements.txt
+Index: sm-3.2.12/dev_requirements.txt
+===================================================================
+--- sm-3.2.12.orig/dev_requirements.txt
++++ sm-3.2.12/dev_requirements.txt
 @@ -2,3 +2,4 @@ coverage
  astroid==2.3.3
  pylint==2.4.4
  bitarray
 +python-linstor
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index fe6d01d4..829c48f8 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -362,9 +362,6 @@ class LinstorSR(SR.SR):
          self._linstor = None  # Ensure that LINSTOR attribute exists.
          self._journaler = None
@@ -319,10 +319,10 @@ index fe6d01d4..829c48f8 100755
  # ------------------------------------------------------------------------------
  
  
-diff --git a/drivers/linstor-manager b/drivers/linstor-manager
-index 8d313ec7..47c434a3 100755
---- a/drivers/linstor-manager
-+++ b/drivers/linstor-manager
+Index: sm-3.2.12/drivers/linstor-manager
+===================================================================
+--- sm-3.2.12.orig/drivers/linstor-manager
++++ sm-3.2.12/drivers/linstor-manager
 @@ -27,8 +27,9 @@ import socket
  import XenAPI
  import XenAPIPlugin
@@ -562,6 +562,8 @@ index 8d313ec7..47c434a3 100755
 -                        .format(disk_state, volume['device-path'], volume_index, resource_name, node_name)
 -                    )
 -
+-    except Exception as e:
+-        result['errors'].append('Unexpected error: `{}`'.format(e))
 +                    result['errors'].append(HealthCheckError(
 +                        code=HealthCheckError.VOLUME_INTERNAL_UNVERIFIED_STATE,
 +                        node=node_name,
@@ -569,8 +571,7 @@ index 8d313ec7..47c434a3 100755
 +                        number=volume_index,
 +                        state=disk_state
 +                    ))
-     except Exception as e:
--        result['errors'].append('Unexpected error: `{}`'.format(e))
++    except Exception as e:
 +        result['errors'].append(HealthCheckError(
 +            code=HealthCheckError.GENERIC_UNEXPECTED,
 +            message=str(e)
@@ -607,10 +608,10 @@ index 8d313ec7..47c434a3 100755
 +        'getNodePreferredInterface': get_node_preferred_interface,
          'setNodePreferredInterface': set_node_preferred_interface
      })
-diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
-index 13e1bb08..046c9695 100644
---- a/drivers/linstorvhdutil.py
-+++ b/drivers/linstorvhdutil.py
+Index: sm-3.2.12/drivers/linstorvhdutil.py
+===================================================================
+--- sm-3.2.12.orig/drivers/linstorvhdutil.py
++++ sm-3.2.12/drivers/linstorvhdutil.py
 @@ -21,6 +21,7 @@ import distutils.util
  import errno
  import json
@@ -619,7 +620,7 @@ index 13e1bb08..046c9695 100644
  import util
  import vhdutil
  import xs_errors
-@@ -46,6 +47,16 @@ def call_remote_method(session, host_ref, method, device_path, args):
+@@ -46,6 +47,16 @@ def call_remote_method(session, host_ref
      return response
  
  
@@ -707,10 +708,10 @@ index 13e1bb08..046c9695 100644
  
      @linstormodifier()
      def force_repair(self, path):
-diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index dbca3b41..a470dfec 100755
---- a/drivers/linstorvolumemanager.py
-+++ b/drivers/linstorvolumemanager.py
+Index: sm-3.2.12/drivers/linstorvolumemanager.py
+===================================================================
+--- sm-3.2.12.orig/drivers/linstorvolumemanager.py
++++ sm-3.2.12/drivers/linstorvolumemanager.py
 @@ -18,7 +18,6 @@
  
  import distutils.util
@@ -719,7 +720,7 @@ index dbca3b41..a470dfec 100755
  import json
  import linstor
  import os.path
-@@ -273,7 +272,8 @@ class LinstorVolumeManagerError(Exception):
+@@ -273,7 +272,8 @@ class LinstorVolumeManagerError(Exceptio
      ERR_GENERIC = 0,
      ERR_VOLUME_EXISTS = 1,
      ERR_VOLUME_NOT_EXISTS = 2,
@@ -983,11 +984,10 @@ index dbca3b41..a470dfec 100755
          return resources
  
      def get_database_path(self):
-@@ -1659,6 +1723,16 @@ class LinstorVolumeManager(object):
-         """
+@@ -1660,6 +1724,16 @@ class LinstorVolumeManager(object):
          return self._request_database_path(self._linstor)
  
-+    @classmethod
+     @classmethod
 +    def get_all_group_names(cls, base_name):
 +        """
 +        Get all group names. I.e. list of current group + HA.
@@ -997,9 +997,10 @@ index dbca3b41..a470dfec 100755
 +        """
 +        return [cls._build_group_name(base_name), cls._build_ha_group_name(base_name)]
 +
-     @classmethod
++    @classmethod
      def create_sr(
          cls, group_name, ips, redundancy,
+         thin_provisioning, auto_quorum,
 @@ -1744,8 +1818,8 @@ class LinstorVolumeManager(object):
          driver_pool_name = group_name
          base_group_name = group_name
@@ -1300,11 +1301,10 @@ index dbca3b41..a470dfec 100755
              ))
          # Create diskless resources on the remaining set.
          for node_name in diskful_nodes[redundancy:] + diskless_nodes:
-@@ -2825,6 +2916,55 @@ class LinstorVolumeManager(object):
-         # after LINSTOR database volume destruction.
+@@ -2826,6 +2917,55 @@ class LinstorVolumeManager(object):
          return util.retry(destroy, maxretry=10)
  
-+    @classmethod
+     @classmethod
 +    def _create_resource_group(
 +        cls,
 +        lin,
@@ -1353,9 +1353,10 @@ index dbca3b41..a470dfec 100755
 +                )
 +            )
 +
-     @classmethod
++    @classmethod
      def _destroy_resource_group(cls, lin, group_name):
          def destroy():
+             result = lin.resource_group_delete(group_name)
 @@ -2849,6 +2989,12 @@ class LinstorVolumeManager(object):
          # `VG/LV`. "/" is not accepted by LINSTOR.
          return '{}{}'.format(cls.PREFIX_SR, base_name.replace('/', '_'))
@@ -1383,10 +1384,10 @@ index dbca3b41..a470dfec 100755
          if errors:
              raise LinstorVolumeManagerError(
                  'Failed to create volume `{}` from SR `{}`: {}'.format(
-diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 75328757..f98257a2 100755
---- a/drivers/tapdisk-pause
-+++ b/drivers/tapdisk-pause
+Index: sm-3.2.12/drivers/tapdisk-pause
+===================================================================
+--- sm-3.2.12.orig/drivers/tapdisk-pause
++++ sm-3.2.12/drivers/tapdisk-pause
 @@ -30,6 +30,7 @@ import vhdutil
  import lvmcache
  
@@ -1410,7 +1411,3 @@ index 75328757..f98257a2 100755
  
              if realpath != device_path:
                  util.SMlog(
-diff --git a/tests/mocks/linstor/__init__.py b/mocks/linstor/__init__.py
-similarity index 100%
-rename from tests/mocks/linstor/__init__.py
-rename to mocks/linstor/__init__.py

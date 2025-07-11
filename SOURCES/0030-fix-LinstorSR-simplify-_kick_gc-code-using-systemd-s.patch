@@ -8,10 +8,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  drivers/LinstorSR.py | 24 ++----------------------
  1 file changed, 2 insertions(+), 22 deletions(-)
 
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 829c48f8..1ff3d963 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -31,7 +31,7 @@ except ImportError:
  
      LINSTOR_AVAILABLE = False

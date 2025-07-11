@@ -51,6 +51,8 @@ Obsoletes: sm-additional-drivers
 # git format-patch v3.2.12-xcpng..3.2.12-8.3 --no-signature --no-numbered
 #TODO
 
+Patch2000: install-relative-symlinks.patch
+
 %description
 This package contains storage backends used in XCP
 
@@ -323,6 +325,7 @@ in /opt/xensource
 - Adjust deps for Almalinux 9
 - Skipped all XCP-ng patches for now, drop BuildRequires: python-mock
 - Dropped obsolete dependency on python3-future
+- New patch: install relative symlinks
 - TODO: XCP-ng patches were not ported yet to 4.x, XCP-ng-specific files commented out
 - *** Upstream changelog ***
   * Mon Jan 26 2026 Mark Syms <mark.syms@citrix.com> - 4.1.12-1

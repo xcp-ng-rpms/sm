@@ -1,0 +1,255 @@
+# -*- rpm-spec -*-
+
+Summary: sm - XCP storage managers
+Name:    sm
+Version: @SM_VERSION@ 
+Release: @SM_RELEASE@
+Group:   System/Hypervisor
+License: LGPL
+URL:  http://www.citrix.com
+Source0: sm-@SM_VERSION@.tar.bz2
+
+%define __python python3.6
+
+BuildRequires: python3
+BuildRequires: python3-devel
+BuildRequires: python3-pylint
+BuildRequires: python3-coverage
+BuildRequires: python3-bitarray
+
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+Requires: xenserver-multipath
+Requires: python3-bitarray
+Requires: python3-future
+Conflicts: kernel < 4.19.19-5.0.0
+Conflicts: blktap < 3.55.3
+
+%description
+This package contains storage backends used in XCP
+
+%prep
+%autosetup -p1
+
+%build
+make
+make -C misc/fairlock
+
+%install
+make install DESTDIR="%{buildroot}"
+make -C misc/fairlock install DESTDIR="%{buildroot}"
+
+%pre
+# Remove sm-multipath on install or upgrade, to ensure it goes
+[ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
+
+%post
+%systemd_post make-dummy-sr.service
+%systemd_post mpcount.service
+%systemd_post sm-mpath-root.service
+%systemd_post xs-sm.service
+%systemd_post storage-init.service
+%systemd_post usb-scan.socket
+%systemd_post mpathcount.socket
+
+# On upgrade, migrate from the old statefile to the new statefile so that
+# storage is not reinitialized.
+if [ $1 -gt 1 ] ; then
+    grep -q ^success /etc/firstboot.d/state/10-prepare-storage 2>/dev/null && touch /var/lib/misc/ran-storage-init || :
+fi
+
+[ -f /etc/lvm/lvm.conf.orig ] || cp /etc/lvm/lvm.conf /etc/lvm/lvm.conf.orig || exit $?
+[ -d /etc/lvm/master ] || mkdir /etc/lvm/master || exit $?
+mv -f /etc/lvm/lvm.conf /etc/lvm/master/lvm.conf || exit $?
+sed -i 's/metadata_read_only =.*/metadata_read_only = 0/' /etc/lvm/master/lvm.conf || exit $?
+sed -i 's/archive = .*/archive = 0/' /etc/lvm/master/lvm.conf || exit $?
+sed -i 's/udev_sync = 1/udev_sync = 0/' /etc/lvm/master/lvm.conf || exit $?
+sed -i 's/udev_rules = 1/udev_rules = 0/' /etc/lvm/master/lvm.conf || exit $?
+sed -i 's/obtain_device_list_from_udev = 1/obtain_device_list_from_udev = 0/' /etc/lvm/master/lvm.conf || exit $?
+sed -i 's/write_cache_state = 1/write_cache_state = 0/' /etc/lvm/master/lvm.conf || exit $?
+cp /etc/lvm/master/lvm.conf /etc/lvm/lvm.conf || exit $?
+sed -i 's/metadata_read_only =.*/metadata_read_only = 1/' /etc/lvm/lvm.conf || exit $?
+rm -f /etc/lvm/cache/.cache
+touch /etc/lvm/cache/.cache
+
+# We try to be "update-alternatives" ready.
+# If a file exists and it is not a symlink we back it up
+if [ -e /etc/multipath.conf -a ! -h /etc/multipath.conf ]; then
+   mv -f /etc/multipath.conf /etc/multipath.conf.$(date +%F_%T)
+fi
+update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.xenserver/multipath.conf 90
+
+%preun
+%systemd_preun make-dummy-sr.service
+%systemd_preun mpcount.service
+%systemd_preun sm-mpath-root.service
+%systemd_preun xs-sm.service
+%systemd_preun storage-init.service
+%systemd_preun usb-scan.socket
+%systemd_preun mpathcount.socket
+# Remove sm-multipath on upgrade or uninstall, to ensure it goes
+[ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
+# only remove in case of erase (but not at upgrade)
+if [ $1 -eq 0 ] ; then
+    update-alternatives --remove multipath.conf /etc/multipath.xenserver/multipath.conf
+fi
+exit 0
+
+%postun
+%systemd_postun make-dummy-sr.service
+%systemd_postun mpcount.service
+%systemd_postun sm-mpath-root.service
+%systemd_postun xs-sm.service
+%systemd_postun storage-init.service
+
+%check
+tests/run_python_unittests.sh
+
+%files
+%defattr(-,root,root,-)
+/etc/udev/scripts/xs-mpath-scsidev.sh
+/etc/xapi.d/plugins/coalesce-leaf
+/etc/xapi.d/plugins/lvhd-thin
+/etc/xapi.d/plugins/nfs-on-slave
+/etc/xapi.d/plugins/on-slave
+/etc/xapi.d/plugins/tapdisk-pause
+/etc/xapi.d/plugins/testing-hooks
+/etc/xapi.d/plugins/intellicache-clean
+/etc/xapi.d/plugins/trim
+/etc/xapi.d/xapi-pre-shutdown/*
+/etc/xensource/master.d/02-vhdcleanup
+/opt/xensource/bin/blktap2
+/opt/xensource/bin/tapdisk-cache-stats
+/opt/xensource/debug/tp
+/opt/xensource/libexec/check-device-sharing
+/opt/xensource/libexec/dcopy
+/opt/xensource/libexec/local-device-change
+/opt/xensource/libexec/make-dummy-sr
+/opt/xensource/libexec/usb_change
+/opt/xensource/libexec/kickpipe
+/opt/xensource/libexec/set-iscsi-initiator
+/opt/xensource/libexec/storage-init
+/opt/xensource/sm/DummySR
+/opt/xensource/sm/DummySR.py
+/opt/xensource/sm/EXTSR
+/opt/xensource/sm/EXTSR.py
+/opt/xensource/sm/FileSR
+/opt/xensource/sm/FileSR.py
+/opt/xensource/sm/HBASR
+/opt/xensource/sm/HBASR.py
+/opt/xensource/sm/ISCSISR
+/opt/xensource/sm/RawISCSISR.py
+/opt/xensource/sm/BaseISCSI.py
+/opt/xensource/sm/ISOSR
+/opt/xensource/sm/ISOSR.py
+/opt/xensource/sm/LUNperVDI.py
+/opt/xensource/sm/LVHDSR.py
+/opt/xensource/sm/LVHDoHBASR.py
+/opt/xensource/sm/LVHDoISCSISR.py
+/opt/xensource/sm/LVHDoFCoESR.py
+/opt/xensource/sm/LVMSR
+/opt/xensource/sm/LVMoHBASR
+/opt/xensource/sm/LVMoISCSISR
+/opt/xensource/sm/LVMoFCoESR
+/opt/xensource/sm/NFSSR
+/opt/xensource/sm/NFSSR.py
+/opt/xensource/sm/SMBSR
+/opt/xensource/sm/SMBSR.py
+/opt/xensource/sm/SHMSR.py
+/opt/xensource/sm/SR.py
+/opt/xensource/sm/SRCommand.py
+/opt/xensource/sm/VDI.py
+/opt/xensource/sm/XE_SR_ERRORCODES.xml
+/opt/xensource/sm/blktap2.py
+/opt/xensource/sm/cleanup.py
+/opt/xensource/sm/devscan.py
+/opt/xensource/sm/fjournaler.py
+/opt/xensource/sm/flock.py
+/opt/xensource/sm/ipc.py
+/opt/xensource/sm/iscsilib.py
+/opt/xensource/sm/fcoelib.py
+/opt/xensource/sm/journaler.py
+/opt/xensource/sm/lcache.py
+/opt/xensource/sm/lock.py
+/opt/xensource/sm/lock_queue.py
+/opt/xensource/sm/lvhdutil.py
+/opt/xensource/sm/lvmanager.py
+/opt/xensource/sm/lvmcache.py
+/opt/xensource/sm/lvutil.py
+/opt/xensource/sm/metadata.py
+/opt/xensource/sm/srmetadata.py
+/opt/xensource/sm/mpath_cli.py
+/opt/xensource/sm/mpath_dmp.py
+/opt/xensource/sm/mpath_null.py
+/opt/xensource/sm/mpathcount.py
+/opt/xensource/sm/mpathutil.py
+/opt/xensource/sm/nfs.py
+/opt/xensource/sm/refcounter.py
+/opt/xensource/sm/resetvdis.py
+/opt/xensource/sm/scsiutil.py
+/opt/xensource/sm/scsi_host_rescan.py
+/opt/xensource/sm/sysdevice.py
+/opt/xensource/sm/udevSR
+/opt/xensource/sm/udevSR.py
+/opt/xensource/sm/util.py
+/opt/xensource/sm/cifutils.py
+/opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/vhdutil.py
+/opt/xensource/sm/trim_util.py
+/opt/xensource/sm/xs_errors.py
+/opt/xensource/sm/wwid_conf.py
+/opt/xensource/sm/pluginutil.py
+/opt/xensource/sm/constants.py
+/opt/xensource/sm/cbtutil.py
+/opt/xensource/sm/multipath-root-setup
+%dir /opt/xensource/sm/plugins
+/opt/xensource/sm/plugins/__init__.py*
+/sbin/mpathutil
+/etc/rc.d/init.d/sm-multipath
+%{_unitdir}/make-dummy-sr.service
+%{_unitdir}/xs-sm.service
+%{_unitdir}/sm-mpath-root.service
+%{_unitdir}/usb-scan.service
+%{_unitdir}/usb-scan.socket
+%{_unitdir}/mpathcount.service
+%{_unitdir}/mpathcount.socket
+%{_unitdir}/SMGC@.service
+%config /etc/udev/rules.d/65-multipath.rules
+%config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
+%config /etc/udev/rules.d/58-xapi.rules
+%config /etc/multipath.xenserver/multipath.conf
+%dir /etc/multipath/conf.d
+%config(noreplace) /etc/multipath/conf.d/custom.conf
+%config /etc/udev/rules.d/69-dm-lvm-metad.rules
+%config /etc/logrotate.d/SMlog
+%config /etc/udev/rules.d/57-usb.rules
+%doc CONTRIB LICENSE MAINTAINERS README.md
+
+%package fairlock
+Summary: Fair locking subsystem
+
+%description fairlock
+This package provides the fair locking subsystem using by the Storage
+Manager and some other packages
+
+%files fairlock
+%{python3_sitelib}/__pycache__/fairlock*pyc
+%{python3_sitelib}/fairlock.py
+%{_unitdir}/fairlock@.service
+%{_libexecdir}/fairlock
+
+%post fairlock
+## On upgrade, shut down existing lock services so new ones will
+## be started. There should be no locks held during upgrade operations
+## so this is safe.
+if [ $1 -gt 1 ];
+then
+    /usr/bin/systemctl list-units fairlock@* --all --no-legend | /usr/bin/cut -d' ' -f1 | while read service;
+    do
+        /usr/bin/systemctl stop "$service"
+    done
+fi
+
+%changelog
+

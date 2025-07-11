@@ -52,72 +52,72 @@ Requires: libcgroup-tools
 
 Obsoletes: sm-additional-drivers
 
-# XCP-ng patches
-# Generated from our sm repository
-# git format-patch v3.2.12-xcpng..3.2.12-8.3 --no-signature --no-numbered
-Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
-Patch1003: 0003-feat-drivers-add-XFS-driver.patch
-Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
-Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
-Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
-Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
-Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
-Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
-Patch1015: 0015-py3-use-of-integer-division-operator.patch
-Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
-Patch1017: 0017-py3-switch-interpreter-to-python3.patch
-Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
-Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
-Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
-Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
-Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
-Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
-Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
-Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
-Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
-Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
-Patch1028: 0028-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
-Patch1029: 0029-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
-Patch1030: 0030-fix-LinstorSR-simplify-_kick_gc-code-using-systemd-s.patch
-Patch1031: 0031-fix-LinstorSR-imitate-the-CA-400106-change.patch
-Patch1032: 0032-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
-Patch1033: 0033-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
-Patch1034: 0034-Fix-many-invalid-escape-sequences.patch
-Patch1035: 0035-Fix-many-invalid-escape-sequences-on-regexes.patch
-Patch1036: 0036-Fix-override-of-FileSR.attach.patch
-Patch1037: 0037-Fix-override-of-BaseISCSISR.detach.patch
-Patch1038: 0038-Fix-override-of-VDI.delete-in-many-subclasses.patch
-Patch1039: 0039-Fix-override-of-VDI._do_snapshot.patch
-Patch1040: 0040-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
-Patch1041: 0041-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
-Patch1042: 0042-Modernize-Lock-class-using-staticmethod-decorator.patch
-Patch1043: 0043-Modernize-GC-using-staticmethod-decorator.patch
-Patch1044: 0044-Modernize-RefCounter-using-staticmethod-decorator.patch
-Patch1045: 0045-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
-Patch1046: 0046-Use-for-session-instead-of-for-e.patch
-Patch1047: 0047-Fix-util.SRtoXML-calls-in-many-drivers.patch
-Patch1048: 0048-Replace-Dict-variable-with-info-in-LVHDSR.patch
-Patch1049: 0049-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
-Patch1050: 0050-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
-Patch1051: 0051-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
-Patch1052: 0052-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
-Patch1053: 0053-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
-Patch1054: 0054-Replace-deprecated-calls-to-distutils.util.strtobool.patch
-Patch1055: 0055-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
-Patch1056: 0056-Use-static-analysis-tool-mypy.patch
-Patch1057: 0057-Add-mypy-stubs.patch
-Patch1058: 0058-Use-override-everywhere.patch
-Patch1059: 0059-Makefile-fix-don-t-execute-precheck-during-installat.patch
-Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
-Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
-Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
-Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
+# # XCP-ng patches
+# # Generated from our sm repository
+# # git format-patch v3.2.12-xcpng..3.2.12-8.3 --no-signature --no-numbered
+# Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
+# Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
+# Patch1003: 0003-feat-drivers-add-XFS-driver.patch
+# Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+# Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
+# Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+# Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
+# Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+# Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+# Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
+# Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+# Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
+# Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
+# Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
+# Patch1015: 0015-py3-use-of-integer-division-operator.patch
+# Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
+# Patch1017: 0017-py3-switch-interpreter-to-python3.patch
+# Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
+# Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
+# Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
+# Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
+# Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
+# Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
+# Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
+# Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
+# Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
+# Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
+# Patch1028: 0028-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
+# Patch1029: 0029-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
+# Patch1030: 0030-fix-LinstorSR-simplify-_kick_gc-code-using-systemd-s.patch
+# Patch1031: 0031-fix-LinstorSR-imitate-the-CA-400106-change.patch
+# Patch1032: 0032-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
+# Patch1033: 0033-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
+# Patch1034: 0034-Fix-many-invalid-escape-sequences.patch
+# Patch1035: 0035-Fix-many-invalid-escape-sequences-on-regexes.patch
+# Patch1036: 0036-Fix-override-of-FileSR.attach.patch
+# Patch1037: 0037-Fix-override-of-BaseISCSISR.detach.patch
+# Patch1038: 0038-Fix-override-of-VDI.delete-in-many-subclasses.patch
+# Patch1039: 0039-Fix-override-of-VDI._do_snapshot.patch
+# Patch1040: 0040-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
+# Patch1041: 0041-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
+# Patch1042: 0042-Modernize-Lock-class-using-staticmethod-decorator.patch
+# Patch1043: 0043-Modernize-GC-using-staticmethod-decorator.patch
+# Patch1044: 0044-Modernize-RefCounter-using-staticmethod-decorator.patch
+# Patch1045: 0045-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
+# Patch1046: 0046-Use-for-session-instead-of-for-e.patch
+# Patch1047: 0047-Fix-util.SRtoXML-calls-in-many-drivers.patch
+# Patch1048: 0048-Replace-Dict-variable-with-info-in-LVHDSR.patch
+# Patch1049: 0049-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
+# Patch1050: 0050-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
+# Patch1051: 0051-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
+# Patch1052: 0052-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
+# Patch1053: 0053-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
+# Patch1054: 0054-Replace-deprecated-calls-to-distutils.util.strtobool.patch
+# Patch1055: 0055-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
+# Patch1056: 0056-Use-static-analysis-tool-mypy.patch
+# Patch1057: 0057-Add-mypy-stubs.patch
+# Patch1058: 0058-Use-override-everywhere.patch
+# Patch1059: 0059-Makefile-fix-don-t-execute-precheck-during-installat.patch
+# Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+# Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+# Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
+# Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
 
 %description
 This package contains storage backends used in XCP
@@ -177,9 +177,9 @@ systemctl start sr_health_check.timer
 systemctl enable sr_health_check.timer
 systemctl start sr_health_check.timer
 
-# XCP-ng: enable linstor-monitor by default.
-# However it won't start without linstor-controller.service
-systemctl enable linstor-monitor.service
+# # XCP-ng: enable linstor-monitor by default.
+# # However it won't start without linstor-controller.service
+# systemctl enable linstor-monitor.service
 
 # XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
 # the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
@@ -202,8 +202,8 @@ fi
 # Remove sm-multipath on upgrade or uninstall, to ensure it goes
 [ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
 
-# XCP-ng
-%systemd_preun linstor-monitor.service
+# # XCP-ng
+# %systemd_preun linstor-monitor.service
 
 exit 0
 
@@ -216,8 +216,8 @@ exit 0
 %systemd_postun sr_health_check.timer
 %systemd_postun sr_health_check.service
 
-# XCP-ng
-%systemd_postun linstor-monitor.service
+# # XCP-ng
+# %systemd_postun linstor-monitor.service
 
 %check
 tests/run_python_unittests.sh
@@ -264,35 +264,95 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config %{_sysconfdir}/udev/rules.d/99-purestorage.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 %{_datadir}/%{name}/update-cgrules.patch
-# XCP-ng
-/etc/systemd/system/drbd-reactor.service.d/override.conf
-/etc/systemd/system/linstor-satellite.service.d/override.conf
-/etc/systemd/system/var-lib-linstor.service
-/etc/xapi.d/plugins/linstor-manager
-/opt/xensource/bin/linstor-kv-tool
-/opt/xensource/libexec/fork-log-daemon
-/opt/xensource/libexec/linstor-monitord
-/opt/xensource/libexec/safe-umount
-/opt/xensource/sm/CephFSSR
-/opt/xensource/sm/CephFSSR.py
-/opt/xensource/sm/GlusterFSSR
-/opt/xensource/sm/GlusterFSSR.py
-/opt/xensource/sm/linstorjournaler.py
-/opt/xensource/sm/LinstorSR
-/opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/linstorvhdutil.py
-/opt/xensource/sm/linstorvolumemanager.py
-/opt/xensource/sm/MooseFSSR
-/opt/xensource/sm/MooseFSSR.py
-/opt/xensource/sm/XFSSR
-/opt/xensource/sm/XFSSR.py
-/opt/xensource/sm/ZFSSR
-/opt/xensource/sm/ZFSSR.py
-/opt/xensource/sm/LargeBlockSR
-/opt/xensource/sm/LargeBlockSR.py
-%{_unitdir}/linstor-monitor.service
-%{python3_sitelib}/__pycache__/sm_typing*pyc
-%{python3_sitelib}/sm_typing.py
+# compat symlinks and stubs
+/opt/xensource/bin/blktap2
+/opt/xensource/bin/tapdisk-cache-stats
+/opt/xensource/sm/DummySR
+/opt/xensource/sm/EXTSR
+/opt/xensource/sm/FileSR
+/opt/xensource/sm/HBASR
+/opt/xensource/sm/ISOSR
+/opt/xensource/sm/LVHDoHBASR
+/opt/xensource/sm/LVHDoISCSISR
+/opt/xensource/sm/LVHDSR
+/opt/xensource/sm/LVMoHBASR
+/opt/xensource/sm/LVMoISCSISR
+/opt/xensource/sm/LVMSR
+/opt/xensource/sm/NFSSR
+/opt/xensource/sm/RawISCSISR
+/opt/xensource/sm/SMBSR
+/opt/xensource/sm/udevSR
+/opt/xensource/sm/BaseISCSI.py
+/opt/xensource/sm/LUNperVDI.py
+/opt/xensource/sm/SR.py
+/opt/xensource/sm/SRCommand.py
+/opt/xensource/sm/VDI.py
+/opt/xensource/sm/cleanup.py
+/opt/xensource/sm/devscan.py
+/opt/xensource/sm/fjournaler.py
+/opt/xensource/sm/flock.py
+/opt/xensource/sm/ipc.py
+/opt/xensource/sm/iscsilib.py
+/opt/xensource/sm/journaler.py
+/opt/xensource/sm/lock.py
+/opt/xensource/sm/lock_queue.py
+/opt/xensource/sm/lvhdutil.py
+/opt/xensource/sm/lvmanager.py
+/opt/xensource/sm/lvmcache.py
+/opt/xensource/sm/lvutil.py
+/opt/xensource/sm/metadata.py
+/opt/xensource/sm/srmetadata.py
+/opt/xensource/sm/mpath_cli.py
+/opt/xensource/sm/mpath_dmp.py
+/opt/xensource/sm/mpath_null.py
+/opt/xensource/sm/mpathcount.py
+/opt/xensource/sm/mpathutil.py
+/opt/xensource/sm/nfs.py
+/opt/xensource/sm/refcounter.py
+/opt/xensource/sm/resetvdis.py
+/opt/xensource/sm/scsiutil.py
+/opt/xensource/sm/scsi_host_rescan.py
+/opt/xensource/sm/sysdevice.py
+/opt/xensource/sm/util.py
+/opt/xensource/sm/cifutils.py
+/opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/vhdutil.py
+/opt/xensource/sm/trim_util.py
+/opt/xensource/sm/xs_errors.py
+/opt/xensource/sm/wwid_conf.py
+/opt/xensource/sm/pluginutil.py
+/opt/xensource/sm/constants.py
+/opt/xensource/sm/cbtutil.py
+
+# # XCP-ng
+# /etc/systemd/system/drbd-reactor.service.d/override.conf
+# /etc/systemd/system/linstor-satellite.service.d/override.conf
+# /etc/systemd/system/var-lib-linstor.service
+# /etc/xapi.d/plugins/linstor-manager
+# /opt/xensource/bin/linstor-kv-tool
+# /opt/xensource/libexec/fork-log-daemon
+# /opt/xensource/libexec/linstor-monitord
+# /opt/xensource/libexec/safe-umount
+# /opt/xensource/sm/CephFSSR
+# /opt/xensource/sm/CephFSSR.py
+# /opt/xensource/sm/GlusterFSSR
+# /opt/xensource/sm/GlusterFSSR.py
+# /opt/xensource/sm/linstorjournaler.py
+# /opt/xensource/sm/LinstorSR
+# /opt/xensource/sm/LinstorSR.py
+# /opt/xensource/sm/linstorvhdutil.py
+# /opt/xensource/sm/linstorvolumemanager.py
+# /opt/xensource/sm/MooseFSSR
+# /opt/xensource/sm/MooseFSSR.py
+# /opt/xensource/sm/XFSSR
+# /opt/xensource/sm/XFSSR.py
+# /opt/xensource/sm/ZFSSR
+# /opt/xensource/sm/ZFSSR.py
+# /opt/xensource/sm/LargeBlockSR
+# /opt/xensource/sm/LargeBlockSR.py
+# %{_unitdir}/linstor-monitor.service
+# %{python3_sitelib}/__pycache__/sm_typing*pyc
+# %{python3_sitelib}/sm_typing.py
 
 %package testresults
 Summary:  test results for SM package
@@ -404,6 +464,7 @@ in /opt/xensource
 * Fri Jul 11 2025 Yann Dirson <yann.dirson@vates.tech> - 4.1.3-0.ydi.1
 - New upstream
 - Dropped all XS patches, all assumed integrated upstream
+- Skipped all XCP-ng patches for now
 
 * Thu Jul 10 2025 Yann Dirson <yann.dirson@vates.tech> - 3.2.12-8.0.ydi.1
 - Adjust deps for Almalinux 9

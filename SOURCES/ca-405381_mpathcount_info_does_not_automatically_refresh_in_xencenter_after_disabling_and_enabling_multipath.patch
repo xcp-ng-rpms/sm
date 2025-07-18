@@ -14,9 +14,9 @@ index 2bdac1b..6be7e3c 100755
  import json
 +import subprocess
  
- supported = ['iscsi', 'lvmoiscsi', 'rawhba', 'lvmohba', 'ocfsohba', 'ocfsoiscsi', 'netapp', 'gfs2']
+ supported = ['iscsi', 'lvmoiscsi', 'rawhba', 'lvmohba', 'ocfsohba', 'ocfsoiscsi', 'netapp', 'lvmofcoe', 'gfs2']
  
-@@ -35,6 +36,7 @@ MPATH_FILE_NAME = "/dev/shm/mpath_status"
+@@ -35,6 +36,7 @@ MPATH_FILE_NAME = "/dev/shm/mpath_status
  match_bySCSIid = False
  mpath_enabled = True
  SCSIid = 'NOTSUPPLIED'
@@ -24,7 +24,7 @@ index 2bdac1b..6be7e3c 100755
  
  cached_DM_maj = None
  
-@@ -199,13 +201,31 @@ def check_devconfig(devconfig, sm_config, config, remove, add, mpath_status=None
+@@ -199,13 +201,31 @@ def check_devconfig(devconfig, sm_config
              else:
                  update_config(key, i, config[key], remove, add, mpath_status)
  

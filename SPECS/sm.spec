@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 4.1.3
-Release: %{?xsrel}.0.ydi.2%{?dist}
+Release: %{?xsrel}.0.ydi.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-%{version}.tar.gz
@@ -272,65 +272,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config %{_sysconfdir}/udev/rules.d/99-purestorage.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 %{_datadir}/%{name}/update-cgrules.patch
-# compat symlinks and stubs
-/opt/xensource/bin/blktap2
-/opt/xensource/bin/tapdisk-cache-stats
-/opt/xensource/sm/DummySR
-/opt/xensource/sm/EXTSR
-/opt/xensource/sm/FileSR
-/opt/xensource/sm/HBASR
-/opt/xensource/sm/ISOSR
-/opt/xensource/sm/LVHDoHBASR
-/opt/xensource/sm/LVHDoISCSISR
-/opt/xensource/sm/LVHDSR
-/opt/xensource/sm/LVMoHBASR
-/opt/xensource/sm/LVMoISCSISR
-/opt/xensource/sm/LVMSR
-/opt/xensource/sm/NFSSR
-/opt/xensource/sm/RawISCSISR
-/opt/xensource/sm/SMBSR
-/opt/xensource/sm/udevSR
-/opt/xensource/sm/BaseISCSI.py
-/opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/SR.py
-/opt/xensource/sm/SRCommand.py
-/opt/xensource/sm/VDI.py
-/opt/xensource/sm/cleanup.py
-/opt/xensource/sm/devscan.py
-/opt/xensource/sm/fjournaler.py
-/opt/xensource/sm/flock.py
-/opt/xensource/sm/ipc.py
-/opt/xensource/sm/iscsilib.py
-/opt/xensource/sm/journaler.py
-/opt/xensource/sm/lock.py
-/opt/xensource/sm/lock_queue.py
-/opt/xensource/sm/lvhdutil.py
-/opt/xensource/sm/lvmanager.py
-/opt/xensource/sm/lvmcache.py
-/opt/xensource/sm/lvutil.py
-/opt/xensource/sm/metadata.py
-/opt/xensource/sm/srmetadata.py
-/opt/xensource/sm/mpath_cli.py
-/opt/xensource/sm/mpath_dmp.py
-/opt/xensource/sm/mpath_null.py
-/opt/xensource/sm/mpathcount.py
-/opt/xensource/sm/mpathutil.py
-/opt/xensource/sm/nfs.py
-/opt/xensource/sm/refcounter.py
-/opt/xensource/sm/resetvdis.py
-/opt/xensource/sm/scsiutil.py
-/opt/xensource/sm/scsi_host_rescan.py
-/opt/xensource/sm/sysdevice.py
-/opt/xensource/sm/util.py
-/opt/xensource/sm/cifutils.py
-/opt/xensource/sm/verifyVHDsOnSR.py
-/opt/xensource/sm/vhdutil.py
-/opt/xensource/sm/trim_util.py
-/opt/xensource/sm/xs_errors.py
-/opt/xensource/sm/wwid_conf.py
-/opt/xensource/sm/pluginutil.py
-/opt/xensource/sm/constants.py
-/opt/xensource/sm/cbtutil.py
 
 # # XCP-ng
 # /etc/systemd/system/drbd-reactor.service.d/override.conf
@@ -469,7 +410,7 @@ in /opt/xensource
 /opt/xensource/libexec/dcopy
 
 %changelog
-* Fri Jul 11 2025 Yann Dirson <yann.dirson@vates.tech> - 4.1.3-0.0.ydi.2
+* Fri Jul 11 2025 Yann Dirson <yann.dirson@vates.tech> - 4.1.3-0.0.ydi.3
 - New upstream
 - Dropped all XS patches, all assumed integrated upstream
 - Skipped all XCP-ng patches for now

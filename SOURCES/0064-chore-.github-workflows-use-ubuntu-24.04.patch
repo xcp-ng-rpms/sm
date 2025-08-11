@@ -1,0 +1,46 @@
+From 756509761e163aca0aca14fd442e25e8e98302c8 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, 22 Apr 2025 11:10:24 +0200
+Subject: [PATCH] chore(.github/workflows): use ubuntu-24.04
+
+Previous version is no longer available.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ .github/workflows/main.yml | 4 ++--
+ dev_requirements.txt       | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+index d89b968..015d641 100644
+--- a/.github/workflows/main.yml
++++ b/.github/workflows/main.yml
+@@ -23,14 +23,14 @@ jobs:
+           mypy .
+ 
+   build:
+-    runs-on: ubuntu-20.04
++    runs-on: ubuntu-24.04
+ 
+     steps:
+       - uses: actions/checkout@v3
+       - name: Set up Python 3
+         uses: actions/setup-python@v4
+         with:
+-          python-version: '3.6'
++          python-version: '3.x'
+ 
+       - name: Install dependencies
+         run: |
+diff --git a/dev_requirements.txt b/dev_requirements.txt
+index f25f768..5fbd590 100644
+--- a/dev_requirements.txt
++++ b/dev_requirements.txt
+@@ -1,5 +1,5 @@
+ coverage
+-astroid==2.3.3
+-pylint==2.4.4
++astroid
++pylint
+ bitarray
+ python-linstor

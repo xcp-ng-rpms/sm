@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.4%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -116,6 +116,18 @@ Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
 Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
 Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
 Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1064: 0064-chore-.github-workflows-use-ubuntu-24.04.patch
+Patch1065: 0065-Fix-warns-reported-by-new-github-workflow.patch
+Patch1066: 0066-Improve-LinstorSR.py-to-handle-thick-SR-creation-85.patch
+Patch1067: 0067-Fix-LINSTOR-satellite-LS_KEEP_RES-regex.patch
+Patch1068: 0068-fix-LinstorSR-Correctly-reference-a-variable-excepti.patch
+Patch1069: 0069-Fix-GC-hidden-attribute-in-case-of-SIGTERM-signal-87.patch
+Patch1070: 0070-fix-LinstorSR-robustify-DB-umount-call.patch
+Patch1071: 0071-feat-Linstor-rewrite-linstorhostcall-logic.patch
+Patch1072: 0072-feat-linstor-Add-new-debug-log-in-linstorhostcall-67.patch
+Patch1073: 0073-fix-linstor-subsequent-fixes-for-linstorhostcall.patch
+Patch1074: 0074-fix-linstorvolumemanager-robustify-usable-size-gette.patch
+Patch1075: 0075-feat-LinstorSR-improve-DB-volume-robustness.patch
 
 %description
 This package contains storage backends used in XCP
@@ -431,6 +443,19 @@ then
 fi
 
 %changelog
+* Tue Aug 26 2025 Mathieu Labourier <mathieu.labourier@vates.tech> - 3.2.12-3.4
+- Fix warns reported by new github workflow
+- Improve LinstorSR.py to handle `thick` SR creation
+- Check enabled hosts instead of online during SR creation
+- Fix LINSTOR satellite LS_KEEP_RES regex to be more precise
+- Fix GC hidden attribute in case of SIGTERM signal
+- Correctly reference a variable exception in LinstorSR
+- Robustify DB umount call in LinstorSR
+- Rewrite linstorhostcall logic
+- Add new debug log in linstorhostcall
+- Robustify "usable size" getters
+- Improve DB volume robustness
+
 * Fri Jul 04 2025 Yann Dirson <yann.dirson@vates.fr> - 3.2.12-3.3
 - Add missing dependency on libcgroup-tools, uses cgclassify(1)
 - Drop dependency on old and unused python3-future

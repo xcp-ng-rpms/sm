@@ -191,6 +191,8 @@ Patch1135: 0135-fix-qcow2util-add-size-limit-for-qcow2.patch
 Patch1136: 0136-Optimize-qcow2-helper-with-OpenMP.patch
 Patch1137: 0137-fix-cleanup-remove-running-file-before-relink.patch
 Patch1138: 0138-fix-qcow2util-read-clusters-with-kill-data.patch
+Patch1139: 0139-Try-bitmap-dump-with-qcow2helper.patch
+Patch1140: 0140-Remove-limitation-on-blocksize.patch
 
 %description
 This package contains storage backends used in XCP
@@ -510,6 +512,10 @@ then
 fi
 
 %changelog
+* Fri Aug 29 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-3.2.0.qcow2.3
+- Add bitmap to qcow2_helper
+- Fix handling of different blocksize for QCOW2
+
 * Mon Aug 11 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-3.2.0.qcow2.2
 - Add qcow2_helper binary to more quickly get allocated size of a QCOW2
 - Add LV activation fix that should correctly handle LV activation, especially during VDI migration

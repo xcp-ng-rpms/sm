@@ -1,0 +1,276 @@
+From a57ddcdacf7c11983fe717eb1edca3dc2a31cfe2 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, 19 Aug 2025 23:25:04 +0200
+Subject: [PATCH] Fix GC hidden attribute in case of SIGTERM signal (#87)
+
+The GC can be interrupted by a SIGTERM signal. If this is caught while modifying
+a volume's hidden flag, this can have bad consequences.
+
+For example in the situation below, the hidden flag of a volume has been changed
+but the cached value (self.hidden) in the python process still has the old value
+because of the 'util.CommandException' exception that was thrown. A VDI
+that normally should not be hidden is still hidden after executing
+`_undoInterruptedCoalesceLeaf` because the hidden value was not the correct one.
+
+Code:
+```
+    def _setHidden(self, hidden=True):
+        vhdutil.setHidden(self.path, hidden)
+        # Exception! Next line is never executed.
+        self.hidden = hidden
+```
+
+Trace:
+```
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Removed vhd-parent from dce4b0fc(2.000G/170.336M?)
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Removed vhd-blocks from dce4b0fc(2.000G/170.336M?)
+Jun  5 09:15:50 r620-q6 SM: [563219] ['/usr/bin/vhd-util', 'set', '--debug', '-n', '/var/run/sr-mount/f816795d-e7a9-43df-170c-23bc329607fc/OLD_dce4b0fc-6ad1-4750-857b-45d8d2758503.vhd', '-f', 'hidden', '-v', '1']
+Jun  5 09:15:50 r620-q6 SM: [563219] GC: recieved SIGTERM
+Jun  5 09:15:50 r620-q6 SM: [563219] FAILED in util.pread: (rc -15) stdout: '', stderr: ''
+Jun  5 09:15:50 r620-q6 SMGC: [563219] *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
+Jun  5 09:15:50 r620-q6 SMGC: [563219]          ***********************
+Jun  5 09:15:50 r620-q6 SMGC: [563219]          *  E X C E P T I O N  *
+Jun  5 09:15:50 r620-q6 SMGC: [563219]          ***********************
+Jun  5 09:15:50 r620-q6 SMGC: [563219] _doCoalesceLeaf: EXCEPTION <class 'util.CommandException'>, Signalled 15
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/cleanup.py", line 2653, in _liveLeafCoalesce
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     self._doCoalesceLeaf(vdi)
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/cleanup.py", line 2717, in _doCoalesceLeaf
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     vdi._setHidden(True)
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/cleanup.py", line 1063, in _setHidden
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     vhdutil.setHidden(self.path, hidden)
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/vhdutil.py", line 235, in setHidden
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     ret = ioretry(cmd)
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/vhdutil.py", line 94, in ioretry
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     errlist=[errno.EIO, errno.EAGAIN])
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/util.py", line 347, in ioretry
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     return f()
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/vhdutil.py", line 93, in <lambda>
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     return util.ioretry(lambda: util.pread2(cmd, text=text),
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/util.py", line 255, in pread2
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     return pread(cmdlist, quiet=quiet, text=text)
+Jun  5 09:15:50 r620-q6 SMGC: [563219]   File "/opt/xensource/sm/util.py", line 217, in pread
+Jun  5 09:15:50 r620-q6 SMGC: [563219]     raise CommandException(rc, str(cmdlist), stderr.strip())
+Jun  5 09:15:50 r620-q6 SMGC: [563219]
+Jun  5 09:15:50 r620-q6 SMGC: [563219] *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
+Jun  5 09:15:50 r620-q6 SMGC: [563219] *** UNDO LEAF-COALESCE
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Renaming parent back: dce4b0fc-6ad1-4750-857b-45d8d2758503 -> 056b6f93-66ff-460a-9354-157540b584a8
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Renaming /var/run/sr-mount/f816795d-e7a9-43df-170c-23bc329607fc/dce4b0fc-6ad1-4750-857b-45d8d2758503.vhd -> /var/run/sr-mount/f816795d-e7a9-43df-170c-23bc329607fc/056b6f93-66ff-460a-9354-157540b584a8.vhd
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Renaming child back to dce4b0fc-6ad1-4750-857b-45d8d2758503
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Renaming /var/run/sr-mount/f816795d-e7a9-43df-170c-23bc329607fc/OLD_dce4b0fc-6ad1-4750-857b-45d8d2758503.vhd -> /var/run/sr-mount/f816795d-e7a9-43df-170c-23bc329607fc/dce4b0fc-6ad1-4750-857b-45d8d2758503.vhd
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Updating the VDI record
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Set vhd-parent = 056b6f93-66ff-460a-9354-157540b584a8 for dce4b0fc(2.000G/8.500K?)
+Jun  5 09:15:50 r620-q6 SMGC: [563219] Set vdi_type = vhd for dce4b0fc(2.000G/8.500K?)
+Jun  5 09:15:50 r620-q6 SM: [563219] ['/usr/bin/vhd-util', 'set', '--debug', '-n', '/var/run/sr-mount/f816795d-e7a9-43df-170c-23bc329607fc/056b6f93-66ff-460a-9354-157540b584a8.vhd', '-f', 'hidden', '-v', '1']
+Jun  5 09:15:50 r620-q6 SM: [563219]   pread SUCCESS
+Jun  5 09:15:50 r620-q6 SMGC: [563219] *** leaf-coalesce undo successful
+```
+
+Therefore, a VDI impacted by this problem remains hidden and can no longer
+be used correctly without manual intervention:
+```
+Jun  5 09:16:29 r620-q6 SM: [566174] lock: released /var/lock/sm/f816795d-e7a9-43df-170c-23bc329607fc/sr
+Jun  5 09:16:29 r620-q6 SM: [566174] ***** generic exception: vdi_clone: EXCEPTION <class 'xs_errors.SROSError'>, Failed to clone VDI [opterr=hidden VDI]
+Jun  5 09:16:29 r620-q6 SM: [566174]   File "/opt/xensource/sm/SRCommand.py", line 113, in run
+Jun  5 09:16:29 r620-q6 SM: [566174]     return self._run_locked(sr)
+Jun  5 09:16:29 r620-q6 SM: [566174]   File "/opt/xensource/sm/SRCommand.py", line 163, in _run_locked
+Jun  5 09:16:29 r620-q6 SM: [566174]     rv = self._run(sr, target)
+Jun  5 09:16:29 r620-q6 SM: [566174]   File "/opt/xensource/sm/SRCommand.py", line 270, in _run
+Jun  5 09:16:29 r620-q6 SM: [566174]     return target.clone(self.params['sr_uuid'], self.vdi_uuid)
+Jun  5 09:16:29 r620-q6 SM: [566174]   File "/opt/xensource/sm/FileSR.py", line 704, in clone
+Jun  5 09:16:29 r620-q6 SM: [566174]     return self._do_snapshot(sr_uuid, vdi_uuid, VDI.SNAPSHOT_DOUBLE)
+Jun  5 09:16:29 r620-q6 SM: [566174]   File "/opt/xensource/sm/FileSR.py", line 754, in _do_snapshot
+Jun  5 09:16:29 r620-q6 SM: [566174]     return self._snapshot(snapType, cbtlog, consistency_state)
+Jun  5 09:16:29 r620-q6 SM: [566174]   File "/opt/xensource/sm/FileSR.py", line 797, in _snapshot
+Jun  5 09:16:29 r620-q6 SM: [566174]     raise xs_errors.XenError('VDIClone', opterr='hidden VDI')
+Jun  5 09:16:29 r620-q6 SM: [566174]
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/cleanup.py | 50 +++++++++++++++++++++++++++-------------------
+ 1 file changed, 29 insertions(+), 21 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 528fcf9a..3d228d59 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -561,7 +561,7 @@ class VDI(object):
+         self.sizeVirt = -1
+         self._sizeVHD = -1
+         self._sizeAllocated = -1
+-        self.hidden = False
++        self._hidden = False
+         self.parent = None
+         self.children = []
+         self._vdiRef = None
+@@ -664,7 +664,7 @@ class VDI(object):
+         return not self.scanError and \
+                 self.parent and \
+                 len(self.parent.children) == 1 and \
+-                self.hidden and \
++                self.isHidden() and \
+                 len(self.children) > 0
+ 
+     def isLeafCoalesceable(self):
+@@ -672,7 +672,7 @@ class VDI(object):
+         return not self.scanError and \
+                 self.parent and \
+                 len(self.parent.children) == 1 and \
+-                not self.hidden and \
++                not self.isHidden() and \
+                 len(self.children) == 0
+ 
+     def canLiveCoalesce(self, speed):
+@@ -700,7 +700,7 @@ class VDI(object):
+             # some tapdisks could still be using the file.
+             if self.sr.journaler.get(self.JRN_RELINK, self.uuid):
+                 return []
+-            if not self.scanError and self.hidden:
++            if not self.scanError and self.isHidden():
+                 return [self]
+             return []
+ 
+@@ -724,7 +724,7 @@ class VDI(object):
+         # Normally we are not in this function when the delete action is
+         # executed but in `_liveLeafCoalesce`.
+ 
+-        if not self.scanError and not self.hidden and thisPrunable:
++        if not self.scanError and not self.isHidden() and thisPrunable:
+             vdiList.append(self)
+         return vdiList
+ 
+@@ -795,7 +795,7 @@ class VDI(object):
+     @override
+     def __str__(self) -> str:
+         strHidden = ""
+-        if self.hidden:
++        if self.isHidden():
+             strHidden = "*"
+         strSizeVirt = "?"
+         if self.sizeVirt > 0:
+@@ -1055,13 +1055,19 @@ class VDI(object):
+             Util.log("Failed to update %s with vhd-parent field %s" % \
+                      (self.uuid, self.parentUuid))
+ 
++    def isHidden(self) -> bool:
++        if self._hidden is None:
++            self._loadInfoHidden()
++        return self._hidden
++
+     def _loadInfoHidden(self) -> None:
+         hidden = vhdutil.getHidden(self.path)
+-        self.hidden = (hidden != 0)
++        self._hidden = (hidden != 0)
+ 
+     def _setHidden(self, hidden=True) -> None:
++        self._hidden = None
+         vhdutil.setHidden(self.path, hidden)
+-        self.hidden = hidden
++        self._hidden = hidden
+ 
+     def _increaseSizeVirt(self, size, atomic=True) -> None:
+         """ensure the virtual size of 'self' is at least 'size'. Note that
+@@ -1186,7 +1192,7 @@ class FileVDI(VDI):
+         self.sizeVirt = info.sizeVirt
+         self._sizeVHD = info.sizePhys
+         self._sizeAllocated = info.sizeAllocated
+-        self.hidden = info.hidden
++        self._hidden = info.hidden
+         self.scanError = False
+         self.path = os.path.join(self.sr.path, "%s%s" % \
+                 (self.uuid, vhdutil.FILE_EXTN_VHD))
+@@ -1245,7 +1251,7 @@ class LVHDVDI(VDI):
+         self.lvActive = info.lvActive
+         self.lvOpen = info.lvOpen
+         self.lvReadonly = info.lvReadonly
+-        self.hidden = info.hidden
++        self._hidden = info.hidden
+         self.parentUuid = info.parentUuid
+         self.path = os.path.join(self.sr.path, self.fileName)
+ 
+@@ -1379,15 +1385,16 @@ class LVHDVDI(VDI):
+     @override
+     def _loadInfoHidden(self) -> None:
+         if self.raw:
+-            self.hidden = self.sr.lvmCache.getHidden(self.fileName)
++            self._hidden = self.sr.lvmCache.getHidden(self.fileName)
+         else:
+             VDI._loadInfoHidden(self)
+ 
+     @override
+     def _setHidden(self, hidden=True) -> None:
+         if self.raw:
++            self._hidden = None
+             self.sr.lvmCache.setHidden(self.fileName, hidden)
+-            self.hidden = hidden
++            self._hidden = hidden
+         else:
+             VDI._setHidden(self, hidden)
+ 
+@@ -1397,7 +1404,7 @@ class LVHDVDI(VDI):
+         if self.raw:
+             strType = "RAW"
+         strHidden = ""
+-        if self.hidden:
++        if self.isHidden():
+             strHidden = "*"
+         strSizeVHD = ""
+         if self._sizeVHD > 0:
+@@ -1575,7 +1582,7 @@ class LinstorVDI(VDI):
+         self._sizeVHD = -1
+         self._sizeAllocated = -1
+         self.drbd_size = -1
+-        self.hidden = info.hidden
++        self._hidden = info.hidden
+         self.scanError = False
+         self.vdi_type = vhdutil.VDI_TYPE_VHD
+ 
+@@ -1749,10 +1756,11 @@ class LinstorVDI(VDI):
+         HIDDEN_TAG = 'hidden'
+ 
+         if self.raw:
++            self._hidden = None
+             self.sr._linstor.update_volume_metadata(self.uuid, {
+                 HIDDEN_TAG: hidden
+             })
+-            self.hidden = hidden
++            self._hidden = hidden
+         else:
+             VDI._setHidden(self, hidden)
+ 
+@@ -3015,9 +3023,9 @@ class FileSR(SR):
+             child.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_VHD)
+             util.fistpoint.activate("LVHDRT_coaleaf_undo_after_rename2", self.uuid)
+ 
+-        if child.hidden:
++        if child.isHidden():
+             child._setHidden(False)
+-        if not parent.hidden:
++        if not parent.isHidden():
+             parent._setHidden(True)
+         self._updateSlavesOnUndoLeafCoalesce(parent, child)
+         util.fistpoint.activate("LVHDRT_coaleaf_undo_end", self.uuid)
+@@ -3251,9 +3259,9 @@ class LVHDSR(SR):
+         parent.deflate()
+         child.inflateFully()
+         util.fistpoint.activate("LVHDRT_coaleaf_undo_after_deflate", self.uuid)
+-        if child.hidden:
++        if child.isHidden():
+             child._setHidden(False)
+-        if not parent.hidden:
++        if not parent.isHidden():
+             parent._setHidden(True)
+         if not parent.lvReadonly:
+             self.lvmCache.setReadonly(parent.fileName, True)
+@@ -3607,9 +3615,9 @@ class LinstorSR(SR):
+ 
+         # TODO: Maybe deflate here.
+ 
+-        if child.hidden:
++        if child.isHidden():
+             child._setHidden(False)
+-        if not parent.hidden:
++        if not parent.isHidden():
+             parent._setHidden(True)
+         self._updateSlavesOnUndoLeafCoalesce(parent, child)
+         Util.log('*** leaf-coalesce undo successful')

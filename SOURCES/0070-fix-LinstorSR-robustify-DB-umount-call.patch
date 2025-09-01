@@ -1,0 +1,165 @@
+From 6dbec460c107df56f01d5f0a690f3f43d61cf088 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, 8 Jul 2025 18:12:40 +0200
+Subject: [PATCH] fix(LinstorSR): robustify DB umount call
+
+In the event of a network outage on a LINSTOR host where the
+controller is running, a rather problematic situation can occur:
+the `/var/lib/linstor` folder may remain mounted (in RO mode) while
+`xcp-persistent-database` has become PRIMARY on another machine.
+
+This situation occurs following a kernel freeze lasting several minutes
+of jbd2/ext4fs.
+
+Trace of the temporary blockage:
+```
+Jul  8 15:05:39 xcp-ng-ha-1 kernel: [98867.434915] r8125: eth2: link down
+Jul  8 15:06:03 xcp-ng-ha-1 kernel: [98890.897922] r8125: eth2: link up
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001306] INFO: task jbd2/drbd1000-8:736989 blocked for more than 120 seconds.
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001314]       Tainted: G           O      4.19.0+1 #1
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001316] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001319] jbd2/drbd1000-8 D    0 736989      2 0x80000000
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001321] Call Trace:
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001330]  ? __schedule+0x2a6/0x880
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001331]  schedule+0x32/0x80
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001334]  jbd2_journal_commit_transaction+0x260/0x1896
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001336]  ? __switch_to_asm+0x34/0x70
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001337]  ? __switch_to_asm+0x40/0x70
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001338]  ? __switch_to_asm+0x34/0x70
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001339]  ? __switch_to_asm+0x40/0x70
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001340]  ? __switch_to_asm+0x34/0x70
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001341]  ? __switch_to_asm+0x40/0x70
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001342]  ? __switch_to_asm+0x34/0x70
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001343]  ? __switch_to_asm+0x40/0x70
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001346]  ? wait_woken+0x80/0x80
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001348]  ? try_to_del_timer_sync+0x4d/0x80
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001350]  kjournald2+0xc1/0x260
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001351]  ? wait_woken+0x80/0x80
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001353]  kthread+0xf8/0x130
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001355]  ? commit_timeout+0x10/0x10
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001356]  ? kthread_bind+0x10/0x10
+Jul  8 15:09:13 xcp-ng-ha-1 kernel: [99081.001357]  ret_from_fork+0x22/0x40
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830064] INFO: task jbd2/drbd1000-8:736989 blocked for more than 120 seconds.
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830071]       Tainted: G           O      4.19.0+1 #1
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830074] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830076] jbd2/drbd1000-8 D    0 736989      2 0x80000000
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830078] Call Trace:
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830086]  ? __schedule+0x2a6/0x880
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830088]  schedule+0x32/0x80
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830091]  jbd2_journal_commit_transaction+0x260/0x1896
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830093]  ? __switch_to_asm+0x34/0x70
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830094]  ? __switch_to_asm+0x40/0x70
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830095]  ? __switch_to_asm+0x34/0x70
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830096]  ? __switch_to_asm+0x40/0x70
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830097]  ? __switch_to_asm+0x34/0x70
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830098]  ? __switch_to_asm+0x40/0x70
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830099]  ? __switch_to_asm+0x34/0x70
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830100]  ? __switch_to_asm+0x40/0x70
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830103]  ? wait_woken+0x80/0x80
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830105]  ? try_to_del_timer_sync+0x4d/0x80
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830107]  kjournald2+0xc1/0x260
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830108]  ? wait_woken+0x80/0x80
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830110]  kthread+0xf8/0x130
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830112]  ? commit_timeout+0x10/0x10
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830113]  ? kthread_bind+0x10/0x10
+Jul  8 15:11:14 xcp-ng-ha-1 kernel: [99201.830114]  ret_from_fork+0x22/0x40
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731530] drbd_reject_write_early: 2 callbacks suppressed
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731541] Aborting journal on device drbd1000-8.
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731544] Buffer I/O error on dev drbd1000, logical block 131072, lost sync page write
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731546] JBD2: Error -5 detected when updating journal superblock for drbd1000-8.
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731549] EXT4-fs error (device drbd1000) in ext4_reserve_inode_write:5872: Journal has aborted
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731556] Buffer I/O error on dev drbd1000, logical block 0, lost sync page write
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731562] EXT4-fs (drbd1000): I/O error while writing superblock
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731565] EXT4-fs error (device drbd1000) in ext4_orphan_add:2822: Journal has aborted
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731569] Buffer I/O error on dev drbd1000, logical block 0, lost sync page write
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731571] EXT4-fs (drbd1000): I/O error while writing superblock
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731575] EXT4-fs error (device drbd1000) in ext4_reserve_inode_write:5872: Journal has aborted
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731578] Buffer I/O error on dev drbd1000, logical block 0, lost sync page write
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731581] EXT4-fs (drbd1000): I/O error while writing superblock
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731586] EXT4-fs error (device drbd1000) in ext4_truncate:4527: Journal has aborted
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731589] Buffer I/O error on dev drbd1000, logical block 0, lost sync page write
+Jul  8 15:11:51 xcp-ng-ha-1 kernel: [99238.731592] EXT4-fs (drbd1000): I/O error while writing superblock
+```
+
+On the drbd-monitor side, here's what happens: we failed
+to stop the controller, and it was subsequently killed by systemd.
+Then an attempt to unmount `/var/lib/linstor` failed completely:
+```
+Jul  8 15:10:15 xcp-ng-ha-1 systemd[1]: linstor-controller.service stop-final-sigterm timed out. Killing.
+Jul  8 15:11:45 xcp-ng-ha-1 systemd[1]: linstor-controller.service still around after final SIGKILL. Entering failed mode.
+Jul  8 15:11:45 xcp-ng-ha-1 systemd[1]: Stopped drbd-reactor controlled linstor-controller.
+Jul  8 15:11:45 xcp-ng-ha-1 systemd[1]: Unit linstor-controller.service entered failed state.
+Jul  8 15:11:45 xcp-ng-ha-1 systemd[1]: linstor-controller.service failed.
+Jul  8 15:11:45 xcp-ng-ha-1 systemd[1]: Stopping drbd-reactor controlled var-lib-linstor...
+Jul  8 15:11:48 xcp-ng-ha-1 Satellite[739516]: 2025-07-08 15:11:48.312 [MainWorkerPool-8] INFO  LINSTOR/Satellite/000010 SYSTEM - SpaceInfo: DfltDisklessStorPool -> 9223372036854775807/9223372036854775807
+Jul  8 15:11:48 xcp-ng-ha-1 Satellite[739516]: 2025-07-08 15:11:48.447 [MainWorkerPool-8] INFO  LINSTOR/Satellite/000010 SYSTEM - SpaceInfo: xcp-sr-linstor_group_thin_device -> 430950298/444645376
+Jul  8 15:11:51 xcp-ng-ha-1 systemd[1]: var-lib-linstor.service: control process exited, code=exited status=32
+Jul  8 15:11:51 xcp-ng-ha-1 systemd[1]: Stopped drbd-reactor controlled var-lib-linstor.
+Jul  8 15:11:51 xcp-ng-ha-1 systemd[1]: Unit var-lib-linstor.service entered failed state.
+Jul  8 15:11:51 xcp-ng-ha-1 systemd[1]: var-lib-linstor.service failed.
+Jul  8 15:11:51 xcp-ng-ha-1 systemd[1]: Stopping Promotion of DRBD resource xcp-persistent-database...
+```
+
+In this situation: the host will not be able to run the controller
+again without manually unmounting `/var/lib/linstor`. The solution
+to this problem is to attempt a `umount` call with the lazy option.
+This option can be dangerous in many situations, but here we don't
+have much choice:
+- The DRBD resource is technically no longer PRIMARY and therefore
+  no longer accessible
+- The controller has been stopped
+- No writing is possible
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ etc/systemd/system/var-lib-linstor.service |  2 ++
+ scripts/safe-umount                        | 19 +++++++++++++++++--
+ 2 files changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/etc/systemd/system/var-lib-linstor.service b/etc/systemd/system/var-lib-linstor.service
+index e9deb904..c5e6e5bc 100644
+--- a/etc/systemd/system/var-lib-linstor.service
++++ b/etc/systemd/system/var-lib-linstor.service
+@@ -19,3 +19,5 @@ Type=oneshot
+ ExecStart=/bin/mount -w /dev/drbd/by-res/xcp-persistent-database/0 /var/lib/linstor
+ ExecStop=/opt/xensource/libexec/safe-umount /var/lib/linstor
+ RemainAfterExit=true
++StandardOutput=journal
++StandardError=inherit
+diff --git a/scripts/safe-umount b/scripts/safe-umount
+index 3c64a3f3..f51d8672 100755
+--- a/scripts/safe-umount
++++ b/scripts/safe-umount
+@@ -18,7 +18,7 @@ def safe_umount(path):
+             return 0
+ 
+         proc = subprocess.Popen(['umount', path], stderr=subprocess.PIPE)
+-        (stdout, stderr) = proc.communicate()
++        (_stdout, stderr) = proc.communicate()
+         if not proc.returncode:
+             return 0
+ 
+@@ -29,7 +29,22 @@ def safe_umount(path):
+         retry_count -= 1
+         last_code = proc.returncode
+         time.sleep(0.500)
+-    return last_code
++
++    # Lazy attempt.
++    # Unmounting can fail for example due to a network outage of a DRBD volume mounted
++    # as `xcp-persistent-database` and which would be blocked in the kernel because of
++    # ext4 commands that cannot complete.
++    # In this kind of situation, it's necessary to force a umount call with lazy arg to
++    # ensure that the mountpoint does not remain present.
++    print(f'Failed to unmount `{path}`, trying with lazy option...', file=sys.stderr)
++    proc = subprocess.Popen(['umount', '-l', path], stderr=subprocess.PIPE)
++    (_stdout, stderr) = proc.communicate()
++    if proc.returncode:
++        print(f'Failed to unmount `{path}` with lazy option: `{stderr.strip()}`.', file=sys.stderr)
++    else:
++        print(f'Successfully unmounted `{path}`.', file=sys.stderr)
++
++    return proc.returncode
+ 
+ 
+ if __name__ == '__main__':

@@ -1,0 +1,26 @@
+From 917f27af40ed29785bea620f28aa536e1303ac95 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Mon, 15 Sep 2025 13:12:32 +0200
+Subject: [PATCH] fix(linstorvhdutil): call local method when possible in
+ linstorhostcall context
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvhdutil.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index a6606597..71c327f3 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -101,7 +101,10 @@ def linstorhostcall(local_method, remote_method):
+             remote_args.update(**kwargs)
+             remote_args = {str(key): str(value) for key, value in remote_args.items()}
+ 
++            this_host_ref = util.get_this_host_ref(self._session)
+             def call_method(host_label, host_ref):
++                if host_ref == this_host_ref:
++                    return self._call_local_method(local_method, device_path, *args[2:], **kwargs)
+                 response = call_remote_method(self._session, host_ref, remote_method, remote_args)
+                 log_successful_call(host_label, device_path, vdi_uuid, remote_method, response)
+                 return response_parser(self, vdi_uuid, response)

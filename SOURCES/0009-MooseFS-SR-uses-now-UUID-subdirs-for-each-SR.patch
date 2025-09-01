@@ -1,4 +1,4 @@
-From 1bbeb6a754b8444c120229d7b839436b826f7545 Mon Sep 17 00:00:00 2001
+From a832e8f00a0c96742572898b8e6875ca3982a9f7 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 18 May 2022 17:28:09 +0200
 Subject: [PATCH] MooseFS SR uses now UUID subdirs for each SR

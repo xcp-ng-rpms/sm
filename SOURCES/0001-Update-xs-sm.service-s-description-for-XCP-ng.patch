@@ -1,4 +1,4 @@
-From 511144d246d9e50f867d24b297279cca407f4ad8 Mon Sep 17 00:00:00 2001
+From 1d58bcdca29d68833f662c467683aba7e5ea6f32 Mon Sep 17 00:00:00 2001
 From: Samuel Verschelde <stormi@laposte.net>
 Date: Thu, 13 Aug 2020 15:22:17 +0200
 Subject: [PATCH] Update xs-sm.service's description for XCP-ng

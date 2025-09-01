@@ -1,4 +1,4 @@
-From ad42020aacbd31f149a867dff0ad5c86bebd8e68 Mon Sep 17 00:00:00 2001
+From 5de21ca4747cda1a3599d7ba1aab02e74b830b36 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 12 Apr 2024 15:08:59 +0200
 Subject: [PATCH] feat(LargeBlock): introduce largeblocksr (#51)
@@ -47,7 +47,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  create mode 100644 drivers/LargeBlockSR.py
 
 diff --git a/Makefile b/Makefile
-index 9a8a0314..d33c0605 100755
+index 6408e36c..2d38fb92 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -20,6 +20,7 @@ SM_DRIVERS += GlusterFS
@@ -314,10 +314,10 @@ index 00000000..ba0ac1d1
 +else:
 +    SR.registerSR(LargeBlockSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 3578dd55..b5813153 100755
+index 25b9e9ca..91407810 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -968,4 +968,26 @@
+@@ -974,4 +974,26 @@
              <description>LINSTOR SR delete error</description>
              <value>5007</value>
          </code>
@@ -345,10 +345,10 @@ index 3578dd55..b5813153 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e3b78e52..9713ffe5 100755
+index 3447be87..8520699d 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3530,7 +3530,7 @@ def normalizeType(type):
+@@ -3534,7 +3534,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -358,10 +358,10 @@ index e3b78e52..9713ffe5 100755
          type = SR.TYPE_FILE
      if type in ["linstor"]:
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 2d990a9b..dfd9d5c5 100755
+index 0776142a..af60d610 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
-@@ -569,12 +569,16 @@ def resizePV(dev):
+@@ -570,12 +570,16 @@ def resizePV(dev):
          util.SMlog("Failed to grow the PV, non-fatal")
  
  
@@ -379,7 +379,7 @@ index 2d990a9b..dfd9d5c5 100755
 +    cmd_lvm(cmd)
  
  
- @lvmretry
+ def checkPVScsiIds(vgname, SCSIid):
 diff --git a/drivers/on_slave.py b/drivers/on_slave.py
 index 524424f6..2f58281a 100755
 --- a/drivers/on_slave.py

@@ -1,4 +1,4 @@
-From b3ded469a3a826f58da076f285880489913899ea Mon Sep 17 00:00:00 2001
+From 2a7e2b3080669cacaf3c7428aa7b805b4eb28e67 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 15:48:29 +0200
 Subject: [PATCH] Replace deprecated calls to distutils.spawn.find_executable
@@ -84,10 +84,10 @@ index 5301d5ec..cf5eb12d 100644
  
  
 diff --git a/drivers/util.py b/drivers/util.py
-index 65b23f64..ccea5c52 100755
+index 2efbcb18..782b84d4 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -2096,3 +2096,7 @@ def make_profile(name, function):
+@@ -2107,3 +2107,7 @@ def make_profile(name, function):
          cProfile.runctx('function()', None, locals(), profile_path)
      finally:
          SMlog('* End profiling of {} ({}) *'.format(name, filename))

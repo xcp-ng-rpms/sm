@@ -1,4 +1,4 @@
-From cb10d3d8d7b394fea9b96ecc7bcfc71043c283c8 Mon Sep 17 00:00:00 2001
+From 261733afd9b277dd74fc9ab4f40c5323febe37c1 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Thu, 10 Apr 2025 10:39:54 +0200
 Subject: [PATCH] fix(LinstorSR): simplify _kick_gc code using systemd service

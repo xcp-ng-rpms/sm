@@ -1,0 +1,27 @@
+From f373af55338218fd5f2c5df38e3f354119adcb3c Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Wed, 17 Sep 2025 16:23:21 +0200
+Subject: [PATCH] fix(linstorvhdutil): support missing session (#97)
+
+Session attr is not set during "attach/detach calls from config".
+In this context local method must always be called.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvhdutil.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index f5cbcbef..b44c7176 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -94,6 +94,9 @@ def linstorhostcall(local_method, remote_method):
+                 self._linstor.get_volume_name(vdi_uuid)
+             )
+ 
++            if not self._session:
++                return self._call_local_method(local_method, device_path, *args[2:], **kwargs)
++
+             remote_args = {
+                 'devicePath': device_path,
+                 'groupName': self._linstor.group_name

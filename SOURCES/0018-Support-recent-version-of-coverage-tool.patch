@@ -1,4 +1,4 @@
-From 0918908a19367acbd2cd17650ae77f014a72fdf5 Mon Sep 17 00:00:00 2001
+From ce9e62bdbd9dcf8c20dc7c8cec3fc0a99d9dab18 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 4 May 2023 10:24:22 +0200
 Subject: [PATCH] Support recent version of coverage tool (coverage 7.2.5)

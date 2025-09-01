@@ -1,4 +1,4 @@
-From 05ec78f199934723320296f27451f4919c6ff7ec Mon Sep 17 00:00:00 2001
+From 615a18a87a9797f2989a4f03f4bbbd4adbd94be3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH] feat(drivers): add LinstorSR driver
@@ -78,7 +78,7 @@ module imports are protected by try.. except... blocks.
  create mode 100644 tests/mocks/linstor/__init__.py
 
 diff --git a/Makefile b/Makefile
-index 95aa5b2b..3cacbff2 100755
+index 52af52cc..54f38225 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -8,6 +8,7 @@ SM_DRIVERS += Dummy
@@ -2246,10 +2246,10 @@ index 00000000..ffd70abf
 +else:
 +    SR.registerSR(LinstorSR)
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 120b92fc..1986bc55 100755
+index c7de5c0d..a2dea049 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -926,4 +926,40 @@
+@@ -932,4 +932,40 @@
              <description>ZFS SR deletion error</description>
              <value>5001</value>
          </code>
@@ -2291,7 +2291,7 @@ index 120b92fc..1986bc55 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 62e283ab..74b28674 100755
+index 67b1015f..341faa73 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -2468,7 +2468,7 @@ index 62e283ab..74b28674 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2951,6 +3081,232 @@ class LVHDSR(SR):
+@@ -2955,6 +3085,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2701,7 +2701,7 @@ index 62e283ab..74b28674 100755
  ################################################################################
  #
  #  Helpers
-@@ -2992,7 +3348,9 @@ def normalizeType(type):
+@@ -2996,7 +3352,9 @@ def normalizeType(type):
          "xfs", "zfs"
      ]:
          type = SR.TYPE_FILE
@@ -5133,10 +5133,10 @@ index 6b7fc09f..932fc3ca 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 3a568d59..a913fcf5 100755
+index 00d45cc8..2e42c6ac 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -699,10 +699,35 @@ def get_this_host():
+@@ -700,10 +700,35 @@ def get_this_host():
      return uuid
  
  
@@ -5175,7 +5175,7 @@ index 3a568d59..a913fcf5 100755
  
  
  def get_localhost_ref(session):
-@@ -1548,13 +1573,21 @@ def get_connected_sockets(pid):
+@@ -1559,13 +1584,21 @@ def get_connected_sockets(pid):
      return sockets
  
  

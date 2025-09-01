@@ -1,4 +1,4 @@
-From 8e7cde1413c150feb8a539a6fe0ea9f44bb7e84a Mon Sep 17 00:00:00 2001
+From d7a1b57127d1fd96b88a17b4138ee749ce4accc6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 17:12:57 +0200
 Subject: [PATCH] Fix override of VDI.delete in many subclasses

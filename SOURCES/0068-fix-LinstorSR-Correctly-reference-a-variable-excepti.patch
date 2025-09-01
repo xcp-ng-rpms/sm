@@ -1,0 +1,28 @@
+From 654ffc147e7e4a1cbf9d1ada29230177636a1449 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 19 Aug 2025 23:11:01 +0200
+Subject: [PATCH] fix(LinstorSR): Correctly reference a variable exception
+ (#91)
+
+This bug is minor but it makes it difficult to understand why snapshots
+fail since the initial trace is lost due to the exception caused by the
+reference to the non-existing variable "e".
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LinstorSR.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index dbfda35e..18ee3211 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -2514,7 +2514,7 @@ class LinstorVDI(VDI.VDI):
+             self.session.xenapi.VDI.set_sm_config(
+                 vdi_ref, active_vdi.sm_config
+             )
+-        except Exception:
++        except Exception as e:
+             util.logException('Failed to snapshot!')
+             try:
+                 self.sr._handle_interrupted_clone(

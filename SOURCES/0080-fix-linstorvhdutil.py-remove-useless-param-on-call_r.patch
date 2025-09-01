@@ -1,0 +1,33 @@
+From 89a1faff21d912b8958e4175932a10dcb0730727 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 10 Feb 2025 17:35:26 +0100
+Subject: [PATCH] fix(linstorvhdutil.py): remove useless param on
+ "call_remote_method"
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvhdutil.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index 71c327f3..99f0a350 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -30,7 +30,7 @@ import xs_errors
+ MANAGER_PLUGIN = 'linstor-manager'
+ 
+ 
+-def call_remote_method(session, host_ref, method, device_path, args):
++def call_remote_method(session, host_ref, method, args):
+     try:
+         response = session.xenapi.host.call_plugin(
+             host_ref, MANAGER_PLUGIN, method, args
+@@ -574,7 +574,7 @@ class LinstorVhdUtil:
+ 
+                 no_host_found = False
+                 try:
+-                    return call_remote_method(self._session, host_ref, remote_method, device_path, remote_args)
++                    return call_remote_method(self._session, host_ref, remote_method, remote_args)
+                 except Exception:
+                     pass
+ 

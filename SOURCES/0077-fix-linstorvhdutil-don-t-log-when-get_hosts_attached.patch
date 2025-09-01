@@ -1,0 +1,24 @@
+From ce49cdee46434898e890c10de2975d30b64f35be Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Mon, 15 Sep 2025 11:01:21 +0200
+Subject: [PATCH] fix(linstorvhdutil): don't log when get_hosts_attached_on()
+ is empty
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvhdutil.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index d1777d9d..6d9c17a5 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -111,7 +111,7 @@ def linstorhostcall(local_method, remote_method):
+             remote_args = {str(key): str(value) for key, value in remote_args.items()}
+ 
+             try:
+-                host_ref_attached = next(iter(util.get_hosts_attached_on(self._session, [vdi_uuid])))
++                host_ref_attached = next(iter(util.get_hosts_attached_on(self._session, [vdi_uuid])), None)
+                 if host_ref_attached:
+                     response = call_remote_method(
+                         self._session, host_ref_attached, remote_method, device_path, remote_args

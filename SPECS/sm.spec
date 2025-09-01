@@ -1,6 +1,6 @@
-%global package_speccommit 8e6cd3472bfc5c18f40205b9edc1344ea1588240
+%global package_speccommit 9df6da66175c15762000aa7a96311c44268fef52
 %global usver 3.2.12
-%global xsver 8
+%global xsver 10
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -33,6 +33,9 @@ Patch15: cp-51843__add_unit_tests_for_remove_cache.patch
 Patch16: cp-51843__disable_read-caching_on_block.patch
 Patch17: ca_409231_report_intellicache_stats_with_nbd
 Patch18: ca_411163_verify_pv_scsi_ids
+Patch19: CA-395221_use_systemd_target_for_gc_enable
+Patch20: CA-413209_remove_dangling_reference_to_rawhba
+Patch21: CP-308587_update_netapp_multipath
 
 %define __python python3
 
@@ -324,6 +327,13 @@ then
 fi
 
 %changelog
+* Fri Jul 04 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-10
+- CA-413209: remove dangling reference to rawhba
+- CP-308587: update NetApp multipath as requested
+
+* Wed Jun 18 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-9
+- CA-395221: require systemd target
+
 * Tue May 27 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-8
 - CP-53692 SR attach with kicking the mpathcount pipe
 - CA-411163: refuse to attach if we see multiple SCSI IDs for SR PVs

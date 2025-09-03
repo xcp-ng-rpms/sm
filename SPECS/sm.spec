@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.1.0.qcow2.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -147,6 +147,31 @@ Patch1071: 0071-feat-Linstor-rewrite-linstorhostcall-logic.patch
 Patch1072: 0072-feat-linstor-Add-new-debug-log-in-linstorhostcall-67.patch
 Patch1073: 0073-fix-linstor-subsequent-fixes-for-linstorhostcall.patch
 Patch1074: 0074-Fix-tests-of-CP-51843-add-unit-tests-for-setup_cache.patch
+Patch1075: 0075-fix-linstorcowutil.py-remove-useless-param-on-call_r.patch
+Patch1076: 0076-chore-pylintrc-get-rid-of-E1120-errors-for-LINSTOR-u.patch
+Patch1077: 0077-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
+Patch1078: 0078-refactor-sm-move-all-VDI-types-a-new-module-vditype..patch
+Patch1079: 0079-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
+Patch1080: 0080-feat-VdiType-add-an-helper-to-test-cow-images.patch
+Patch1081: 0081-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
+Patch1082: 0082-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
+Patch1083: 0083-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
+Patch1084: 0084-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
+Patch1085: 0085-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
+Patch1086: 0086-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
+Patch1087: 0087-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
+Patch1088: 0088-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
+Patch1089: 0089-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
+Patch1090: 0090-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
+Patch1091: 0091-refactor-LVHDSR-rename-to-LVMSR.patch
+Patch1092: 0092-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
+Patch1093: 0093-refactor-constants.py-move-VG_LOCATION-VG_PREFIX-and.patch
+Patch1094: 0094-fix-test_blktap2.py-replace-phy-VDI-with-raw-VDI.patch
+Patch1095: 0095-COW-in-progress.patch
+Patch1096: 0096-Support-image-format-param-during-VDI-creation.patch
+Patch1097: 0097-Always-store-image-format-in-sm-config.patch
+Patch1098: 0098-to-drop.patch
+Patch1099: 0099-feat-SR-support-QCOW2-format.patch
 
 %description
 This package contains storage backends used in XCP
@@ -286,6 +311,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/kickpipe
 /opt/xensource/libexec/set-iscsi-initiator
 /opt/xensource/libexec/storage-init
+/opt/xensource/sm/cowutil.py
 /opt/xensource/sm/DummySR
 /opt/xensource/sm/DummySR.py
 /opt/xensource/sm/EXTSR
@@ -300,10 +326,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ISOSR
 /opt/xensource/sm/ISOSR.py
 /opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/LVHDSR.py
-/opt/xensource/sm/LVHDoHBASR.py
-/opt/xensource/sm/LVHDoISCSISR.py
-/opt/xensource/sm/LVHDoFCoESR.py
+/opt/xensource/sm/LVMSR.py
+/opt/xensource/sm/LVMoHBASR.py
+/opt/xensource/sm/LVMoISCSISR.py
+/opt/xensource/sm/LVMoFCoESR.py
 /opt/xensource/sm/LVMSR
 /opt/xensource/sm/LVMoHBASR
 /opt/xensource/sm/LVMoISCSISR
@@ -329,7 +355,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/lcache.py
 /opt/xensource/sm/lock.py
 /opt/xensource/sm/lock_queue.py
-/opt/xensource/sm/lvhdutil.py
+/opt/xensource/sm/lvmcowutil.py
 /opt/xensource/sm/lvmanager.py
 /opt/xensource/sm/lvmcache.py
 /opt/xensource/sm/lvutil.py
@@ -351,6 +377,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/util.py
 /opt/xensource/sm/cifutils.py
 /opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/vditype.py
 /opt/xensource/sm/vhdutil.py
 /opt/xensource/sm/trim_util.py
 /opt/xensource/sm/xs_errors.py
@@ -403,7 +430,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/linstorjournaler.py
 /opt/xensource/sm/LinstorSR
 /opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/linstorvhdutil.py
+/opt/xensource/sm/linstorcowutil.py
 /opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/MooseFSSR
 /opt/xensource/sm/MooseFSSR.py
@@ -463,6 +490,9 @@ then
 fi
 
 %changelog
+* Wed Sep 03 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-10.1.0.qcow2.1
+- Repair LINSTOR
+
 * Mon Sep 01 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-10.1
 - Rebase on 3.2.12-10
 - Sync patches with our latest 3.2.12-8.3 branch

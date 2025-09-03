@@ -1,0 +1,507 @@
+From f1c96127c0a032164e00123390437b1ce534c63e Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Sat, 14 Dec 2024 00:28:06 +0100
+Subject: [PATCH] feat(SR): support QCOW2 format
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/CephFSSR.py    |  4 ++--
+ drivers/EXTSR.py       |  4 ++--
+ drivers/FileSR.py      | 18 +++++++++++++-----
+ drivers/GlusterFSSR.py |  4 ++--
+ drivers/LVMSR.py       |  9 +++++----
+ drivers/LVMoFCoESR.py  |  2 +-
+ drivers/LVMoHBASR.py   |  2 +-
+ drivers/LinstorSR.py   |  3 ++-
+ drivers/MooseFSSR.py   |  4 ++--
+ drivers/NFSSR.py       |  4 ++--
+ drivers/SMBSR.py       |  4 ++--
+ drivers/SR.py          |  4 ++--
+ drivers/XFSSR.py       |  4 ++--
+ drivers/ZFSSR.py       |  4 ++--
+ drivers/blktap2.py     |  8 ++++----
+ drivers/cowutil.py     |  8 +++++++-
+ drivers/lvmcowutil.py  |  7 ++++---
+ drivers/srmetadata.py  |  2 +-
+ drivers/vditype.py     |  5 ++++-
+ tests/test_LVMSR.py    |  6 ++++++
+ 20 files changed, 66 insertions(+), 40 deletions(-)
+
+diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
+index 8e7c173d..bf1c5f43 100644
+--- a/drivers/CephFSSR.py
++++ b/drivers/CephFSSR.py
+@@ -55,8 +55,8 @@ CONFIGURATION = [
+ ]
+ 
+ DRIVER_INFO = {
+-    'name': 'CephFS VHD',
+-    'description': 'SR plugin which stores disks as VHD files on a CephFS storage',
++    'name': 'CephFS VHD and QCOW2',
++    'description': 'SR plugin which stores disks as VHD and QCOW2 files on a CephFS storage',
+     'vendor': 'Vates SAS',
+     'copyright': '(C) 2020 Vates SAS',
+     'driver_version': '1.0',
+diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
+index c342d5a1..15957455 100755
+--- a/drivers/EXTSR.py
++++ b/drivers/EXTSR.py
+@@ -43,8 +43,8 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING",
+ CONFIGURATION = [['device', 'local device path (required) (e.g. /dev/sda3)']]
+ 
+ DRIVER_INFO = {
+-    'name': 'Local EXT4 VHD',
+-    'description': 'SR plugin which represents disks as VHD files stored on a local EXT4 filesystem, created inside an LVM volume',
++    'name': 'Local EXT4 VHD and QCOW2',
++    'description': 'SR plugin which represents disks as VHD and QCOW2 files stored on a local EXT4 filesystem, created inside an LVM volume',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2008 Citrix Systems Inc',
+     'driver_version': '1.0',
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index e9446980..baf3c180 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -49,12 +49,12 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", \
+ 
+ CONFIGURATION = [
+     ['location', 'local directory path (required)'],
+-    ['preferred-image-formats', 'list of preferred image formats to use (default: VHD)']
++    ['preferred-image-formats', 'list of preferred image formats to use (default: VHD,QCOW2)']
+ ]
+ 
+ DRIVER_INFO = {
+-    'name': 'Local Path VHD',
+-    'description': 'SR plugin which represents disks as VHD files stored on a local path',
++    'name': 'Local Path VHD and QCOW2',
++    'description': 'SR plugin which represents disks as VHD and QCOW2 files stored on a local path',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2008 Citrix Systems Inc',
+     'driver_version': '1.0',
+@@ -103,7 +103,7 @@ class FileSR(SR.SR):
+     def load(self, sr_uuid) -> None:
+         self.ops_exclusive = OPS_EXCLUSIVE
+         self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+-        self.sr_vditype = VdiType.VHD
++        self.sr_vditype = SR.DEFAULT_TAP
+         if 'location' not in self.dconf or  not self.dconf['location']:
+             raise xs_errors.XenError('ConfigLocationMissing')
+         self.remotepath = self.dconf['location']
+@@ -440,9 +440,11 @@ class FileSR(SR.SR):
+ class FileVDI(VDI.VDI):
+     PARAM_RAW = "raw"
+     PARAM_VHD = "vhd"
++    PARAM_QCOW2 = "qcow2"
+     VDI_TYPE = {
+             PARAM_RAW: VdiType.RAW,
+-            PARAM_VHD: VdiType.VHD
++            PARAM_VHD: VdiType.VHD,
++            PARAM_QCOW2: VdiType.QCOW2
+     }
+ 
+     def _find_path_with_retries(self, vdi_uuid, maxretry=5, period=2.0):
+@@ -450,6 +452,8 @@ class FileVDI(VDI.VDI):
+                                 (vdi_uuid, self.PARAM_RAW))
+         vhd_path = os.path.join(self.sr.path, "%s.%s" % \
+                                 (vdi_uuid, self.PARAM_VHD))
++        qcow2_path = os.path.join(self.sr.path, "%s.%s" % \
++                                (vdi_uuid, self.PARAM_QCOW2))
+         cbt_path = os.path.join(self.sr.path, "%s.%s" %
+                                 (vdi_uuid, CBTLOG_TAG))
+         found = False
+@@ -460,6 +464,10 @@ class FileVDI(VDI.VDI):
+                 self.vdi_type = VdiType.VHD
+                 self.path = vhd_path
+                 found = True
++            elif util.ioretry(lambda: util.pathexists(qcow2_path)):
++                self.vdi_type = VdiType.QCOW2
++                self.path = qcow2_path
++                found = True
+             elif util.ioretry(lambda: util.pathexists(raw_path)):
+                 self.vdi_type = VdiType.RAW
+                 self.path = raw_path
+diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
+index 406d4064..d8b5ca43 100644
+--- a/drivers/GlusterFSSR.py
++++ b/drivers/GlusterFSSR.py
+@@ -49,8 +49,8 @@ CONFIGURATION = [['server', 'Full path to share on gluster server (required, ex:
+                  ]
+ 
+ DRIVER_INFO = {
+-    'name': 'GlusterFS VHD',
+-    'description': 'SR plugin which stores disks as VHD files on a GlusterFS storage',
++    'name': 'GlusterFS VHD and QCOW2',
++    'description': 'SR plugin which stores disks as VHD and QCOW2 files on a GlusterFS storage',
+     'vendor': 'Vates SAS',
+     'copyright': '(C) 2020 Vates SAS',
+     'driver_version': '1.0',
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index d90d22c3..8d07f83d 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -15,7 +15,7 @@
+ # along with this program; if not, write to the Free Software Foundation, Inc.,
+ # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ #
+-# LVMSR: VHD on LVM storage repository
++# LVMSR: VHD and QCOW2 on LVM storage repository
+ #
+ 
+ from sm_typing import Dict, List, override
+@@ -68,8 +68,8 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_TRIM",
+ CONFIGURATION = [['device', 'local device path (required) (e.g. /dev/sda3)']]
+ 
+ DRIVER_INFO = {
+-    'name': 'Local VHD on LVM',
+-    'description': 'SR plugin which represents disks as VHD disks on ' + \
++    'name': 'Local VHD and QCOW2 on LVM',
++    'description': 'SR plugin which represents disks as VHD and QCOW2 disks on ' + \
+             'Logical Volumes within a locally-attached Volume Group',
+     'vendor': 'XenSource Inc',
+     'copyright': '(C) 2008 XenSource Inc',
+@@ -81,7 +81,8 @@ DRIVER_INFO = {
+ 
+ CREATE_PARAM_TYPES = {
+     "raw": VdiType.RAW,
+-    "vhd": VdiType.VHD
++    "vhd": VdiType.VHD,
++    "qcow2": VdiType.QCOW2
+ }
+ 
+ OPS_EXCLUSIVE = [
+diff --git a/drivers/LVMoFCoESR.py b/drivers/LVMoFCoESR.py
+index 0f136043..e5995c6b 100755
+--- a/drivers/LVMoFCoESR.py
++++ b/drivers/LVMoFCoESR.py
+@@ -42,7 +42,7 @@ CONFIGURATION = [['SCSIid', 'The scsi_id of the destination LUN'],
+ 
+ DRIVER_INFO = {
+     'name': 'LVM over FCoE',
+-    'description': 'SR plugin which represents disks as VHDs on Logical \
++    'description': 'SR plugin which represents disks as VHDs and QCOW2s on Logical \
+     Volumes within a Volume Group created on a FCoE LUN',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2015 Citrix Systems Inc',
+diff --git a/drivers/LVMoHBASR.py b/drivers/LVMoHBASR.py
+index d5789522..38cb4ae7 100755
+--- a/drivers/LVMoHBASR.py
++++ b/drivers/LVMoHBASR.py
+@@ -48,7 +48,7 @@ CONFIGURATION = [['SCSIid', 'The scsi_id of the destination LUN'], \
+ 
+ DRIVER_INFO = {
+     'name': 'LVM over FC',
+-    'description': 'SR plugin which represents disks as VHDs on Logical Volumes within a Volume Group created on an HBA LUN, e.g. hardware-based iSCSI or FC support',
++    'description': 'SR plugin which represents disks as VHDs and QCOW2s on Logical Volumes within a Volume Group created on an HBA LUN, e.g. hardware-based iSCSI or FC support',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2008 Citrix Systems Inc',
+     'driver_version': '1.0',
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index fb9038ba..ec12570c 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -91,7 +91,8 @@ REDO_LOG_VOLUME_NAME = PERSISTENT_PREFIX + 'redo-log'
+ # These values represents the types given on the command line.
+ CREATE_PARAM_TYPES = {
+     "raw": VdiType.RAW,
+-    "vhd": VdiType.VHD
++    "vhd": VdiType.VHD,
++    "qcow2": VdiType.QCOW2
+ }
+ 
+ # ==============================================================================
+diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
+index ac7f320b..007f82d1 100755
+--- a/drivers/MooseFSSR.py
++++ b/drivers/MooseFSSR.py
+@@ -54,8 +54,8 @@ CONFIGURATION = [
+ ]
+ 
+ DRIVER_INFO = {
+-    'name': 'MooseFS VHD',
+-    'description': 'SR plugin which stores disks as VHD files on a MooseFS storage',
++    'name': 'MooseFS VHD and QCOW2',
++    'description': 'SR plugin which stores disks as VHD and QCOW2 files on a MooseFS storage',
+     'vendor': 'Tappest sp. z o.o.',
+     'copyright': '(C) 2021 Tappest sp. z o.o.',
+     'driver_version': '1.0',
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index c6f42455..d5f5446e 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -47,8 +47,8 @@ CONFIGURATION = [['server', 'hostname or IP address of NFS server (required)'],
+                  nfs.NFS_VERSION]
+ 
+ DRIVER_INFO = {
+-    'name': 'NFS VHD',
+-    'description': 'SR plugin which stores disks as VHD files on a remote NFS filesystem',
++    'name': 'NFS VHD and QCOW2',
++    'description': 'SR plugin which stores disks as VHD and QCOW2 files on a remote NFS filesystem',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2008 Citrix Systems Inc',
+     'driver_version': '1.0',
+diff --git a/drivers/SMBSR.py b/drivers/SMBSR.py
+index 2318de48..c7973863 100755
+--- a/drivers/SMBSR.py
++++ b/drivers/SMBSR.py
+@@ -44,8 +44,8 @@ CONFIGURATION = [['server', 'Full path to share root on SMB server (required)'],
+                   ['password', 'The password to be used during SMB authentication']]
+ 
+ DRIVER_INFO = {
+-    'name': 'SMB VHD',
+-    'description': 'SR plugin which stores disks as VHD files on a remote SMB filesystem',
++    'name': 'SMB VHD and QCOW2',
++    'description': 'SR plugin which stores disks as VHD and QCOW2 files on a remote SMB filesystem',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2015 Citrix Systems Inc',
+     'driver_version': '1.0',
+diff --git a/drivers/SR.py b/drivers/SR.py
+index 6f115964..92301f17 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -33,13 +33,13 @@ from cowutil import \
+ from vditype import VdiType
+ 
+ MOUNT_BASE = '/var/run/sr-mount'
+-DEFAULT_TAP = "vhd"
++DEFAULT_TAP = "vhd,qcow2"
+ MASTER_LVM_CONF = '/etc/lvm/master'
+ 
+ # LUN per VDI key for XenCenter
+ LUNPERVDI = "LUNperVDI"
+ 
+-DEFAULT_IMAGE_FORMATS = [ImageFormat.VHD]
++DEFAULT_IMAGE_FORMATS = [ImageFormat.VHD, ImageFormat.QCOW2]
+ 
+ 
+ 
+diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
+index 8d54f6cc..eb52f7fb 100755
+--- a/drivers/XFSSR.py
++++ b/drivers/XFSSR.py
+@@ -44,8 +44,8 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING", \
+ CONFIGURATION = [['device', 'local device path (required) (e.g. /dev/sda3)']]
+ 
+ DRIVER_INFO = {
+-    'name': 'Local XFS VHD',
+-    'description': 'SR plugin which represents disks as VHD files stored on a local XFS filesystem, created inside an LVM volume',
++    'name': 'Local XFS VHD and QCOW2',
++    'description': 'SR plugin which represents disks as VHD and QCOW2 files stored on a local XFS filesystem, created inside an LVM volume',
+     'vendor': 'Vates SAS',
+     'copyright': '(C) 2019 Vates SAS',
+     'driver_version': '1.0',
+diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
+index 13a895a2..65eaea74 100644
+--- a/drivers/ZFSSR.py
++++ b/drivers/ZFSSR.py
+@@ -48,9 +48,9 @@ CONFIGURATION = [
+ ]
+ 
+ DRIVER_INFO = {
+-    'name': 'Local ZFS VHD',
++    'name': 'Local ZFS VHD and QCOW2',
+     'description':
+-        'SR plugin which represents disks as VHD files stored on a ZFS disk',
++        'SR plugin which represents disks as VHD and QCOW2 files stored on a ZFS disk',
+     'vendor': 'Vates SAS',
+     'copyright': '(C) 2020 Vates SAS',
+     'driver_version': '1.0',
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index a354c9a0..c1c247ac 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -668,7 +668,7 @@ class Blktap(ClassDevice):
+ 
+ class Tapdisk(object):
+ 
+-    TYPES = ['aio', 'vhd']
++    TYPES = ['aio', 'vhd', 'qcow2']
+ 
+     def __init__(self, pid, minor, _type, path, state):
+         self.pid = pid
+@@ -1084,6 +1084,7 @@ class VDI(object):
+         return {
+             'raw': 'aio',
+             'vhd': 'vhd',
++            'qcow2': 'qcow2',
+             'iso': 'aio',  # for ISO SR
+             'aio': 'aio',  # for LVHD
+             'file': 'aio',
+@@ -1114,7 +1115,8 @@ class VDI(object):
+                       'aio': 'tap',  # for LVM raw nodes
+                       'iso': 'tap',  # for ISOSR
+                       'file': 'tap',
+-                      'vhd': 'tap'}
++                      'vhd': 'tap',
++                      'qcow2': 'tap'}
+ 
+     def tap_wanted(self):
+         # 1. Let the target vdi_type decide
+@@ -1171,8 +1173,6 @@ class VDI(object):
+ 
+         def get_vdi_type(self):
+             _type = self.vdi.vdi_type
+-            if not _type:
+-                _type = self.vdi.sr.sr_vditype
+             if not _type:
+                 raise VDI.UnexpectedVDIType(_type, self.vdi)
+             return _type
+diff --git a/drivers/cowutil.py b/drivers/cowutil.py
+index 9339580b..d476f972 100755
+--- a/drivers/cowutil.py
++++ b/drivers/cowutil.py
+@@ -33,10 +33,12 @@ IMAGE_FORMAT_COW_FLAG: Final = 1 << 8
+ class ImageFormat(IntEnum):
+     RAW   = 1
+     VHD   = 2 | IMAGE_FORMAT_COW_FLAG
++    QCOW2 = 3 | IMAGE_FORMAT_COW_FLAG
+ 
+ IMAGE_FORMAT_TO_STR: Final = {
+     ImageFormat.RAW:   "raw",
+-    ImageFormat.VHD:   "vhd"
++    ImageFormat.VHD:   "vhd",
++    ImageFormat.QCOW2: "qcow2"
+ }
+ 
+ STR_TO_IMAGE_FORMAT: Final = {v: k for k, v in IMAGE_FORMAT_TO_STR.items()}
+@@ -303,6 +305,8 @@ def getImageFormatFromVdiType(vdi_type: str) -> ImageFormat:
+         return ImageFormat.RAW
+     if vdi_type == VdiType.VHD:
+         return ImageFormat.VHD
++    if vdi_type == VdiType.QCOW2:
++        return ImageFormat.QCOW2
+ 
+     assert False, f"Unsupported vdi type: {vdi_type}"
+ 
+@@ -314,6 +318,8 @@ def getVdiTypeFromImageFormat(image_format: ImageFormat) -> str:
+         return VdiType.RAW
+     if image_format == ImageFormat.VHD:
+         return VdiType.VHD
++    if image_format == ImageFormat.QCOW2:
++        return VdiType.QCOW2
+ 
+     assert False, f"Unsupported image format: {IMAGE_FORMAT_TO_STR[image_format]}"
+ 
+diff --git a/drivers/lvmcowutil.py b/drivers/lvmcowutil.py
+index cafe072a..d38c719f 100755
+--- a/drivers/lvmcowutil.py
++++ b/drivers/lvmcowutil.py
+@@ -16,7 +16,7 @@
+ # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ 
+ """
+-Helper functions for LVMSR. This module knows about RAW and VHD VDI's that live in LV's.
++Helper functions for LVMSR. This module knows about RAW, VHD and QCOW2 VDI's that live in LV's.
+ """
+ 
+ from sm_typing import Dict, Final, List, Optional, Tuple, cast
+@@ -43,7 +43,8 @@ LOCK_RETRY_ATTEMPTS: Final = 20
+ 
+ LV_PREFIX: Final = {
+     VdiType.RAW: "LV-",
+-    VdiType.VHD: "VHD-"
++    VdiType.VHD: "VHD-",
++    VdiType.QCOW2: "QCOW2-"
+ }
+ 
+ LV_PREFIX_TO_VDI_TYPE: Final = {v: k for k, v in LV_PREFIX.items()}
+@@ -269,7 +270,7 @@ class LvmCowUtil(object):
+     @classmethod
+     def getVDIInfo(cls, lvmCache: LVMCache) -> Dict[str, VDIInfo]:
+         """
+-        Load VDI info (both LV and if the VDI is not raw, VHD info).
++        Load VDI info (both LV and if the VDI is not raw, VHD/QCOW2 info).
+         """
+         vdis: Dict[str, VDIInfo] = {}
+         lvs = cls.getVolumeInfo(lvmCache)
+diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
+index 34aa5f16..c0e1744c 100755
+--- a/drivers/srmetadata.py
++++ b/drivers/srmetadata.py
+@@ -338,7 +338,7 @@ class MetadataHandler:
+     #   snapshot_of, if snapshot status is true
+     #   snapshot time
+     #   type (system, user or metadata etc)
+-    #   vdi_type: raw or vhd
++    #   vdi_type: raw, vhd or qcow2
+     #   read_only
+     #   location
+     #   managed
+diff --git a/drivers/vditype.py b/drivers/vditype.py
+index c43b26b2..dcae45c9 100644
+--- a/drivers/vditype.py
++++ b/drivers/vditype.py
+@@ -20,6 +20,7 @@ from sm_typing import Final
+ class VdiType(object):
+     RAW = "aio"
+     VHD = "vhd"
++    QCOW2 = "qcow2"
+     ISO = "iso"
+     FILE = "file"
+     CBTLOG = "cbtlog"
+@@ -32,15 +33,17 @@ class VdiType(object):
+ class VdiTypeExtension(object):
+     RAW = ".raw"
+     VHD = ".vhd"
++    QCOW2 = ".qcow2"
+     ISO = ".iso"
+     FILE = ".file"
+     CBTLOG = ".cbtlog"
+ 
+-VDI_COW_TYPES: Final = (VdiType.VHD, )
++VDI_COW_TYPES: Final = (VdiType.VHD, VdiType.QCOW2)
+ 
+ VDI_TYPE_TO_EXTENSION: Final = {
+     VdiType.RAW: VdiTypeExtension.RAW,
+     VdiType.VHD: VdiTypeExtension.VHD,
++    VdiType.QCOW2: VdiTypeExtension.QCOW2,
+     VdiType.ISO: VdiTypeExtension.ISO,
+     VdiType.FILE: VdiTypeExtension.FILE,
+     VdiType.CBTLOG: VdiTypeExtension.CBTLOG
+diff --git a/tests/test_LVMSR.py b/tests/test_LVMSR.py
+index a2739733..aeb3ed70 100644
+--- a/tests/test_LVMSR.py
++++ b/tests/test_LVMSR.py
+@@ -415,12 +415,14 @@ class TestLVMVDI(unittest.TestCase, Stubs):
+             False,
+             False, # AIO
+             True,  # VHD
++            False, # QCOW2
+             False,
+             True,
+             True,
+             False,
+             False, # AIO
+             True,  # VHD
++            False, # QCOW2
+             False,
+             True,
+             False,
+@@ -469,12 +471,14 @@ class TestLVMVDI(unittest.TestCase, Stubs):
+             False,
+             False, # AIO
+             True,  # VHD
++            False, # QCOW2
+             False,
+             True,
+             True,
+             False,
+             False, # AIO
+             True,  # VHD
++            False, # QCOW2
+             False,
+             True,
+             False,
+@@ -525,12 +529,14 @@ class TestLVMVDI(unittest.TestCase, Stubs):
+             False,
+             False, # AIO
+             True,  # VHD
++            False, # QCOW2
+             False,
+             True,
+             True,
+             False,
+             False, # AIO
+             True,  # VHD
++            False, # QCOW2
+             False,
+             True,
+             False,

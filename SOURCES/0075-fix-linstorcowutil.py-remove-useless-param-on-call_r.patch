@@ -1,0 +1,69 @@
+From a78ad692c9eab2e5937a5916a767196046c6d85f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 10 Feb 2025 17:35:26 +0100
+Subject: [PATCH] fix(linstorcowutil.py): remove useless param on
+ "call_remote_method"
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/linstorvhdutil.py | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index d1777d9d..e65418cc 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -30,7 +30,7 @@ import xs_errors
+ MANAGER_PLUGIN = 'linstor-manager'
+ 
+ 
+-def call_remote_method(session, host_ref, method, device_path, args):
++def call_remote_method(session, host_ref, method, args):
+     try:
+         response = session.xenapi.host.call_plugin(
+             host_ref, MANAGER_PLUGIN, method, args
+@@ -114,7 +114,7 @@ def linstorhostcall(local_method, remote_method):
+                 host_ref_attached = next(iter(util.get_hosts_attached_on(self._session, [vdi_uuid])))
+                 if host_ref_attached:
+                     response = call_remote_method(
+-                        self._session, host_ref_attached, remote_method, device_path, remote_args
++                        self._session, host_ref_attached, remote_method, remote_args
+                     )
+                     log_successful_call('attached node', device_path, vdi_uuid, remote_method, response)
+                     return response_parser(self, vdi_uuid, response)
+@@ -123,7 +123,7 @@ def linstorhostcall(local_method, remote_method):
+ 
+             try:
+                 master_ref = util.get_master_ref(self._session)
+-                response = call_remote_method(self._session, master_ref, remote_method, device_path, remote_args)
++                response = call_remote_method(self._session, master_ref, remote_method, remote_args)
+                 log_successful_call('master', device_path, vdi_uuid, remote_method, response)
+                 return response_parser(self, vdi_uuid, response)
+             except Exception as e:
+@@ -134,7 +134,7 @@ def linstorhostcall(local_method, remote_method):
+             if primary_hostname:
+                 try:
+                     host_ref = self._get_readonly_host(vdi_uuid, device_path, {primary_hostname})
+-                    response = call_remote_method(self._session, host_ref, remote_method, device_path, remote_args)
++                    response = call_remote_method(self._session, host_ref, remote_method, remote_args)
+                     log_successful_call('primary', device_path, vdi_uuid, remote_method, response)
+                     return response_parser(self, vdi_uuid, response)
+                 except Exception as remote_e:
+@@ -151,7 +151,7 @@ def linstorhostcall(local_method, remote_method):
+ 
+                 try:
+                     host = self._get_readonly_host(vdi_uuid, device_path, nodes)
+-                    response = call_remote_method(self._session, host, remote_method, device_path, remote_args)
++                    response = call_remote_method(self._session, host, remote_method, remote_args)
+                     log_successful_call('another node', device_path, vdi_uuid, remote_method, response)
+                     return response_parser(self, vdi_uuid, response)
+                 except Exception as remote_e:
+@@ -609,7 +609,7 @@ class LinstorVhdUtil:
+ 
+                 no_host_found = False
+                 try:
+-                    return call_remote_method(self._session, host_ref, remote_method, device_path, remote_args)
++                    return call_remote_method(self._session, host_ref, remote_method, remote_args)
+                 except Exception:
+                     pass
+ 

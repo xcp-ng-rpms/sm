@@ -1,0 +1,925 @@
+From dec422fcb91fcd1228d72a591e230a5940912ab9 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 5 Dec 2024 15:23:59 +0100
+Subject: [PATCH] refactor(vhdutil): move LOCK_TYPE_SR from vhdutil.py to
+ lock.py
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/CephFSSR.py        |  4 ++--
+ drivers/EXTSR.py           |  4 ++--
+ drivers/FileSR.py          |  4 ++--
+ drivers/GlusterFSSR.py     |  4 ++--
+ drivers/LVHDSR.py          |  8 ++++----
+ drivers/LinstorSR.py       |  6 +++---
+ drivers/MooseFSSR.py       |  4 ++--
+ drivers/NFSSR.py           |  4 ++--
+ drivers/SMBSR.py           |  4 ++--
+ drivers/XFSSR.py           |  4 ++--
+ drivers/cleanup.py         |  4 ++--
+ drivers/linstor-manager    |  4 ++--
+ drivers/lock.py            |  1 +
+ drivers/lvhdutil.py        | 15 ++++++++-------
+ drivers/resetvdis.py       |  4 +---
+ drivers/trim_util.py       |  2 +-
+ tests/test_FileSR.py       |  2 +-
+ tests/test_ISOSR.py        |  4 ++--
+ tests/test_LVHDSR.py       | 12 ++++++------
+ tests/test_LVHDoHBASR.py   |  2 +-
+ tests/test_LVHDoISCSISR.py |  2 +-
+ tests/test_MooseFSSR.py    |  8 ++++----
+ tests/test_NFSSR.py        | 28 ++++++++++++++--------------
+ tests/test_SMBSR.py        | 28 ++++++++++++++--------------
+ tests/test_ZFSSR.py        | 10 +++++-----
+ tests/test_cleanup.py      |  2 +-
+ 26 files changed, 87 insertions(+), 87 deletions(-)
+
+diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
+index 9e8e46e1..574190d6 100644
+--- a/drivers/CephFSSR.py
++++ b/drivers/CephFSSR.py
+@@ -37,10 +37,10 @@ import FileSR
+ # end of careful
+ import VDI
+ import cleanup
++import lock
+ import util
+ import vhdutil
+ import xs_errors
+-from lock import Lock
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+@@ -101,7 +101,7 @@ class CephFSSR(FileSR.FileSR):
+             )
+ 
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+         self.driver_config = DRIVER_CONFIG
+         if 'server' not in self.dconf:
+diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
+index 30aa3832..32ea15b7 100755
+--- a/drivers/EXTSR.py
++++ b/drivers/EXTSR.py
+@@ -28,10 +28,10 @@ import util
+ import lvutil
+ import scsiutil
+ 
++import lock
+ import os
+ import xs_errors
+ import vhdutil
+-from lock import Lock
+ from constants import EXT_PREFIX
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING",
+@@ -68,7 +68,7 @@ class EXTSR(FileSR.FileSR):
+     @override
+     def load(self, sr_uuid) -> None:
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+ 
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index f1d983a8..c2307571 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -25,6 +25,7 @@ import SRCommand
+ import util
+ import scsiutil
+ import vhdutil
++import lock
+ import os
+ import errno
+ import xs_errors
+@@ -33,7 +34,6 @@ import blktap2
+ import time
+ import glob
+ from uuid import uuid4
+-from lock import Lock
+ import xmlrpc.client
+ import XenAPI # pylint: disable=import-error
+ from constants import CBTLOG_TAG
+@@ -95,7 +95,7 @@ class FileSR(SR.SR):
+     @override
+     def load(self, sr_uuid) -> None:
+         self.ops_exclusive = OPS_EXCLUSIVE
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = vhdutil.VDI_TYPE_VHD
+         if 'location' not in self.dconf or  not self.dconf['location']:
+             raise xs_errors.XenError('ConfigLocationMissing')
+diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
+index 7b515dc8..1d8f8ab2 100644
+--- a/drivers/GlusterFSSR.py
++++ b/drivers/GlusterFSSR.py
+@@ -33,10 +33,10 @@ import FileSR
+ # end of careful
+ import VDI
+ import cleanup
++import lock
+ import util
+ import vhdutil
+ import xs_errors
+-from lock import Lock
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+@@ -95,7 +95,7 @@ class GlusterFSSR(FileSR.FileSR):
+             )
+ 
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+         self.driver_config = DRIVER_CONFIG
+         if 'server' not in self.dconf:
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index dfa60fba..12bb0ca6 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -30,6 +30,7 @@ import lvmcache
+ import vhdutil
+ import lvhdutil
+ import scsiutil
++import lock
+ import os
+ import sys
+ import time
+@@ -38,7 +39,6 @@ import xs_errors
+ import cleanup
+ import blktap2
+ from journaler import Journaler
+-from lock import Lock
+ from refcounter import RefCounter
+ from ipc import IPCFlag
+ from lvmanager import LVActivator
+@@ -158,7 +158,7 @@ class LVHDSR(SR.SR):
+         if 'SRmaster' in self.dconf and self.dconf['SRmaster'] == 'true':
+             self.isMaster = True
+ 
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+         self.uuid = sr_uuid
+         self.vgname = lvhdutil.VG_PREFIX + self.uuid
+@@ -1305,8 +1305,8 @@ class LVHDSR(SR.SR):
+         RefCounter.resetAll(lvhdutil.NS_PREFIX_LVM + self.uuid)
+         IPCFlag(self.uuid).clearAll()
+         if not skipLockCleanup:
+-            Lock.cleanupAll(self.uuid)
+-            Lock.cleanupAll(lvhdutil.NS_PREFIX_LVM + self.uuid)
++            lock.Lock.cleanupAll(self.uuid)
++            lock.Lock.cleanupAll(lvhdutil.NS_PREFIX_LVM + self.uuid)
+ 
+     def _prepareTestMode(self):
+         util.SMlog("Test mode: %s" % self.testMode)
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 52c806b6..f85ee184 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -33,11 +33,11 @@ except ImportError:
+ 
+     LINSTOR_AVAILABLE = False
+ 
+-from lock import Lock
+ import blktap2
+ import cleanup
+ import errno
+ import functools
++import lock
+ import lvutil
+ import os
+ import re
+@@ -354,7 +354,7 @@ class LinstorSR(SR.SR):
+         # Define properties for SR parent class.
+         self.ops_exclusive = OPS_EXCLUSIVE
+         self.path = LinstorVolumeManager.DEV_ROOT_PATH
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+ 
+         if self.cmd == 'sr_create':
+@@ -699,7 +699,7 @@ class LinstorSR(SR.SR):
+                 opterr=str(e)
+             )
+ 
+-        Lock.cleanupAll(self.uuid)
++        lock.Lock.cleanupAll(self.uuid)
+ 
+     @override
+     @_locked_load
+diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
+index 4ebd7bd8..f4703ddb 100755
+--- a/drivers/MooseFSSR.py
++++ b/drivers/MooseFSSR.py
+@@ -36,10 +36,10 @@ import FileSR
+ # end of careful
+ import VDI
+ import cleanup
++import lock
+ import util
+ import vhdutil
+ import xs_errors
+-from lock import Lock
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+@@ -97,7 +97,7 @@ class MooseFSSR(FileSR.FileSR):
+             )
+ 
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+         self.driver_config = DRIVER_CONFIG
+         if 'masterhost' not in self.dconf:
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index 6eeedeb7..54687f6c 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -31,9 +31,9 @@ import os
+ import sys
+ import xmlrpc.client
+ import xs_errors
++import lock
+ import nfs
+ import vhdutil
+-from lock import Lock
+ import cleanup
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_CACHING",
+@@ -79,7 +79,7 @@ class NFSSR(FileSR.SharedFileSR):
+     @override
+     def load(self, sr_uuid) -> None:
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+         self.driver_config = DRIVER_CONFIG
+         if 'server' not in self.dconf:
+diff --git a/drivers/SMBSR.py b/drivers/SMBSR.py
+index 34ba40d6..2183dfcb 100755
+--- a/drivers/SMBSR.py
++++ b/drivers/SMBSR.py
+@@ -28,8 +28,8 @@ import errno
+ import os
+ import xmlrpc.client
+ import xs_errors
++import lock
+ import vhdutil
+-from lock import Lock
+ import cleanup
+ import cifutils
+ 
+@@ -82,7 +82,7 @@ class SMBSR(FileSR.SharedFileSR):
+     @override
+     def load(self, sr_uuid) -> None:
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+         self.driver_config = DRIVER_CONFIG
+         if 'server' not in self.dconf:
+diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
+index 5bd73267..1f3eb791 100755
+--- a/drivers/XFSSR.py
++++ b/drivers/XFSSR.py
+@@ -29,10 +29,10 @@ import util
+ import lvutil
+ import scsiutil
+ 
++import lock
+ import os
+ import xs_errors
+ import vhdutil
+-from lock import Lock
+ from constants import EXT_PREFIX
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING", \
+@@ -77,7 +77,7 @@ class XFSSR(FileSR.FileSR):
+             )
+ 
+         self.ops_exclusive = FileSR.OPS_EXCLUSIVE
+-        self.lock = Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++        self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+ 
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 3d228d59..1fe1cad1 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1963,7 +1963,7 @@ class SR(object):
+         self._locked = 0
+         self._srLock = None
+         if createLock:
+-            self._srLock = lock.Lock(vhdutil.LOCK_TYPE_SR, self.uuid)
++            self._srLock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         else:
+             Util.log("Requested no SR locking")
+         self.name = self.xapi.srRecord["name_label"]
+@@ -3891,7 +3891,7 @@ class LockActive:
+     """
+     def __init__(self, srUuid):
+         self._lock = lock.Lock(LOCK_TYPE_GC_ACTIVE, srUuid)
+-        self._srLock = lock.Lock(vhdutil.LOCK_TYPE_SR, srUuid)
++        self._srLock = lock.Lock(lock.LOCK_TYPE_SR, srUuid)
+ 
+     def acquireNoblock(self):
+         self._srLock.acquire()
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index 9cef5f82..e568643c 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -30,9 +30,9 @@ from json import JSONEncoder
+ from linstorjournaler import LinstorJournaler
+ from linstorvhdutil import LinstorVhdUtil, check_ex
+ from linstorvolumemanager import get_controller_uri, get_local_volume_openers, LinstorVolumeManager
+-from lock import Lock
+ import json
+ import LinstorSR
++import lock
+ import re
+ import util
+ import vhdutil
+@@ -615,7 +615,7 @@ def lock_vdi(session, args):
+         locked = util.strtobool(args['locked'])
+ 
+         # We must lock to mark the VDI.
+-        lock = Lock(vhdutil.LOCK_TYPE_SR, sr_uuid)
++        lock = lock.Lock(lock.LOCK_TYPE_SR, sr_uuid)
+         if locked:
+             lock.acquire()
+ 
+diff --git a/drivers/lock.py b/drivers/lock.py
+index 6792d7b0..390debe3 100755
+--- a/drivers/lock.py
++++ b/drivers/lock.py
+@@ -28,6 +28,7 @@ VERBOSE = True
+ # Still just called "running" for backwards compatibility
+ LOCK_TYPE_GC_RUNNING = "running"
+ LOCK_TYPE_ISCSIADM_RUNNING = "isciadm_running"
++LOCK_TYPE_SR = "sr"
+ 
+ class LockException(util.SMException):
+     pass
+diff --git a/drivers/lvhdutil.py b/drivers/lvhdutil.py
+index 3186b291..f0d4a78c 100755
+--- a/drivers/lvhdutil.py
++++ b/drivers/lvhdutil.py
+@@ -21,9 +21,10 @@ import os
+ import sys
+ import time
+ 
++import lock
+ import util
+ import vhdutil
+-from lock import Lock
++
+ from refcounter import RefCounter
+ 
+ MSIZE_MB = 2 * 1024 * 1024  # max virt size for fast resize
+@@ -229,9 +230,9 @@ def attachThin(journaler, srUuid, vdiUuid):
+     """Ensure that the VDI LV is expanded to the fully-allocated size"""
+     lvName = LV_PREFIX[vhdutil.VDI_TYPE_VHD] + vdiUuid
+     vgName = VG_PREFIX + srUuid
+-    lock = Lock(vhdutil.LOCK_TYPE_SR, srUuid)
++    sr_lock = lock.Lock(lock.LOCK_TYPE_SR, srUuid)
+     lvmCache = journaler.lvmCache
+-    _tryAcquire(lock)
++    _tryAcquire(sr_lock)
+     lvmCache.refresh()
+     vhdInfo = vhdutil.getVHDInfoLVM(lvName, extractUuid, vgName)
+     newSize = calcSizeVHDLV(vhdInfo.sizeVirt)
+@@ -243,15 +244,15 @@ def attachThin(journaler, srUuid, vdiUuid):
+         inflate(journaler, srUuid, vdiUuid, newSize)
+     finally:
+         lvmCache.deactivate(NS_PREFIX_LVM + srUuid, vdiUuid, lvName, False)
+-    lock.release()
++    sr_lock.release()
+ 
+ 
+ def detachThin(session, lvmCache, srUuid, vdiUuid):
+     """Shrink the VDI to the minimal size if no one is using it"""
+     lvName = LV_PREFIX[vhdutil.VDI_TYPE_VHD] + vdiUuid
+     path = os.path.join(VG_LOCATION, VG_PREFIX + srUuid, lvName)
+-    lock = Lock(vhdutil.LOCK_TYPE_SR, srUuid)
+-    _tryAcquire(lock)
++    sr_lock = lock.Lock(lock.LOCK_TYPE_SR, srUuid)
++    _tryAcquire(sr_lock)
+ 
+     vdiRef = session.xenapi.VDI.get_by_uuid(vdiUuid)
+     vbds = session.xenapi.VBD.get_all_records_where( \
+@@ -270,7 +271,7 @@ def detachThin(session, lvmCache, srUuid, vdiUuid):
+         deflate(lvmCache, lvName, newSize)
+     finally:
+         lvmCache.deactivate(NS_PREFIX_LVM + srUuid, vdiUuid, lvName, False)
+-    lock.release()
++    sr_lock.release()
+ 
+ 
+ def createVHDJournalLV(lvmCache, jName, size):
+diff --git a/drivers/resetvdis.py b/drivers/resetvdis.py
+index 61454f84..0be98e69 100755
+--- a/drivers/resetvdis.py
++++ b/drivers/resetvdis.py
+@@ -26,12 +26,10 @@ import XenAPI # pylint: disable=import-error
+ 
+ 
+ def reset_sr(session, host_uuid, sr_uuid, is_sr_master):
+-    from vhdutil import LOCK_TYPE_SR
+-
+     cleanup.abort(sr_uuid)
+ 
+     gc_lock = lock.Lock(lock.LOCK_TYPE_GC_RUNNING, sr_uuid)
+-    sr_lock = lock.Lock(LOCK_TYPE_SR, sr_uuid)
++    sr_lock = lock.Lock(lock.LOCK_TYPE_SR, sr_uuid)
+     gc_lock.acquire()
+     sr_lock.acquire()
+ 
+diff --git a/drivers/trim_util.py b/drivers/trim_util.py
+index 07dba86a..b04f8baf 100755
+--- a/drivers/trim_util.py
++++ b/drivers/trim_util.py
+@@ -105,7 +105,7 @@ def do_trim(session, args):
+         return to_xml(err_msg)
+ 
+     # Lock SR, get vg empty space details
+-    sr_lock = lock.Lock(vhdutil.LOCK_TYPE_SR, sr_uuid)
++    sr_lock = lock.Lock(lock.LOCK_TYPE_SR, sr_uuid)
+     got_lock = False
+     for i in range(LOCK_RETRY_ATTEMPTS):
+         got_lock = sr_lock.acquireNoblock()
+diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
+index 109f6d30..98bd466e 100644
+--- a/tests/test_FileSR.py
++++ b/tests/test_FileSR.py
+@@ -456,7 +456,7 @@ class TestShareFileSR(unittest.TestCase):
+         unlink_patcher = mock.patch('FileSR.util.force_unlink')
+         self.mock_unlink = unlink_patcher.start()
+ 
+-        lock_patcher = mock.patch('FileSR.Lock')
++        lock_patcher = mock.patch('FileSR.lock.Lock')
+         self.mock_lock = lock_patcher.start()
+ 
+         lock_patcher_cleanup = mock.patch('cleanup.lock.Lock')
+diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
+index ad5d99dc..eba5512d 100644
+--- a/tests/test_ISOSR.py
++++ b/tests/test_ISOSR.py
+@@ -109,7 +109,7 @@ class TestISOSR_overNFS(unittest.TestCase):
+ 
+         validate_nfsversion.assert_called_once_with('aNfsversion')
+ 
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.validate_nfsversion', autospec=True)
+     def test_load_validate_nfsversion_returnused(self, validate_nfsversion,
+                                                  Lock):
+@@ -117,7 +117,7 @@ class TestISOSR_overNFS(unittest.TestCase):
+ 
+         self.assertEqual(self.create_isosr().nfsversion, 'aNfsversion')
+ 
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.validate_nfsversion', autospec=True)
+     def test_load_validate_nfsversion_exceptionraised(self,
+                                                       validate_nfsversion,
+diff --git a/tests/test_LVHDSR.py b/tests/test_LVHDSR.py
+index 3c4572fd..ede7eef6 100644
+--- a/tests/test_LVHDSR.py
++++ b/tests/test_LVHDSR.py
+@@ -61,7 +61,7 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+ 
+     @mock.patch('lvutil.Fairlock', autospec=True)
+     @mock.patch('lvhdutil.getVDIInfo', autospec=True)
+-    @mock.patch('LVHDSR.Lock', autospec=True)
++    @mock.patch('LVHDSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_loadvids(self, mock_xenapi, mock_lock, mock_getVDIInfo, mock_lvlock):
+         """sr.allVDIs populated by _loadvdis"""
+@@ -77,7 +77,7 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+     @mock.patch('lvhdutil.lvRefreshOnAllSlaves', autospec=True)
+     @mock.patch('lvhdutil.getVDIInfo', autospec=True)
+     @mock.patch('journaler.Journaler.getAll', autospec=True)
+-    @mock.patch('LVHDSR.Lock', autospec=True)
++    @mock.patch('LVHDSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_undoAllInflateJournals(
+             self,
+@@ -106,7 +106,7 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+ 
+     @mock.patch('LVHDSR.cleanup', autospec=True)
+     @mock.patch('LVHDSR.IPCFlag', autospec=True)
+-    @mock.patch('LVHDSR.Lock', autospec=True)
++    @mock.patch('LVHDSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     @testlib.with_context
+     def test_srlifecycle_success(self,
+@@ -365,7 +365,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         test_vhdInfo.hidden = hidden
+         self.mock_vhdutil.getVHDInfo.return_value = test_vhdInfo
+ 
+-    @mock.patch('LVHDSR.Lock', autospec=True)
++    @mock.patch('LVHDSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_clone_success(self, mock_xenapi, mock_lock):
+         """
+@@ -395,7 +395,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         # Assert
+         self.assertIsNotNone(clone)
+ 
+-    @mock.patch('LVHDSR.Lock', autospec=True)
++    @mock.patch('LVHDSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_snapshot_attached_success(self, mock_xenapi, mock_lock):
+         """
+@@ -432,7 +432,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         # Assert
+         self.assertIsNotNone(snap)
+ 
+-    @mock.patch('LVHDSR.Lock', autospec=True)
++    @mock.patch('LVHDSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_snapshot_attached_cbt_success(self, mock_xenapi, mock_lock):
+         """
+diff --git a/tests/test_LVHDoHBASR.py b/tests/test_LVHDoHBASR.py
+index da88e461..ce99d736 100644
+--- a/tests/test_LVHDoHBASR.py
++++ b/tests/test_LVHDoHBASR.py
+@@ -82,7 +82,7 @@ class TestLVHDoHBASR(unittest.TestCase):
+         self.sr_uuid = str(uuid4())
+         self.scsi_id = '360a98000534b4f4e46704c76692d6d33'
+ 
+-        lock_patcher = mock.patch('LVHDSR.Lock', autospec=True)
++        lock_patcher = mock.patch('LVHDSR.lock.Lock', autospec=True)
+         self.mock_lock = lock_patcher.start()
+         lvhdsr_patcher = mock.patch('LVHDoHBASR.LVHDSR')
+         self.mock_lvhdsr = lvhdsr_patcher.start()
+diff --git a/tests/test_LVHDoISCSISR.py b/tests/test_LVHDoISCSISR.py
+index 611cd419..7153eb38 100644
+--- a/tests/test_LVHDoISCSISR.py
++++ b/tests/test_LVHDoISCSISR.py
+@@ -156,7 +156,7 @@ class TestLVHDoISCSISR(ISCSITestCase):
+ 
+         self.mock_copy.side_effect = deepcopy
+ 
+-        lock_patcher = mock.patch('LVHDSR.Lock')
++        lock_patcher = mock.patch('LVHDSR.lock.Lock')
+         self.mock_lock = lock_patcher.start()
+         lvlock_patcher = mock.patch('LVHDSR.lvutil.Fairlock')
+         self.mock_lvlock = lvlock_patcher.start()
+diff --git a/tests/test_MooseFSSR.py b/tests/test_MooseFSSR.py
+index f4e0a852..1948e10b 100644
+--- a/tests/test_MooseFSSR.py
++++ b/tests/test_MooseFSSR.py
+@@ -34,13 +34,13 @@ class TestMooseFSSR(unittest.TestCase):
+         return moosefssr
+ 
+     @mock.patch('MooseFSSR.MooseFSSR._is_moosefs_available', mock.MagicMock(return_value="mfsmount"))
+-    @mock.patch('MooseFSSR.Lock', autospec=True)
++    @mock.patch('MooseFSSR.lock.Lock', autospec=True)
+     def test_load(self, Lock):
+         self.create_moosefssr()
+ 
+     @mock.patch('MooseFSSR.MooseFSSR._is_moosefs_available', mock.MagicMock(return_value="mfsmount"))
+     @mock.patch('MooseFSSR.MooseFSSR.checkmount', autospec=True)
+-    @mock.patch('MooseFSSR.Lock', autospec=True)
++    @mock.patch('MooseFSSR.lock.Lock', autospec=True)
+     def test_attach_if_mounted_then_attached(self, mock_lock, mock_checkmount):
+         mfssr = self.create_moosefssr()
+         mock_checkmount.return_value=True
+@@ -48,14 +48,14 @@ class TestMooseFSSR(unittest.TestCase):
+         self.assertTrue(mfssr.attached)
+ 
+     @mock.patch('MooseFSSR.MooseFSSR._is_moosefs_available', mock.MagicMock(return_value="mfsmount"))
+-    @mock.patch('MooseFSSR.Lock', autospec=True)
++    @mock.patch('MooseFSSR.lock.Lock', autospec=True)
+     def test_mount_mountpoint_empty_string(self, mock_lock):
+         mfssr = self.create_moosefssr()
+         self.assertRaises(MooseFSSR.MooseFSException, mfssr.mount)
+ 
+     @mock.patch('MooseFSSR.MooseFSSR._is_moosefs_available', mock.MagicMock(return_value="mfsmount"))
+     @mock.patch('MooseFSSR.MooseFSSR.checkmount',return_value=False, autospec=True)
+-    @mock.patch('MooseFSSR.Lock', autospec=True)
++    @mock.patch('MooseFSSR.lock.Lock', autospec=True)
+     def test_detach_not_detached_if_not_mounted(self, mock_lock, mock_checkmount):
+         mfssr = self.create_moosefssr()
+         mfssr.attached = True
+diff --git a/tests/test_NFSSR.py b/tests/test_NFSSR.py
+index fa92d5e2..16b785ec 100644
+--- a/tests/test_NFSSR.py
++++ b/tests/test_NFSSR.py
+@@ -43,18 +43,18 @@ class TestNFSSR(unittest.TestCase):
+         nfssr.load(sr_uuid)
+         return nfssr
+ 
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     def test_load(self, Lock):
+         self.create_nfssr()
+ 
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.validate_nfsversion', autospec=True)
+     def test_load_validate_nfsversion_called(self, validate_nfsversion, Lock):
+         nfssr = self.create_nfssr(nfsversion='aNfsversion')
+ 
+         validate_nfsversion.assert_called_once_with('aNfsversion')
+ 
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.validate_nfsversion', autospec=True)
+     def test_load_validate_nfsversion_returnused(self, validate_nfsversion,
+                                                  Lock):
+@@ -62,7 +62,7 @@ class TestNFSSR(unittest.TestCase):
+ 
+         self.assertEqual(self.create_nfssr().nfsversion, "aNfsversion")
+ 
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.validate_nfsversion', autospec=True)
+     def test_load_validate_nfsversion_exceptionraised(self,
+                                                       validate_nfsversion,
+@@ -72,7 +72,7 @@ class TestNFSSR(unittest.TestCase):
+         self.assertRaises(nfs.NfsException, self.create_nfssr)
+ 
+     @mock.patch('util.makedirs')
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount')
+     @mock.patch('util._testHost')
+     @mock.patch('nfs.check_server_tcp')
+@@ -87,7 +87,7 @@ class TestNFSSR(unittest.TestCase):
+         nfssr.create(sr_uuid, size)
+ 
+     @mock.patch('util.makedirs')
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount')
+     @mock.patch('util._testHost')
+     @mock.patch('nfs.check_server_tcp')
+@@ -113,7 +113,7 @@ class TestNFSSR(unittest.TestCase):
+         self.assertEqual(srose.exception.errno, 461)
+ 
+     @mock.patch('util.makedirs')
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount')
+     @mock.patch('util._testHost')
+     @mock.patch('nfs.check_server_tcp')
+@@ -141,7 +141,7 @@ class TestNFSSR(unittest.TestCase):
+ 
+ 
+     @mock.patch('NFSSR.os.rmdir')
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount')
+     @mock.patch('util._testHost')
+     @mock.patch('nfs.check_server_tcp')
+@@ -165,7 +165,7 @@ class TestNFSSR(unittest.TestCase):
+     @mock.patch('FileSR.SharedFileSR._check_writable', autospec=True)
+     @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount', autospec=True)
+     @mock.patch('util._testHost', autospec=True)
+     @mock.patch('nfs.check_server_tcp', autospec=True)
+@@ -191,7 +191,7 @@ class TestNFSSR(unittest.TestCase):
+                                            retrans=4)
+ 
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount', autospec=True)
+     @mock.patch('nfs.unmount', autospec=True)
+     @mock.patch('util._testHost', autospec=True)
+@@ -210,7 +210,7 @@ class TestNFSSR(unittest.TestCase):
+ 
+     @mock.patch('FileSR.SharedFileSR._checkmount', autospec=True)
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount', autospec=True)
+     def test_attach_already_mounted(self, soft_mount, Lock, makedirs,
+                                     mock_checkmount):
+@@ -226,7 +226,7 @@ class TestNFSSR(unittest.TestCase):
+     @mock.patch('FileSR.SharedFileSR._check_writable', autospec=True)
+     @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('util.makedirs', autospec=True)
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     @mock.patch('nfs.soft_mount', autospec=True)
+     @mock.patch('nfs.unmount', autospec=True)
+     @mock.patch('util._testHost', autospec=True)
+@@ -262,12 +262,12 @@ class TestNFSSR(unittest.TestCase):
+         soft_mount.assert_called_once()
+         unmount.assert_called_once_with('/var/run/sr-mount/UUID', True)
+ 
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     def test_load_ipv6(self, mock_lock):
+         nfssr = self.create_nfssr(server='::1')
+         self.assertEqual(nfssr.transport, 'tcp6')
+ 
+-    @mock.patch('NFSSR.Lock', autospec=True)
++    @mock.patch('NFSSR.lock.Lock', autospec=True)
+     def test_load_no_server(self, mock_lock):
+         """
+         As called by on_slave.is_open
+diff --git a/tests/test_SMBSR.py b/tests/test_SMBSR.py
+index 42ce035e..3ac3f31a 100644
+--- a/tests/test_SMBSR.py
++++ b/tests/test_SMBSR.py
+@@ -68,7 +68,7 @@ class Test_SMBSR(unittest.TestCase):
+     #Attach
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.mount', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     def test_attach_smbexception_raises_xenerror(
+             self, mock_lock, mock_mount, mock_checkmount):
+         smbsr = self.create_smbsr()
+@@ -80,7 +80,7 @@ class Test_SMBSR(unittest.TestCase):
+         self.assertEqual(cm.exception.errno, 111)
+ 
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     def test_attach_if_mounted_then_attached(self, mock_lock, mock_checkmount):
+         smbsr = self.create_smbsr()
+         mock_checkmount.return_value = True
+@@ -91,7 +91,7 @@ class Test_SMBSR(unittest.TestCase):
+     @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.makeMountPoint', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     @mock.patch('os.symlink', autospec=True)
+     def test_attach_vanilla(self, symlink, mock_lock,
+                             makeMountPoint, mock_checkmount, mock_checklinks,
+@@ -109,7 +109,7 @@ class Test_SMBSR(unittest.TestCase):
+     @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.makeMountPoint', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospecd=True)
++    @mock.patch('SMBSR.lock.Lock', autospecd=True)
+     @mock.patch('os.symlink', autospec=True)
+     def test_attach_with_cifs_password(
+             self, symlink, mock_lock, makeMountPoint,
+@@ -125,7 +125,7 @@ class Test_SMBSR(unittest.TestCase):
+     @mock.patch('FileSR.SharedFileSR._check_hardlinks', autospec=True)
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.makeMountPoint', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospecd=True)
++    @mock.patch('SMBSR.lock.Lock', autospecd=True)
+     @mock.patch('os.symlink', autospec=True)
+     def test_attach_with_cifs_password_and_domain(
+             self, symlink, mock_lock, makeMountPoint,
+@@ -143,7 +143,7 @@ class Test_SMBSR(unittest.TestCase):
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.mount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.unmount', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     @mock.patch('os.symlink', autospec=True)
+     @mock.patch('os.unlink', autospec=True)
+     @mock.patch('util.pathexists', autospec=True)
+@@ -193,7 +193,7 @@ class Test_SMBSR(unittest.TestCase):
+     @mock.patch('SMBSR.SMBSR.checkmount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.mount', autospec=True)
+     @mock.patch('SMBSR.SMBSR.unmount', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     @mock.patch('os.unlink', autospec=True)
+     @mock.patch('util.pathexists', autospec=True)
+     def test_attach_misc_mount_failure(self, mock_pathexists, mock_unlink,
+@@ -213,7 +213,7 @@ class Test_SMBSR(unittest.TestCase):
+     #Detach
+     @mock.patch('SMBSR.SMBSR.checkmount', return_value=True, autospec=True)
+     @mock.patch('SMBSR.SMBSR.unmount', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     @mock.patch('SMBSR.os.chdir', autospec=True)
+     @mock.patch('SMBSR.cleanup', autospec=True)
+     def test_detach_smbexception_raises_xenerror(
+@@ -227,7 +227,7 @@ class Test_SMBSR(unittest.TestCase):
+         self.assertEqual(cm.exception.errno, 112)
+ 
+     @mock.patch('SMBSR.SMBSR.checkmount', return_value=False, autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     def test_detach_not_detached_if_not_mounted(self, mock_lock, mock_checkmount):
+         smbsr = self.create_smbsr()
+         smbsr.attached = True
+@@ -237,7 +237,7 @@ class Test_SMBSR(unittest.TestCase):
+ 
+     #Mount
+     @mock.patch('SMBSR.util.isdir', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     @mock.patch('util.time', autospec=True)
+     def test_mount_mountpoint_isdir(self, mock_time, mock_lock, mock_isdir):
+         # Not sure that the code rerying in an ioretry loop in the case of a
+@@ -248,14 +248,14 @@ class Test_SMBSR(unittest.TestCase):
+         with self.assertRaises(SMBSR.SMBException) as cm:
+             smbsr.mount()
+ 
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     def test_mount_mountpoint_empty_string(self, mock_lock):
+         smbsr = self.create_smbsr()
+         self.assertRaises(SMBSR.SMBException, smbsr.mount, "")
+ 
+     @mock.patch('util.makedirs', autospec=True)
+     @mock.patch('util.get_pool_restrictions', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     @mock.patch('SMBSR.os.symlink', autospec=True)
+     def test_create_success(self, symlink, lock, restrict, makedirs):
+         # Arrange
+@@ -276,7 +276,7 @@ class Test_SMBSR(unittest.TestCase):
+ 
+     @mock.patch('util.makedirs', autospec=True)
+     @mock.patch('util.get_pool_restrictions', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     @mock.patch('SMBSR.os.symlink', autospec=True)
+     def test_create_read_only(self, symlink, lock, restrict, makedirs):
+         # Arrange
+@@ -305,7 +305,7 @@ class Test_SMBSR(unittest.TestCase):
+ 
+     @mock.patch('util.makedirs', autospec=True)
+     @mock.patch('util.get_pool_restrictions', autospec=True)
+-    @mock.patch('SMBSR.Lock', autospec=True)
++    @mock.patch('SMBSR.lock.Lock', autospec=True)
+     @mock.patch('SMBSR.os.symlink', autospec=True)
+     def test_create_nospace(self, symlink, lock, restrict, makedirs):
+         # Arrange
+diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
+index 47d72b89..da614a2f 100644
+--- a/tests/test_ZFSSR.py
++++ b/tests/test_ZFSSR.py
+@@ -43,7 +43,7 @@ class TestZFSSR(unittest.TestCase):
+         return sr
+ 
+     @mock.patch('ZFSSR.is_zfs_available', autospec=True)
+-    @mock.patch('FileSR.Lock', autospec=True)
++    @mock.patch('FileSR.lock.Lock', autospec=True)
+     def test_load(self, lock, is_zfs_available):
+         self.create_zfs_sr()
+ 
+@@ -59,14 +59,14 @@ class TestZFSSR(unittest.TestCase):
+ 
+     @mock.patch('ZFSSR.is_zfs_available', autospec=True)
+     @mock.patch('ZFSSR.is_zfs_path', autospec=True)
+-    @mock.patch('FileSR.Lock', autospec=True)
++    @mock.patch('FileSR.lock.Lock', autospec=True)
+     def test_create(self, lock, is_zfs_path, is_zfs_available):
+         sr = self.create_zfs_sr()
+         sr.create(sr.uuid, 42)
+ 
+     @mock.patch('ZFSSR.is_zfs_available', autospec=True)
+     @mock.patch('ZFSSR.is_zfs_path', autospec=True)
+-    @mock.patch('FileSR.Lock', autospec=True)
++    @mock.patch('FileSR.lock.Lock', autospec=True)
+     @mock.patch('xs_errors.XML_DEFS', new=XML_DEFS)
+     def test_create_with_invalid_zfs_path(
+         self, lock, is_zfs_path, is_zfs_available
+@@ -84,7 +84,7 @@ class TestZFSSR(unittest.TestCase):
+ 
+     @mock.patch('ZFSSR.is_zfs_available', autospec=True)
+     @mock.patch('ZFSSR.is_zfs_path', autospec=True)
+-    @mock.patch('FileSR.Lock', autospec=True)
++    @mock.patch('FileSR.lock.Lock', autospec=True)
+     @mock.patch('FileSR.FileSR._checkmount', autospec=True)
+     @mock.patch('FileSR.FileSR._loadvdis', autospec=True)
+     @mock.patch('SR.SR.scan', autospec=True)
+@@ -98,7 +98,7 @@ class TestZFSSR(unittest.TestCase):
+ 
+     @mock.patch('ZFSSR.is_zfs_available', autospec=True)
+     @mock.patch('ZFSSR.is_zfs_path', autospec=True)
+-    @mock.patch('FileSR.Lock', autospec=True)
++    @mock.patch('FileSR.lock.Lock', autospec=True)
+     @mock.patch('FileSR.FileSR._checkmount', autospec=True)
+     @mock.patch('xs_errors.XML_DEFS', new=XML_DEFS)
+     def test_scan_with_invalid_zfs_path(
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index 82ea299c..3e45dc63 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -1925,7 +1925,7 @@ class TestLockGCActive(unittest.TestCase):
+ 
+     def test_can_acquire_when_already_holding_sr_lock(self):
+         # Given
+-        srLock = lock.Lock(vhdutil.LOCK_TYPE_SR, self.sr_uuid)
++        srLock = lock.Lock(lock.LOCK_TYPE_SR, self.sr_uuid)
+         srLock.held = True
+         gcLock = cleanup.LockActive(self.sr_uuid)
+ 

@@ -1,0 +1,98 @@
+From 0111322787db60329ab2d659cfac59118d913894 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 17 Mar 2025 16:27:21 +0100
+Subject: [PATCH] chore(pylintrc): get rid of E1120 errors for LINSTOR using
+ signature-mutators
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/LinstorSR.py      | 12 +++---------
+ drivers/linstorvhdutil.py | 10 +++-------
+ tests/pylintrc            |  2 ++
+ 3 files changed, 8 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 18ee3211..52c806b6 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -149,9 +149,7 @@ def attach_thin(session, journaler, linstor, sr_uuid, vdi_uuid):
+     # If the virtual VHD size is lower than the LINSTOR volume size,
+     # there is nothing to do.
+     vhd_size = LinstorVhdUtil.compute_volume_size(
+-        # TODO: Replace pylint comment with this feature when possible:
+-        # https://github.com/PyCQA/pylint/pull/2926
+-        LinstorVhdUtil(session, linstor).get_size_virt(vdi_uuid),  # pylint: disable = E1120
++        LinstorVhdUtil(session, linstor).get_size_virt(vdi_uuid),
+         image_type
+     )
+ 
+@@ -194,9 +192,7 @@ def detach_thin_impl(session, linstor, sr_uuid, vdi_uuid):
+     device_path = linstor.get_device_path(vdi_uuid)
+     vhdutil_inst = LinstorVhdUtil(session, linstor)
+     new_volume_size = LinstorVolumeManager.round_up_volume_size(
+-        # TODO: Replace pylint comment with this feature when possible:
+-        # https://github.com/PyCQA/pylint/pull/2926
+-        vhdutil_inst.get_size_phys(vdi_uuid)  # pylint: disable = E1120
++        vhdutil_inst.get_size_phys(vdi_uuid)
+     )
+ 
+     volume_info = linstor.get_volume_info(vdi_uuid)
+@@ -1203,9 +1199,7 @@ class LinstorSR(SR.SR):
+             self.vdis[vdi_uuid] = vdi
+ 
+             if USE_KEY_HASH and vdi.vdi_type == vhdutil.VDI_TYPE_VHD:
+-                # TODO: Replace pylint comment with this feature when possible:
+-                # https://github.com/PyCQA/pylint/pull/2926
+-                vdi.sm_config_override['key_hash'] = self._vhdutil.get_key_hash(vdi_uuid)  # pylint: disable = E1120
++                vdi.sm_config_override['key_hash'] = self._vhdutil.get_key_hash(vdi_uuid)
+ 
+             # 4.c. Update CBT status of disks either just added
+             # or already in XAPI.
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index e65418cc..e78dffb6 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -228,7 +228,7 @@ class LinstorVhdUtil:
+             'fast': fast
+         }
+         try:
+-            self._check(vdi_uuid, **kwargs)  # pylint: disable = E1123
++            self._check(vdi_uuid, **kwargs)
+             return True
+         except Exception as e:
+             util.SMlog('Call to `check` failed: {}'.format(e))
+@@ -243,9 +243,7 @@ class LinstorVhdUtil:
+             'includeParent': include_parent,
+             'resolveParent': False
+         }
+-        # TODO: Replace pylint comment with this feature when possible:
+-        # https://github.com/PyCQA/pylint/pull/2926
+-        return self._get_vhd_info(vdi_uuid, self._extract_uuid, **kwargs)  # pylint: disable = E1123
++        return self._get_vhd_info(vdi_uuid, self._extract_uuid, **kwargs)
+ 
+     @linstorhostcall(vhdutil.getVHDInfo, 'getVHDInfo')
+     def _get_vhd_info(self, vdi_uuid, response):
+@@ -359,9 +357,7 @@ class LinstorVhdUtil:
+         )
+         self._linstor.resize_volume(vdi_uuid, new_size)
+ 
+-        # TODO: Replace pylint comment with this feature when possible:
+-        # https://github.com/PyCQA/pylint/pull/2926
+-        result_size = self.get_drbd_size(vdi_uuid)  # pylint: disable = E1120
++        result_size = self.get_drbd_size(vdi_uuid)
+         if result_size < new_size:
+             util.SMlog(
+                 'WARNING: Cannot inflate volume to {}B, result size: {}B'
+diff --git a/tests/pylintrc b/tests/pylintrc
+index 4588675b..9779dc33 100644
+--- a/tests/pylintrc
++++ b/tests/pylintrc
+@@ -92,6 +92,8 @@ generated-members=REQUEST,acl_users,aq_parent,linstor.*
+ # # supports qualified module names, as well as Unix pattern matching.
+ ignored-modules=bitarray
+ 
++# List of decorators that change the signature of a decorated function.
++signature-mutators=linstorcowutil.linstorhostcall
+ 
+ [SIMILARITIES]
+ 

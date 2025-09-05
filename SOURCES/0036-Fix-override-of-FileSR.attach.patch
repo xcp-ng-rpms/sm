@@ -16,10 +16,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_FileSR.py | 2 +-
  3 files changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
-index 61e88dcd..16481620 100755
---- a/drivers/EXTSR.py
-+++ b/drivers/EXTSR.py
+Index: sm-3.2.12/drivers/EXTSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/EXTSR.py
++++ sm-3.2.12/drivers/EXTSR.py
 @@ -123,7 +123,7 @@ class EXTSR(FileSR.FileSR):
                          'LVMMount',
                          opterr='FSCK failed on %s. Errno is %d' % (self.remotepath, inst.code))
@@ -29,10 +29,10 @@ index 61e88dcd..16481620 100755
  
          self.attached = True
  
-diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 6ac841c9..4de359bf 100755
---- a/drivers/FileSR.py
-+++ b/drivers/FileSR.py
+Index: sm-3.2.12/drivers/FileSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/FileSR.py
++++ sm-3.2.12/drivers/FileSR.py
 @@ -156,7 +156,10 @@ class FileSR(SR.SR):
              raise xs_errors.XenError('FileSRDelete', \
                    opterr='error %d' % inst.code)
@@ -45,10 +45,10 @@ index 6ac841c9..4de359bf 100755
          if not self._checkmount():
              try:
                  util.ioretry(lambda: util.makedirs(self.path, mode=0o700))
-diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
-index e755f2d8..a82d0e5b 100644
---- a/tests/test_FileSR.py
-+++ b/tests/test_FileSR.py
+Index: sm-3.2.12/tests/test_FileSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_FileSR.py
++++ sm-3.2.12/tests/test_FileSR.py
 @@ -682,7 +682,7 @@ class TestFileSR(unittest.TestCase):
  
          sr.path = mount_dst

@@ -9,10 +9,10 @@ forked git repo for sm in the xcp-ng github organisation.
  systemd/xs-sm.service | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/systemd/xs-sm.service b/systemd/xs-sm.service
-index 99cb313f..609c6ef5 100644
---- a/systemd/xs-sm.service
-+++ b/systemd/xs-sm.service
+Index: sm-3.2.12/systemd/xs-sm.service
+===================================================================
+--- sm-3.2.12.orig/systemd/xs-sm.service
++++ sm-3.2.12/systemd/xs-sm.service
 @@ -1,5 +1,5 @@
  [Unit]
 -Description=XenServer Storage Manager (SM)

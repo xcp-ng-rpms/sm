@@ -10,10 +10,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/LVHDSR.py | 38 +++++++++++++++++++-------------------
  1 file changed, 19 insertions(+), 19 deletions(-)
 
-diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 23adf3a9..195c6fd3 100755
---- a/drivers/LVHDSR.py
-+++ b/drivers/LVHDSR.py
+Index: sm-3.2.12/drivers/LVHDSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LVHDSR.py
++++ sm-3.2.12/drivers/LVHDSR.py
 @@ -690,21 +690,21 @@ class LVHDSR(SR.SR):
                  for vdi in vdis:
                      vdi_uuids.add(self.session.xenapi.VDI.get_uuid(vdi))

@@ -13,10 +13,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/iscsilib.py | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/iscsilib.py b/drivers/iscsilib.py
-index e77d17d2..e54de1bc 100644
---- a/drivers/iscsilib.py
-+++ b/drivers/iscsilib.py
+Index: sm-3.2.12/drivers/iscsilib.py
+===================================================================
+--- sm-3.2.12.orig/drivers/iscsilib.py
++++ sm-3.2.12/drivers/iscsilib.py
 @@ -535,8 +535,8 @@ def _checkAnyTGT():
      except Exception as e:
          util.SMlog("%s failed with %s" % (cmd, e.args))

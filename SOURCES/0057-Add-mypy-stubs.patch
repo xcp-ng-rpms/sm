@@ -15,20 +15,13 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  create mode 100644 stubs/xen/__init__.pyi
  create mode 100644 stubs/xen/lowlevel/xs.pyi
 
-diff --git a/stubs/XenAPIPlugin.pyi b/stubs/XenAPIPlugin.pyi
-new file mode 100644
-index 00000000..ca5f52ca
+Index: sm-3.2.12/stubs/XenAPIPlugin.pyi
+===================================================================
 --- /dev/null
-+++ b/stubs/XenAPIPlugin.pyi
++++ sm-3.2.12/stubs/XenAPIPlugin.pyi
 @@ -0,0 +1,5 @@
 +class Failure(Exception):
 +    def __init__(self, code, params) -> None: ...
 +    def __str__(self) -> str: ...
 +
 +def dispatch(fn_table) -> None: ...
-diff --git a/stubs/xen/__init__.pyi b/stubs/xen/__init__.pyi
-new file mode 100644
-index 00000000..e69de29b
-diff --git a/stubs/xen/lowlevel/xs.pyi b/stubs/xen/lowlevel/xs.pyi
-new file mode 100644
-index 00000000..e69de29b

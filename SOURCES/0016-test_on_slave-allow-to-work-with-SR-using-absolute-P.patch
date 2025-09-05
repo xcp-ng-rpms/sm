@@ -35,11 +35,11 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  tests/test_on_slave.py | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
-index 90347477..679d4421 100644
---- a/tests/test_on_slave.py
-+++ b/tests/test_on_slave.py
-@@ -30,6 +30,7 @@ class Test_on_slave_is_open(unittest.TestCase):
+Index: sm-3.2.12/tests/test_on_slave.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_on_slave.py
++++ sm-3.2.12/tests/test_on_slave.py
+@@ -30,6 +30,7 @@ class Test_on_slave_is_open(unittest.Tes
          self.mock_import.side_effect = self.fake_import
  
          self.mock_sr = mock.MagicMock()

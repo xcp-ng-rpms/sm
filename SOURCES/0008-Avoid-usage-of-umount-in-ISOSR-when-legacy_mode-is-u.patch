@@ -13,10 +13,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_ISOSR.py | 59 +++++++++++++++++++++++++++++++++++++++++++++
  2 files changed, 60 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
-index f591d237..9ca44506 100755
---- a/drivers/ISOSR.py
-+++ b/drivers/ISOSR.py
+Index: sm-3.2.12/drivers/ISOSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/ISOSR.py
++++ sm-3.2.12/drivers/ISOSR.py
 @@ -569,8 +569,7 @@ class ISOSR(SR.SR):
  
      def detach(self, sr_uuid):
@@ -27,10 +27,10 @@ index f591d237..9ca44506 100755
              return
  
          try:
-diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
-index 3aea7963..760c566a 100644
---- a/tests/test_ISOSR.py
-+++ b/tests/test_ISOSR.py
+Index: sm-3.2.12/tests/test_ISOSR.py
+===================================================================
+--- sm-3.2.12.orig/tests/test_ISOSR.py
++++ sm-3.2.12/tests/test_ISOSR.py
 @@ -24,6 +24,65 @@ class FakeISOSR(ISOSR.ISOSR):
          self.dconf = srcmd.dconf
          self.srcmd = srcmd

@@ -10,10 +10,10 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  drivers/linstorvolumemanager.py | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
-index dca96456..1b86a439 100755
---- a/drivers/linstorvolumemanager.py
-+++ b/drivers/linstorvolumemanager.py
+Index: sm-3.2.12/drivers/linstorvolumemanager.py
+===================================================================
+--- sm-3.2.12.orig/drivers/linstorvolumemanager.py
++++ sm-3.2.12/drivers/linstorvolumemanager.py
 @@ -28,7 +28,7 @@ import util
  def round_up(value, divisor):
      assert divisor

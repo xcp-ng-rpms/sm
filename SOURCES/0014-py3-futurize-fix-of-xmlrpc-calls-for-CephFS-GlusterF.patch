@@ -12,10 +12,10 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  drivers/MooseFSSR.py   | 6 +++---
  4 files changed, 13 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
-index f83beb3d..be2521fd 100644
---- a/drivers/CephFSSR.py
-+++ b/drivers/CephFSSR.py
+Index: sm-3.2.12/drivers/CephFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/CephFSSR.py
++++ sm-3.2.12/drivers/CephFSSR.py
 @@ -21,7 +21,7 @@
  import errno
  import os
@@ -36,10 +36,10 @@ index f83beb3d..be2521fd 100644
  
      def attach_from_config(self, sr_uuid, vdi_uuid):
          try:
-diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
-index 6d5e0614..48471f96 100644
---- a/drivers/GlusterFSSR.py
-+++ b/drivers/GlusterFSSR.py
+Index: sm-3.2.12/drivers/GlusterFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/GlusterFSSR.py
++++ sm-3.2.12/drivers/GlusterFSSR.py
 @@ -19,7 +19,7 @@
  import errno
  import os
@@ -60,10 +60,10 @@ index 6d5e0614..48471f96 100644
  
      def attach_from_config(self, sr_uuid, vdi_uuid):
          try:
-diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
-index 4e8888e2..f6badabb 100755
---- a/drivers/LinstorSR.py
-+++ b/drivers/LinstorSR.py
+Index: sm-3.2.12/drivers/LinstorSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/LinstorSR.py
++++ sm-3.2.12/drivers/LinstorSR.py
 @@ -38,7 +38,7 @@ import traceback
  import util
  import VDI
@@ -93,10 +93,10 @@ index 4e8888e2..f6badabb 100755
  
      def attach_from_config(self, sr_uuid, vdi_uuid):
          """
-diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
-index 05a42640..c29c7583 100755
---- a/drivers/MooseFSSR.py
-+++ b/drivers/MooseFSSR.py
+Index: sm-3.2.12/drivers/MooseFSSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/MooseFSSR.py
++++ sm-3.2.12/drivers/MooseFSSR.py
 @@ -22,7 +22,7 @@ import distutils.util
  import errno
  import os

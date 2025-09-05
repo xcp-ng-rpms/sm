@@ -10,10 +10,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/ISOSR.py | 7 ++++---
  1 file changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
-index cbe0b658..64f99b48 100755
---- a/drivers/ISOSR.py
-+++ b/drivers/ISOSR.py
+Index: sm-3.2.12/drivers/ISOSR.py
+===================================================================
+--- sm-3.2.12.orig/drivers/ISOSR.py
++++ sm-3.2.12/drivers/ISOSR.py
 @@ -335,14 +335,15 @@ class ISOSR(SR.SR):
              util.makedirs(self.mountpoint)
  

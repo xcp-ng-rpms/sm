@@ -46,10 +46,10 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  6 files changed, 280 insertions(+), 3 deletions(-)
  create mode 100644 drivers/LargeBlockSR.py
 
-diff --git a/Makefile b/Makefile
-index 9a8a0314..d33c0605 100755
---- a/Makefile
-+++ b/Makefile
+Index: sm-3.2.12/Makefile
+===================================================================
+--- sm-3.2.12.orig/Makefile
++++ sm-3.2.12/Makefile
 @@ -20,6 +20,7 @@ SM_DRIVERS += GlusterFS
  SM_DRIVERS += XFS
  SM_DRIVERS += ZFS
@@ -58,11 +58,10 @@ index 9a8a0314..d33c0605 100755
  
  SM_LIBS := SR
  SM_LIBS += SRCommand
-diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
-new file mode 100644
-index 00000000..ba0ac1d1
+Index: sm-3.2.12/drivers/LargeBlockSR.py
+===================================================================
 --- /dev/null
-+++ b/drivers/LargeBlockSR.py
++++ sm-3.2.12/drivers/LargeBlockSR.py
 @@ -0,0 +1,249 @@
 +#!/usr/bin/env python3
 +#
@@ -313,11 +312,11 @@ index 00000000..ba0ac1d1
 +    SRCommand.run(LargeBlockSR, DRIVER_INFO)
 +else:
 +    SR.registerSR(LargeBlockSR)
-diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 3578dd55..b5813153 100755
---- a/drivers/XE_SR_ERRORCODES.xml
-+++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -968,4 +968,26 @@
+Index: sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+===================================================================
+--- sm-3.2.12.orig/drivers/XE_SR_ERRORCODES.xml
++++ sm-3.2.12/drivers/XE_SR_ERRORCODES.xml
+@@ -974,4 +974,26 @@
              <description>LINSTOR SR delete error</description>
              <value>5007</value>
          </code>
@@ -344,11 +343,11 @@ index 3578dd55..b5813153 100755
 +            <value>5011</value>
 +        </code>
  </SM-errorcodes>
-diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e3b78e52..9713ffe5 100755
---- a/drivers/cleanup.py
-+++ b/drivers/cleanup.py
-@@ -3530,7 +3530,7 @@ def normalizeType(type):
+Index: sm-3.2.12/drivers/cleanup.py
+===================================================================
+--- sm-3.2.12.orig/drivers/cleanup.py
++++ sm-3.2.12/drivers/cleanup.py
+@@ -3534,7 +3534,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -357,11 +356,11 @@ index e3b78e52..9713ffe5 100755
      ]:
          type = SR.TYPE_FILE
      if type in ["linstor"]:
-diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 2d990a9b..dfd9d5c5 100755
---- a/drivers/lvutil.py
-+++ b/drivers/lvutil.py
-@@ -569,12 +569,16 @@ def resizePV(dev):
+Index: sm-3.2.12/drivers/lvutil.py
+===================================================================
+--- sm-3.2.12.orig/drivers/lvutil.py
++++ sm-3.2.12/drivers/lvutil.py
+@@ -570,12 +570,16 @@ def resizePV(dev):
          util.SMlog("Failed to grow the PV, non-fatal")
  
  
@@ -379,11 +378,11 @@ index 2d990a9b..dfd9d5c5 100755
 +    cmd_lvm(cmd)
  
  
- @lvmretry
-diff --git a/drivers/on_slave.py b/drivers/on_slave.py
-index 524424f6..2f58281a 100755
---- a/drivers/on_slave.py
-+++ b/drivers/on_slave.py
+ def checkPVScsiIds(vgname, SCSIid):
+Index: sm-3.2.12/drivers/on_slave.py
+===================================================================
+--- sm-3.2.12.orig/drivers/on_slave.py
++++ sm-3.2.12/drivers/on_slave.py
 @@ -78,6 +78,7 @@ def _is_open(session, args):
      import SR
      import CephFSSR

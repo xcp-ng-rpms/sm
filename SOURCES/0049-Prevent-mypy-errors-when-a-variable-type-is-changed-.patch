@@ -14,10 +14,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/BaseISCSI.py | 12 ++++++------
  1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/BaseISCSI.py b/drivers/BaseISCSI.py
-index a52442c5..750b40b0 100755
---- a/drivers/BaseISCSI.py
-+++ b/drivers/BaseISCSI.py
+Index: sm-3.2.12/drivers/BaseISCSI.py
+===================================================================
+--- sm-3.2.12.orig/drivers/BaseISCSI.py
++++ sm-3.2.12/drivers/BaseISCSI.py
 @@ -175,11 +175,11 @@ class BaseISCSISR(SR.SR):
                  and ('chappassword' in self.dconf or 'chappassword_secret' in self.dconf):
              self.chapuser = self.dconf['chapuser'].encode('utf-8')

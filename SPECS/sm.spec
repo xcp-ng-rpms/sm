@@ -1,6 +1,6 @@
-%global package_speccommit f1b3ef576666b1b4a3805704f1ce2198094d6392
+%global package_speccommit 9df6da66175c15762000aa7a96311c44268fef52
 %global usver 3.2.12
-%global xsver 3
+%global xsver 10
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -9,13 +9,33 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
 Source1: update-cgrules.patch
 Patch0: ca-403593__dont_log_the_session_ref.patch
 Patch1: ca-405381_mpathcount_info_does_not_automatically_refresh_in_xencenter_after_disabling_and_enabling_multipath.patch
+Patch2: ca_407343_do_not_remove_vhd_parent_in_leaf_gc
+Patch3: revert-2979937bbb7
+Patch4: cp-50026_ensure_mpathcount_runs_after_multipath_deactivate.patch
+Patch5: CP-53692-SR-attach-calls-mpathcount-async.patch
+Patch6: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch7: update_pure_storage_udev_1.patch
+Patch8: update_pure_storage_udev_2.patch
+Patch9: CA-408105_add_logging_to__finishInterruptedCoalesceLeaf
+Patch10: CA-408452_remove_vhd_parent_if_it_does_not_have_one
+Patch11: cp-51633__tidy_up_intellicache_code.patch
+Patch12: cp-51843__advertise_sr_caching_on_lvhdoiscsi_and_hba.patch
+Patch13: cp-51843__add_unit_tests_for_setup_cache.patch
+Patch14: cp-51843__remove_unused_params.patch
+Patch15: cp-51843__add_unit_tests_for_remove_cache.patch
+Patch16: cp-51843__disable_read-caching_on_block.patch
+Patch17: ca_409231_report_intellicache_stats_with_nbd
+Patch18: ca_411163_verify_pv_scsi_ids
+Patch19: CA-395221_use_systemd_target_for_gc_enable
+Patch20: CA-413209_remove_dangling_reference_to_rawhba
+Patch21: CP-308587_update_netapp_multipath
 
 %define __python python3
 
@@ -53,69 +73,7 @@ Obsoletes: sm-additional-drivers
 # XCP-ng patches
 # Generated from our sm repository
 # git format-patch v3.2.12-xcpng..3.2.12-8.3 --no-signature --no-numbered
-Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
-Patch1003: 0003-feat-drivers-add-XFS-driver.patch
-Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
-Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
-Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
-Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
-Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
-Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
-Patch1015: 0015-py3-use-of-integer-division-operator.patch
-Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
-Patch1017: 0017-py3-switch-interpreter-to-python3.patch
-Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
-Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
-Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
-Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
-Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
-Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
-Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
-Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
-Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
-Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
-Patch1028: 0028-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
-Patch1029: 0029-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
-Patch1030: 0030-fix-LinstorSR-simplify-_kick_gc-code-using-systemd-s.patch
-Patch1031: 0031-fix-LinstorSR-imitate-the-CA-400106-change.patch
-Patch1032: 0032-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
-Patch1033: 0033-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
-Patch1034: 0034-Fix-many-invalid-escape-sequences.patch
-Patch1035: 0035-Fix-many-invalid-escape-sequences-on-regexes.patch
-Patch1036: 0036-Fix-override-of-FileSR.attach.patch
-Patch1037: 0037-Fix-override-of-BaseISCSISR.detach.patch
-Patch1038: 0038-Fix-override-of-VDI.delete-in-many-subclasses.patch
-Patch1039: 0039-Fix-override-of-VDI._do_snapshot.patch
-Patch1040: 0040-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
-Patch1041: 0041-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
-Patch1042: 0042-Modernize-Lock-class-using-staticmethod-decorator.patch
-Patch1043: 0043-Modernize-GC-using-staticmethod-decorator.patch
-Patch1044: 0044-Modernize-RefCounter-using-staticmethod-decorator.patch
-Patch1045: 0045-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
-Patch1046: 0046-Use-for-session-instead-of-for-e.patch
-Patch1047: 0047-Fix-util.SRtoXML-calls-in-many-drivers.patch
-Patch1048: 0048-Replace-Dict-variable-with-info-in-LVHDSR.patch
-Patch1049: 0049-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
-Patch1050: 0050-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
-Patch1051: 0051-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
-Patch1052: 0052-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
-Patch1053: 0053-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
-Patch1054: 0054-Replace-deprecated-calls-to-distutils.util.strtobool.patch
-Patch1055: 0055-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
-Patch1056: 0056-Use-static-analysis-tool-mypy.patch
-Patch1057: 0057-Add-mypy-stubs.patch
-Patch1058: 0058-Use-override-everywhere.patch
-Patch1059: 0059-Makefile-fix-don-t-execute-precheck-during-installat.patch
-Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
-Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
-Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
-Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
+TODO
 
 %description
 This package contains storage backends used in XCP
@@ -353,6 +311,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/69-dm-lvm-metad.rules
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
+%config /etc/udev/rules.d/99-purestorage.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 %{_datadir}/%{name}/update-cgrules.patch
 # XCP-ng
@@ -431,6 +390,31 @@ then
 fi
 
 %changelog
+* Tue Sep 16 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-10.1
+- Rebase on 3.2.12-10
+- TODO: Update XCP-ng patches
+- *** Upstream changelog ***
+  * Fri Jul 04 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-10
+  - CA-413209: remove dangling reference to rawhba
+  - CP-308587: update NetApp multipath as requested
+  * Wed Jun 18 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-9
+  - CA-395221: require systemd target
+  * Tue May 27 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-8
+  - CP-53692 SR attach with kicking the mpathcount pipe
+  - CA-411163: refuse to attach if we see multiple SCSI IDs for SR PVs
+  * Tue Apr 08 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-7
+  - CA-409231: Report IntelliCache stats when parent is NBD.
+  * Mon Mar 31 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-6
+  - CA-407743: do not try to add memory caching and intellicache
+  * Tue Mar 25 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-5
+  - CA-408105: add logging to failure paths
+  - CA-408452: remove VDI parent if it does not have one
+  - CP-51843:  extend IntelliCache coverage
+  * Tue Mar 04 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-4
+  - CA-407343: do not remove the parent's vhd-parent in leaf GC
+  - Revert the changes in 2979937bbb7 (CA-397084)
+  - CP-50026 Ensure mpathcount runs after multipath deactivate
+
 * Fri Jul 04 2025 Yann Dirson <yann.dirson@vates.fr> - 3.2.12-3.3
 - Add missing dependency on libcgroup-tools, uses cgclassify(1)
 - Drop dependency on old and unused python3-future

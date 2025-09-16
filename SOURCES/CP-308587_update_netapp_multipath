@@ -1,0 +1,29 @@
+From 2e5df68a765c9e4ccfb544ed428454ac77c780d0 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Wed, 2 Jul 2025 15:03:06 +0100
+Subject: [PATCH] CP-308587: update netapp multipath
+
+Only required on XS8
+---
+ multipath/multipath.conf | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/multipath/multipath.conf b/multipath/multipath.conf
+index 166bd84..3012c6e 100644
+--- a/multipath/multipath.conf
++++ b/multipath/multipath.conf
+@@ -183,4 +183,10 @@ devices {
+         rr_min_io_rq                1
+         rr_weight                   uniform
+     }
++    device {
++        vendor "NETAPP"
++        product "LUN.*"
++        path_checker "tur"
++        no_path_retry "queue"
++    }
+ }
+\ No newline at end of file
+-- 
+2.49.0
+

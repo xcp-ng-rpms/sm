@@ -1,0 +1,86 @@
+From f6633d813c6381be4fae1d53866d4e32ad4d46d2 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Mon, 10 Mar 2025 10:46:53 +0000
+Subject: [PATCH] CA-408105: add logging to _finishInterruptedCoalesceLeaf
+
+No error logging is present in two error paths which make diagnosis
+difficult/impossible.
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 2b0ca5a..13da555 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2637,10 +2637,12 @@ class FileSR(SR):
+         Util.log("*** FINISH LEAF-COALESCE")
+         vdi = self.getVDI(childUuid)
+         if not vdi:
++            Util.log(f"_finishInterruptedCoalesceLeaf, vdi {childUuid} not found, aborting")
+             raise util.SMException("VDI %s not found" % childUuid)
+         try:
+             self.forgetVDI(parentUuid)
+         except XenAPI.Failure:
++            Util.logException('_finishInterruptedCoalesceLeaf')
+             pass
+         self._updateSlavesOnResize(vdi)
+         util.fistpoint.activate("LVHDRT_coaleaf_finish_end", self.uuid)
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index a2b14d6..00b3e2a 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -15,6 +15,8 @@ import vhdutil
+ import ipc
+ 
+ import XenAPI
++from XenAPI import Failure
++from util import SMException
+ 
+ 
+ class FakeFile(object):
+@@ -1985,3 +1987,46 @@ class TestLockGCActive(unittest.TestCase):
+         # When
+         with self.assertRaises(BlockingIOError):
+             gcLock.acquireNoblock()
++
++
++class TestFileSR(TestSR):
++    """
++    Exercise the specfic bits of the FileSR support
++    """
++
++    def setUp(self):
++        super().setUp()
++
++        self.sr_uuid = str(uuid.uuid4())
++
++    def _make_test_sr(self):
++        self.mock_sr =  cleanup.FileSR(self.sr_uuid, self.xapi_mock,
++                                       createLock=False, force=False)
++
++    def test_finishInterruptedCoalesceLeaf_no_vdi(self):
++        self._make_test_sr()
++        self.mock_sr.vdis = {}
++
++        child_vdi_uuid = str(uuid.uuid4())
++        parent_vdi_uuid = str(uuid.uuid4())
++
++        with self.assertRaises(SMException) as sme:
++            self.mock_sr._finishInterruptedCoalesceLeaf(child_vdi_uuid, parent_vdi_uuid)
++
++        self.assertRegex(str(sme.exception), r"VDI \S+ not found")
++
++    def test_finishInterruptedCoalesceLeaf_forget_fail_and_complete(self):
++        child_vdi_uuid = str(uuid.uuid4())
++        parent_vdi_uuid = str(uuid.uuid4())
++
++        self._make_test_sr()
++        self.mock_sr.vdis = {
++            child_vdi_uuid: mock.create_autospec(cleanup.FileVDI)
++        }
++
++        def forgetVdi(self, uuid):
++            raise Failure(f"ForgetVDI {uuid} failed")
++
++        self.xapi_mock.forgetVDI.side_effect = forgetVdi
++
++        self.mock_sr._finishInterruptedCoalesceLeaf(child_vdi_uuid, parent_vdi_uuid)

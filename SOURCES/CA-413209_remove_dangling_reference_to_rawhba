@@ -1,0 +1,19 @@
+From 69f3c0467461ac4074a4d8545d4c8528bf0eb4ea Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Tue, 1 Jul 2025 16:50:53 +0100
+Subject: [PATCH] CA-413209: remove dangling reference to rawhba
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+diff --git a/drivers/mpathcount.py b/drivers/mpathcount.py
+index f89e37a..3faf1ed 100755
+--- a/drivers/mpathcount.py
++++ b/drivers/mpathcount.py
+@@ -24,7 +24,7 @@ import mpath_cli
+ import json
+ import subprocess
+ 
+-supported = ['iscsi', 'lvmoiscsi', 'rawhba', 'lvmohba', 'ocfsohba', 'ocfsoiscsi', 'netapp', 'lvmofcoe', 'gfs2']
++supported = ['iscsi', 'lvmoiscsi', 'lvmohba', 'lvmofcoe', 'gfs2']
+ 
+ LOCK_TYPE_HOST = "host"
+ LOCK_NS1 = "mpathcount1"

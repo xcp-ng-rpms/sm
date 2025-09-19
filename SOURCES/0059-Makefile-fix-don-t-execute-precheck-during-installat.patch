@@ -1,4 +1,4 @@
-From d05657df30d7c0e686eaed9561b1d61587d1b50f Mon Sep 17 00:00:00 2001
+From 5658b6c21bd2937195bd430e232ab877e2184c4c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 7 Nov 2024 15:50:22 +0100
 Subject: [PATCH] Makefile fix: don't execute precheck during installation
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index 293e5faa..3748226c 100755
+index a44fb5a5..608ac4d3 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -127,7 +127,7 @@ precheck: build

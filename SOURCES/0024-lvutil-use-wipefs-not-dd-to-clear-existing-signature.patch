@@ -1,4 +1,4 @@
-From ca1958037242d2bd272a25485ee4ade50b8a20b1 Mon Sep 17 00:00:00 2001
+From ed49d1844cc92cd6ce50396d2ddcc9b6c4fd7b13 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 5 Jul 2023 16:57:26 +0200
 Subject: [PATCH] lvutil: use wipefs not dd to clear existing signatures
@@ -12,10 +12,10 @@ Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
  3 files changed, 15 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/XE_SR_ERRORCODES.xml b/drivers/XE_SR_ERRORCODES.xml
-index 1986bc55..3578dd55 100755
+index a2dea049..25b9e9ca 100755
 --- a/drivers/XE_SR_ERRORCODES.xml
 +++ b/drivers/XE_SR_ERRORCODES.xml
-@@ -909,6 +909,12 @@
+@@ -915,6 +915,12 @@
              <value>461</value>
          </code>
  
@@ -29,10 +29,10 @@ index 1986bc55..3578dd55 100755
              <name>GenericException</name>
              <description>SM has thrown a generic python exception</description>
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 48767ead..2d990a9b 100755
+index ad844aad..0776142a 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
-@@ -478,24 +478,12 @@ def createVG(root, vgname):
+@@ -479,24 +479,12 @@ def createVG(root, vgname):
  
          f = _openExclusive(dev, True)
          os.close(f)
@@ -62,10 +62,10 @@ index 48767ead..2d990a9b 100755
          if not (dev == rootdev):
              try:
 diff --git a/drivers/util.py b/drivers/util.py
-index 4590a46c..e5d5da0a 100755
+index f7660cc0..ab6265fd 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -643,6 +643,11 @@ def zeroOut(path, fromByte, bytes):
+@@ -644,6 +644,11 @@ def zeroOut(path, fromByte, bytes):
      return True
  
  

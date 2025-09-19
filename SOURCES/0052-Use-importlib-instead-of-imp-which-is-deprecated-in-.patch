@@ -1,4 +1,4 @@
-From ea2f0b4686cd039785a753e0040ff1b3be20d5d1 Mon Sep 17 00:00:00 2001
+From cc37e7fe7be1116f6aa8330f2c7aef528e9cf502 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 10 Oct 2024 14:58:02 +0200
 Subject: [PATCH] Use importlib instead of imp which is deprecated in python
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/SR.py b/drivers/SR.py
-index 9ca0045c..d1aacdb3 100755
+index 14d63681..d19c5b34 100755
 --- a/drivers/SR.py
 +++ b/drivers/SR.py
 @@ -153,7 +153,7 @@ class SR(object):

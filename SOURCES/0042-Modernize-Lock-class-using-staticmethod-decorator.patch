@@ -1,4 +1,4 @@
-From 41e7dd418ea035feb91d5eb0eb99e41155d0815b Mon Sep 17 00:00:00 2001
+From f7f58b9f085a3b1d9aca456bff081f1d1923f9a9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 15:15:02 +0200
 Subject: [PATCH] Modernize Lock class using `staticmethod` decorator

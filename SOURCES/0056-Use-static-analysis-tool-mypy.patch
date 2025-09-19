@@ -1,4 +1,4 @@
-From 321ff7f25b04e34220e51fdf588d4d9be789189b Mon Sep 17 00:00:00 2001
+From de0611f0bf1329aaa6accbc5a340bd073cf5d696 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 17:51:25 +0200
 Subject: [PATCH] Use static analysis tool (mypy)
@@ -56,7 +56,7 @@ index 6271a21b..d89b968c 100644
      runs-on: ubuntu-20.04
  
 diff --git a/Makefile b/Makefile
-index d33c0605..293e5faa 100755
+index 2d38fb92..a44fb5a5 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -233,6 +233,7 @@ install: precheck
@@ -121,7 +121,7 @@ index 04a6543e..155983fc 100755
                  "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", \
                  "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 195c6fd3..70463b6c 100755
+index 595a55ac..117f2380 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -18,6 +18,8 @@
@@ -143,7 +143,7 @@ index 195c6fd3..70463b6c 100755
          "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", "VDI_MIRROR",
          "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "ATOMIC_PAUSE",
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index c900f57d..0daf3e97 100755
+index 3403c262..129528a5 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -17,6 +17,9 @@
@@ -156,7 +156,7 @@ index c900f57d..0daf3e97 100755
  import grp
  import os
  import re
-@@ -513,7 +516,7 @@ def mkdirs(path, mode=0o777):
+@@ -512,7 +515,7 @@ def mkdirs(path, mode=0o777):
  
  class KObject(object):
  
@@ -165,7 +165,7 @@ index c900f57d..0daf3e97 100755
  
      def sysfs_devname(self):
          raise NotImplementedError("sysfs_devname is undefined")
-@@ -521,7 +524,7 @@ class KObject(object):
+@@ -520,7 +523,7 @@ class KObject(object):
  
  class Attribute(object):
  
@@ -174,7 +174,7 @@ index c900f57d..0daf3e97 100755
  
      def __init__(self, path):
          self.path = path
-@@ -1167,7 +1170,7 @@ class VDI(object):
+@@ -1164,7 +1167,7 @@ class VDI(object):
          # before VDI.activate. Therefore those link steps where we
          # relink existing devices under deterministic path names.
  
@@ -183,7 +183,7 @@ index c900f57d..0daf3e97 100755
  
          def _mklink(self, target):
              raise NotImplementedError("_mklink is not defined")
-@@ -2132,7 +2135,7 @@ class UEventHandler(object):
+@@ -2120,7 +2123,7 @@ class UEventHandler(object):
              return "Uevent '%s' not handled by %s" % \
                  (self.event, self.handler.__class__.__name__)
  
@@ -192,7 +192,7 @@ index c900f57d..0daf3e97 100755
  
      def run(self):
  
-@@ -2228,7 +2231,7 @@ class PagePool(KObject):
+@@ -2216,7 +2219,7 @@ class PagePool(KObject):
  
  class BusDevice(KObject):
  
@@ -201,7 +201,7 @@ index c900f57d..0daf3e97 100755
  
      @classmethod
      def sysfs_bus_path(cls):
-@@ -2246,7 +2249,7 @@ class XenbusDevice(BusDevice):
+@@ -2234,7 +2237,7 @@ class XenbusDevice(BusDevice):
  
      XBT_NIL = ""
  
@@ -210,7 +210,7 @@ index c900f57d..0daf3e97 100755
  
      def __init__(self, domid, devid):
          self.domid = int(domid)
-@@ -2395,7 +2398,7 @@ class Blkback(XenBackendDevice):
+@@ -2383,7 +2386,7 @@ class Blkback(XenBackendDevice):
          self._q_events = None
  
      class XenstoreValueError(Exception):
@@ -219,7 +219,7 @@ index c900f57d..0daf3e97 100755
  
          def __init__(self, vbd, _str):
              self.vbd = vbd
-@@ -2832,7 +2835,7 @@ if __name__ == '__main__':
+@@ -2820,7 +2823,7 @@ if __name__ == '__main__':
  
      elif _class == 'tap':
  
@@ -275,7 +275,7 @@ index 56bf9fcc..2e6e2c9c 100755
      def __new__(cls, name, ns=None, *args, **kwargs):
          if ns:
 diff --git a/drivers/mpathcount.py b/drivers/mpathcount.py
-index f89e37a9..43285edc 100755
+index 3faf1ed2..1d35e7c9 100755
 --- a/drivers/mpathcount.py
 +++ b/drivers/mpathcount.py
 @@ -15,6 +15,8 @@
@@ -376,7 +376,7 @@ index 00000000..c515056c
 +import typing
 +from typing import *
 diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
-index a2b14d60..bbd04b15 100644
+index dfe9c9d0..7dbf6127 100644
 --- a/tests/test_cleanup.py
 +++ b/tests/test_cleanup.py
 @@ -1,3 +1,5 @@
@@ -385,7 +385,7 @@ index a2b14d60..bbd04b15 100644
  import errno
  import signal
  import unittest
-@@ -26,7 +28,7 @@ class FakeException(Exception):
+@@ -31,7 +33,7 @@ class FakeException(Exception):
  
  
  class FakeUtil:

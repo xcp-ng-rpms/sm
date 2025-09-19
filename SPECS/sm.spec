@@ -1,6 +1,6 @@
-%global package_speccommit f1b3ef576666b1b4a3805704f1ce2198094d6392
+%global package_speccommit 9df6da66175c15762000aa7a96311c44268fef52
 %global usver 3.2.12
-%global xsver 3
+%global xsver 10
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -9,13 +9,33 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
 Source1: update-cgrules.patch
 Patch0: ca-403593__dont_log_the_session_ref.patch
 Patch1: ca-405381_mpathcount_info_does_not_automatically_refresh_in_xencenter_after_disabling_and_enabling_multipath.patch
+Patch2: ca_407343_do_not_remove_vhd_parent_in_leaf_gc
+Patch3: revert-2979937bbb7
+Patch4: cp-50026_ensure_mpathcount_runs_after_multipath_deactivate.patch
+Patch5: CP-53692-SR-attach-calls-mpathcount-async.patch
+Patch6: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch7: update_pure_storage_udev_1.patch
+Patch8: update_pure_storage_udev_2.patch
+Patch9: CA-408105_add_logging_to__finishInterruptedCoalesceLeaf
+Patch10: CA-408452_remove_vhd_parent_if_it_does_not_have_one
+Patch11: cp-51633__tidy_up_intellicache_code.patch
+Patch12: cp-51843__advertise_sr_caching_on_lvhdoiscsi_and_hba.patch
+Patch13: cp-51843__add_unit_tests_for_setup_cache.patch
+Patch14: cp-51843__remove_unused_params.patch
+Patch15: cp-51843__add_unit_tests_for_remove_cache.patch
+Patch16: cp-51843__disable_read-caching_on_block.patch
+Patch17: ca_409231_report_intellicache_stats_with_nbd
+Patch18: ca_411163_verify_pv_scsi_ids
+Patch19: CA-395221_use_systemd_target_for_gc_enable
+Patch20: CA-413209_remove_dangling_reference_to_rawhba
+Patch21: CP-308587_update_netapp_multipath
 
 %define __python python3
 
@@ -52,7 +72,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.12-xcpng..3.2.12-8.3 --no-signature --no-numbered
+# git format-patch v3.2.12-10-xcpng..HEAD --no-signature --no-numbered
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -116,6 +136,25 @@ Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
 Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
 Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
 Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1064: 0064-chore-.github-workflows-use-ubuntu-24.04.patch
+Patch1065: 0065-Fix-warns-reported-by-new-github-workflow.patch
+Patch1066: 0066-Improve-LinstorSR.py-to-handle-thick-SR-creation-85.patch
+Patch1067: 0067-Fix-LINSTOR-satellite-LS_KEEP_RES-regex.patch
+Patch1068: 0068-fix-LinstorSR-Correctly-reference-a-variable-excepti.patch
+Patch1069: 0069-Fix-GC-hidden-attribute-in-case-of-SIGTERM-signal-87.patch
+Patch1070: 0070-fix-LinstorSR-robustify-DB-umount-call.patch
+Patch1071: 0071-feat-Linstor-rewrite-linstorhostcall-logic.patch
+Patch1072: 0072-feat-linstor-Add-new-debug-log-in-linstorhostcall-67.patch
+Patch1073: 0073-fix-linstor-subsequent-fixes-for-linstorhostcall.patch
+Patch1074: 0074-Fix-tests-of-CP-51843-add-unit-tests-for-setup_cache.patch
+Patch1075: 0075-feat-LinstorSR-improve-DB-volume-robustness.patch
+Patch1076: 0076-fix-linstorvolumemanager-robustify-usable-size-gette.patch
+Patch1077: 0077-fix-linstorvhdutil-don-t-log-when-get_hosts_attached.patch
+Patch1078: 0078-refactor-linstorvhdutil-simplify-linstorhostcall.patch
+Patch1079: 0079-fix-linstorvhdutil-call-local-method-when-possible-i.patch
+Patch1080: 0080-fix-linstorvhdutil.py-remove-useless-param-on-call_r.patch
+Patch1081: 0081-chore-pylintrc-get-rid-of-E1120-errors-for-LINSTOR-u.patch
+Patch1082: 0082-fix-linstorvhdutil-support-missing-session-97.patch
 
 %description
 This package contains storage backends used in XCP
@@ -353,6 +392,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/69-dm-lvm-metad.rules
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
+%config /etc/udev/rules.d/99-purestorage.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
 %{_datadir}/%{name}/update-cgrules.patch
 # XCP-ng
@@ -431,6 +471,51 @@ then
 fi
 
 %changelog
+* Tue Sep 16 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-10.1
+- Rebase on 3.2.12-10
+- Sync patches with our latest 3.2.12-8.3 branch
+- Add new patches:
+  - 0064-chore-.github-workflows-use-ubuntu-24.04.patch
+  - 0065-Fix-warns-reported-by-new-github-workflow.patch
+  - 0066-Improve-LinstorSR.py-to-handle-thick-SR-creation-85.patch
+  - 0067-Fix-LINSTOR-satellite-LS_KEEP_RES-regex.patch
+  - 0068-fix-LinstorSR-Correctly-reference-a-variable-excepti.patch
+  - 0069-Fix-GC-hidden-attribute-in-case-of-SIGTERM-signal-87.patch
+  - 0070-fix-LinstorSR-robustify-DB-umount-call.patch
+  - 0071-feat-Linstor-rewrite-linstorhostcall-logic.patch
+  - 0072-feat-linstor-Add-new-debug-log-in-linstorhostcall-67.patch
+  - 0073-fix-linstor-subsequent-fixes-for-linstorhostcall.patch
+  - 0074-Fix-tests-of-CP-51843-add-unit-tests-for-setup_cache.patch
+  - 0075-feat-LinstorSR-improve-DB-volume-robustness.patch
+  - 0076-fix-linstorvolumemanager-robustify-usable-size-gette.patch
+  - 0077-fix-linstorvhdutil-don-t-log-when-get_hosts_attached.patch
+  - 0078-refactor-linstorvhdutil-simplify-linstorhostcall.patch
+  - 0079-fix-linstorvhdutil-call-local-method-when-possible-i.patch
+  - 0080-fix-linstorvhdutil.py-remove-useless-param-on-call_r.patch
+  - 0081-chore-pylintrc-get-rid-of-E1120-errors-for-LINSTOR-u.patch
+  - 0082-fix-linstorvhdutil-support-missing-session-97.patch
+- *** Upstream changelog ***
+  * Fri Jul 04 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-10
+  - CA-413209: remove dangling reference to rawhba
+  - CP-308587: update NetApp multipath as requested
+  * Wed Jun 18 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-9
+  - CA-395221: require systemd target
+  * Tue May 27 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-8
+  - CP-53692 SR attach with kicking the mpathcount pipe
+  - CA-411163: refuse to attach if we see multiple SCSI IDs for SR PVs
+  * Tue Apr 08 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-7
+  - CA-409231: Report IntelliCache stats when parent is NBD.
+  * Mon Mar 31 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-6
+  - CA-407743: do not try to add memory caching and intellicache
+  * Tue Mar 25 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-5
+  - CA-408105: add logging to failure paths
+  - CA-408452: remove VDI parent if it does not have one
+  - CP-51843:  extend IntelliCache coverage
+  * Tue Mar 04 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-4
+  - CA-407343: do not remove the parent's vhd-parent in leaf GC
+  - Revert the changes in 2979937bbb7 (CA-397084)
+  - CP-50026 Ensure mpathcount runs after multipath deactivate
+
 * Fri Jul 04 2025 Yann Dirson <yann.dirson@vates.fr> - 3.2.12-3.3
 - Add missing dependency on libcgroup-tools, uses cgclassify(1)
 - Drop dependency on old and unused python3-future

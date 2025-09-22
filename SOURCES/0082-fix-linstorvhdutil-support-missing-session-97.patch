@@ -1,7 +1,7 @@
-From f9ac72660b44a3e9ed63d61a1b36061abc25bff8 Mon Sep 17 00:00:00 2001
+From f373af55338218fd5f2c5df38e3f354119adcb3c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
-Date: Wed, 17 Sep 2025 16:09:33 +0200
-Subject: [PATCH] fix(linstorvhdutil): support missing session
+Date: Wed, 17 Sep 2025 16:23:21 +0200
+Subject: [PATCH] fix(linstorvhdutil): support missing session (#97)
 
 Session attr is not set during "attach/detach calls from config".
 In this context local method must always be called.

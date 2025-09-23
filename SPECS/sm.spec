@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -155,6 +155,8 @@ Patch1079: 0079-fix-linstorvhdutil-call-local-method-when-possible-i.patch
 Patch1080: 0080-fix-linstorvhdutil.py-remove-useless-param-on-call_r.patch
 Patch1081: 0081-chore-pylintrc-get-rid-of-E1120-errors-for-LINSTOR-u.patch
 Patch1082: 0082-fix-linstorvhdutil-support-missing-session-97.patch
+Patch1083: 0083-Remove-useless-loadLocked-param-on-vdi-methods-98.patch
+Patch1084: 0084-fix-largeblock-redo-VG-activation-using-custom-confi.patch
 
 %description
 This package contains storage backends used in XCP
@@ -471,6 +473,10 @@ then
 fi
 
 %changelog
+* Tue Sep 23 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-10.2
+- Add 0083-Remove-useless-loadLocked-param-on-vdi-methods-98.patch
+- Add 0084-fix-largeblock-redo-VG-activation-using-custom-confi.patch
+
 * Tue Sep 16 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-10.1
 - Rebase on 3.2.12-10
 - Sync patches with our latest 3.2.12-8.3 branch

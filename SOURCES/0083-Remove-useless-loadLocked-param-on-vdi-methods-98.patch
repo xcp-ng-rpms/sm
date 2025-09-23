@@ -1,0 +1,79 @@
+From 29f7b9bc0d36cf35d30677b893d00c109fd9d95d Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, 23 Sep 2025 15:39:44 +0200
+Subject: [PATCH] Remove useless `loadLocked` param on `vdi` methods (#98)
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/CephFSSR.py    | 2 +-
+ drivers/GlusterFSSR.py | 2 +-
+ drivers/MooseFSSR.py   | 2 +-
+ drivers/XFSSR.py       | 2 +-
+ drivers/ZFSSR.py       | 2 +-
+ 5 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
+index 9e8e46e1..56ca7ba6 100644
+--- a/drivers/CephFSSR.py
++++ b/drivers/CephFSSR.py
+@@ -269,7 +269,7 @@ class CephFSSR(FileSR.FileSR):
+                 raise xs_errors.SROSError(114, "Failed to remove CephFS mount point")
+ 
+     @override
+-    def vdi(self, uuid, loadLocked=False) -> VDI.VDI:
++    def vdi(self, uuid) -> VDI.VDI:
+         return CephFSFileVDI(self, uuid)
+ 
+     @staticmethod
+diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
+index 7b515dc8..e6aec9a4 100644
+--- a/drivers/GlusterFSSR.py
++++ b/drivers/GlusterFSSR.py
+@@ -249,7 +249,7 @@ class GlusterFSSR(FileSR.FileSR):
+                 raise xs_errors.SROSError(114, "Failed to remove GlusterFS mount point")
+ 
+     @override
+-    def vdi(self, uuid, loadLocked=False) -> VDI.VDI:
++    def vdi(self, uuid) -> VDI.VDI:
+         return GlusterFSFileVDI(self, uuid)
+ 
+     @staticmethod
+diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
+index 4ebd7bd8..dac557eb 100755
+--- a/drivers/MooseFSSR.py
++++ b/drivers/MooseFSSR.py
+@@ -278,7 +278,7 @@ class MooseFSSR(FileSR.FileSR):
+                 raise xs_errors.SROSError(114, "Failed to remove MooseFS mount point")
+ 
+     @override
+-    def vdi(self, uuid, loadLocked=False) -> VDI.VDI:
++    def vdi(self, uuid) -> VDI.VDI:
+         return MooseFSFileVDI(self, uuid)
+ 
+     @staticmethod
+diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
+index 5bd73267..91d2dfe3 100755
+--- a/drivers/XFSSR.py
++++ b/drivers/XFSSR.py
+@@ -235,7 +235,7 @@ class XFSSR(FileSR.FileSR):
+                   scsiutil.devlist_to_serialstring(self.dconf['device'].split(',')))
+ 
+     @override
+-    def vdi(self, uuid, loadLocked = False) -> VDI.VDI:
++    def vdi(self, uuid) -> VDI.VDI:
+         return XFSFileVDI(self, uuid)
+ 
+     @staticmethod
+diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
+index 13a895a2..14aa0cd7 100644
+--- a/drivers/ZFSSR.py
++++ b/drivers/ZFSSR.py
+@@ -120,7 +120,7 @@ class ZFSSR(FileSR.FileSR):
+         return super(ZFSSR, self).detach(sr_uuid)
+ 
+     @override
+-    def vdi(self, uuid, loadLocked=False) -> VDI.VDI:
++    def vdi(self, uuid) -> VDI.VDI:
+         return ZFSFileVDI(self, uuid)
+ 
+     # Ensure _checkmount is overridden to prevent bad behaviors in FileSR.

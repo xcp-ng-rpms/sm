@@ -1,0 +1,98 @@
+From becb9a27aa2e742ee3721921fd8e6bf036d313e1 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Wed, 16 Apr 2025 11:21:01 +0200
+Subject: [PATCH] Support image-format param during VDI creation
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/FileSR.py    | 16 +++++++++-------
+ drivers/LVMSR.py     | 19 ++++++++++---------
+ drivers/LinstorSR.py | 14 +++++++-------
+ 3 files changed, 26 insertions(+), 23 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 8e97105d..eb7ed047 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -489,16 +489,18 @@ class FileVDI(VDI.VDI):
+ 
+         if self.sr.srcmd.cmd == "vdi_create":
+             self.key_hash = None
+-            if "vdi_sm_config" in self.sr.srcmd.params:
+-                if "key_hash" in self.sr.srcmd.params["vdi_sm_config"]:
+-                    self.key_hash = self.sr.srcmd.params["vdi_sm_config"]["key_hash"]
+ 
+-                if "type" in self.sr.srcmd.params["vdi_sm_config"]:
+-                    vdi_type = self.sr.srcmd.params["vdi_sm_config"]["type"]
+-                    if not self.VDI_TYPE.get(vdi_type):
++            vdi_sm_config = self.sr.srcmd.params.get("vdi_sm_config")
++            if vdi_sm_config:
++                self.key_hash = vdi_sm_config.get("key_hash")
++
++                image_format = vdi_sm_config.get("image-format") or vdi_sm_config.get("type")
++                if image_format:
++                    vdi_type = self.VDI_TYPE.get(image_format)
++                    if not vdi_type:
+                         raise xs_errors.XenError('VDIType',
+                                 opterr='Invalid VDI type %s' % vdi_type)
+-                    self.vdi_type = self.VDI_TYPE[vdi_type]
++                    self.vdi_type = vdi_type
+ 
+             if not self.vdi_type:
+                 self.vdi_type = getVdiTypeFromImageFormat(self.sr.preferred_image_formats[0])
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 1c4243db..d971f50d 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -1370,16 +1370,17 @@ class LVMVDI(VDI.VDI):
+ 
+         # the VDI must be in the process of being created
+         self.exists = False
+-        if "vdi_sm_config" in self.sr.srcmd.params and \
+-                "type" in self.sr.srcmd.params["vdi_sm_config"]:
+-            type = self.sr.srcmd.params["vdi_sm_config"]["type"]
+ 
+-            try:
+-                self._setType(CREATE_PARAM_TYPES[type])
+-            except:
+-                raise xs_errors.XenError('VDICreate', opterr='bad type')
+-            if self.sr.legacyMode and self.sr.cmd == 'vdi_create' and VdiType.isCowImage(self.vdi_type):
+-                raise xs_errors.XenError('VDICreate', opterr='Cannot create COW type disk in legacy mode')
++        vdi_sm_config = self.sr.srcmd.params.get("vdi_sm_config")
++        if vdi_sm_config:
++            image_format = vdi_sm_config.get("image-format") or vdi_sm_config.get("type")
++            if image_format:
++                try:
++                    self._setType(CREATE_PARAM_TYPES[image_format])
++                except:
++                    raise xs_errors.XenError('VDICreate', opterr='bad image format')
++                if self.sr.legacyMode and self.sr.cmd == 'vdi_create' and VdiType.isCowImage(self.vdi_type):
++                    raise xs_errors.XenError('VDICreate', opterr='Cannot create COW type disk in legacy mode')
+ 
+         if not self.vdi_type:
+             self._setType(getVdiTypeFromImageFormat(self.sr.preferred_image_formats[0]))
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index befa1d47..d9b15a27 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1609,13 +1609,13 @@ class LinstorVDI(VDI.VDI):
+ 
+                 self._exists = False
+                 vdi_sm_config = self.sr.srcmd.params.get('vdi_sm_config')
+-                if vdi_sm_config is not None:
+-                    type = vdi_sm_config.get('type')
+-
+-                    try:
+-                        self._set_type(CREATE_PARAM_TYPES[type])
+-                    except:
+-                        raise xs_errors.XenError('VDICreate', opterr='bad type')
++                if vdi_sm_config:
++                    image_format = vdi_sm_config.get('image-format') or vdi_sm_config.get('type')
++                    if image_format:
++                        try:
++                            self._set_type(CREATE_PARAM_TYPES[image_format])
++                        except:
++                            raise xs_errors.XenError('VDICreate', opterr='bad image format')
+ 
+                 if not self.vdi_type:
+                     self._set_type(getVdiTypeFromImageFormat(self.sr.preferred_image_formats[0]))

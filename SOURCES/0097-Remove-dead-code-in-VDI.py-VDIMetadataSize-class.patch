@@ -1,0 +1,42 @@
+From fc6bf44dbc9b1bddf1bde0a9f510479245ba9b08 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 13 Jan 2025 18:18:50 +0100
+Subject: [PATCH] Remove dead code in VDI.py (VDIMetadataSize class)
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/VDI.py | 21 ---------------------
+ 1 file changed, 21 deletions(-)
+
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index fd679f17..21f51154 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -41,27 +41,6 @@ SNAPSHOT_INTERNAL = 3  # SNAPSHOT_SINGLE but don't update SR's virtual allocatio
+ CBT_BLOCK_SIZE = (64 * 1024)
+ 
+ 
+-def VDIMetadataSize(type, virtualsize):
+-    size = 0
+-    if type == 'vhd':
+-        size_mb = virtualsize // (1024 * 1024)
+-        #Footer + footer copy + header + possible CoW parent locator fields
+-        size = 3 * 1024
+-
+-        # BAT 4 Bytes per block segment
+-        size += (size_mb // 2) * 4
+-        size = util.roundup(512, size)
+-
+-        # BATMAP 1 bit per block segment
+-        size += (size_mb // 2) // 8
+-        size = util.roundup(4096, size)
+-
+-        # Segment bitmaps + Page align offsets
+-        size += (size_mb // 2) * 4096
+-
+-    return size
+-
+-
+ class VDI(object):
+     """Virtual Disk Instance descriptor.
+ 

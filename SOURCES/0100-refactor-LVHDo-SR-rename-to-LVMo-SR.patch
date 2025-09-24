@@ -1,0 +1,693 @@
+From c608c087373613f3bac8734a6f580c2d341c832f Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 20 Jan 2025 23:12:38 +0100
+Subject: [PATCH] refactor(LVHDo*SR): rename to "LVMo*SR"
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ Makefile                                      | 12 +++----
+ drivers/LVMSR.py                              |  4 +--
+ drivers/{LVHDoFCoESR.py => LVMoFCoESR.py}     | 20 +++++------
+ drivers/{LVHDoHBASR.py => LVMoHBASR.py}       | 36 +++++++++----------
+ drivers/{LVHDoISCSISR.py => LVMoISCSISR.py}   | 34 +++++++++---------
+ tests/test_BaseISCSI.py                       |  2 +-
+ ...test_LVHDoFCoESR.py => test_LVMoFCoESR.py} | 14 ++++----
+ .../{test_LVHDoHBASR.py => test_LVMoHBASR.py} | 30 ++++++++--------
+ ...st_LVHDoISCSISR.py => test_LVMoISCSISR.py} | 28 +++++++--------
+ 9 files changed, 90 insertions(+), 90 deletions(-)
+ rename drivers/{LVHDoFCoESR.py => LVMoFCoESR.py} (87%)
+ rename drivers/{LVHDoHBASR.py => LVMoHBASR.py} (92%)
+ rename drivers/{LVHDoISCSISR.py => LVMoISCSISR.py} (97%)
+ rename tests/{test_LVHDoFCoESR.py => test_LVMoFCoESR.py} (86%)
+ rename tests/{test_LVHDoHBASR.py => test_LVMoHBASR.py} (84%)
+ rename tests/{test_LVHDoISCSISR.py => test_LVMoISCSISR.py} (93%)
+
+diff --git a/Makefile b/Makefile
+index c2e25a7f..b628d4a5 100755
+--- a/Makefile
++++ b/Makefile
+@@ -10,11 +10,11 @@ SM_DRIVERS += ISO
+ SM_DRIVERS += HBA
+ SM_DRIVERS += Linstor
+ SM_DRIVERS += LVM
+-SM_DRIVERS += LVHDoISCSI
+-SM_DRIVERS += LVHDoHBA
++SM_DRIVERS += LVMoISCSI
++SM_DRIVERS += LVMoHBA
+ SM_DRIVERS += SHM
+ SM_DRIVERS += SMB
+-SM_DRIVERS += LVHDoFCoE
++SM_DRIVERS += LVMoFCoE
+ SM_DRIVERS += CephFS
+ SM_DRIVERS += GlusterFS
+ SM_DRIVERS += XFS
+@@ -205,9 +205,9 @@ install: build
+ 	rm $(SM_STAGING)$(SM_DEST)/SHMSR
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f LVMSR && ln -sf LVMSR.py LVHDSR
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f RawISCSISR && ln -sf RawISCSISR.py ISCSISR
+-	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoISCSISR && ln -sf LVHDoISCSISR.py LVMoISCSISR
+-	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoHBASR && ln -sf LVHDoHBASR.py LVMoHBASR
+-	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoFCoESR && ln -sf LVHDoFCoESR.py LVMoFCoESR
++	cd $(SM_STAGING)$(SM_DEST) && rm -f LVMoISCSISR && ln -sf LVMoISCSISR.py LVMoISCSISR
++	cd $(SM_STAGING)$(SM_DEST) && rm -f LVMoHBASR && ln -sf LVMoHBASR.py LVMoHBASR
++	cd $(SM_STAGING)$(SM_DEST) && rm -f LVMoFCoESR && ln -sf LVMoFCoESR.py LVMoFCoESR
+ 	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
+ 	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
+ 	install -m 755 drivers/linstor-manager $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 8724bfbc..d01e8921 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -452,7 +452,7 @@ class LVMSR(SR.SR):
+         Return true if all paths/devices agree on the same size.
+         """
+         if hasattr(self, 'SCSIid'):
+-            # LVHDoHBASR, LVHDoISCSISR
++            # LVMoHBASR, LVMoISCSISR
+             return scsiutil.refresh_lun_size_by_SCSIid(getattr(self, 'SCSIid'))
+         else:
+             # LVMSR
+@@ -476,7 +476,7 @@ class LVMSR(SR.SR):
+         if totaldevicesize >= (currentvgsize + resizethreshold):
+             try:
+                 if hasattr(self, 'SCSIid'):
+-                    # LVHDoHBASR, LVHDoISCSISR might have slaves
++                    # LVMoHBASR, LVMoISCSISR might have slaves
+                     scsiutil.refresh_lun_size_by_SCSIid_on_slaves(self.session,
+                                                        getattr(self, 'SCSIid'))
+                 util.SMlog("LVMSR._expand_size for %s will resize the pv." %
+diff --git a/drivers/LVHDoFCoESR.py b/drivers/LVMoFCoESR.py
+similarity index 87%
+rename from drivers/LVHDoFCoESR.py
+rename to drivers/LVMoFCoESR.py
+index 94132d78..988b216c 100755
+--- a/drivers/LVHDoFCoESR.py
++++ b/drivers/LVMoFCoESR.py
+@@ -15,14 +15,14 @@
+ # along with this program; if not, write to the Free Software Foundation, Inc.,
+ # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ #
+-# LVHDoFCoESR: LVHD over Fibre Channel over Ethernet driver
++# LVMoFCoESR: LVM over Fibre Channel over Ethernet driver
+ #
+ 
+ from sm_typing import override
+ 
+ import SR
+ import VDI
+-import LVHDoHBASR
++import LVMoHBASR
+ import LVMSR
+ import SRCommand
+ import sys
+@@ -41,8 +41,8 @@ CONFIGURATION = [['SCSIid', 'The scsi_id of the destination LUN'],
+                  defaults to thick)']]
+ 
+ DRIVER_INFO = {
+-    'name': 'LVHD over FCoE',
+-    'description': 'SR plugin which represents disks as VHDs on Logical \
++    'name': 'LVM over FCoE',
++    'description': 'SR plugin which represents disks as VHDs and QCOW2 on Logical \
+     Volumes within a Volume Group created on a FCoE LUN',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2015 Citrix Systems Inc',
+@@ -53,9 +53,9 @@ DRIVER_INFO = {
+ }
+ 
+ 
+-class LVHDoFCoESR(LVHDoHBASR.LVHDoHBASR):
++class LVMoFCoESR(LVMoHBASR.LVMoHBASR):
+ 
+-    """LVHD over FCoE storage repository"""
++    """LVM over FCoE storage repository"""
+ 
+     @override
+     @staticmethod
+@@ -93,13 +93,13 @@ class LVHDoFCoESR(LVHDoHBASR.LVHDoHBASR):
+ 
+     @override
+     def vdi(self, uuid) -> VDI.VDI:
+-        return LVHDoFCoEVDI(self, uuid)
++        return LVMoFCoEVDI(self, uuid)
+ 
+ 
+-class LVHDoFCoEVDI(LVHDoHBASR.LVHDoHBAVDI):
++class LVMoFCoEVDI(LVMoHBASR.LVMoHBAVDI):
+     pass
+ 
+ if __name__ == '__main__':
+-    SRCommand.run(LVHDoFCoESR, DRIVER_INFO)
++    SRCommand.run(LVMoFCoESR, DRIVER_INFO)
+ else:
+-    SR.registerSR(LVHDoFCoESR)
++    SR.registerSR(LVMoFCoESR)
+diff --git a/drivers/LVHDoHBASR.py b/drivers/LVMoHBASR.py
+similarity index 92%
+rename from drivers/LVHDoHBASR.py
+rename to drivers/LVMoHBASR.py
+index e1c75a77..d5789522 100755
+--- a/drivers/LVHDoHBASR.py
++++ b/drivers/LVMoHBASR.py
+@@ -15,7 +15,7 @@
+ # along with this program; if not, write to the Free Software Foundation, Inc.,
+ # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ #
+-# LVHDoISCSISR: LVHD over Hardware HBA LUN driver, e.g. Fibre Channel or
++# LVMoISCSISR: LVM over Hardware HBA LUN driver, e.g. Fibre Channel or
+ # hardware based iSCSI
+ #
+ 
+@@ -47,7 +47,7 @@ CONFIGURATION = [['SCSIid', 'The scsi_id of the destination LUN'], \
+                   ['allocation', 'Valid values are thick or thin (optional, defaults to thick)']]
+ 
+ DRIVER_INFO = {
+-    'name': 'LVHD over FC',
++    'name': 'LVM over FC',
+     'description': 'SR plugin which represents disks as VHDs on Logical Volumes within a Volume Group created on an HBA LUN, e.g. hardware-based iSCSI or FC support',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2008 Citrix Systems Inc',
+@@ -58,8 +58,8 @@ DRIVER_INFO = {
+     }
+ 
+ 
+-class LVHDoHBASR(LVMSR.LVMSR):
+-    """LVHD over HBA storage repository"""
++class LVMoHBASR(LVMSR.LVMSR):
++    """LVM over HBA storage repository"""
+ 
+     @override
+     @staticmethod
+@@ -111,14 +111,14 @@ class LVHDoHBASR(LVMSR.LVMSR):
+                 raise xs_errors.XenError('ConfigSCSIid')
+ 
+         self.SCSIid = self.dconf['SCSIid']
+-        super(LVHDoHBASR, self).load(sr_uuid)
++        super(LVMoHBASR, self).load(sr_uuid)
+ 
+     @override
+     def create(self, sr_uuid, size) -> None:
+         self.hbasr.attach(sr_uuid)
+         if self.mpath == "true":
+             self.mpathmodule.refresh(self.SCSIid, 0)
+-        self._pathrefresh(LVHDoHBASR)
++        self._pathrefresh(LVMoHBASR)
+         try:
+             LVMSR.LVMSR.create(self, sr_uuid, size)
+         finally:
+@@ -137,7 +137,7 @@ class LVHDoHBASR(LVMSR.LVMSR):
+             for file in os.listdir(path):
+                 self.block_setscheduler('%s/%s' % (path, file))
+ 
+-        self._pathrefresh(LVHDoHBASR)
++        self._pathrefresh(LVMoHBASR)
+         if not os.path.exists(self.dconf['device']):
+             # Force a rescan on the bus
+             self.hbasr._init_hbadict()
+@@ -156,10 +156,10 @@ class LVHDoHBASR(LVMSR.LVMSR):
+             if 'device' not in self.dconf or not os.path.exists(self.dconf['device']):
+                 util.SMlog("@@@@@ path does not exists")
+                 self.mpathmodule.refresh(self.SCSIid, 0)
+-                self._pathrefresh(LVHDoHBASR)
++                self._pathrefresh(LVMoHBASR)
+                 self._setMultipathableFlag(SCSIid=self.SCSIid)
+         else:
+-                self._pathrefresh(LVHDoHBASR)
++                self._pathrefresh(LVMoHBASR)
+         LVMSR.LVMSR.scan(self, sr_uuid)
+ 
+     @override
+@@ -180,7 +180,7 @@ class LVHDoHBASR(LVMSR.LVMSR):
+             self.mpathmodule.refresh(self.SCSIid, 0)
+ 
+         try:
+-            self._pathrefresh(LVHDoHBASR)
++            self._pathrefresh(LVMoHBASR)
+             result = LVMSR.LVMSR.probe(self)
+             if self.mpath == "true":
+                 self.mpathmodule.reset(self.SCSIid, explicit_unmap=True)
+@@ -217,7 +217,7 @@ class LVHDoHBASR(LVMSR.LVMSR):
+ 
+     @override
+     def delete(self, sr_uuid) -> None:
+-        self._pathrefresh(LVHDoHBASR)
++        self._pathrefresh(LVMoHBASR)
+         try:
+             LVMSR.LVMSR.delete(self, sr_uuid)
+         finally:
+@@ -227,13 +227,13 @@ class LVHDoHBASR(LVMSR.LVMSR):
+ 
+     @override
+     def vdi(self, uuid) -> VDI.VDI:
+-        return LVHDoHBAVDI(self, uuid)
++        return LVMoHBAVDI(self, uuid)
+ 
+ 
+-class LVHDoHBAVDI(LVMSR.LVMVDI):
++class LVMoHBAVDI(LVMSR.LVMVDI):
+     @override
+     def generate_config(self, sr_uuid, vdi_uuid) -> str:
+-        util.SMlog("LVHDoHBAVDI.generate_config")
++        util.SMlog("LVMoHBAVDI.generate_config")
+         if not lvutil._checkLV(self.path):
+             raise xs_errors.XenError('VDIUnavailable')
+         dict = {}
+@@ -250,14 +250,14 @@ class LVHDoHBAVDI(LVMSR.LVMVDI):
+ 
+     @override
+     def attach_from_config(self, sr_uuid, vdi_uuid) -> str:
+-        util.SMlog("LVHDoHBAVDI.attach_from_config")
++        util.SMlog("LVMoHBAVDI.attach_from_config")
+         self.sr.hbasr.attach(sr_uuid)
+         if self.sr.mpath == "true":
+             self.sr.mpathmodule.refresh(self.sr.SCSIid, 0)
+         try:
+             return self.attach(sr_uuid, vdi_uuid)
+         except:
+-            util.logException("LVHDoHBAVDI.attach_from_config")
++            util.logException("LVMoHBAVDI.attach_from_config")
+             raise xs_errors.XenError('SRUnavailable', \
+                         opterr='Unable to attach the heartbeat disk')
+ 
+@@ -267,6 +267,6 @@ def match_scsidev(s):
+     return regex.search(s, 0)
+ 
+ if __name__ == '__main__':
+-    SRCommand.run(LVHDoHBASR, DRIVER_INFO)
++    SRCommand.run(LVMoHBASR, DRIVER_INFO)
+ else:
+-    SR.registerSR(LVHDoHBASR)
++    SR.registerSR(LVMoHBASR)
+diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVMoISCSISR.py
+similarity index 97%
+rename from drivers/LVHDoISCSISR.py
+rename to drivers/LVMoISCSISR.py
+index f7d7a59b..f3818d03 100755
+--- a/drivers/LVHDoISCSISR.py
++++ b/drivers/LVMoISCSISR.py
+@@ -15,7 +15,7 @@
+ # along with this program; if not, write to the Free Software Foundation, Inc.,
+ # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ #
+-# LVHDoISCSISR: LVHD over ISCSI software initiator SR driver
++# LVMoISCSISR: LVM over ISCSI software initiator SR driver
+ #
+ 
+ from sm_typing import override
+@@ -60,7 +60,7 @@ CONFIGURATION = [['SCSIid', 'The scsi_id of the destination LUN'], \
+                   ['allocation', 'Valid values are thick or thin (optional, defaults to thick)']]
+ 
+ DRIVER_INFO = {
+-    'name': 'LVHD over iSCSI',
++    'name': 'LVM over iSCSI',
+     'description': 'SR plugin which represents disks as Logical Volumes within a Volume Group created on an iSCSI LUN',
+     'vendor': 'Citrix Systems Inc',
+     'copyright': '(C) 2008 Citrix Systems Inc',
+@@ -71,8 +71,8 @@ DRIVER_INFO = {
+     }
+ 
+ 
+-class LVHDoISCSISR(LVMSR.LVMSR):
+-    """LVHD over ISCSI storage repository"""
++class LVMoISCSISR(LVMSR.LVMSR):
++    """LVM over ISCSI storage repository"""
+ 
+     @override
+     @staticmethod
+@@ -178,7 +178,7 @@ class LVHDoISCSISR(LVMSR.LVMSR):
+                     dconf['multiSession'] = IQNstring
+                     self.session.xenapi.PBD.set_device_config(pbd, dconf)
+             except Exception as exc:
+-                util.logException("LVHDoISCSISR.load")
++                util.logException("LVMoISCSISR.load")
+                 saved_exc = exc
+         try:
+             self.iscsi = self.iscsiSRs[0]
+@@ -440,7 +440,7 @@ class LVHDoISCSISR(LVMSR.LVMSR):
+         self.iscsi.attach(sr_uuid)
+         try:
+             self.iscsi._attach_LUN_bySCSIid(self.SCSIid)
+-            self._pathrefresh(LVHDoISCSISR)
++            self._pathrefresh(LVMoISCSISR)
+             LVMSR.LVMSR.create(self, sr_uuid, size)
+         except Exception as inst:
+             self.iscsi.detach(sr_uuid)
+@@ -449,7 +449,7 @@ class LVHDoISCSISR(LVMSR.LVMSR):
+ 
+     @override
+     def delete(self, sr_uuid) -> None:
+-        self._pathrefresh(LVHDoISCSISR)
++        self._pathrefresh(LVMoISCSISR)
+         LVMSR.LVMSR.delete(self, sr_uuid)
+         for i in self.iscsiSRs:
+             i.detach(sr_uuid)
+@@ -485,7 +485,7 @@ class LVHDoISCSISR(LVMSR.LVMSR):
+                 for a in self.iscsi.adapter:
+                     scsiutil.rescan([self.iscsi.adapter[a]])
+ 
+-            self._pathrefresh(LVHDoISCSISR)
++            self._pathrefresh(LVMoISCSISR)
+ 
+             # Check that we only have PVs for the volume group with the expected SCSI ID
+             lvutil.checkPVScsiIds(self.vgname, self.SCSIid)
+@@ -511,7 +511,7 @@ class LVHDoISCSISR(LVMSR.LVMSR):
+ 
+     @override
+     def scan(self, sr_uuid) -> None:
+-        self._pathrefresh(LVHDoISCSISR)
++        self._pathrefresh(LVMoISCSISR)
+         if self.mpath == "true":
+             for i in self.iscsiSRs:
+                 try:
+@@ -539,7 +539,7 @@ class LVHDoISCSISR(LVMSR.LVMSR):
+ 
+         self.iscsi.attach(self.uuid)
+         self.iscsi._attach_LUN_bySCSIid(self.SCSIid)
+-        self._pathrefresh(LVHDoISCSISR)
++        self._pathrefresh(LVMoISCSISR)
+         out = LVMSR.LVMSR.probe(self)
+         self.iscsi.detach(self.uuid)
+         return out
+@@ -560,13 +560,13 @@ class LVHDoISCSISR(LVMSR.LVMSR):
+ 
+     @override
+     def vdi(self, uuid) -> VDI.VDI:
+-        return LVHDoISCSIVDI(self, uuid)
++        return LVMoISCSIVDI(self, uuid)
+ 
+ 
+-class LVHDoISCSIVDI(LVMSR.LVMVDI):
++class LVMoISCSIVDI(LVMSR.LVMVDI):
+     @override
+     def generate_config(self, sr_uuid, vdi_uuid) -> str:
+-        util.SMlog("LVHDoISCSIVDI.generate_config")
++        util.SMlog("LVMoISCSIVDI.generate_config")
+         if not lvutil._checkLV(self.path):
+             raise xs_errors.XenError('VDIUnavailable')
+         dict = {}
+@@ -588,18 +588,18 @@ class LVHDoISCSIVDI(LVMSR.LVMVDI):
+ 
+     @override
+     def attach_from_config(self, sr_uuid, vdi_uuid) -> str:
+-        util.SMlog("LVHDoISCSIVDI.attach_from_config")
++        util.SMlog("LVMoISCSIVDI.attach_from_config")
+         try:
+             self.sr.iscsi.attach(sr_uuid)
+             self.sr.iscsi._attach_LUN_bySCSIid(self.sr.SCSIid)
+             return LVMSR.LVMVDI.attach(self, sr_uuid, vdi_uuid)
+         except:
+-            util.logException("LVHDoISCSIVDI.attach_from_config")
++            util.logException("LVMoISCSIVDI.attach_from_config")
+             raise xs_errors.XenError('SRUnavailable', \
+                         opterr='Unable to attach the heartbeat disk')
+ 
+ 
+ if __name__ == '__main__':
+-    SRCommand.run(LVHDoISCSISR, DRIVER_INFO)
++    SRCommand.run(LVMoISCSISR, DRIVER_INFO)
+ else:
+-    SR.registerSR(LVHDoISCSISR)
++    SR.registerSR(LVMoISCSISR)
+diff --git a/tests/test_BaseISCSI.py b/tests/test_BaseISCSI.py
+index 7c4ed83f..f9216de1 100644
+--- a/tests/test_BaseISCSI.py
++++ b/tests/test_BaseISCSI.py
+@@ -36,7 +36,7 @@ class TestBaseISCSI(ISCSITestCase):
+         mock_xenapi = xenapi_patcher.start()
+         mock_xenapi.xapi_local.return_value = self.mock_session
+ 
+-        copy_patcher = mock.patch('LVHDoISCSISR.SR.copy.deepcopy')
++        copy_patcher = mock.patch('LVMoISCSISR.SR.copy.deepcopy')
+         self.mock_copy = copy_patcher.start()
+ 
+         def deepcopy(to_copy):
+diff --git a/tests/test_LVHDoFCoESR.py b/tests/test_LVMoFCoESR.py
+similarity index 86%
+rename from tests/test_LVHDoFCoESR.py
+rename to tests/test_LVMoFCoESR.py
+index 4bdcf41b..515a76a2 100644
+--- a/tests/test_LVHDoFCoESR.py
++++ b/tests/test_LVMoFCoESR.py
+@@ -1,11 +1,11 @@
+ import unittest.mock as mock
+-import LVHDoFCoESR
++import LVMoFCoESR
+ import unittest
+ import testlib
+ import xs_errors
+ 
+ 
+-class FakeFCoESR(LVHDoFCoESR.LVHDoFCoESR):
++class FakeFCoESR(LVMoFCoESR.LVMoFCoESR):
+     uuid = None
+     sr_ref = None
+     session = None
+@@ -40,7 +40,7 @@ class TestFCoESR(unittest.TestCase):
+ 
+     @mock.patch('SR.driver', autospec=True)
+     @mock.patch('util.find_my_pbd', autospec=True)
+-    @mock.patch('LVHDoFCoESR.LVHDoHBASR.HBASR.HBASR.print_devs', autospec=True)
++    @mock.patch('LVMoFCoESR.LVMoHBASR.HBASR.HBASR.print_devs', autospec=True)
+     def test_load_no_scsiid(self, print_devs, find_my_pbd, driver):
+         find_my_pbd.return_value = ['pbd_ref', 'pbd']
+         parameters = {}
+@@ -51,7 +51,7 @@ class TestFCoESR(unittest.TestCase):
+     @mock.patch('SR.driver', autospec=True)
+     @mock.patch('util.find_my_pbd', autospec=True)
+     @mock.patch('SR.SR._pathrefresh', autospec=True)
+-    @mock.patch('LVHDoFCoESR.LVMSR.LVMSR.load', autospec=True)
++    @mock.patch('LVMoFCoESR.LVMSR.LVMSR.load', autospec=True)
+     def test_load_scsiid(self, lvmsrload, pathrefresh, find_my_pbd, driver):
+         find_my_pbd.return_value = ['pbd_ref', 'pbd']
+         parameters = {}
+@@ -61,7 +61,7 @@ class TestFCoESR(unittest.TestCase):
+     @mock.patch('SR.driver', autospec=True)
+     @mock.patch('util.find_my_pbd', autospec=True)
+     @mock.patch('SR.SR._pathrefresh', autospec=True)
+-    @mock.patch('LVHDoFCoESR.LVMSR.LVMSR.load', autospec=True)
++    @mock.patch('LVMoFCoESR.LVMSR.LVMSR.load', autospec=True)
+     def test_load_pbd_exception(self, lvmsrload, pathrefresh, find_my_pbd, driver):
+         find_my_pbd.side_effect = Exception('exception raised')
+         parameters = {}
+@@ -71,7 +71,7 @@ class TestFCoESR(unittest.TestCase):
+     @mock.patch('SR.driver', autospec=True)
+     @mock.patch('util.find_my_pbd', autospec=True)
+     @mock.patch('SR.SR._pathrefresh', autospec=True)
+-    @mock.patch('LVHDoFCoESR.LVMSR.LVMSR.load', autospec=True)
++    @mock.patch('LVMoFCoESR.LVMSR.LVMSR.load', autospec=True)
+     def test_vdi(self, lvmsrload, pathrefresh, find_my_pbd, driver):
+         sr_uuid = 'bsr_uuid'
+         find_my_pbd.return_value = ['pbd_ref', 'pbd']
+@@ -81,5 +81,5 @@ class TestFCoESR(unittest.TestCase):
+ 
+         def mock_init(self, sr, sr_uuid):
+             pass
+-        with mock.patch('LVHDoFCoESR.LVHDoHBASR.LVHDoHBAVDI.__init__', new=mock_init):
++        with mock.patch('LVMoFCoESR.LVMoHBASR.LVMoHBAVDI.__init__', new=mock_init):
+             fcoesr.vdi(sr_uuid)
+diff --git a/tests/test_LVHDoHBASR.py b/tests/test_LVMoHBASR.py
+similarity index 84%
+rename from tests/test_LVHDoHBASR.py
+rename to tests/test_LVMoHBASR.py
+index 54686de9..e8beadbe 100644
+--- a/tests/test_LVHDoHBASR.py
++++ b/tests/test_LVMoHBASR.py
+@@ -1,7 +1,7 @@
+ from sm_typing import override
+ 
+ import unittest.mock as mock
+-import LVHDoHBASR
++import LVMoHBASR
+ import unittest
+ import xmlrpc.client
+ import SRCommand
+@@ -15,11 +15,11 @@ def mock_init(self, sr, sr_uuid):
+     self.sr_uuid = sr_uuid
+ 
+ 
+-class TestLVHDoHBAVDI(unittest.TestCase):
++class TestLVMoHBAVDI(unittest.TestCase):
+ 
+-    @mock.patch('LVHDoHBASR.LVHDoHBASR', autospec=True)
+-    @mock.patch('LVHDoHBASR.LVHDoHBAVDI.__init__', mock_init)
+-    @mock.patch('LVHDoHBASR.lvutil._checkLV', autospec=True)
++    @mock.patch('LVMoHBASR.LVMoHBASR', autospec=True)
++    @mock.patch('LVMoHBASR.LVMoHBAVDI.__init__', mock_init)
++    @mock.patch('LVMoHBASR.lvutil._checkLV', autospec=True)
+     def test_generate_config(self,
+                              mock_checkLV,
+                              mock_SR):
+@@ -34,7 +34,7 @@ class TestLVHDoHBAVDI(unittest.TestCase):
+         sr.mpathhandle = mpath_handle
+         sr.lock = "blah"
+ 
+-        vdi = LVHDoHBASR.LVHDoHBAVDI(sr, sr_uuid)
++        vdi = LVMoHBASR.LVMoHBAVDI(sr, sr_uuid)
+         vdi.path = "blahblah"
+         stuff = vdi.generate_config(sr_uuid, vdi_uuid)
+ 
+@@ -48,9 +48,9 @@ class TestLVHDoHBAVDI(unittest.TestCase):
+         self.assertEqual(load_object[0][0]["device_config"]["multipathhandle"],
+                          mpath_handle)
+ 
+-    @mock.patch('LVHDoHBASR.LVHDoHBASR', autospec=True)
+-    @mock.patch('LVHDoHBASR.LVHDoHBAVDI.__init__', mock_init)
+-    @mock.patch('LVHDoHBASR.lvutil._checkLV', autospec=True)
++    @mock.patch('LVMoHBASR.LVMoHBASR', autospec=True)
++    @mock.patch('LVMoHBASR.LVMoHBAVDI.__init__', mock_init)
++    @mock.patch('LVMoHBASR.lvutil._checkLV', autospec=True)
+     def test_generate_config_bad_path_assert(self,
+                                              mock_checkLV,
+                                              mock_SR):
+@@ -64,7 +64,7 @@ class TestLVHDoHBAVDI(unittest.TestCase):
+         sr.mpath = mpathing
+         sr.mpathhandle = mpath_handle
+ 
+-        vdi = LVHDoHBASR.LVHDoHBAVDI(sr, sr_uuid)
++        vdi = LVMoHBASR.LVMoHBAVDI(sr, sr_uuid)
+         vdi.path = "blahblah"
+ 
+         with self.assertRaises(xs_errors.SROSError) as cm:
+@@ -73,7 +73,7 @@ class TestLVHDoHBAVDI(unittest.TestCase):
+         self.assertEqual(str(cm.exception), "The VDI is not available")
+ 
+ 
+-class TestLVHDoHBASR(unittest.TestCase):
++class TestLVMoHBASR(unittest.TestCase):
+     @override
+     def setUp(self) -> None:
+         self.host_ref = str(uuid4())
+@@ -84,9 +84,9 @@ class TestLVHDoHBASR(unittest.TestCase):
+ 
+         lock_patcher = mock.patch('LVMSR.lock.Lock', autospec=True)
+         self.mock_lock = lock_patcher.start()
+-        lvmsr_patcher = mock.patch('LVHDoHBASR.LVMSR')
++        lvmsr_patcher = mock.patch('LVMoHBASR.LVMSR')
+         self.mock_lvmsr = lvmsr_patcher.start()
+-        util_patcher = mock.patch('LVHDoHBASR.util', autospec=True)
++        util_patcher = mock.patch('LVMoHBASR.util', autospec=True)
+         self.mock_util = util_patcher.start()
+         lc_patcher = mock.patch('LVMSR.lvmcache.lvutil.Fairlock', autospec=True)
+         self.mock_lc = lc_patcher.start()
+@@ -126,12 +126,12 @@ class TestLVHDoHBASR(unittest.TestCase):
+         return srcmd
+ 
+     @mock.patch("builtins.open", new_callable=mock.mock_open())
+-    @mock.patch('LVHDoHBASR.glob.glob', autospec=True)
++    @mock.patch('LVMoHBASR.glob.glob', autospec=True)
+     def test_sr_delete_no_multipath(self, mock_glob, mock_open):
+         # Arrange
+         srcmd = self.create_sr_cmd("sr_delete")
+ 
+-        sr = LVHDoHBASR.LVHDoHBASR(srcmd, self.sr_uuid)
++        sr = LVMoHBASR.LVMoHBASR(srcmd, self.sr_uuid)
+ 
+         mock_glob.return_value = ['/dev/sdd', '/dev/sde',
+                                   '/dev/sdi', '/dev/sdh']
+diff --git a/tests/test_LVHDoISCSISR.py b/tests/test_LVMoISCSISR.py
+similarity index 93%
+rename from tests/test_LVHDoISCSISR.py
+rename to tests/test_LVMoISCSISR.py
+index 44cc0fff..c294800a 100644
+--- a/tests/test_LVHDoISCSISR.py
++++ b/tests/test_LVMoISCSISR.py
+@@ -9,7 +9,7 @@ import traceback
+ from uuid import uuid4
+ 
+ import SR
+-import LVHDoISCSISR
++import LVMoISCSISR
+ import iscsilib
+ from BaseISCSI import BaseISCSISR
+ import SRCommand
+@@ -27,10 +27,10 @@ class RandomError(Exception):
+     pass
+ 
+ 
+-class NonInitingLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
++class NonInitingLVMoISCSISR(LVMoISCSISR.LVMoISCSISR):
+ 
+     """
+-    Helper class; Creates dummy LVHDoISCSISR object.
++    Helper class; Creates dummy LVMoISCSISR object.
+     Add attributes/methods as appropriate.
+     """
+ 
+@@ -58,10 +58,10 @@ class NonInitingLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
+         self.srcmd.params.update(extra_params or {})
+ 
+ 
+-class TestLVHDoISCSISR_load(unittest.TestCase):
++class TestLVMoISCSISR_load(unittest.TestCase):
+ 
+     """
+-    Tests for 'LVHDoISCSISR.load()'
++    Tests for 'LVMoISCSISR.load()'
+     """
+ 
+     @override
+@@ -78,7 +78,7 @@ class TestLVHDoISCSISR_load(unittest.TestCase):
+         for patcher in patchers:
+             patcher.start()
+ 
+-        self.lvhd_o_iscsi_sr = NonInitingLVHDoISCSISR(
++        self.lvhd_o_iscsi_sr = NonInitingLVMoISCSISR(
+             {'targetIQN': '*'},
+             {'command': 'sr_create'}
+         )
+@@ -123,24 +123,24 @@ class TestLVHDoISCSISR_load(unittest.TestCase):
+         )
+ 
+ 
+-class TestLVHDoISCSISR(ISCSITestCase):
++class TestLVMoISCSISR(ISCSITestCase):
+ 
+-    TEST_CLASS = 'LVHDoISCSISR'
++    TEST_CLASS = 'LVMoISCSISR'
+ 
+     @override
+     def setUp(self) -> None:
+-        util_patcher = mock.patch('LVHDoISCSISR.util', autospec=True)
++        util_patcher = mock.patch('LVMoISCSISR.util', autospec=True)
+         self.mock_util = util_patcher.start()
+         # self.mock_util.SMlog.side_effect = print
+         self.mock_util.isVDICommand = util.isVDICommand
+         self.mock_util.sessions_less_than_targets = util.sessions_less_than_targets
+ 
+         self.base_srs: Set[BaseISCSISR] = set()
+-        baseiscsi_patcher = mock.patch('LVHDoISCSISR.BaseISCSI.BaseISCSISR',
++        baseiscsi_patcher = mock.patch('LVMoISCSISR.BaseISCSI.BaseISCSISR',
+                                        autospec=True)
+         patched_baseiscsi = baseiscsi_patcher.start()
+         patched_baseiscsi.side_effect = self.baseiscsi
+-        lvmsr_patcher = mock.patch ('LVHDoISCSISR.LVMSR')
++        lvmsr_patcher = mock.patch ('LVMoISCSISR.LVMSR')
+ 
+         self.mock_lvmsr = lvmsr_patcher.start()
+         self.mock_session = mock.MagicMock()
+@@ -148,7 +148,7 @@ class TestLVHDoISCSISR(ISCSITestCase):
+         mock_xenapi = xenapi_patcher.start()
+         mock_xenapi.xapi_local.return_value = self.mock_session
+ 
+-        copy_patcher = mock.patch('LVHDoISCSISR.SR.copy.deepcopy')
++        copy_patcher = mock.patch('LVMoISCSISR.SR.copy.deepcopy')
+         self.mock_copy = copy_patcher.start()
+ 
+         def deepcopy(to_copy):
+@@ -161,7 +161,7 @@ class TestLVHDoISCSISR(ISCSITestCase):
+         lvlock_patcher = mock.patch('LVMSR.lvutil.Fairlock')
+         self.mock_lvlock = lvlock_patcher.start()
+ 
+-        pv_check_patcher = mock.patch('LVHDoISCSISR.lvutil.checkPVScsiIds', autospec=True)
++        pv_check_patcher = mock.patch('LVMoISCSISR.lvutil.checkPVScsiIds', autospec=True)
+         self.mock_pv_check = pv_check_patcher.start()
+ 
+         self.addCleanup(mock.patch.stopall)
+@@ -197,7 +197,7 @@ class TestLVHDoISCSISR(ISCSITestCase):
+ 
+     def create_test_sr(self, sr_cmd):
+         self.sr_uuid = str(uuid4())
+-        self.subject = LVHDoISCSISR.LVHDoISCSISR(
++        self.subject = LVMoISCSISR.LVMoISCSISR(
+             sr_cmd, self.sr_uuid)
+ 
+     def test_check_sr_pbd_not_found(self):

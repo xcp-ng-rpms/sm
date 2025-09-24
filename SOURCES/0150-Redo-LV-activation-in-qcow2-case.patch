@@ -1,0 +1,187 @@
+From 462a744c71c979e66dae339aa152f3decee435a0 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 18 Jul 2025 17:01:42 +0200
+Subject: [PATCH] Redo LV activation in qcow2 case
+
+Uses LVMCache in LV activation for QCOW2utils usage
+a few fix in blktap2.py check_journal_coalesce usage
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/blktap2.py   | 29 +++++++++++++++-------------
+ drivers/qcow2util.py | 46 ++++++++++++++++----------------------------
+ 2 files changed, 33 insertions(+), 42 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 91581f4a..2f3036fd 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -56,11 +56,6 @@ from cowutil import getCowUtil
+ from xmlrpc.client import ServerProxy, Transport
+ from socket import socket, AF_UNIX, SOCK_STREAM
+ 
+-import fjournaler
+-import journaler
+-from lvmcowutil import LvmCowUtil
+-from FileSR import FileVDI
+-import lvmcache
+ 
+ try:
+     from linstorvolumemanager import log_drbd_openers
+@@ -1660,7 +1655,7 @@ class VDI(object):
+             time.sleep(1)
+         raise util.SMException("VDI %s locked" % vdi_uuid)
+ 
+-    def _get_host_ref(self) -> str:
++    def _get_sr_master_host_ref(self) -> str:
+         """
+         Give the host ref of the one responsible for Garbage Collection for a SR.
+         Meaning this host for a local SR, the master for a shared SR.
+@@ -1672,7 +1667,7 @@ class VDI(object):
+             host_ref = sr.host_ref
+         return host_ref
+ 
+-    def _get_chain(self, cowutil, extractUuid) -> List[str]:
++    def _get_vdi_chain(self, cowutil, extractUuid) -> List[str]:
+         vdi_chain = []
+         path = self.target.get_vdi_path()
+ 
+@@ -1691,9 +1686,14 @@ class VDI(object):
+         if not cowutil.isCoalesceableOnRemote(): #We only need to stop the coalesce in case of QCOW2
+             return True
+ 
+-        level = 0
+         path = self.target.get_vdi_path()
+ 
++        import fjournaler
++        import journaler
++        from lvmcowutil import LvmCowUtil
++        from FileSR import FileVDI
++        import lvmcache
++
+         journal: Union[journaler.Journaler, fjournaler.Journaler]
+         # Different extractUUID & journaler function for LVMSR and FileSR
+         if path.startswith("/dev/"): #TODO: How to identify SR type easily, we could ask XAPI since we have the sruuid (and even ref)
+@@ -1707,14 +1707,15 @@ class VDI(object):
+             extractUuid = FileVDI.extractUuid
+ 
+         # Get the VDI chain
+-        vdi_chain = self._get_chain(cowutil, extractUuid)
++        vdi_chain = self._get_vdi_chain(cowutil, extractUuid)
+ 
+         if len(vdi_chain) == 1:
+-            #We only have a leaf, do nothing
++            # We only have a leaf, do nothing
+             util.SMlog("VDI {} is only a leaf, continuing...".format(vdi_uuid))
+             return True
+ 
+         # Log the chain of active VDI
++        level = 0
+         util.SMlog("VDI chain:")
+         for vdi in vdi_chain:
+             prefix = "    " * level
+@@ -1728,7 +1729,7 @@ class VDI(object):
+                 util.SMlog("Coalescing VDI {} in chain".format(entry))
+ 
+         # Get the host_ref from the host doing the GC work
+-        host_ref = self._get_host_ref()
++        host_ref = self._get_sr_master_host_ref()
+         for vdi in vdi_to_cancel:
+             args = {"sr_uuid": sr_uuid, "vdi_uuid": vdi}
+             util.SMlog("Calling cancel_coalesce_master with args: {}".format(args))
+@@ -1782,8 +1783,10 @@ class VDI(object):
+                 lock = Lock("lvchange-p", NS_PREFIX_LVM + sr_uuid)
+                 lock.acquire()
+ 
+-            self._check_journal_coalesce_chain(sr_uuid, vdi_uuid)
+-            #TODO: handling error here
++            if not self._check_journal_coalesce_chain(sr_uuid, vdi_uuid):
++                return False
++            # we could return false from here if we need to retry after relink
++            # #TODO: handling error here
+ 
+             # When we attach a static VDI for HA, we cannot communicate with
+             # xapi, because has not started yet. These VDIs are raw.
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 2db07999..5622bb43 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -14,6 +14,7 @@ import xs_errors
+ from blktap2 import TapCtl
+ from cowutil import CowUtil, CowImageInfo
+ from lvmcache import LVMCache
++from LVMSR import NS_PREFIX_LVM
+ 
+ MAX_QCOW_CHAIN_LENGTH: Final = 30
+ 
+@@ -482,37 +483,24 @@ class QCowUtil(CowUtil):
+         self, lvName: str, extractUuidFunction: Callable[[str], str], vgName: str
+     ) -> Optional[CowImageInfo]:
+         lvcache = LVMCache(vgName)
+-        lvcache.refresh()
+-        if lvName not in lvcache.lvs:
+-            return None
+-        if not lvcache.is_active(lvName):
+-                        lvcache.activateNoRefcount(lvName)
+-                        was_activated = True
+-        path = "/dev/{}/{}".format(vgName, lvName)
+-        cowinfo = self.getInfo(path, extractUuidFunction)
+-        if was_activated:
+-            try:
+-                lvcache.deactivateNoRefcount(lvName)
+-            except Exception as e:
+-                raise e
+-        return cowinfo
++        return self._getInfoLV(lvcache, extractUuidFunction, vgName, lvName)
+ 
+-    def _getInfoLV(self, lvcache: LVMCache, extractUuidFunction: Callable[[str], str], lvPath: str) -> Optional[CowImageInfo]:
+-        was_activated = False
+-        lvName = lvPath.split("/")[-1]
++    def _getInfoLV(
++        self, lvcache: LVMCache, extractUuidFunction: Callable[[str], str], vgName: str, lvName: str
++    ) -> Optional[CowImageInfo]:
++        lvPath = "/dev/{}/{}".format(vgName, lvName)
+         lvcache.refresh()
+         if lvName not in lvcache.lvs:
+             util.SMlog("{} does not exist anymore".format(lvName))
+             return None
+-        if not lvcache.is_active(lvName):
+-            lvcache.activateNoRefcount(lvName)
+-            was_activated = True
+-        cowinfo = self.getInfo(lvPath, extractUuidFunction)
+-        if was_activated:
+-            try:
+-                lvcache.deactivateNoRefcount(lvName)
+-            except Exception as e:
+-                raise e
++
++        vdiUuid = extractUuidFunction(lvPath)
++        srUuid = extractUuidFunction(vgName)
++        lvcache.activate(NS_PREFIX_LVM + srUuid, vdiUuid, lvName, False)
++        try:
++            cowinfo = self.getInfo(lvPath, extractUuidFunction)
++        finally:
++            lvcache.deactivate(NS_PREFIX_LVM + srUuid, vdiUuid, lvName, False)
+         return cowinfo
+ 
+     @override
+@@ -536,8 +524,7 @@ class QCowUtil(CowUtil):
+             for lvName in lvList:
+                 # lvinfo = lvcache.lvs[lvName]
+                 if reg.match(lvName):
+-                    lvPath = "/dev/{}/{}".format(vgName, lvName)
+-                    cowinfo = self._getInfoLV(lvcache, extractUuidFunction, lvPath)
++                    cowinfo = self._getInfoLV(lvcache, extractUuidFunction, vgName, lvName)
+                     if cowinfo is None: #We get None if the LV stopped existing in the meanwhile
+                         continue
+                     result[cowinfo.uuid] = cowinfo
+@@ -545,7 +532,8 @@ class QCowUtil(CowUtil):
+                         parentUuid = cowinfo.parentUuid
+                         parentPath = cowinfo.parentPath
+                         while parentUuid != "":
+-                            parent_cowinfo = self._getInfoLV(lvcache, extractUuidFunction, parentPath)
++                            parentLvName = parentPath.split("/")[-1]
++                            parent_cowinfo = self._getInfoLV(lvcache, extractUuidFunction, vgName, parentLvName)
+                             if parent_cowinfo is None: #Parent disappeared while scanning
+                                 raise util.SMException("Parent of {} wasn't found during scan".format(lvName))
+                             result[parent_cowinfo.uuid] = parent_cowinfo

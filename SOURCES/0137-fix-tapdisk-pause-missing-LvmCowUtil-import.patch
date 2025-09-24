@@ -1,0 +1,23 @@
+From 986107522e2958e30e333d395ac9cad2256a1435 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 2 Jun 2025 13:46:08 +0200
+Subject: [PATCH] fix(tapdisk-pause): missing LvmCowUtil import
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/tapdisk-pause | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
+index 3ff7fdfe..8a5bc757 100755
+--- a/drivers/tapdisk-pause
++++ b/drivers/tapdisk-pause
+@@ -29,7 +29,7 @@ import lvmcache
+ 
+ from constants import NS_PREFIX_LVM, VG_PREFIX
+ from cowutil import getCowUtil
+-from lvmcowutil import LV_PREFIX, LV_PREFIX_TO_VDI_TYPE
++from lvmcowutil import LV_PREFIX, LV_PREFIX_TO_VDI_TYPE, LvmCowUtil
+ from vditype import VdiType
+ 
+ try:

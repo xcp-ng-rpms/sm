@@ -1,0 +1,22 @@
+From 742e7c9066c2c119ccc2ccc55e78e64ba4578bb4 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 27 Mar 2025 11:47:35 +0100
+Subject: [PATCH] Add qcow2util to Makefile
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Makefile b/Makefile
+index 44e95d06..2c1e7d30 100755
+--- a/Makefile
++++ b/Makefile
+@@ -40,6 +40,7 @@ SM_LIBS += linstorcowutil
+ SM_LIBS += linstorjournaler
+ SM_LIBS += linstorvolumemanager
+ SM_LIBS += lvmcowutil
++SM_LIBS += qcow2util
+ SM_LIBS += cifutils
+ SM_LIBS += xs_errors
+ SM_LIBS += nfs

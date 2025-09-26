@@ -1,0 +1,261 @@
+From 0bf54f8424eff3f2c743bf774dec7f8fd9f7b225 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 26 May 2025 17:56:22 +0200
+Subject: [PATCH] WIP for cancelling coalesce for VDI activation
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/blktap2.py  | 90 +++++++++++++++++++++++++++++++++++++++++++--
+ drivers/cleanup.py  | 17 +++++----
+ drivers/on_slave.py | 22 +++++++++--
+ 3 files changed, 116 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 64f1a232..cb07a07c 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -18,7 +18,7 @@
+ # blktap2: blktap/tapdisk management layer
+ #
+ 
+-from sm_typing import Any, Callable, ClassVar, Dict, override
++from sm_typing import Any, Callable, ClassVar, Dict, override, List
+ 
+ from abc import abstractmethod
+ 
+@@ -1654,6 +1654,89 @@ class VDI(object):
+             time.sleep(1)
+         raise util.SMException("VDI %s locked" % vdi_uuid)
+ 
++    def _get_host_ref(self) -> str:
++        """
++        Give the host ref of the one responsible for Garbage Collection for a SR.
++        Meaning this host for a local SR, the master for a shared SR.
++        """
++        sr = self.target.vdi.sr
++        if sr.is_shared():
++            host_ref = util.get_master_ref(self._session)
++        else:
++            host_ref = sr.host_ref
++        return host_ref
++
++    def _get_chain(self, cowutil, extractUuid) -> List[str]:
++        vdi_chain = []
++        path = self.target.get_vdi_path()
++
++        #TODO: Need to add handling of error for getParentNoCheck, e.g. corrupted VDI where we can't read parent
++        vdi_chain.append(extractUuid(path))
++        parent = cowutil.getParentNoCheck(path)
++        while parent:
++            vdi_chain.append(extractUuid(parent))
++            parent = cowutil.getParentNoCheck(parent)
++        vdi_chain.reverse()
++        return vdi_chain
++
++    def _check_journal_coalesce_chain(self, sr_uuid: str, vdi_uuid: str) -> bool:
++        vdi_type = self.target.get_vdi_type()
++        cowutil = getCowUtil(vdi_type)
++        if not cowutil.isCoalesceableOnRemote(): #We only need to stop the coalesce in case of QCOW2
++            return True
++
++        level = 0
++        path = self.target.get_vdi_path()
++
++        # Different extractUUID & journaler function for LVMSR and FileSR
++        journaler = None
++        extractUuid = None
++        if path.startswith("/dev/"): #TODO: How to identify SR type easily, we could ask XAPI since we have the sruuid (and even ref)
++            from lvmcowutil import LvmCowUtil
++            import lvmcache
++            import journaler
++            vgName = "VG_XenStorage-{}".format(sr_uuid)
++            lvmCache = lvmcache.LVMCache(vgName)
++            journaler = journaler.Journaler(lvmCache)
++
++            extractUuid = LvmCowUtil.extractUuid
++        else:
++            from FileSR import FileVDI
++            import fjournaler
++            journaler = fjournaler.Journaler(os.getcwd())
++            extractUuid = FileVDI.extractUuid
++
++        # Get the VDI chain
++        vdi_chain = self._get_chain(cowutil, extractUuid)
++
++        if len(vdi_chain) == 1:
++            #We only have a leaf, do nothing
++            util.SMlog("VDI {} is only a leaf, continuing...".format(vdi_uuid))
++            return True
++
++        # Log the chain of active VDI
++        util.SMlog("VDI chain:")
++        for vdi in vdi_chain:
++            prefix = "    " * level
++            level += 1
++            util.SMlog("{}{}".format(prefix, vdi))
++
++        vdi_to_cancel = []
++        for entry in journaler.getAll("coalesce").keys():
++            if entry in vdi_chain:
++                vdi_to_cancel.append(entry)
++                util.SMlog("Coalescing VDI {} in chain".format(entry))
++
++        # Get the host_ref from the host doing the GC work
++        host_ref = self._get_host_ref()
++        for vdi in vdi_to_cancel:
++            args = {"sr_uuid": sr_uuid, "vdi_uuid": vdi}
++            util.SMlog("Calling cancel_coalesce_master with args: {}".format(args))
++            self._session.xenapi.host.call_plugin(\
++                host_ref, PLUGIN_ON_SLAVE, "cancel_coalesce_master", args)
++
++        return True
++
+     @locking("VDIUnavailable")
+     def _activate_locked(self, sr_uuid, vdi_uuid, options):
+         """Wraps target.activate and adds a tapdisk"""
+@@ -1663,8 +1746,6 @@ class VDI(object):
+         if self.tap_wanted():
+             if not self._add_tag(vdi_uuid, not options["rdonly"]):
+                 return False
+-                #TODO: Need to interrupt coalesce on master, the coalesce will check for host_OpaqueRef on the VDI before trying offline coalesce
+-                #TODO: The coalesce could happen on another slave in onlinecoalesce, interrupt coalesce on another slave (online coalesce)?
+             refresh = True
+ 
+         try:
+@@ -1689,6 +1770,9 @@ class VDI(object):
+ 
+             vdi_type = self.target.get_vdi_type()
+ 
++            self._check_journal_coalesce_chain(sr_uuid, vdi_uuid)
++            #TODO: handling error here
++
+             # Take lvchange-p Lock before running
+             # tap-ctl open
+             # Needed to avoid race with lvchange -p which is
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index c912db42..0cc5d283 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -835,8 +835,10 @@ class VDI(object):
+ 
+     def _call_plugin_coalesce(self, hostRef):
+         args = {"path": self.path, "vdi_type": self.vdi_type}
+-        self.sr.xapi.session.xenapi.host.call_plugin( \
++        util.SMlog("DAMS: Calling remote coalesce with: {}".format(args))
++        ret = self.sr.xapi.session.xenapi.host.call_plugin( \
+                     hostRef, XAPI.PLUGIN_ON_SLAVE, "commit_tapdisk", args)
++        util.SMlog("DAMS: Remote coalesce returned {}".format(ret))
+ 
+     def _doCoalesceOnHost(self, hostRef):
+         self.validate()
+@@ -852,6 +854,7 @@ class VDI(object):
+                 with open(file, "r") as f:
+                     if not f.read():
+                         #TODO: Need to call commit cancel on the hostRef if we stop
++                        util.SMlog("DAMS: Cancelling")
+                         self._call_plug_cancel(hostRef)
+                         return True
+             except OSError as e:
+@@ -862,6 +865,7 @@ class VDI(object):
+                 return True
+             return False
+ 
++        #TODO: Add exception handling here like when callinng in a runAbortable situation_doCoalesceCOWImage
+         Util.runAbortable(lambda: self._call_plugin_coalesce(hostRef),
+                           None, self.sr.uuid, abortTest, VDI.POLL_INTERVAL, 0)
+ 
+@@ -2486,7 +2490,6 @@ class SR(object):
+             # journal as soon as the COW coalesce step is done, because we
+             # don't expect the rest of the process to take long
+ 
+-            #TODO: Create `gc_running` in `/run/nonpersistent/sm/<sr uuid>/`
+             if os.path.exists(self._gc_running_file(vdi)):
+                 util.SMlog("gc_running already exist for {}. Ignoring...".format(self.uuid))
+ 
+@@ -2502,14 +2505,14 @@ class SR(object):
+             try:
+                 if host_refs and vdi.cowutil.isCoalesceableOnRemote:
+                     #Leaf opened on another host, we need to call online coalesce
+-                    util.SMlog("DAMS: Remote coalesce for {}".format(vdi.path))
++                    util.SMlog("Remote coalesce for {}".format(vdi.path))
+                     vdi._doCoalesceOnHost(list(host_refs)[0])
+                     skipRelink = True
+                 else:
+-                    util.SMlog("DAMS: Offline coalesce for {}".format(vdi.path))
++                    util.SMlog("Offline coalesce for {}".format(vdi.path))
+                     vdi._doCoalesce()
+             except Exception as e:
+-                util.SMlog("DAMS: EXCEPTION {}".format(e))
++                util.SMlog("EXCEPTION while coalescing: {}".format(e))
+                 self._delete_running_file(vdi)
+                 raise
+             """
+@@ -2527,7 +2530,7 @@ class SR(object):
+             if not skipRelink:
+                 self.journaler.create(vdi.JRN_RELINK, vdi.uuid, "1")
+ 
+-        if not skipRelink:
++        if not skipRelink: #TODO: we might want to let relink happen for VDI not currently in use
+             self.lock()
+             try:
+                 vdi.parent._tagChildrenForRelink()
+@@ -2762,7 +2765,7 @@ class SR(object):
+             return False
+         return True
+ 
+-    def _liveLeafCoalesce(self, vdi) -> bool:
++    def _liveLeafCoalesce(self, vdi: VDI) -> bool:
+         util.fistpoint.activate("LVHDRT_coaleaf_delay_3", self.uuid)
+         self.lock()
+         try:
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index c38b307c..70c580c9 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -163,15 +163,29 @@ def refresh_lun_size_by_SCSIid(session, args):
+         return "False"
+ 
+ def commit_tapdisk(session, args):
+-    path = args["path"]
++    path: str = args["path"]
+     vdi_type = args["vdi_type"]
+-    #TODO: Miss activating/changing RW, naming should reflect that it does more than coalesceing
++    #TODO: naming should reflect that it does more than coalesceing, like setting volume RW
++
++    def set_RW(path):
++        try:
++            util.pread2(["lvchange", "-p", "rw", path])
++        except:
++            pass
++    #TODO: need to make children RW. Or we let the relink happen with a refresh on master and hope it doesn't corrupt the disk
++    if path.startswith("/dev/"):
++        set_RW(path)
++
+     from cowutil import getCowUtil
+     cowutil = getCowUtil(vdi_type)
+     try:
++        parent = cowutil.getParentNoCheck(path)
++        if parent.startswith("/dev/"):
++            set_RW(parent)
+         return str(cowutil.coalesceOnline(path))
+     except:
+-        return "0"
++        util.logException("Couldn't coalesce online")
++        raise
+ 
+ def commit_cancel(session, args):
+     path = args["path"]
+@@ -205,6 +219,7 @@ def cancel_coalesce_master(session, args):
+ 
+     # return "True"
+ 
++    util.SMlog("Running cancel_coalesce_master plugin: {}".format(vdi_uuid))
+     path = "/run/nonpersistent/sm/{}/gc_running_{}".format(sr_uuid, vdi_uuid)
+ 
+     try:
+@@ -236,4 +251,5 @@ if __name__ == "__main__":
+         "is_openers": is_openers,
+         "commit_tapdisk": commit_tapdisk,
+         "commit_cancel": commit_cancel,
++        "cancel_coalesce_master": cancel_coalesce_master,
+         })

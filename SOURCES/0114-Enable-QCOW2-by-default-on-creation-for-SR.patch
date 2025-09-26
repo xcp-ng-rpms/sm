@@ -1,0 +1,23 @@
+From d2cd34a06e502d8a9d3e3527e1309823b8cfc00a Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 23 Jan 2025 17:17:00 +0100
+Subject: [PATCH] Enable QCOW2 by default on creation for SR
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/SR.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/SR.py b/drivers/SR.py
+index 92301f17..d9f25197 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -39,7 +39,7 @@ MASTER_LVM_CONF = '/etc/lvm/master'
+ # LUN per VDI key for XenCenter
+ LUNPERVDI = "LUNperVDI"
+ 
+-DEFAULT_IMAGE_FORMATS = [ImageFormat.VHD, ImageFormat.QCOW2]
++DEFAULT_IMAGE_FORMATS = [ImageFormat.QCOW2, ImageFormat.VHD]
+ 
+ 
+ 

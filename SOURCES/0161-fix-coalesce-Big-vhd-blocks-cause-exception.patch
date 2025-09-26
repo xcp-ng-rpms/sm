@@ -1,0 +1,46 @@
+From e0f21bc94b74ddf817d8c15e1e1ad14224d6bfab Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 25 Aug 2025 17:07:34 +0200
+Subject: [PATCH] fix(coalesce): Big vhd-blocks cause exception
+
+When handling bitmap, the GC is trying to write it in sm-config of the
+VDI.
+In the case of QCOW2, the bitmap can be bigger with 64KiB blocksize
+and they can't be written in the VDI sm-config.
+In this case, the GC would silently fail before running again and
+failing again.
+The written information is apparently never used again but the existence
+of the key in sm-config is checked by the GC to know if it has work to
+do.
+By not raising, the GC would run normally but never stop.
+Writing a dummy value then allow the GC to run and stop if it doesn't
+have work to do.
+Since the value used is always read from the VDI, the one from sm-config
+is not really relevant.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 1f29d693..257889e2 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -769,7 +769,15 @@ class VDI(object):
+ 
+     def updateBlockInfo(self) -> Optional[str]:
+         val = base64.b64encode(self._queryCowBlocks()).decode()
+-        self.setConfig(VDI.DB_VDI_BLOCKS, val)
++        try:
++            self.setConfig(VDI.DB_VDI_BLOCKS, val)
++        except Exception:
++            if self.vdi_type != VdiType.QCOW2:
++                raise
++            # Sometime with QCOW2, our allocation table is too big to be stored in XAPI, in this case we do not store it
++            # and we write `skipped` instead so that hasWork is happy (and the GC doesn't run in loop indefinitely).
++            self.setConfig(VDI.DB_VDI_BLOCKS, "skipped")
++
+         return val
+ 
+     def rename(self, uuid) -> None:

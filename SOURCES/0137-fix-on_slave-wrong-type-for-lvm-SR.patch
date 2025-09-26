@@ -1,0 +1,23 @@
+From 385ab69724b028dc07128bbd897913c04ac85699 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 2 Jun 2025 09:09:54 +0200
+Subject: [PATCH] fix(on_slave): wrong type for lvm SR
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/on_slave.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index 70c580c9..0fc4f499 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -100,7 +100,7 @@ def _is_open(session, args):
+     # FIXME: ugly hacks to create a VDI object without a real SRCommand to
+     # avoid having to refactor the core files
+     if srType.startswith("lvm"):
+-        srType = "lvhd"
++        srType = "lvm"
+     cmd = SRCommand.SRCommand(None)
+     cmd.driver_info = {"capabilities": None}
+     cmd.dconf = {

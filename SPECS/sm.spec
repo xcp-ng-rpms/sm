@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2.0.qcow2.1%{?dist}
+Release: %{?xsrel}.2.0.qcow2.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -180,60 +180,62 @@ Patch1104: 0104-Support-image-format-param-during-VDI-creation.patch
 Patch1105: 0105-Always-store-image-format-in-sm-config.patch
 Patch1106: 0106-to-drop.patch
 Patch1107: 0107-feat-SR-support-QCOW2-format.patch
-Patch1108: 0108-Fix-warns-reported-by-new-github-workflow.patch
-Patch1109: 0109-Fix-for-type-in-cleanup.py.patch
-Patch1110: 0110-Add-getBlockBitmap-coalesce-setParent.patch
-Patch1111: 0111-Fix-getSizePhys-and-size-in-calcOverheadEmpty.patch
-Patch1112: 0112-Add-getDefaultPreallocationSizeVirt-in-qcow2util.patch
-Patch1113: 0113-Enable-QCOW2-by-default-on-creation-for-SR.patch
-Patch1114: 0114-Implement-getInfo-for-LVM-raw-parents-and-getDepth.patch
-Patch1115: 0115-Add-function-get_openers_pid-in-util.py.patch
-Patch1116: 0116-Fix-getSizePhys-to-work-for-block-devices.patch
-Patch1117: 0117-Add-check-to-see-if-a-QCOW2-is-used-for-coalesce.patch
-Patch1118: 0118-Add-commit-and-query-to-TapCtl.patch
-Patch1119: 0119-Add-coalesce-with-call-to-blktap.patch
-Patch1120: 0120-cleanup.py-Change-VDI-to-be-RW-for-qemu-img-commit.patch
-Patch1121: 0121-Add-parents-for-getAllInfoFromVG.patch
-Patch1122: 0122-blktap2.py-correct-TapCtl.commit-call.patch
-Patch1123: 0123-Set-RW-children-of-a-LVM-VDI-to-coalesce.patch
-Patch1124: 0124-Limit-setParent-when-QCOW-is-opened.patch
-Patch1125: 0125-fix-getLvInfo-a-LV-could-disappear-during-scan.patch
-Patch1126: 0126-fix-qcow2util-explicitely-cast-in-str-for-mypy.patch
-Patch1127: 0127-fix-qcow2util-handle-online-coalesce-correctly.patch
-Patch1128: 0128-Add-qcow2util-to-Makefile.patch
-Patch1129: 0129-fix-FileSR-info-were-not-correctly-used.patch
-Patch1130: 0130-fix-FileSR-remove-a-dot-added-at-the-extension.patch
-Patch1131: 0131-Coalesce-on-remote-WIP.patch
-Patch1132: 0132-fix-setParent-setParent-only-warn-about-openers.patch
-Patch1133: 0133-Enable-qcow2util-to-cowutil.patch
-Patch1134: 0134-Add-is_shared-function-on-SR.patch
-Patch1135: 0135-WIP-for-cancelling-coalesce-for-VDI-activation.patch
-Patch1136: 0136-fix-on_slave-wrong-type-for-lvm-SR.patch
-Patch1137: 0137-fix-tapdisk-pause-missing-LvmCowUtil-import.patch
-Patch1138: 0138-fix-blktap2.py-change-chain-check-position-to-be-aft.patch
-Patch1139: 0139-fix-on-slave-temporary-fix-for-linstor-import-error.patch
-Patch1140: 0140-fix-cleanup.py-call-correctly-isCoalesceableOnRemote.patch
-Patch1141: 0141-fix-qcow2util-refactor-coalesce-online.patch
-Patch1142: 0142-Add-qcow2helper-to-compute-allocated-blocks.patch
-Patch1143: 0143-qcow2_helper-create-qcow2_helper.h.patch
-Patch1144: 0144-Add-some-type-hints-fixes.patch
-Patch1145: 0145-Type-fixes-on-cowutil.patch
-Patch1146: 0146-MooseFSSR-type-hint-fix.patch
-Patch1147: 0147-qcow2util.py-reduce-log-spam-for-onlinecoalesce.patch
-Patch1148: 0148-cowutil-add-a-comment-for-isCoalesceableOnRemote.patch
-Patch1149: 0149-lvmcowutil-fix-sr_uuid-handling.patch
-Patch1150: 0150-Redo-LV-activation-in-qcow2-case.patch
-Patch1151: 0151-Fix-unit-tests-with-QCOW2-changes.patch
-Patch1152: 0152-Fix-lvutil.extractUuid.patch
-Patch1153: 0153-fix-qcow2util-add-size-limit-for-qcow2.patch
-Patch1154: 0154-Optimize-qcow2-helper-with-OpenMP.patch
-Patch1155: 0155-fix-cleanup-remove-running-file-before-relink.patch
-Patch1156: 0156-fix-qcow2util-read-clusters-with-kill-data.patch
-Patch1157: 0157-Try-bitmap-dump-with-qcow2helper.patch
-Patch1158: 0158-Remove-limitation-on-blocksize.patch
-Patch1159: 0159-Fix-deadlock-with-coalesce-and-vdi-activation.patch
-Patch1160: 0160-fix-coalesce-Big-vhd-blocks-cause-exception.patch
-Patch1161: 0161-Mock-check_journal_coalesce-for-VDI-activation.patch
+Patch1108: 0108-fix-linstorvolumemanager-report-unexpected-DRBD-devi.patch
+Patch1109: 0109-Fix-warns-reported-by-new-github-workflow.patch
+Patch1110: 0110-Fix-for-type-in-cleanup.py.patch
+Patch1111: 0111-Add-getBlockBitmap-coalesce-setParent.patch
+Patch1112: 0112-Fix-getSizePhys-and-size-in-calcOverheadEmpty.patch
+Patch1113: 0113-Add-getDefaultPreallocationSizeVirt-in-qcow2util.patch
+Patch1114: 0114-Enable-QCOW2-by-default-on-creation-for-SR.patch
+Patch1115: 0115-Implement-getInfo-for-LVM-raw-parents-and-getDepth.patch
+Patch1116: 0116-Add-function-get_openers_pid-in-util.py.patch
+Patch1117: 0117-Fix-getSizePhys-to-work-for-block-devices.patch
+Patch1118: 0118-Add-check-to-see-if-a-QCOW2-is-used-for-coalesce.patch
+Patch1119: 0119-Add-commit-and-query-to-TapCtl.patch
+Patch1120: 0120-Add-coalesce-with-call-to-blktap.patch
+Patch1121: 0121-cleanup.py-Change-VDI-to-be-RW-for-qemu-img-commit.patch
+Patch1122: 0122-Add-parents-for-getAllInfoFromVG.patch
+Patch1123: 0123-blktap2.py-correct-TapCtl.commit-call.patch
+Patch1124: 0124-Set-RW-children-of-a-LVM-VDI-to-coalesce.patch
+Patch1125: 0125-Limit-setParent-when-QCOW-is-opened.patch
+Patch1126: 0126-fix-getLvInfo-a-LV-could-disappear-during-scan.patch
+Patch1127: 0127-fix-qcow2util-explicitely-cast-in-str-for-mypy.patch
+Patch1128: 0128-fix-qcow2util-handle-online-coalesce-correctly.patch
+Patch1129: 0129-Add-qcow2util-to-Makefile.patch
+Patch1130: 0130-fix-FileSR-info-were-not-correctly-used.patch
+Patch1131: 0131-fix-FileSR-remove-a-dot-added-at-the-extension.patch
+Patch1132: 0132-Coalesce-on-remote-WIP.patch
+Patch1133: 0133-fix-setParent-setParent-only-warn-about-openers.patch
+Patch1134: 0134-Enable-qcow2util-to-cowutil.patch
+Patch1135: 0135-Add-is_shared-function-on-SR.patch
+Patch1136: 0136-WIP-for-cancelling-coalesce-for-VDI-activation.patch
+Patch1137: 0137-fix-on_slave-wrong-type-for-lvm-SR.patch
+Patch1138: 0138-fix-tapdisk-pause-missing-LvmCowUtil-import.patch
+Patch1139: 0139-fix-blktap2.py-change-chain-check-position-to-be-aft.patch
+Patch1140: 0140-fix-on-slave-temporary-fix-for-linstor-import-error.patch
+Patch1141: 0141-fix-cleanup.py-call-correctly-isCoalesceableOnRemote.patch
+Patch1142: 0142-fix-qcow2util-refactor-coalesce-online.patch
+Patch1143: 0143-Add-qcow2helper-to-compute-allocated-blocks.patch
+Patch1144: 0144-qcow2_helper-create-qcow2_helper.h.patch
+Patch1145: 0145-Add-some-type-hints-fixes.patch
+Patch1146: 0146-Type-fixes-on-cowutil.patch
+Patch1147: 0147-MooseFSSR-type-hint-fix.patch
+Patch1148: 0148-qcow2util.py-reduce-log-spam-for-onlinecoalesce.patch
+Patch1149: 0149-cowutil-add-a-comment-for-isCoalesceableOnRemote.patch
+Patch1150: 0150-lvmcowutil-fix-sr_uuid-handling.patch
+Patch1151: 0151-Redo-LV-activation-in-qcow2-case.patch
+Patch1152: 0152-Fix-unit-tests-with-QCOW2-changes.patch
+Patch1153: 0153-Fix-lvutil.extractUuid.patch
+Patch1154: 0154-fix-qcow2util-add-size-limit-for-qcow2.patch
+Patch1155: 0155-Optimize-qcow2-helper-with-OpenMP.patch
+Patch1156: 0156-fix-cleanup-remove-running-file-before-relink.patch
+Patch1157: 0157-fix-qcow2util-read-clusters-with-kill-data.patch
+Patch1158: 0158-Try-bitmap-dump-with-qcow2helper.patch
+Patch1159: 0159-Remove-limitation-on-blocksize.patch
+Patch1160: 0160-Fix-deadlock-with-coalesce-and-vdi-activation.patch
+Patch1161: 0161-fix-coalesce-Big-vhd-blocks-cause-exception.patch
+Patch1162: 0162-Mock-check_journal_coalesce-for-VDI-activation-in-te.patch
+Patch1163: 0163-qcow2util-read-commit-size-correctly.patch
 
 %description
 This package contains storage backends used in XCP
@@ -554,6 +556,9 @@ then
 fi
 
 %changelog
+* Fri Sep 26 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-10.2.0.qcow2.2
+- Rebase to include patch for reporting unexpected DRBD device path
+
 * Wed Sep 24 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-10.2.0.qcow2.1
 - Rebase QCOW2 support
 

@@ -1,0 +1,23 @@
+From a5a9c3c93eed256fc81726b1f7c9029d4c9b046a Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 21 Feb 2025 11:17:38 +0100
+Subject: [PATCH] blktap2.py: correct TapCtl.commit call
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/blktap2.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index f0caf144..9472358e 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -447,7 +447,7 @@ class TapCtl(object):
+ 
+     @classmethod
+     def commit(cls, pid, minor, vdi_type, path):
+-        args = ["commit", "-p", pid, "-m", minor, "-a", "{}:{}".format(vdi_type, path)]
++        args = ["commit", "-p", pid, "-m", minor, "-a", path]
+         cls._pread(args)
+ 
+     @classmethod

@@ -1,0 +1,37 @@
+From 7b86aa506d666c56367f1f8628da3f975372a722 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 10 Feb 2025 16:57:06 +0100
+Subject: [PATCH] Fix getSizePhys to work for block devices
+
+Return max size for getDefaultPreallocationSizeVirt like vhdutil does
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 0f7c94c1..d94c98b4 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -426,7 +426,7 @@ class QCowUtil(CowUtil):
+ 
+     @override
+     def getDefaultPreallocationSizeVirt(self) -> int:
+-        return 0
++        return MAX_QCOW_SIZE
+ 
+     @override
+     def getMaxChainLength(self) -> int:
+@@ -638,7 +638,10 @@ class QCowUtil(CowUtil):
+ 
+     @override
+     def getSizePhys(self, path: str) -> int:
+-        return os.stat(path).st_size
++        size = os.stat(path).st_size
++        if size == 0:
++            size = int(self._ioretry(["blockdev", "--getsize64", path]))
++        return size
+ 
+     @override
+     def setSizePhys(self, path: str, size: int, debug: bool = True) -> None:

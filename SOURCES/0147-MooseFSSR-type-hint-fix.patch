@@ -1,0 +1,28 @@
+From 59610c97198b1689cabe67d0864fe64f0902ffc5 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 2 Jul 2025 14:58:46 +0200
+Subject: [PATCH] MooseFSSR: type hint fix
+
+---
+ drivers/MooseFSSR.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
+index be305c48..7201e52e 100755
+--- a/drivers/MooseFSSR.py
++++ b/drivers/MooseFSSR.py
+@@ -228,11 +228,11 @@ class MooseFSSR(FileSR.FileSR):
+             raise xs_errors.SROSError(111, "MooseFS mount error [opterr=%s]" % exc.errstr)
+ 
+         try:
+-            self.subdir = self.sm_config.get('subdir')
+-            if self.subdir is None:
++            subdir = self.sm_config.get('subdir')
++            if subdir is None:
+                 self.subdir = True
+             else:
+-                self.subdir = util.strtobool(self.subdir)
++                self.subdir = util.strtobool(subdir)
+ 
+             self.sm_config['subdir'] = str(self.subdir)
+             self.session.xenapi.SR.set_sm_config(self.sr_ref, self.sm_config)

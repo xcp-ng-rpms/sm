@@ -1,0 +1,29 @@
+From 95f577aba2ed987d7edd37add1c1fd8ab4750fe4 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 7 Aug 2025 21:36:50 +0200
+Subject: [PATCH] fix(qcow2util): add size limit for qcow2
+
+Copy vhdutil that enforce size limits on validateAndRoundImageSize
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index f344c87e..8a745b30 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -825,6 +825,12 @@ class QCowUtil(CowUtil):
+ 
+     @override
+     def validateAndRoundImageSize(self, size: int) -> int:
++        if size < 0 or size > MAX_QCOW_SIZE:
++            raise xs_errors.XenError(
++                "VDISize",
++                opterr="VDI size must be between {} MB and {} MB".format(MIN_QCOW_SIZE // (1024*1024), MAX_QCOW_SIZE // (1024 * 1024))
++            )
++
+         return util.roundup(QCOW_CLUSTER_SIZE, size)
+ 
+     @override

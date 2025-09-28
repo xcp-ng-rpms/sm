@@ -1,4 +1,4 @@
-From f0e054cc64a1b668d6299e12da0a775de0cdae68 Mon Sep 17 00:00:00 2001
+From 5881b56d29f654acab595f4fc5d01399d8db04f7 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 11 Aug 2025 14:04:24 +0200
 Subject: [PATCH] fix(qcow2util): read clusters with kill data

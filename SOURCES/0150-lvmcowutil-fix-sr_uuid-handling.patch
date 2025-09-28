@@ -1,4 +1,4 @@
-From fe8a83a3338b7ff4a2fe204ecd2737c8b0f5f20b Mon Sep 17 00:00:00 2001
+From ae5f1ca5552d45d01943701b6bc891dbcfe346d2 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 17 Jul 2025 11:44:11 +0200
 Subject: [PATCH] lvmcowutil: fix sr_uuid handling

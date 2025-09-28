@@ -1,4 +1,4 @@
-From d20a8110ab3a65d921e10a0b460033626312d083 Mon Sep 17 00:00:00 2001
+From 310f20c0d0047fbaf8107d05e5fe8fcc538fd5f5 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 27 Jun 2025 10:20:38 +0200
 Subject: [PATCH] fix(cleanup.py): call correctly isCoalesceableOnRemote

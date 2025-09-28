@@ -1,4 +1,4 @@
-From 1d32b66d709f3ac740e14e37b3227208879f0cc4 Mon Sep 17 00:00:00 2001
+From b3d9eff7ff2debbe4b35a70670015eead7a0c2a2 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 16 Jan 2025 16:29:51 +0100
 Subject: [PATCH] Fix for type in cleanup.py

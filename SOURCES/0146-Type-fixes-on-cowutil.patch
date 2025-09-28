@@ -1,4 +1,4 @@
-From d489226ae4bd8edeccc8ed39845d556e5658aa09 Mon Sep 17 00:00:00 2001
+From 7a2206c87694a3d83221551ba94aa4ab76c5c5f0 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 2 Jul 2025 14:41:47 +0200
 Subject: [PATCH] Type fixes on cowutil

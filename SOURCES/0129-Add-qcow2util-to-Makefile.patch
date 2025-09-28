@@ -1,4 +1,4 @@
-From f57f2e5e2b06e09da5cd05013e33bf43c2b0ddb6 Mon Sep 17 00:00:00 2001
+From a50ad67b8e06ef2d849c37e30bf57ba323be2b3e Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 27 Mar 2025 11:47:35 +0100
 Subject: [PATCH] Add qcow2util to Makefile

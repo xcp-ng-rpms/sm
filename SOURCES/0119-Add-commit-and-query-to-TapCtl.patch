@@ -1,4 +1,4 @@
-From d3767b4797d44132801e4b7e8ea98e2d11405cf3 Mon Sep 17 00:00:00 2001
+From d45b021b34d472709066f86ab50c73060c44912f Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 14 Feb 2025 17:01:16 +0100
 Subject: [PATCH] Add commit and query to TapCtl

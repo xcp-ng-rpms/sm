@@ -1,0 +1,23 @@
+From 11101cd15cef51f6f8f0d486037a361f946c0525 Mon Sep 17 00:00:00 2001
+From: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+Date: Sat, 27 Sep 2025 00:07:44 +0200
+Subject: [PATCH] qcow2_helper: Remove space
+
+Signed-off-by: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+---
+ qcow2/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/qcow2/Makefile b/qcow2/Makefile
+index 85a1682c..14e93c66 100644
+--- a/qcow2/Makefile
++++ b/qcow2/Makefile
+@@ -3,7 +3,7 @@ DESTDIR ?=
+ DEBUGDIR ?= /opt/xensource/debug
+ 
+ 
+-OPTS := -D _GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -Wall -fopenmp -Ofast
++OPTS := -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -Wall -fopenmp -Ofast
+ 
+ SRC := qcow2_helper.c
+ 

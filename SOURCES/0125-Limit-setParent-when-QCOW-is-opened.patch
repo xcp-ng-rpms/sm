@@ -1,4 +1,4 @@
-From d06273542c24f697149d936dc411b686a4aeb2a4 Mon Sep 17 00:00:00 2001
+From cfbfaf360a8d8238a50efd1f404bc7992708ec56 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 14 Mar 2025 10:04:46 +0100
 Subject: [PATCH] Limit setParent when QCOW is opened

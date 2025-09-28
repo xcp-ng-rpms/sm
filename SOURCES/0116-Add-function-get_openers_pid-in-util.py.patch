@@ -1,4 +1,4 @@
-From 2b128c90140637ad2eeb0df8e6bcaf3ed578437d Mon Sep 17 00:00:00 2001
+From d81bcd9f1edeee2851e39a12ef520a42ea87e97b Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 10 Feb 2025 13:08:35 +0100
 Subject: [PATCH] Add function get_openers_pid in util.py

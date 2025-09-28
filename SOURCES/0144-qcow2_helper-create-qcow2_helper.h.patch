@@ -1,4 +1,4 @@
-From 8c3c13a311055d7167d418aa9a52eefe16711aa4 Mon Sep 17 00:00:00 2001
+From 9799b37b6e588632dba0630de738657d615f3af9 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 1 Jul 2025 16:41:49 +0200
 Subject: [PATCH] qcow2_helper: create qcow2_helper.h

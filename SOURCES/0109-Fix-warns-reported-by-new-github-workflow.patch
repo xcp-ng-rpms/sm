@@ -1,4 +1,4 @@
-From c63020e5b6c7e4e59423dd579e3e502e202871a6 Mon Sep 17 00:00:00 2001
+From eb06e059d42a30b83a9955ed0f1040b96970c219 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 22 Apr 2025 11:27:12 +0200
 Subject: [PATCH] Fix warns reported by new github workflow

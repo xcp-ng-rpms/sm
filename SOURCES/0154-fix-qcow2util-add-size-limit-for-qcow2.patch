@@ -1,4 +1,4 @@
-From 95f577aba2ed987d7edd37add1c1fd8ab4750fe4 Mon Sep 17 00:00:00 2001
+From 562fd7a8b093b6e1a06ed3c5107543d678a0cb74 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 7 Aug 2025 21:36:50 +0200
 Subject: [PATCH] fix(qcow2util): add size limit for qcow2

@@ -1,0 +1,24 @@
+From 891a1d286a4aa293bd7bf4e60a23e0817deed5e8 Mon Sep 17 00:00:00 2001
+From: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+Date: Sat, 27 Sep 2025 00:08:29 +0200
+Subject: [PATCH] qcow2_helper: print errno on read error
+
+Signed-off-by: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+---
+ qcow2/qcow2_helper.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/qcow2/qcow2_helper.c b/qcow2/qcow2_helper.c
+index b4590703..0b47b584 100644
+--- a/qcow2/qcow2_helper.c
++++ b/qcow2/qcow2_helper.c
+@@ -58,7 +58,8 @@ uint64_t* get_l1_offset(struct qcow2_header* header, int fd){
+ 
+     err = pread(fd, raw_l1, l1_table_size, l1_offset);
+     if(err < 0){
+-        fprintf(stderr, "Couldn't read L1 table\n");
++        fprintf(stderr, "Couldn't read L1 table: %s (%d)\n",
++                strerror(errno), errno);
+         free(raw_l1);
+         return NULL;
+     }

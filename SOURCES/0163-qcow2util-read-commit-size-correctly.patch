@@ -1,4 +1,4 @@
-From 6c9e1ee64f2ec2730515bfca8be43ce4600c3794 Mon Sep 17 00:00:00 2001
+From 8d930fa4fe31250c3323106cdbd9e832cd9d0343 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 26 Sep 2025 18:11:46 +0200
 Subject: [PATCH] qcow2util: read commit size correctly

@@ -1,4 +1,4 @@
-From 5dc1529bd56e42c05045253918849b6e2be4fd52 Mon Sep 17 00:00:00 2001
+From d892adcd533f18f151ec2ea289c4f081e48e496d Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 2 Jun 2025 13:46:08 +0200
 Subject: [PATCH] fix(tapdisk-pause): missing LvmCowUtil import

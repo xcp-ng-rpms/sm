@@ -1,4 +1,4 @@
-From f95e831fdd6cc2629557917aff8965ce5177edec Mon Sep 17 00:00:00 2001
+From 97c401505d14a25954b7e5da714bef87ce95ce16 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 19 Feb 2025 17:51:06 +0100
 Subject: [PATCH] Add parents for getAllInfoFromVG

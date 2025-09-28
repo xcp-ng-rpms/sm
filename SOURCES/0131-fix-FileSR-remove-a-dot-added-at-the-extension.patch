@@ -1,4 +1,4 @@
-From cd79c024b973049761ae7b0c6724938cf318742c Mon Sep 17 00:00:00 2001
+From a17f39ae9fa3036565942bffd527cc2d78500655 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 28 Mar 2025 11:03:31 +0100
 Subject: [PATCH] fix(FileSR): remove a dot added at the extension

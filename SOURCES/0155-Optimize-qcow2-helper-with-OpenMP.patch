@@ -1,4 +1,4 @@
-From 18dd28cc65de1b9abf579c1ac75c6ee80ca8f676 Mon Sep 17 00:00:00 2001
+From ec27b5aa3edef6f16aefb2cbd0e8d62e3dd8cde7 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 8 Aug 2025 10:24:09 +0200
 Subject: [PATCH] Optimize qcow2 helper with OpenMP

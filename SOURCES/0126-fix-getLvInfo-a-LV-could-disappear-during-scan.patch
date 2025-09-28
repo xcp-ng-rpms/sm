@@ -1,4 +1,4 @@
-From 5186c8ecccc0333f17274a05be163532aa09230b Mon Sep 17 00:00:00 2001
+From 0e52fa2c12a3e2f18807e3a4f83761fadb2a1ddb Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 27 Mar 2025 10:08:33 +0100
 Subject: [PATCH] fix(getLvInfo): a LV could disappear during scan

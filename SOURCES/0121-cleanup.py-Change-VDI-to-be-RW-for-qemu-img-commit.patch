@@ -1,4 +1,4 @@
-From 0b1bb5b33de6f7eeadfcd332e2c33d79f774d68c Mon Sep 17 00:00:00 2001
+From 66ccc0132f9190368941c6204cbbba3a7bcea4d6 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 18 Feb 2025 16:27:36 +0100
 Subject: [PATCH] cleanup.py: Change VDI to be RW for qemu-img commit

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2.0.qcow2.2%{?dist}
+Release: %{?xsrel}.2.0.qcow2.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -236,6 +236,12 @@ Patch1160: 0160-Fix-deadlock-with-coalesce-and-vdi-activation.patch
 Patch1161: 0161-fix-coalesce-Big-vhd-blocks-cause-exception.patch
 Patch1162: 0162-Mock-check_journal_coalesce-for-VDI-activation-in-te.patch
 Patch1163: 0163-qcow2util-read-commit-size-correctly.patch
+Patch1164: 0164-qcow2_helper-Remove-space.patch
+Patch1165: 0165-qcow2_helper-print-errno-on-read-error.patch
+Patch1166: 0166-qcow2_helper-check-read-return-value.patch
+Patch1167: 0167-qcow2_helper-Fix-bound-array-warning.patch
+Patch1168: 0168-qcow2_helper-support-extended_l2-feature.patch
+Patch1169: 0169-qcow2util-force-extended_l2-on-qcow2.patch
 
 %description
 This package contains storage backends used in XCP
@@ -556,6 +562,9 @@ then
 fi
 
 %changelog
+* Sun Sep 28 2025 Anthoine Bourgeois <anthoine.bourgeois@vates.tech> - 3.2.12-10.2.0.qcow2.3
+- Qcow2: Add subcluster feature support
+
 * Fri Sep 26 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-10.2.0.qcow2.2
 - Rebase to include patch for reporting unexpected DRBD device path
 

@@ -1,4 +1,4 @@
-From 16b639a2f251e752b9ba1c9b8842db56b46a8ca0 Mon Sep 17 00:00:00 2001
+From 3a0cdf889e478cf12a3f264ce33fb24e6aa41ee6 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 18 Jul 2025 17:01:42 +0200
 Subject: [PATCH] Redo LV activation in qcow2 case

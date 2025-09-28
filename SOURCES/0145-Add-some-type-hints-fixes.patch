@@ -1,4 +1,4 @@
-From 583385544c4be8e046658d83011c271154a8e84e Mon Sep 17 00:00:00 2001
+From bf0dfa76fa4db9c1a682bd62314aa4efd6b26f92 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 1 Jul 2025 17:38:48 +0200
 Subject: [PATCH] Add some type hints fixes

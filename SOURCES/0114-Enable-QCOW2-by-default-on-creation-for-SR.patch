@@ -1,4 +1,4 @@
-From d2cd34a06e502d8a9d3e3527e1309823b8cfc00a Mon Sep 17 00:00:00 2001
+From 608ae158fc36a272d202e4aff18fdde981e8874e Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 23 Jan 2025 17:17:00 +0100
 Subject: [PATCH] Enable QCOW2 by default on creation for SR

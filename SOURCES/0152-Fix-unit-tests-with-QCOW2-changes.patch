@@ -1,4 +1,4 @@
-From a66785d388df43a7b698aa8485cef5ccd120358a Mon Sep 17 00:00:00 2001
+From a0f819010558bd92821319bd25bc3f103d10b603 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 22 Jul 2025 10:17:21 +0200
 Subject: [PATCH] Fix unit tests with QCOW2 changes

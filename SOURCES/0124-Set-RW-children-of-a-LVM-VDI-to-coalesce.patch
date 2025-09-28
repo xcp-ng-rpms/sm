@@ -1,4 +1,4 @@
-From ab189465509b49f0593d7af4c746a92f324aa2fa Mon Sep 17 00:00:00 2001
+From 6758c0fe8321d1d91d1c2e819f154c2ba5e67458 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 12 Mar 2025 12:05:12 +0100
 Subject: [PATCH] Set RW children of a LVM VDI to coalesce

@@ -1,4 +1,4 @@
-From bec151abe3847b11a295ab955afbb43691efa277 Mon Sep 17 00:00:00 2001
+From 70216c788c846eb82680b2eed1ef76f4c75f89a6 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 22 Jan 2025 16:08:27 +0100
 Subject: [PATCH] Add getBlockBitmap, coalesce, setParent

@@ -1,4 +1,4 @@
-From a3442f1c254b58c594a3209308063083d7d2f298 Mon Sep 17 00:00:00 2001
+From f4470d5af13b85f89ef49e41e285fdea9093693f Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 24 Sep 2025 17:15:41 +0200
 Subject: [PATCH] Mock check_journal_coalesce for VDI activation in

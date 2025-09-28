@@ -1,4 +1,4 @@
-From b1ef80e932092726db692170873ac493f800f39b Mon Sep 17 00:00:00 2001
+From 7555b8dcdf71a93f5100f5900b0b8153995cca05 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 2 Jul 2025 15:50:41 +0200
 Subject: [PATCH] qcow2util.py: reduce log spam for onlinecoalesce

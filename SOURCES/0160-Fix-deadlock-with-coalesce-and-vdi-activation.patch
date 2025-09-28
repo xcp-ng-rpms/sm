@@ -1,4 +1,4 @@
-From cda0291c3cc0cfa45f62c7cead8e41683730853d Mon Sep 17 00:00:00 2001
+From e9b48033516bd6c7e09053924937ebc047d82d34 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 19 Aug 2025 16:38:29 +0200
 Subject: [PATCH] Fix deadlock with coalesce and vdi activation

@@ -1,4 +1,4 @@
-From c0f8d0ef97ef27184d1b738cd939c82f3afbffa3 Mon Sep 17 00:00:00 2001
+From 3ef80e1cd60128ad34740a4807b3086179995f78 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 6 Feb 2025 09:47:17 +0100
 Subject: [PATCH] Implement getInfo* for LVM, raw parents and getDepth

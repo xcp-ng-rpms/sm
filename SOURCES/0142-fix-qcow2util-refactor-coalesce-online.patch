@@ -1,4 +1,4 @@
-From 31be6a78b01bceeeabc160827075f4f5ec35841b Mon Sep 17 00:00:00 2001
+From 9b9a737184d478c0baf5bd73b34bf53e156e280e Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 30 Jun 2025 16:34:51 +0200
 Subject: [PATCH] fix(qcow2util): refactor coalesce online

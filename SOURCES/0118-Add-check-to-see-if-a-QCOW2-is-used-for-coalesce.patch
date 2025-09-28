@@ -1,4 +1,4 @@
-From ce3fc92c433d7c0c1a28f7273e2dd81340f5a946 Mon Sep 17 00:00:00 2001
+From 6285b551e731ddc1dabcd94e80d9200a03da8a36 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 13 Feb 2025 17:44:58 +0100
 Subject: [PATCH] Add check to see if a QCOW2 is used for coalesce

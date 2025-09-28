@@ -1,4 +1,4 @@
-From dba210898eb206377b318571d1ccfd0940e9aa33 Mon Sep 17 00:00:00 2001
+From 9e7e608cbf2906ce60d1c8d4f44f91752e789a43 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 27 Mar 2025 10:29:34 +0100
 Subject: [PATCH] fix(qcow2util): handle online coalesce correctly

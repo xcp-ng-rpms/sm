@@ -1,4 +1,4 @@
-From 02e961c3c58ff45fc90a21e8a823278d8538c136 Mon Sep 17 00:00:00 2001
+From bb921b110aee55d90f56b9ac4ed58370da45cf97 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 27 Mar 2025 10:09:47 +0100
 Subject: [PATCH] fix(qcow2util): explicitely cast in str for mypy

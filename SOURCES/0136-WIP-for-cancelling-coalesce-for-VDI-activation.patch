@@ -1,4 +1,4 @@
-From 0bf54f8424eff3f2c743bf774dec7f8fd9f7b225 Mon Sep 17 00:00:00 2001
+From 204c6fadba82317141375bcaaf957e2c98450308 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 26 May 2025 17:56:22 +0200
 Subject: [PATCH] WIP for cancelling coalesce for VDI activation

@@ -1,4 +1,4 @@
-From 7b86aa506d666c56367f1f8628da3f975372a722 Mon Sep 17 00:00:00 2001
+From a55160752cd6ac27741ec4a9bc3ca4342ad7f59d Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 10 Feb 2025 16:57:06 +0100
 Subject: [PATCH] Fix getSizePhys to work for block devices

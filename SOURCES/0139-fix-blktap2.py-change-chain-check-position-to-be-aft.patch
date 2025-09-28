@@ -1,4 +1,4 @@
-From a436ed7e607bf5a46db022076ae4fbad243e810f Mon Sep 17 00:00:00 2001
+From 799dd789fe74c537c0a78662c3c760b7c818972c Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 2 Jun 2025 14:13:13 +0200
 Subject: [PATCH] fix(blktap2.py): change chain check position to be after

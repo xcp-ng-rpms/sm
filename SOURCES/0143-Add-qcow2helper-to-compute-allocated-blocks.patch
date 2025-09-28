@@ -1,4 +1,4 @@
-From 3d36fa27c55eeaa9a4e85751117f2db81dd350c0 Mon Sep 17 00:00:00 2001
+From 61d27e76381d58ad9cf2080d67c851277c4b3a4a Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 25 Jun 2025 17:00:22 +0200
 Subject: [PATCH] Add qcow2helper to compute allocated blocks

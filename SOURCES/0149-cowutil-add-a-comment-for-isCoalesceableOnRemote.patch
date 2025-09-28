@@ -1,4 +1,4 @@
-From eea3d6f464161cbcfa771ce51016d4eedbac3605 Mon Sep 17 00:00:00 2001
+From 08379d916a467d9364ed6b555f6a981bcf73235f Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 2 Jul 2025 15:52:40 +0200
 Subject: [PATCH] cowutil: add a comment for isCoalesceableOnRemote

@@ -1,4 +1,4 @@
-From 28e04f33edc99a439ebe3db9f76a1d1d65439c4e Mon Sep 17 00:00:00 2001
+From 91e176a953f2fb5c87091064b3b0cfabc5b74eeb Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 7 Aug 2025 11:19:20 +0200
 Subject: [PATCH] Fix lvutil.extractUuid

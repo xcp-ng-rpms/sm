@@ -1,4 +1,4 @@
-From c13b28f6a3b2de09be6972541578fee2e00fb180 Mon Sep 17 00:00:00 2001
+From 31668ccb107990d60b1cfd9b6757cb73b6729e00 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 21 May 2025 17:58:32 +0200
 Subject: [PATCH] fix(setParent): setParent only warn about openers

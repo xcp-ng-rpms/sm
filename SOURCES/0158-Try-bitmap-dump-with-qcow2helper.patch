@@ -1,4 +1,4 @@
-From 6f7735b9c15e187ebe10193d5b5ddaef81a1649d Mon Sep 17 00:00:00 2001
+From 99e6eb29c9b18071a688054e14777684a9052bf7 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 18 Aug 2025 17:17:13 +0200
 Subject: [PATCH] Try bitmap dump with qcow2helper

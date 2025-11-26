@@ -72,7 +72,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.12-10-xcpng..HEAD --no-signature --no-numbered
+# git format-patch v3.2.12-10-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch

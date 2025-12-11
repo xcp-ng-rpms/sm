@@ -1,4 +1,4 @@
-From de0611f0bf1329aaa6accbc5a340bd073cf5d696 Mon Sep 17 00:00:00 2001
+From f53b0a2287f3bcec83c888723d8dc34ba91e616b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 17:51:25 +0200
 Subject: [PATCH] Use static analysis tool (mypy)
@@ -121,7 +121,7 @@ index 04a6543e..155983fc 100755
                  "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", \
                  "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 595a55ac..117f2380 100755
+index 3cc46b0c..1f710f59 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -18,6 +18,8 @@
@@ -306,7 +306,7 @@ index 3faf1ed2..1d35e7c9 100755
  
      util.SMlog("MPATH: Update done")
 diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
-index f86711e2..c80fb6d7 100755
+index 685c11d1..a8af20f1 100755
 --- a/drivers/srmetadata.py
 +++ b/drivers/srmetadata.py
 @@ -15,6 +15,9 @@
@@ -376,7 +376,7 @@ index 00000000..c515056c
 +import typing
 +from typing import *
 diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
-index dfe9c9d0..7dbf6127 100644
+index 93f1907c..d15672bd 100644
 --- a/tests/test_cleanup.py
 +++ b/tests/test_cleanup.py
 @@ -1,3 +1,5 @@
@@ -384,8 +384,8 @@ index dfe9c9d0..7dbf6127 100644
 +
  import errno
  import signal
- import unittest
-@@ -31,7 +33,7 @@ class FakeException(Exception):
+ import subprocess
+@@ -32,7 +34,7 @@ class FakeException(Exception):
  
  
  class FakeUtil:

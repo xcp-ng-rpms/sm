@@ -1,4 +1,4 @@
-From 27901c3141d9f88faa091c116b4698817cb7557b Mon Sep 17 00:00:00 2001
+From b19063ce36d39f60b4f8420dd8ec176d9a78d7b9 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 13:53:21 +0100
 Subject: [PATCH] test_on_slave: allow to work with SR using absolute

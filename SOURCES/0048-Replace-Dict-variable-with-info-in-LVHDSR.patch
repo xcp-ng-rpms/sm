@@ -1,4 +1,4 @@
-From e489d391aa93d72fbd1fc2324e546f95cf82dacc Mon Sep 17 00:00:00 2001
+From 4010a5fe9e132e89c889937ca109362c735be0ee Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:10:55 +0200
 Subject: [PATCH] Replace `Dict` variable with `info` in `LVHDSR`
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 19 insertions(+), 19 deletions(-)
 
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index b444acc2..595a55ac 100755
+index 2379f971..3cc46b0c 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -690,21 +690,21 @@ class LVHDSR(SR.SR):

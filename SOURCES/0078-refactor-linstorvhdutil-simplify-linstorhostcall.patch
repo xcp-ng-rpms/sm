@@ -1,4 +1,4 @@
-From 33525d4ef02bfbed9d05becdbba8714089c5bc55 Mon Sep 17 00:00:00 2001
+From 55abe61f1fca90849a24ed7bfc1ee2642031850e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Mon, 15 Sep 2025 13:09:27 +0200
 Subject: [PATCH] refactor(linstorvhdutil): simplify linstorhostcall

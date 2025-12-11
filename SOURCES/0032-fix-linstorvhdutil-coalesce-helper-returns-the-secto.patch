@@ -1,4 +1,4 @@
-From 263a17f6da1aec4913af711da97f68448a233658 Mon Sep 17 00:00:00 2001
+From 2aae8e8f50a520ac9d8fc57865d89ba9b6cbb1b2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 11 Dec 2024 11:14:27 +0100
 Subject: [PATCH] fix(linstorvhdutil): coalesce helper returns the sector count

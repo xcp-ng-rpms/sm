@@ -1,4 +1,4 @@
-From a57ddcdacf7c11983fe717eb1edca3dc2a31cfe2 Mon Sep 17 00:00:00 2001
+From 2ce4c50e26649b6e4b9ca6b5d1a79114488e722d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 19 Aug 2025 23:25:04 +0200
 Subject: [PATCH] Fix GC hidden attribute in case of SIGTERM signal (#87)
@@ -91,7 +91,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  1 file changed, 29 insertions(+), 21 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 528fcf9a..3d228d59 100755
+index f2105b6c..51d51e8d 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -561,7 +561,7 @@ class VDI(object):
@@ -238,7 +238,7 @@ index 528fcf9a..3d228d59 100755
          else:
              VDI._setHidden(self, hidden)
  
-@@ -3015,9 +3023,9 @@ class FileSR(SR):
+@@ -3034,9 +3042,9 @@ class FileSR(SR):
              child.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_VHD)
              util.fistpoint.activate("LVHDRT_coaleaf_undo_after_rename2", self.uuid)
  
@@ -250,7 +250,7 @@ index 528fcf9a..3d228d59 100755
              parent._setHidden(True)
          self._updateSlavesOnUndoLeafCoalesce(parent, child)
          util.fistpoint.activate("LVHDRT_coaleaf_undo_end", self.uuid)
-@@ -3251,9 +3259,9 @@ class LVHDSR(SR):
+@@ -3270,9 +3278,9 @@ class LVHDSR(SR):
          parent.deflate()
          child.inflateFully()
          util.fistpoint.activate("LVHDRT_coaleaf_undo_after_deflate", self.uuid)
@@ -262,7 +262,7 @@ index 528fcf9a..3d228d59 100755
              parent._setHidden(True)
          if not parent.lvReadonly:
              self.lvmCache.setReadonly(parent.fileName, True)
-@@ -3607,9 +3615,9 @@ class LinstorSR(SR):
+@@ -3626,9 +3634,9 @@ class LinstorSR(SR):
  
          # TODO: Maybe deflate here.
  

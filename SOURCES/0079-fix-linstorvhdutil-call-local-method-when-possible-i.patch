@@ -1,4 +1,4 @@
-From 917f27af40ed29785bea620f28aa536e1303ac95 Mon Sep 17 00:00:00 2001
+From 1d21889f4d6dd30d169dfe4ad1ca5e9a0c34e59c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Mon, 15 Sep 2025 13:12:32 +0200
 Subject: [PATCH] fix(linstorvhdutil): call local method when possible in

@@ -1,0 +1,55 @@
+From d7cd0b12e73e8407cc28144c61a432df744ba08b Mon Sep 17 00:00:00 2001
+From: Frederic Bor <42858062+f-bor@users.noreply.github.com>
+Date: Tue, 9 Dec 2025 18:12:03 +0100
+Subject: [PATCH] Use serial instead of SCSI ID for USB devices (#107)
+
+Adding SRs on multiple usb devices may fail because /usr/lib/udev/scsi_id returns the same device id for all the usb devices.
+
+This change fixes this by checking the drive type and using the device serial number if correctly read.
+
+Signed-off-by: Frederic Bor <frederic.bor@wanadoo.fr>
+---
+ drivers/util.py | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/util.py b/drivers/util.py
+index 55d1d937..b7a932c5 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -1039,6 +1039,12 @@ def _isSCSIid(s):
+     return regex.search(s, 0)
+ 
+ 
++def is_usb_device(device):
++    cmd = ["udevadm", "info", "-q", "path", "-n", device]
++    result = pread2(cmd).split('/')
++    return len(result) >= 5 and result[4].startswith('usb')
++
++
+ def test_scsiserial(session, device):
+     device = os.path.realpath(device)
+     if not scsiutil._isSCSIdev(device):
+@@ -1062,6 +1068,14 @@ def test_scsiserial(session, device):
+                    % device)
+         return False
+ 
++    # USB devices can have identical SCSI IDs - prefer matching with serial number
++    try:
++        usb_device_with_serial = serial and is_usb_device(device)
++    except:
++        usb_device_with_serial = False
++        SMlog("Unable to check if device is USB:")
++        SMlog(traceback.format_exc())
++
+     try:
+         SRs = session.xenapi.SR.get_all_records()
+     except:
+@@ -1071,7 +1085,7 @@ def test_scsiserial(session, device):
+         conf = record["sm_config"]
+         if 'devserial' in conf:
+             for dev in conf['devserial'].split(','):
+-                if _isSCSIid(dev):
++                if not usb_device_with_serial and _isSCSIid(dev):
+                     if match_scsiID(dev, scsiID):
+                         return True
+                 elif len(serial) and dev == serial:

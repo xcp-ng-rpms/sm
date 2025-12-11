@@ -1,4 +1,4 @@
-From c3bc204789fa9cf7d10156c09d8544a52671456a Mon Sep 17 00:00:00 2001
+From 6b38d356450a669e7895132118b25743a10c4782 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
 Subject: [PATCH] feat(drivers): add XFS driver
@@ -288,10 +288,10 @@ index 00000000..1dfde095
 +else:
 +    SR.registerSR(XFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index fc050871..6b644b8c 100755
+index 927fb795..d4d92e06 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2993,6 +2993,7 @@ def normalizeType(type):
+@@ -3012,6 +3012,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

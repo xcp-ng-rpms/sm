@@ -1,4 +1,4 @@
-From 69d2892025817f094f313ad036fccb6c16132da4 Mon Sep 17 00:00:00 2001
+From ef9aac0132b89bedb2d4fce8a0dada16eee5b832 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
 Subject: [PATCH] feat(LinstorSR): is now compatible with python 3
@@ -88,10 +88,10 @@ index 52d5c26e..1c9bd54a 100755
                  str(device_size)
              ]
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 27037dc1..3447be87 100755
+index ecd6cc15..038d15c6 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3485,7 +3485,7 @@ class LinstorSR(SR):
+@@ -3504,7 +3504,7 @@ class LinstorSR(SR):
      def _checkSlaves(self, vdi):
          try:
              all_openers = self._linstor.get_volume_openers(vdi.uuid)
@@ -286,10 +286,10 @@ index 5e5bcd51..dbca3b41 100755
          try:
              if not force:
 diff --git a/drivers/util.py b/drivers/util.py
-index 8541a3a7..f7660cc0 100755
+index dd421927..395f40cd 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -757,7 +757,7 @@ def get_this_host_address(session):
+@@ -758,7 +758,7 @@ def get_this_host_address(session):
  def get_host_addresses(session):
      addresses = []
      hosts = session.xenapi.host.get_all_records()

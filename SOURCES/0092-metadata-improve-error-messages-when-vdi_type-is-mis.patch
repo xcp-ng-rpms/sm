@@ -1,0 +1,165 @@
+From 993a02fa5ede42e97c9c9d293bdcdd59223aca3b Mon Sep 17 00:00:00 2001
+From: Bartuccio Antoine <antoine.bartuccio@gmail.com>
+Date: Mon, 8 Dec 2025 14:40:15 +0100
+Subject: [PATCH] metadata: improve error messages when vdi_type is missing
+ (#103)
+
+Explicit error message pointing to missing vdi_type on SRMetadata update
+Add a distinction for unpacking corrupted empty metadata headers for easier diagnostic
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+---
+ drivers/LVHDSR.py        |  6 +++++-
+ drivers/srmetadata.py    | 19 ++++++++++---------
+ tests/test_LVHDSR.py     | 10 ++++++++++
+ tests/test_srmetadata.py | 37 +++++++++++++++++++++++++++++++++++++
+ 4 files changed, 62 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index 1ea6eed4..52c337a3 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -262,6 +262,10 @@ class LVHDSR(SR.SR):
+             for vdi in self.session.xenapi.SR.get_VDIs(self.sr_ref):
+                 vdi_uuid = self.session.xenapi.VDI.get_uuid(vdi)
+ 
++                vdi_type = self.session.xenapi.VDI.get_sm_config(vdi).get('vdi_type')
++                if not vdi_type:
++                    raise xs_errors.XenError('MetadataError', opterr=f"Missing `vdi_type` for VDI {vdi_uuid}")
++
+                 # Create the VDI entry in the SR metadata
+                 vdi_info[vdi_uuid] = \
+                 {
+@@ -277,7 +281,7 @@ class LVHDSR(SR.SR):
+                     TYPE_TAG: \
+                         self.session.xenapi.VDI.get_type(vdi),
+                     VDI_TYPE_TAG: \
+-                       self.session.xenapi.VDI.get_sm_config(vdi)['vdi_type'],
++                       vdi_type,
+                     READ_ONLY_TAG: \
+                         int(self.session.xenapi.VDI.get_read_only(vdi)),
+                     METADATA_OF_POOL_TAG: \
+diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
+index 26487b5a..c46c20ad 100755
+--- a/drivers/srmetadata.py
++++ b/drivers/srmetadata.py
+@@ -16,7 +16,7 @@
+ # Functions to read and write SR metadata
+ #
+ 
+-from sm_typing import ClassVar, override
++from sm_typing import ClassVar, Tuple, override
+ 
+ from abc import abstractmethod
+ 
+@@ -138,11 +138,11 @@ def file_read_wrapper(fd, offset, bytesToRead=METADATA_BLK_SIZE):
+             ([fd, offset, bytesToRead], e.errno))
+ 
+ 
+-def to_utf8(s):
++def to_utf8(s: str) -> bytes:
+     return s.encode("utf-8")
+ 
+ 
+-def from_utf8(bs):
++def from_utf8(bs: bytes) -> str:
+     return bs.decode("utf-8")
+ 
+ 
+@@ -182,13 +182,14 @@ def buildHeader(length, major=metadata.MD_MAJOR, minor=metadata.MD_MINOR):
+                    + str(minor))
+ 
+ 
+-def unpackHeader(header):
+-    vals = from_utf8(header).split(HEADER_SEP)
++def unpackHeader(header: bytes) -> Tuple[str, str, str, str]:
++    decoded = from_utf8(header)
++    if len(decoded.rstrip('\x00')) == 0:
++        raise xs_errors.XenError('MetadataError', opterr='Empty header')
++    vals = decoded.split(HEADER_SEP)
+     if len(vals) != 4 or vals[0] != metadata.HDR_STRING:
+-        util.SMlog("Exception unpacking metadata header: "
+-                   "Error: Bad header '%s'" % (header))
+-        raise xs_errors.XenError('MetadataError', \
+-                        opterr='Bad header')
++        util.SMlog(f"Exception unpacking metadata header: Error: Bad header {header!r}")
++        raise xs_errors.XenError('MetadataError', opterr='Bad header')
+     return (vals[0], vals[1], vals[2], vals[3])
+ 
+ 
+diff --git a/tests/test_LVHDSR.py b/tests/test_LVHDSR.py
+index 05347c69..8d287221 100644
+--- a/tests/test_LVHDSR.py
++++ b/tests/test_LVHDSR.py
+@@ -279,6 +279,16 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+             self.assertEqual(1, lvm_cache.activate.call_count)
+             self.assertEqual(1, lvm_cache.deactivate.call_count)
+ 
++        # Act (3)
++        # This tests SR metadata updates
++        sr.updateSRMetadata('thick')
++
++        # Test that removing vdi_type on a vdi does crash properly
++        del vdi_data['vdi2_ref']['sm-config']['vdi_type']
++        with self.assertRaises(Exception):
++            # Fail on vdi2_ref
++            sr.updateSRMetadata('thick')
++
+     def convert_vdi_to_meta(self, vdi_data):
+         metadata = {}
+         for item in vdi_data.items():
+diff --git a/tests/test_srmetadata.py b/tests/test_srmetadata.py
+index fbce6244..589e8df8 100644
+--- a/tests/test_srmetadata.py
++++ b/tests/test_srmetadata.py
+@@ -7,6 +7,7 @@ import testlib
+ import uuid
+ import unittest
+ import unittest.mock as mock
++import xs_errors
+ 
+ from srmetadata import (LVMMetadataHandler, buildHeader, buildXMLSector,
+                         getMetadataLength, unpackHeader, updateLengthInHeader,
+@@ -27,6 +28,42 @@ class TestSRMetadataFunctions(unittest.TestCase):
+         self.assertEqual(int(major), 1)
+         self.assertEqual(int(minor), 2)
+ 
++    def test_unpackHeader_empty(self):
++        # Given
++        headers = [b"", b"\x00", b"\x00"]
++
++        for header in headers:
++            # When
++            with self.assertRaises(xs_errors.SROSError) as error:
++                unpackHeader(header)
++
++            # Then
++            self.assertEqual(
++                error.exception.args[0],
++                'Error in Metadata volume operation for SR. [opterr=Empty header]'
++            )
++
++    def test_unpackHeader_bad(self):
++        # Given
++        headers = [
++            b"BAD:4096      :1:2" + (b' ' * 493),
++            b"BAD:4096      :1:2",
++            b"XSSM:4096      :1",
++            b"XSSM:4096      ",
++            b"XSSM",
++        ]
++
++        for header in headers:
++            # When
++            with self.assertRaises(xs_errors.SROSError) as error:
++                unpackHeader(header)
++
++            # Then
++            self.assertEqual(
++                error.exception.args[0],
++                'Error in Metadata volume operation for SR. [opterr=Bad header]'
++            )
++
+     def test_buildHeader_unpackHeader_roundTrip(self):
+         # Given
+         orig_length = 12345

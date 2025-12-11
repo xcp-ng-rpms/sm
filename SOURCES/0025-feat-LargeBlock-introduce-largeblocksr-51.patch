@@ -1,4 +1,4 @@
-From 5de21ca4747cda1a3599d7ba1aab02e74b830b36 Mon Sep 17 00:00:00 2001
+From 6b7869241b519b3f45e977e709f783baa32d257e Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 12 Apr 2024 15:08:59 +0200
 Subject: [PATCH] feat(LargeBlock): introduce largeblocksr (#51)
@@ -345,10 +345,10 @@ index 25b9e9ca..91407810 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 3447be87..8520699d 100755
+index 038d15c6..04066259 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3534,7 +3534,7 @@ def normalizeType(type):
+@@ -3553,7 +3553,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",
@@ -358,7 +358,7 @@ index 3447be87..8520699d 100755
          type = SR.TYPE_FILE
      if type in ["linstor"]:
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index 0776142a..af60d610 100755
+index 4ce3d0a4..817d1fc4 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
 @@ -570,12 +570,16 @@ def resizePV(dev):

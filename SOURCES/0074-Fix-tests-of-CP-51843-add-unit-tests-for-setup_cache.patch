@@ -1,4 +1,4 @@
-From 921f3857ed55cdbfc5920036f46e580ceb8fcd18 Mon Sep 17 00:00:00 2001
+From e5653a296f5d2a786f7c0f6c3361368b55fc9990 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Thu, 28 Aug 2025 17:45:07 +0200
 Subject: [PATCH] Fix tests of "CP-51843: add unit tests for setup_cache"
@@ -14,10 +14,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  1 file changed, 7 insertions(+), 21 deletions(-)
 
 diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
-index 4318a6ac..4e55b527 100644
+index c38a5805..b629ff69 100644
 --- a/tests/test_blktap2.py
 +++ b/tests/test_blktap2.py
-@@ -227,13 +227,11 @@ class TestVDI(unittest.TestCase):
+@@ -228,13 +228,11 @@ class TestVDI(unittest.TestCase):
      @mock.patch('blktap2.time.sleep', autospec=True)
      @mock.patch('blktap2.util.get_this_host', autospec=True)
      @mock.patch('blktap2.VDI._attach', autospec=True)
@@ -32,7 +32,7 @@ index 4318a6ac..4e55b527 100644
          """
          Test blktap2.VDI.activate, no cache, RW, success
          """
-@@ -256,14 +254,12 @@ class TestVDI(unittest.TestCase):
+@@ -257,14 +255,12 @@ class TestVDI(unittest.TestCase):
      @mock.patch('blktap2.time.sleep', autospec=True)
      @mock.patch('blktap2.util.get_this_host', autospec=True)
      @mock.patch('blktap2.VDI._attach', autospec=True)
@@ -48,7 +48,7 @@ index 4318a6ac..4e55b527 100644
          """
          Test blktap2.VDI.activate, relinking, retry 1, success
          """
-@@ -284,14 +280,12 @@ class TestVDI(unittest.TestCase):
+@@ -285,14 +281,12 @@ class TestVDI(unittest.TestCase):
      @mock.patch('blktap2.time.sleep', autospec=True)
      @mock.patch('blktap2.util.get_this_host', autospec=True)
      @mock.patch('blktap2.VDI._attach', autospec=True)
@@ -64,7 +64,7 @@ index 4318a6ac..4e55b527 100644
          """
          Test blktap2.VDI.activate, paused, retry 1, success
          """
-@@ -311,14 +305,12 @@ class TestVDI(unittest.TestCase):
+@@ -312,14 +306,12 @@ class TestVDI(unittest.TestCase):
      @mock.patch('blktap2.time.sleep', autospec=True)
      @mock.patch('blktap2.util.get_this_host', autospec=True)
      @mock.patch('blktap2.VDI._attach', autospec=True)
@@ -80,7 +80,7 @@ index 4318a6ac..4e55b527 100644
          """
          Test blktap2.VDI.activate, paused, while tagging, success
          """
-@@ -344,14 +336,12 @@ class TestVDI(unittest.TestCase):
+@@ -345,14 +337,12 @@ class TestVDI(unittest.TestCase):
      @mock.patch('blktap2.time.sleep', autospec=True)
      @mock.patch('blktap2.util.get_this_host', autospec=True)
      @mock.patch('blktap2.VDI._attach', autospec=True)
@@ -96,7 +96,7 @@ index 4318a6ac..4e55b527 100644
          """
          Test blktap2.VDI.activate, relinking, while tagging, retry 1, success
          """
-@@ -377,14 +367,12 @@ class TestVDI(unittest.TestCase):
+@@ -378,14 +368,12 @@ class TestVDI(unittest.TestCase):
      @mock.patch('blktap2.time.sleep', autospec=True)
      @mock.patch('blktap2.util.get_this_host', autospec=True)
      @mock.patch('blktap2.VDI._attach', autospec=True)
@@ -112,7 +112,7 @@ index 4318a6ac..4e55b527 100644
          """
          If we're activating for read-only access, with someone else (let's
          say, another host in the pool) also being in the process of
-@@ -415,14 +403,12 @@ class TestVDI(unittest.TestCase):
+@@ -416,14 +404,12 @@ class TestVDI(unittest.TestCase):
      @mock.patch('blktap2.time.sleep', autospec=True)
      @mock.patch('blktap2.util.get_this_host', autospec=True)
      @mock.patch('blktap2.VDI._attach', autospec=True)

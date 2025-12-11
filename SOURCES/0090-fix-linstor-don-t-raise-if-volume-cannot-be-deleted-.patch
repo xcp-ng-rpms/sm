@@ -1,0 +1,62 @@
+From 7f66b883cf4f5ad824fbca19a6878b20f2fc0632 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Thu, 27 Nov 2025 20:55:18 +0100
+Subject: [PATCH] fix(linstor): don't raise if volume cannot be deleted
+ properly (#114)
+
+In the case of a DRBD resource deletion issue via the LINSTOR API,
+a wrong exception was thrown in the `VDI.delete` code instead of
+simply logging and properly terminating the command.
+
+Trace before correction:
+```
+Nov 26 08:19:58 xcp-node-1 SM: [1055074] Failed to remove the volume (maybe is leaf coalescing) for 389e891c-2150-4caa-b201-073dedb8b886 err: Cannot destroy volume `389e891c-2150-4caa-b201-073dedb8b886`: Could not destroy resource `xcp-
+volume-9ef5f4a1-f101-4f34-8029-f2ad698decdd` from SR `xcp-sr-linstor_group_thin_device`: (Node: 'xcp-nodo-1') Failed to delete lvm volume
+Nov 26 08:19:58 xcp-node-1 SM: [1055074] Raising exception [80, Failed to mark VDI hidden [opterr=Cannot destroy volume `389e891c-2150-4caa-b201-073dedb8b886`: Could not destroy resource `xcp-volume-9ef5f4a1-f101-4f34-8029-f2ad698decdd`
+from SR `xcp-sr-linstor_group_thin_device`: (Node: 'xcp-nodo-1') Failed to delete lvm volume]]
+Nov 26 08:19:58 xcp-node-1 SM: [1055074] lock: released /var/lock/sm/33dcb0ef-e089-4b6b-ab79-3d337045528e/sr
+Nov 26 08:19:58 xcp-node-1 SM: [1150284] lock: acquired /var/lock/sm/33dcb0ef-e089-4b6b-ab79-3d337045528e/sr
+Nov 26 08:19:58 xcp-node-1 SM: [1055074] ***** generic exception: vdi_delete: EXCEPTION <class 'xs_errors.SROSError'>, Failed to mark VDI hidden [opterr=Cannot destroy volume `389e891c-2150-4caa-b201-073dedb8b886`: Could not destroy res
+ource `xcp-volume-9ef5f4a1-f101-4f34-8029-f2ad698decdd` from SR `xcp-sr-linstor_group_thin_device`: (Node: 'xcp-nodo-1') Failed to delete lvm volume]
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/SRCommand.py", line 113, in run
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     return self._run_locked(sr)
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/SRCommand.py", line 163, in _run_locked
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     rv = self._run(sr, target)
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/SRCommand.py", line 254, in _run
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     return target.delete(self.params['sr_uuid'], self.vdi_uuid)
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/LinstorSR", line 1775, in delete
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     raise xs_errors.XenError('VDIDelete', opterr=str(e))
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]
+Nov 26 08:19:58 xcp-node-1 SM: [1055074] ***** LINSTOR resources on XCP-ng: EXCEPTION <class 'xs_errors.SROSError'>, Failed to mark VDI hidden [opterr=Cannot destroy volume `389e891c-2150-4caa-b201-073dedb8b886`: Could not destroy resou
+rce `xcp-volume-9ef5f4a1-f101-4f34-8029-f2ad698decdd` from SR `xcp-sr-linstor_group_thin_device`: (Node: 'xcp-nodo-1') Failed to delete lvm volume]
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/SRCommand.py", line 392, in run
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     ret = cmd.run(sr)
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/SRCommand.py", line 113, in run
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     return self._run_locked(sr)
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/SRCommand.py", line 163, in _run_locked
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     rv = self._run(sr, target)
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/SRCommand.py", line 254, in _run
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     return target.delete(self.params['sr_uuid'], self.vdi_uuid)
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]   File "/opt/xensource/sm/LinstorSR", line 1775, in delete
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]     raise xs_errors.XenError('VDIDelete', opterr=str(e))
+Nov 26 08:19:58 xcp-node-1 SM: [1055074]
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/LinstorSR.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 28ca1572..101123c6 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1772,7 +1772,7 @@ class LinstorVDI(VDI.VDI):
+             )
+ 
+             try:
+-                raise xs_errors.XenError('VDIDelete', opterr=str(e))
++                raise e
+             except LinstorVolumeManagerError as e:
+                 if e.code != LinstorVolumeManagerError.ERR_VOLUME_DESTROY:
+                     raise xs_errors.XenError('VDIDelete', opterr=str(e))

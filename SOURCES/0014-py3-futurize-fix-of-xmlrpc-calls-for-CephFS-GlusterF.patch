@@ -1,4 +1,4 @@
-From 5b9bf26acbc5680861152acf2f1385881ccd9946 Mon Sep 17 00:00:00 2001
+From fcf4b65adfbf144c4b161799cbf4c54875031dd4 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 10:28:10 +0100
 Subject: [PATCH] py3: futurize fix of xmlrpc calls for CephFS, GlusterFS,

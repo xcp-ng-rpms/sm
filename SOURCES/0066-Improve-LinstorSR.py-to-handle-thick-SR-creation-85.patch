@@ -1,4 +1,4 @@
-From 7a631e656366f0d4a441a6df7286f59b339542d8 Mon Sep 17 00:00:00 2001
+From 8296eaba5db7a7f08d65e0466d2c0e790939e69a Mon Sep 17 00:00:00 2001
 From: Rushikesh Jadhav <rushikesh7@gmail.com>
 Date: Wed, 25 Jun 2025 15:01:05 +0530
 Subject: [PATCH] Improve LinstorSR.py to handle `thick` SR creation (#85)
@@ -27,10 +27,10 @@ index 2ecb0e38..dbfda35e 100755
              raise xs_errors.XenError(
                  'LinstorSRCreate',
 diff --git a/drivers/util.py b/drivers/util.py
-index 4fca18b2..825bd306 100755
+index 9e0abc59..55d1d937 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -778,6 +778,11 @@ def get_slaves_attached_on(session, vdi_uuids):
+@@ -779,6 +779,11 @@ def get_slaves_attached_on(session, vdi_uuids):
      master_ref = get_this_host_ref(session)
      return [x for x in host_refs if x != master_ref]
  

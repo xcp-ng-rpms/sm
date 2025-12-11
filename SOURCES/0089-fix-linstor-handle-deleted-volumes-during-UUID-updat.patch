@@ -1,0 +1,67 @@
+From b0b937a8df0a98fcb63f05adce95f295ccd2a0e2 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Thu, 27 Nov 2025 20:44:54 +0100
+Subject: [PATCH] fix(linstor): handle deleted volumes during UUID update
+ (#114)
+
+During the construction of the volume set in `LinstorVolumeManager`,
+a resource might not be properly deleted following a previous operation, such as a snapshot.
+In this case, it's renamed with the prefix `DELETED_`. Unfortunately, this part fails
+at the end of the renaming process because it attempts to delete the original volume name
+from the set, which is not present because the list is being initialized at that point.
+Without this fix, we have this trace:
+
+```
+Nov 26 08:20:30 xcp-node-1 SM: [1045423] Cannot clean volume 389e891c-2150-4caa-b201-073dedb8b886: Could not destroy resource `xcp-volume-9ef5f4a1-f101-4f34-8029-f2ad698decdd` from SR `xcp-sr-linstor_group_thin_device`: (Node: 'xcp-nodo
+-1') Failed to delete lvm volume
+Nov 26 08:20:30 xcp-node-1 SM: [1045423] Trying to update volume UUID 389e891c-2150-4caa-b201-073dedb8b886 to DELETED_389e891c-2150-4caa-b201-073dedb8b886...
+Nov 26 08:20:30 xcp-node-1 SM: [1045423] Raising exception [47, The SR is not available [opterr='389e891c-2150-4caa-b201-073dedb8b886']]
+Nov 26 08:20:30 xcp-node-1 SM: [1045423] lock: released /var/lock/sm/33dcb0ef-e089-4b6b-ab79-3d337045528e/sr
+Nov 26 08:20:30 xcp-node-1 SM: [1045423] ***** generic exception: vdi_snapshot: EXCEPTION <class 'xs_errors.SROSError'>, The SR is not available [opterr='389e891c-2150-4caa-b201-073dedb8b886']
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/SRCommand.py", line 113, in run
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     return self._run_locked(sr)
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/SRCommand.py", line 157, in _run_locked
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     target = sr.vdi(self.vdi_uuid)
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/LinstorSR", line 537, in wrap
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     return load(self, *args, **kwargs)
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/LinstorSR", line 463, in load
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     raise xs_errors.XenError('SRUnavailable', opterr=str(e))
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]
+Nov 26 08:20:30 xcp-node-1 SM: [1045423] ***** LINSTOR resources on XCP-ng: EXCEPTION <class 'xs_errors.SROSError'>, The SR is not available [opterr='389e891c-2150-4caa-b201-073dedb8b886']
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/SRCommand.py", line 392, in run
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     ret = cmd.run(sr)
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/SRCommand.py", line 113, in run
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     return self._run_locked(sr)
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/SRCommand.py", line 157, in _run_locked
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     target = sr.vdi(self.vdi_uuid)
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/LinstorSR", line 537, in wrap
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     return load(self, *args, **kwargs)
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]   File "/opt/xensource/sm/LinstorSR", line 463, in load
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]     raise xs_errors.XenError('SRUnavailable', opterr=str(e))
+Nov 26 08:20:30 xcp-node-1 SM: [1045423]
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 057ef9e0..49d67d70 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1132,7 +1132,13 @@ class LinstorVolumeManager(object):
+                 'after volume uuid update: {}'.format(e)
+             )
+ 
+-        self._volumes.remove(volume_uuid)
++        try:
++            self._volumes.remove(volume_uuid)
++        except KeyError:
++            # Can be missing if we are building the volume set attr AND
++            # we are processing a deleted resource.
++            assert force
++
+         self._volumes.add(new_volume_uuid)
+ 
+         self._logger(

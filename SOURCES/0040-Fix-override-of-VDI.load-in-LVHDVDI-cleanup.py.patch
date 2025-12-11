@@ -1,4 +1,4 @@
-From 9a5320f60649bbb4122afc06463ad11c2acadc7f Mon Sep 17 00:00:00 2001
+From 3b32aea1a72de109a9064a34ff110c3b7055b122 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 22 Oct 2024 14:33:13 +0200
 Subject: [PATCH] Fix override of VDI.load in LVHDVDI cleanup.py
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 12 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 0318e742..0c9f8925 100755
+index dfcba47b..7dd3e1af 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -1222,20 +1222,22 @@ class LVHDVDI(VDI):

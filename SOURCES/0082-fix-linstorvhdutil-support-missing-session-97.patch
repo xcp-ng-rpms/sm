@@ -1,4 +1,4 @@
-From f373af55338218fd5f2c5df38e3f354119adcb3c Mon Sep 17 00:00:00 2001
+From 00949029595af87f2de2f5e94381b769b2ef003a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Wed, 17 Sep 2025 16:23:21 +0200
 Subject: [PATCH] fix(linstorvhdutil): support missing session (#97)

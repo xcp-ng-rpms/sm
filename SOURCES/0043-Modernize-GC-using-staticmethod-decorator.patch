@@ -1,4 +1,4 @@
-From 8830bb8bc5387b75ef0fa93dfc146b02d9e42f7c Mon Sep 17 00:00:00 2001
+From befc55f36ae7c612ffd49e5fb60883cb84002c2b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 15:33:11 +0200
 Subject: [PATCH] Modernize GC using `staticmethod` decorator
@@ -9,7 +9,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 12 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 0c9f8925..a55f2dc7 100755
+index 7dd3e1af..74f8f90e 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -123,10 +123,11 @@ class Util:

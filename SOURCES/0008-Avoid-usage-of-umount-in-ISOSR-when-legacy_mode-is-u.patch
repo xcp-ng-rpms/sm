@@ -1,4 +1,4 @@
-From e4e9ad5493e197d97c4bfae4b9732b5ebba19cf9 Mon Sep 17 00:00:00 2001
+From 0149f23e1a7c3d01b947a5d83594c33568b96755 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 2 Dec 2021 09:28:37 +0100
 Subject: [PATCH] Avoid usage of `umount` in `ISOSR` when `legacy_mode` is used

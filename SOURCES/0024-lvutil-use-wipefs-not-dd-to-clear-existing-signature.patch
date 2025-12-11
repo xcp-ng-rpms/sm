@@ -1,4 +1,4 @@
-From ed49d1844cc92cd6ce50396d2ddcc9b6c4fd7b13 Mon Sep 17 00:00:00 2001
+From 197c11c8b33711f7914479396e40f953ce7ef562 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 5 Jul 2023 16:57:26 +0200
 Subject: [PATCH] lvutil: use wipefs not dd to clear existing signatures
@@ -29,7 +29,7 @@ index a2dea049..25b9e9ca 100755
              <name>GenericException</name>
              <description>SM has thrown a generic python exception</description>
 diff --git a/drivers/lvutil.py b/drivers/lvutil.py
-index ad844aad..0776142a 100755
+index 3e7d716c..4ce3d0a4 100755
 --- a/drivers/lvutil.py
 +++ b/drivers/lvutil.py
 @@ -479,24 +479,12 @@ def createVG(root, vgname):
@@ -62,10 +62,10 @@ index ad844aad..0776142a 100755
          if not (dev == rootdev):
              try:
 diff --git a/drivers/util.py b/drivers/util.py
-index f7660cc0..ab6265fd 100755
+index 395f40cd..32246c87 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -644,6 +644,11 @@ def zeroOut(path, fromByte, bytes):
+@@ -645,6 +645,11 @@ def zeroOut(path, fromByte, bytes):
      return True
  
  

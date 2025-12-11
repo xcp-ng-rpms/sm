@@ -1,0 +1,57 @@
+CA-414438 Defend against unexpected VDI name_description contents
+
+From: Tim Smith <tim.smith@cloud.com>
+
+It seems to be possible for a description field on an LV snapshot to be
+converted to a dictionary, which results in attempts to remove it from
+the MGT volume failing after it is deleted, which in turn results in a
+subsequent scan failing because an LV which should exist does not.
+
+It is not immediately clear how this ended up as a dictionary as it has
+been back and forth through XMLRPC a few times, but to solve the
+immediate issue, defend against such things.
+
+Signed-off-by: Tim Smith <tim.smith@cloud.com>
+
+diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
+index f86711e..685c11d 100755
+--- a/drivers/srmetadata.py
++++ b/drivers/srmetadata.py
+@@ -712,8 +712,8 @@ class LVMMetadataHandler(MetadataHandler):
+             # which will be called by all classes
+             # and one specific to this class
+             if generateSector == 1 or generateSector == 0:
+-                label = xml.sax.saxutils.escape(Dict[NAME_LABEL_TAG])
+-                desc = xml.sax.saxutils.escape(Dict[NAME_DESCRIPTION_TAG])
++                label = xml.sax.saxutils.escape(util.to_plain_string(Dict[NAME_LABEL_TAG]))
++                desc = xml.sax.saxutils.escape(util.to_plain_string(Dict[NAME_DESCRIPTION_TAG]))
+                 label_length = len(to_utf8(label))
+                 desc_length = len(to_utf8(desc))
+ 
+diff --git a/drivers/util.py b/drivers/util.py
+index 00d45cc..15d13e3 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -115,8 +115,9 @@ def roundup(divisor, value):
+ def to_plain_string(obj):
+     if obj is None:
+         return None
+-    if type(obj) == str:
+-        return obj
++    if isinstance(obj, dict) and len(obj) == 0:
++        SMlog(f"util.to_plain_string() corrected empty dict to empty str")
++        return ""
+     return str(obj)
+ 
+ 
+diff --git a/tests/test_util.py b/tests/test_util.py
+index 965eec1..25f4272 100644
+--- a/tests/test_util.py
++++ b/tests/test_util.py
+@@ -776,3 +776,6 @@ class TestFistPoints(unittest.TestCase):
+             mock.ANY, valid_fp_name)
+         self.mock_xenapi.xenapi.session.logout.assert_has_calls([mock.call(), mock.call()])
+         self.mock_sleep.assert_called_once_with(util.FIST_PAUSE_PERIOD)
++
++    def test_to_plain_string_empty_dict(self):
++        self.assertEqual("", util.to_plain_string({}))

@@ -1,0 +1,32 @@
+From 4fe7777d1f4ac8da99274c31e940452db2656f17 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@citrix.com>
+Date: Fri, 14 Nov 2025 11:34:20 +0000
+Subject: [PATCH] CA-419706: update print calls
+
+Some dangling left over conversion from Python2
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ scripts/check-device-sharing | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/scripts/check-device-sharing b/scripts/check-device-sharing
+index c402ad1..eab8167 100755
+--- a/scripts/check-device-sharing
++++ b/scripts/check-device-sharing
+@@ -24,9 +24,9 @@ import os, sys
+ 
+ if __name__ == "__main__":
+     if len(sys.argv) != 2:
+-        print "Usage:"
+-        print "    %s <device>" % (sys.argv[0])
+-        print "    -- return zero if the device (eg 'sda' 'sdb') is not in-use; non-zero otherwise"
++        print( "Usage:")
++        print( "    %s <device>" % (sys.argv[0]))
++        print( "    -- return zero if the device (eg 'sda' 'sdb') is not in-use; non-zero otherwise")
+         sys.exit(2)
+ 
+     device = sys.argv[1]
+-- 
+2.51.1
+

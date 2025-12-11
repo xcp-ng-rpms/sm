@@ -1,6 +1,6 @@
-%global package_speccommit 9df6da66175c15762000aa7a96311c44268fef52
+%global package_speccommit 8741def89f3c6eefdc97b6e11d03b23f2ecf8b92
 %global usver 3.2.12
-%global xsver 10
+%global xsver 16
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -16,26 +16,36 @@ Source0: sm-3.2.12.tar.gz
 Source1: update-cgrules.patch
 Patch0: ca-403593__dont_log_the_session_ref.patch
 Patch1: ca-405381_mpathcount_info_does_not_automatically_refresh_in_xencenter_after_disabling_and_enabling_multipath.patch
-Patch2: ca_407343_do_not_remove_vhd_parent_in_leaf_gc
-Patch3: revert-2979937bbb7
-Patch4: cp-50026_ensure_mpathcount_runs_after_multipath_deactivate.patch
-Patch5: CP-53692-SR-attach-calls-mpathcount-async.patch
-Patch6: add_udev_rules_for_purestorage_-_best_practices.patch
-Patch7: update_pure_storage_udev_1.patch
-Patch8: update_pure_storage_udev_2.patch
-Patch9: CA-408105_add_logging_to__finishInterruptedCoalesceLeaf
-Patch10: CA-408452_remove_vhd_parent_if_it_does_not_have_one
-Patch11: cp-51633__tidy_up_intellicache_code.patch
-Patch12: cp-51843__advertise_sr_caching_on_lvhdoiscsi_and_hba.patch
-Patch13: cp-51843__add_unit_tests_for_setup_cache.patch
-Patch14: cp-51843__remove_unused_params.patch
-Patch15: cp-51843__add_unit_tests_for_remove_cache.patch
-Patch16: cp-51843__disable_read-caching_on_block.patch
-Patch17: ca_409231_report_intellicache_stats_with_nbd
-Patch18: ca_411163_verify_pv_scsi_ids
-Patch19: CA-395221_use_systemd_target_for_gc_enable
-Patch20: CA-413209_remove_dangling_reference_to_rawhba
-Patch21: CP-308587_update_netapp_multipath
+Patch2: cp-50026_ensure_mpathcount_runs_after_multipath_deactivate.patch
+Patch3: CP-53692-SR-attach-calls-mpathcount-async.patch
+Patch4: ca_409231_report_intellicache_stats_with_nbd
+Patch5: CA-395221_use_systemd_target_for_gc_enable
+Patch6: CA-413209_remove_dangling_reference_to_rawhba
+Patch7: cp-51633__tidy_up_intellicache_code.patch
+Patch8: cp-51843__advertise_sr_caching_on_lvhdoiscsi_and_hba.patch
+Patch9: cp-51843__add_unit_tests_for_setup_cache.patch
+Patch10: cp-51843__remove_unused_params.patch
+Patch11: cp-51843__add_unit_tests_for_remove_cache.patch
+Patch12: cp-51843__disable_read-caching_on_block.patch
+Patch13: ca_407343_do_not_remove_vhd_parent_in_leaf_gc
+Patch14: CA-408452_remove_vhd_parent_if_it_does_not_have_one
+Patch15: revert-2979937bbb7
+Patch16: CA-408105_add_logging_to__finishInterruptedCoalesceLeaf
+Patch17: ca_411163_verify_pv_scsi_ids
+Patch18: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch19: update_pure_storage_udev_1.patch
+Patch20: update_pure_storage_udev_2.patch
+Patch21: CA-418775_ensure_size_consistent_for_resize
+Patch22: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
+Patch23: CA-420515_handle_errors_in_foreground
+Patch24: ca-419706_update_print_calls
+Patch25: ca-421013_ensure_cbt_refresh_on_supporter
+Patch26: CP-308587_update_netapp_multipath
+Patch27: CA-413325_log_what_lvs_shows_on_failure
+Patch28: ca-414438_defend_against_unexpected_vdi_name_description_contents.patch
+Patch29: ca-413899_rescan_lvs_when_activating
+Patch30: cp-309718_lc_moving_average
+Patch31: CA-416486_leaf_coalesce_wait_for_GC
 
 %define __python python3
 
@@ -327,6 +337,28 @@ then
 fi
 
 %changelog
+* Fri Nov 21 2025 Mark Syms <mark.syms@citrix.com> - 3.2.12-16
+- CA-420515: log errors in GC when running in foreground
+- CA-419706: fix incorrect print syntax
+- CA-421013: ensure repeated CBT enable/disable works
+
+* Mon Nov 10 2025 Mark Syms <mark.syms@citrix.com> - 3.2.12-15
+- CA-418775: ensure getsize and sg_readcap agree on resize
+- CA-420307: encode synthetic SCSI data correctly
+
+* Wed Oct 15 2025 Mark Syms <mark.syms@citrix.com> - 3.2.12-14
+- CA-416486: leaf coalesce wait for GC
+
+* Tue Sep 30 2025 Mark Syms <mark.syms@citrix.com> - 3.2.12-13
+- CP-309718: calculate a moving average of leaf size in GC
+
+* Tue Sep 09 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-12
+- CA-414438 Defend against unexpected VDI name_description contents
+- CA-413899: Rescan lvs when activating
+
+* Mon Aug 18 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-11
+- Rebuild
+
 * Fri Jul 04 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-10
 - CA-413209: remove dangling reference to rawhba
 - CP-308587: update NetApp multipath as requested

@@ -1,0 +1,28 @@
+From 2a812581c3bc2cec72e8ee841cdaf14a874fea7d Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Fri, 26 Sep 2025 18:40:25 +0200
+Subject: [PATCH] fix(linstorvolumemanager): report unexpected DRBD device path
+ (#100)
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 49d67d70..ef7ab772 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1019,9 +1019,10 @@ class LinstorVolumeManager(object):
+         # - "../xcp-volume-<UUID>/0"
+         if device_path.startswith(DRBD_BY_RES_PATH):
+             prefix_len = len(DRBD_BY_RES_PATH)
+-        else:
+-            assert device_path.startswith('../')
++        elif device_path.startswith('../'):
+             prefix_len = 3
++        else:
++            raise LinstorVolumeManagerError('Unexpected device path: `{}`'.format(device_path))
+ 
+         res_name_end = device_path.find('/', prefix_len)
+         assert res_name_end != -1

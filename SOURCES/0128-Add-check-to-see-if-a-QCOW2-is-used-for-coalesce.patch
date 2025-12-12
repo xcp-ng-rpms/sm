@@ -1,0 +1,28 @@
+From b375914e3cac2458d6b283c15c39e4b88dbfeabd Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 13 Feb 2025 17:44:58 +0100
+Subject: [PATCH] Add check to see if a QCOW2 is used for coalesce
+
+If a coalesce is opened, we can't use qemu-img commit directly because
+it would corrupt the image
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index d94c98b4..a17aac96 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -696,6 +696,10 @@ class QCowUtil(CowUtil):
+ 
+     @override
+     def coalesce(self, path: str) -> int:
++        pid_opener = util.get_openers_pid(path)
++        if pid_opener is not None:
++            raise xs_errors.XenError("LeafGCSkip", f"We can't coalesce the QCOW2 since it's in use. Openers: {pid_opener}")
++
+         allocated_blocks = self.getAllocatedSize(path)
+         # -d on commit make it not empty the original image since we don't intend to keep it
+         cmd = [QEMU_IMG, "commit", "-f", QCOW2_TYPE, path, "-d"]

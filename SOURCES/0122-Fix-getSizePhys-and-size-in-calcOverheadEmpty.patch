@@ -1,0 +1,48 @@
+From 3c3a059704676968b6fcf15ddd29e86db961b79d Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 23 Jan 2025 11:56:53 +0100
+Subject: [PATCH] Fix getSizePhys and size in calcOverheadEmpty
+
+getSizePhys now uses os.stat instead of du, it would not have worked on
+a block device instead of a file
+calcOverheadEmpty used hardcoded value for cluster size
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 9767c66c..067907e4 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -5,6 +5,7 @@ import errno
+ import struct
+ from pathlib import Path
+ import zlib
++import os
+ 
+ import util
+ from cowutil import CowUtil, CowImageInfo
+@@ -424,8 +425,8 @@ class QCowUtil(CowUtil):
+ 
+     @override
+     def calcOverheadEmpty(self, virtual_size: int) -> int:
+-        size_l1 = 64 * 1024
+-        size_header = 64 * 1024
++        size_l1 = QCOW_CLUSTER_SIZE
++        size_header = QCOW_CLUSTER_SIZE
+         size_l2 = (virtual_size * 8) / QCOW_CLUSTER_SIZE #It is only an estimation
+ 
+         size = size_l1 + size_l2 + size_header
+@@ -588,9 +589,7 @@ class QCowUtil(CowUtil):
+ 
+     @override
+     def getSizePhys(self, path: str) -> int:
+-        cmd = ["du", "-b", path] #TODO: use os.stat instead since it won't work with a block device
+-        ret = cast(str, self._ioretry(cmd))
+-        return int(ret.split()[0])
++        return os.stat(path).st_size
+ 
+     @override
+     def setSizePhys(self, path: str, size: int, debug: bool = True) -> None:

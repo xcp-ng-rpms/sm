@@ -1,0 +1,79 @@
+From b8a6fec49609a6496f7540d529d03b0aefe7a3b7 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 2 Jul 2025 15:50:41 +0200
+Subject: [PATCH] qcow2util.py: reduce log spam for onlinecoalesce
+
+Add a new class in util.py that only print a log message
+if this message is different from last one or if it's the Xth one
+since last call.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/blktap2.py   |  4 ++--
+ drivers/qcow2util.py |  5 +++--
+ drivers/util.py      | 13 +++++++++++++
+ 3 files changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index bb4c173d..91581f4a 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -458,9 +458,9 @@ class TapCtl(object):
+         cls._pread(args)
+ 
+     @classmethod
+-    def query(cls, pid, minor):
++    def query(cls, pid, minor, quiet=False):
+         args = ["query", "-p", pid, "-m", minor]
+-        output = cls._pread(args)
++        output = cls._pread(args, quiet=quiet)
+         m = re.match(r"Commit status '(.+)' \((\d+)\/(\d+)\)", output)
+         status = m.group(1)
+         coalesced = int(m.group(2))
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 89a5ca2f..2db07999 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -735,6 +735,7 @@ class QCowUtil(CowUtil):
+     @override
+     def coalesceOnline(self, path: str) -> int:
+         pid, minor = self._getTapdisk(path)
++        logger = util.LoggerCounter(10)
+ 
+         try:
+             TapCtl.commit(pid, minor, QCOW2_TYPE, path)
+@@ -749,8 +750,8 @@ class QCowUtil(CowUtil):
+ 
+             while status !=  "concluded":
+                 time.sleep(1)
+-                status, nb, _ = TapCtl.query(pid, minor)
+-                util.SMlog("Got status {} for tapdisk {} (m: {})".format(status, pid, minor))#TODO: this log and the one from the call to query are spamming SMlog
++                status, nb, _ = TapCtl.query(pid, minor, quiet=True)
++                logger.log("Got status {} for tapdisk {} (m: {})".format(status, pid, minor))
+             return nb
+         except TapCtl.CommandFailure:
+             util.SMlog("Query command failed on tapdisk instance {}. Raising...".format(pid))
+diff --git a/drivers/util.py b/drivers/util.py
+index 335b9663..72f78963 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -150,6 +150,19 @@ def SMlog(message, ident="SM", priority=LOG_INFO):
+             _logToSyslog(ident, _SM_SYSLOG_FACILITY, priority, message_line)
+ 
+ 
++class LoggerCounter:
++    def __init__(self, max_repeats):
++        self.previous_message = None
++        self.max_repeats = max_repeats
++        self.repeat_counter = 0
++
++    def log(self, message):
++        self.repeat_counter += 1
++        if self.previous_message != message or self.repeat_counter == self.max_repeats:
++            SMlog(message)
++            self.previous_message = message
++            self.repeat_counter = 0
++
+ def _getDateString():
+     d = datetime.datetime.now()
+     t = d.timetuple()

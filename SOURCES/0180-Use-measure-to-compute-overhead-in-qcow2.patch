@@ -1,0 +1,77 @@
+From c8fa0d8ec462d57fc497ed80d49fae942d1857a5 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 6 Oct 2025 14:37:32 +0200
+Subject: [PATCH] Use measure to compute overhead in qcow2
+
+Use `qemu-img measure` to compute size of overhead for QCOW2 images.
+Also add a `block_size` parameter to `calcOverheadEmpty` to prepare the
+computation to be dependent on block size.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cowutil.py   |  2 +-
+ drivers/qcow2util.py | 17 +++++++++--------
+ drivers/vhdutil.py   |  2 +-
+ 3 files changed, 11 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/cowutil.py b/drivers/cowutil.py
+index be681056..c6b7659d 100755
+--- a/drivers/cowutil.py
++++ b/drivers/cowutil.py
+@@ -111,7 +111,7 @@ class CowUtil(ABC):
+         pass
+ 
+     @abstractmethod
+-    def calcOverheadEmpty(self, virtual_size: int) -> int:
++    def calcOverheadEmpty(self, virtual_size: int, block_size: Optional[int] = None) -> int:
+         pass
+ 
+     @abstractmethod
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index e2ad8f16..aec25e30 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -7,6 +7,7 @@ import re
+ import time
+ import struct
+ import zlib
++import json
+ from pathlib import Path
+ 
+ import util
+@@ -436,14 +437,14 @@ class QCowUtil(CowUtil):
+         return MAX_QCOW_CHAIN_LENGTH
+ 
+     @override
+-    def calcOverheadEmpty(self, virtual_size: int) -> int:
+-        size_l1 = QCOW2_DEFAULT_CLUSTER_SIZE
+-        size_header = QCOW2_DEFAULT_CLUSTER_SIZE
+-        size_l2 = (virtual_size * 8) / QCOW2_DEFAULT_CLUSTER_SIZE #It is only an estimation
+-
+-        size = size_l1 + size_l2 + size_header
+-
+-        return util.roundup(QCOW2_DEFAULT_CLUSTER_SIZE, size)
++    def calcOverheadEmpty(self, virtual_size: int, block_size: Optional[int] = None) -> int:
++        if block_size:
++            cluster_size = block_size
++        else:
++            cluster_size = QCOW2_DEFAULT_CLUSTER_SIZE
++        cmd = [QEMU_IMG, "measure", "-O", "qcow2", "--output", "json", "-o", f"cluster_size={cluster_size}", "--size", f"{virtual_size}"]
++        output = json.loads(self._ioretry(cmd))
++        return int(output["required"])
+ 
+     @override
+     def calcOverheadBitmap(self, virtual_size: int) -> int:
+diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
+index 5f547db0..1075984a 100755
+--- a/drivers/vhdutil.py
++++ b/drivers/vhdutil.py
+@@ -79,7 +79,7 @@ class VhdUtil(CowUtil):
+         return MAX_VHD_CHAIN_LENGTH
+ 
+     @override
+-    def calcOverheadEmpty(self, virtual_size: int) -> int:
++    def calcOverheadEmpty(self, virtual_size: int, block_size: Optional[int] = None) -> int:
+         """
+         Calculate the VHD space overhead (metadata size) for an empty VDI of
+         size virtual_size.

@@ -1,0 +1,26 @@
+From bd75db4b0ae7420ad00899c8a1b0669c16d036a6 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 16 Jan 2025 16:29:51 +0100
+Subject: [PATCH] Fix for type in cleanup.py
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 8f4a5eb2..a85330b9 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -809,10 +809,7 @@ class VDI(object):
+         strSizeAllocated = "?"
+         if self._sizeAllocated >= 0:
+             strSizeAllocated = "/%s" % Util.num2str(self._sizeAllocated)
+-        strType = ""
+-        if self.vdi_type == VdiType.RAW:
+-            strType = "[RAW]"
+-            strSizePhys = ""
++        strType = "[{}]".format(self.vdi_type)
+ 
+         return "%s%s(%s%s%s)%s" % (strHidden, self.uuid[0:8], strSizeVirt,
+                 strSizePhys, strSizeAllocated, strType)

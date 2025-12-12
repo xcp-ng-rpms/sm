@@ -1,0 +1,37 @@
+From 646ddd7914be69e6861a1ef529a84ac335661a1b Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 18 Feb 2025 16:27:36 +0100
+Subject: [PATCH] cleanup.py: Change VDI to be RW for qemu-img commit
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index a85330b9..45895629 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1411,16 +1411,22 @@ class LVMVDI(VDI):
+     @override
+     def _doCoalesce(self) -> None:
+         """LVMVDI parents must first be activated, inflated, and made writable"""
++        was_RO = False
+         try:
+             self._activateChain()
+             self.sr.lvmCache.setReadonly(self.parent.fileName, False)
+             self.parent.validate()
+             self.inflateParentForCoalesce()
++            if self.lvReadonly:
++                self.sr.lvmCache.setReadonly(self.fileName, False)
++                was_RO = True
+             VDI._doCoalesce(self)
+         finally:
+             self.parent._loadInfoSizePhys()
+             self.parent.deflate()
+             self.sr.lvmCache.setReadonly(self.parent.fileName, True)
++            if was_RO:
++                self.sr.lvmCache.setReadonly(self.fileName, True)
+ 
+     @override
+     def _setParent(self, parent) -> None:

@@ -1,0 +1,31 @@
+From e7fccceb7746525a47192eb013de1528fda92e8c Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Fri, 29 Aug 2025 00:58:18 +0200
+Subject: [PATCH] fix(test_blktap2.py): replace phy VDI with raw VDI
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ tests/test_blktap2.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
+index b629ff69..2b537b77 100644
+--- a/tests/test_blktap2.py
++++ b/tests/test_blktap2.py
+@@ -16,6 +16,7 @@ import util
+ import xs_errors
+ import XenAPI
+ 
++from vditype import VdiType
+ 
+ class BogusException(Exception):
+     pass
+@@ -138,7 +139,7 @@ class TestVDI(unittest.TestCase):
+             autospec='blktap2.VDI.TargetDriver')
+         mock_target.return_value = self.mock_target
+ 
+-        self.mock_target.get_vdi_type.return_value = 'phy'
++        self.mock_target.get_vdi_type.return_value = VdiType.RAW
+ 
+         def mock_handles(type_str):
+             return type_str == 'udev'

@@ -1,0 +1,1080 @@
+From b8eea460ee6642db19d0edd0e11adae23832b9a3 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Mon, 20 Jan 2025 22:39:43 +0100
+Subject: [PATCH] refactor(LVHDSR): rename to "LVMSR"
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ Makefile                                |  4 +-
+ drivers/LVHDoFCoESR.py                  |  4 +-
+ drivers/LVHDoHBASR.py                   | 18 +++---
+ drivers/LVHDoISCSISR.py                 | 22 +++----
+ drivers/{LVHDSR.py => LVMSR.py}         | 82 ++++++++++++-------------
+ drivers/cleanup.py                      | 16 ++---
+ drivers/on_slave.py                     |  2 +-
+ drivers/trim_util.py                    |  2 +-
+ tests/test_LVHDoFCoESR.py               | 12 ++--
+ tests/test_LVHDoHBASR.py                |  8 +--
+ tests/test_LVHDoISCSISR.py              |  8 +--
+ tests/{test_LVHDSR.py => test_LVMSR.py} | 76 +++++++++++------------
+ tests/test_on_slave.py                  |  2 +-
+ 13 files changed, 128 insertions(+), 128 deletions(-)
+ rename drivers/{LVHDSR.py => LVMSR.py} (97%)
+ rename tests/{test_LVHDSR.py => test_LVMSR.py} (90%)
+
+diff --git a/Makefile b/Makefile
+index 4cce5b30..c2e25a7f 100755
+--- a/Makefile
++++ b/Makefile
+@@ -9,7 +9,7 @@ SM_DRIVERS += udev
+ SM_DRIVERS += ISO
+ SM_DRIVERS += HBA
+ SM_DRIVERS += Linstor
+-SM_DRIVERS += LVHD
++SM_DRIVERS += LVM
+ SM_DRIVERS += LVHDoISCSI
+ SM_DRIVERS += LVHDoHBA
+ SM_DRIVERS += SHM
+@@ -203,7 +203,7 @@ install: build
+ 	  ln -sf $$i"SR.py" $$i"SR"; \
+ 	done
+ 	rm $(SM_STAGING)$(SM_DEST)/SHMSR
+-	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDSR && ln -sf LVHDSR.py LVMSR
++	cd $(SM_STAGING)$(SM_DEST) && rm -f LVMSR && ln -sf LVMSR.py LVHDSR
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f RawISCSISR && ln -sf RawISCSISR.py ISCSISR
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoISCSISR && ln -sf LVHDoISCSISR.py LVMoISCSISR
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f LVHDoHBASR && ln -sf LVHDoHBASR.py LVMoHBASR
+diff --git a/drivers/LVHDoFCoESR.py b/drivers/LVHDoFCoESR.py
+index 11bf298e..94132d78 100755
+--- a/drivers/LVHDoFCoESR.py
++++ b/drivers/LVHDoFCoESR.py
+@@ -23,7 +23,7 @@ from sm_typing import override
+ import SR
+ import VDI
+ import LVHDoHBASR
+-import LVHDSR
++import LVMSR
+ import SRCommand
+ import sys
+ import xs_errors
+@@ -89,7 +89,7 @@ class LVHDoFCoESR(LVHDoHBASR.LVHDoHBASR):
+             raise xs_errors.XenError('ConfigSCSIid')
+ 
+         self.SCSIid = self.dconf['SCSIid']
+-        LVHDSR.LVHDSR.load(self, sr_uuid)
++        LVMSR.LVMSR.load(self, sr_uuid)
+ 
+     @override
+     def vdi(self, uuid) -> VDI.VDI:
+diff --git a/drivers/LVHDoHBASR.py b/drivers/LVHDoHBASR.py
+index f1181569..e1c75a77 100755
+--- a/drivers/LVHDoHBASR.py
++++ b/drivers/LVHDoHBASR.py
+@@ -22,7 +22,7 @@
+ from sm_typing import override
+ 
+ import SR
+-import LVHDSR
++import LVMSR
+ import SRCommand
+ import VDI
+ import lvutil
+@@ -58,7 +58,7 @@ DRIVER_INFO = {
+     }
+ 
+ 
+-class LVHDoHBASR(LVHDSR.LVHDSR):
++class LVHDoHBASR(LVMSR.LVMSR):
+     """LVHD over HBA storage repository"""
+ 
+     @override
+@@ -120,7 +120,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+             self.mpathmodule.refresh(self.SCSIid, 0)
+         self._pathrefresh(LVHDoHBASR)
+         try:
+-            LVHDSR.LVHDSR.create(self, sr_uuid, size)
++            LVMSR.LVMSR.create(self, sr_uuid, size)
+         finally:
+             if self.mpath == "true":
+                 self.mpathmodule.reset(self.SCSIid, explicit_unmap=True)
+@@ -144,7 +144,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+             # Must re-initialise the multipath node
+             if self.mpath == "true":
+                 self.mpathmodule.refresh(self.SCSIid, 0)
+-        LVHDSR.LVHDSR.attach(self, sr_uuid)
++        LVMSR.LVMSR.attach(self, sr_uuid)
+         self._setMultipathableFlag(SCSIid=self.SCSIid)
+ 
+     @override
+@@ -160,7 +160,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+                 self._setMultipathableFlag(SCSIid=self.SCSIid)
+         else:
+                 self._pathrefresh(LVHDoHBASR)
+-        LVHDSR.LVHDSR.scan(self, sr_uuid)
++        LVMSR.LVMSR.scan(self, sr_uuid)
+ 
+     @override
+     def probe(self) -> str:
+@@ -181,7 +181,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+ 
+         try:
+             self._pathrefresh(LVHDoHBASR)
+-            result = LVHDSR.LVHDSR.probe(self)
++            result = LVMSR.LVMSR.probe(self)
+             if self.mpath == "true":
+                 self.mpathmodule.reset(self.SCSIid, explicit_unmap=True)
+             return result
+@@ -192,7 +192,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+ 
+     @override
+     def detach(self, sr_uuid) -> None:
+-        LVHDSR.LVHDSR.detach(self, sr_uuid)
++        LVMSR.LVMSR.detach(self, sr_uuid)
+         self.mpathmodule.reset(self.SCSIid, explicit_unmap=True)
+         try:
+             pbdref = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
+@@ -219,7 +219,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+     def delete(self, sr_uuid) -> None:
+         self._pathrefresh(LVHDoHBASR)
+         try:
+-            LVHDSR.LVHDSR.delete(self, sr_uuid)
++            LVMSR.LVMSR.delete(self, sr_uuid)
+         finally:
+             if self.mpath == "true":
+                 self.mpathmodule.reset(self.SCSIid, explicit_unmap=True)
+@@ -230,7 +230,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+         return LVHDoHBAVDI(self, uuid)
+ 
+ 
+-class LVHDoHBAVDI(LVHDSR.LVHDVDI):
++class LVHDoHBAVDI(LVMSR.LVMVDI):
+     @override
+     def generate_config(self, sr_uuid, vdi_uuid) -> str:
+         util.SMlog("LVHDoHBAVDI.generate_config")
+diff --git a/drivers/LVHDoISCSISR.py b/drivers/LVHDoISCSISR.py
+index 6491432e..f7d7a59b 100755
+--- a/drivers/LVHDoISCSISR.py
++++ b/drivers/LVHDoISCSISR.py
+@@ -22,7 +22,7 @@ from sm_typing import override
+ 
+ import SR
+ import VDI
+-import LVHDSR
++import LVMSR
+ import BaseISCSI
+ import SRCommand
+ import util
+@@ -71,7 +71,7 @@ DRIVER_INFO = {
+     }
+ 
+ 
+-class LVHDoISCSISR(LVHDSR.LVHDSR):
++class LVHDoISCSISR(LVMSR.LVMSR):
+     """LVHD over ISCSI storage repository"""
+ 
+     @override
+@@ -99,7 +99,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         else:
+             self.create_iscsi_sessions(sr_uuid)
+ 
+-        LVHDSR.LVHDSR.load(self, sr_uuid)
++        LVMSR.LVMSR.load(self, sr_uuid)
+ 
+     def create_iscsi_sessions(self, sr_uuid):
+         if 'target' in self.original_srcmd.dconf:
+@@ -441,7 +441,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         try:
+             self.iscsi._attach_LUN_bySCSIid(self.SCSIid)
+             self._pathrefresh(LVHDoISCSISR)
+-            LVHDSR.LVHDSR.create(self, sr_uuid, size)
++            LVMSR.LVMSR.create(self, sr_uuid, size)
+         except Exception as inst:
+             self.iscsi.detach(sr_uuid)
+             raise xs_errors.XenError("SRUnavailable", opterr=inst)
+@@ -450,7 +450,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+     @override
+     def delete(self, sr_uuid) -> None:
+         self._pathrefresh(LVHDoISCSISR)
+-        LVHDSR.LVHDSR.delete(self, sr_uuid)
++        LVMSR.LVMSR.delete(self, sr_uuid)
+         for i in self.iscsiSRs:
+             i.detach(sr_uuid)
+ 
+@@ -490,7 +490,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+             # Check that we only have PVs for the volume group with the expected SCSI ID
+             lvutil.checkPVScsiIds(self.vgname, self.SCSIid)
+ 
+-            LVHDSR.LVHDSR.attach(self, sr_uuid)
++            LVMSR.LVMSR.attach(self, sr_uuid)
+         except Exception as inst:
+             for i in self.iscsiSRs:
+                 i.detach(sr_uuid)
+@@ -505,7 +505,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+ 
+     @override
+     def detach(self, sr_uuid) -> None:
+-        LVHDSR.LVHDSR.detach(self, sr_uuid)
++        LVMSR.LVMSR.detach(self, sr_uuid)
+         for i in self.iscsiSRs:
+             i.detach(sr_uuid)
+ 
+@@ -518,7 +518,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+                     i.attach(sr_uuid)
+                 except xs_errors.SROSError:
+                     util.SMlog("Connection failed for target %s, continuing.." % i.target)
+-        LVHDSR.LVHDSR.scan(self, sr_uuid)
++        LVMSR.LVMSR.scan(self, sr_uuid)
+ 
+     @override
+     def probe(self) -> str:
+@@ -540,7 +540,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         self.iscsi.attach(self.uuid)
+         self.iscsi._attach_LUN_bySCSIid(self.SCSIid)
+         self._pathrefresh(LVHDoISCSISR)
+-        out = LVHDSR.LVHDSR.probe(self)
++        out = LVMSR.LVMSR.probe(self)
+         self.iscsi.detach(self.uuid)
+         return out
+ 
+@@ -563,7 +563,7 @@ class LVHDoISCSISR(LVHDSR.LVHDSR):
+         return LVHDoISCSIVDI(self, uuid)
+ 
+ 
+-class LVHDoISCSIVDI(LVHDSR.LVHDVDI):
++class LVHDoISCSIVDI(LVMSR.LVMVDI):
+     @override
+     def generate_config(self, sr_uuid, vdi_uuid) -> str:
+         util.SMlog("LVHDoISCSIVDI.generate_config")
+@@ -592,7 +592,7 @@ class LVHDoISCSIVDI(LVHDSR.LVHDVDI):
+         try:
+             self.sr.iscsi.attach(sr_uuid)
+             self.sr.iscsi._attach_LUN_bySCSIid(self.sr.SCSIid)
+-            return LVHDSR.LVHDVDI.attach(self, sr_uuid, vdi_uuid)
++            return LVMSR.LVMVDI.attach(self, sr_uuid, vdi_uuid)
+         except:
+             util.logException("LVHDoISCSIVDI.attach_from_config")
+             raise xs_errors.XenError('SRUnavailable', \
+diff --git a/drivers/LVHDSR.py b/drivers/LVMSR.py
+similarity index 97%
+rename from drivers/LVHDSR.py
+rename to drivers/LVMSR.py
+index 653a5dec..73161102 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVMSR.py
+@@ -15,7 +15,7 @@
+ # along with this program; if not, write to the Free Software Foundation, Inc.,
+ # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ #
+-# LVHDSR: VHD on LVM storage repository
++# LVMSR: VHD on LVM storage repository
+ #
+ 
+ from sm_typing import Dict, List, override
+@@ -89,7 +89,7 @@ OPS_EXCLUSIVE = [
+ # Log if snapshot pauses VM for more than this many seconds
+ LONG_SNAPTIME = 60
+ 
+-class LVHDSR(SR.SR):
++class LVMSR(SR.SR):
+     DRIVER_TYPE = 'lvhd'
+ 
+     PROVISIONING_TYPES = ["thin", "thick"]
+@@ -149,7 +149,7 @@ class LVHDSR(SR.SR):
+             return type == "lvm"
+         elif name.endswith("EXTSR"):
+             return type == "ext"
+-        return type == LVHDSR.DRIVER_TYPE
++        return type == LVMSR.DRIVER_TYPE
+ 
+     @override
+     def load(self, sr_uuid) -> None:
+@@ -459,7 +459,7 @@ class LVHDSR(SR.SR):
+             # LVHDoHBASR, LVHDoISCSISR
+             return scsiutil.refresh_lun_size_by_SCSIid(getattr(self, 'SCSIid'))
+         else:
+-            # LVHDSR
++            # LVMSR
+             devices = self.dconf['device'].split(',')
+             scsiutil.refreshdev(devices)
+             return True
+@@ -483,18 +483,18 @@ class LVHDSR(SR.SR):
+                     # LVHDoHBASR, LVHDoISCSISR might have slaves
+                     scsiutil.refresh_lun_size_by_SCSIid_on_slaves(self.session,
+                                                        getattr(self, 'SCSIid'))
+-                util.SMlog("LVHDSR._expand_size for %s will resize the pv." %
++                util.SMlog("LVMSR._expand_size for %s will resize the pv." %
+                            self.uuid)
+                 for pv in lvutil.get_pv_for_vg(self.vgname):
+                     lvutil.resizePV(pv)
+             except:
+-                util.logException("LVHDSR._expand_size for %s failed to resize"
++                util.logException("LVMSR._expand_size for %s failed to resize"
+                                   " the PV" % self.uuid)
+ 
+     @override
+     @deviceCheck
+     def create(self, uuid, size) -> None:
+-        util.SMlog("LVHDSR.create for %s" % self.uuid)
++        util.SMlog("LVMSR.create for %s" % self.uuid)
+         if not self.isMaster:
+             util.SMlog('sr_create blocked for non-master')
+             raise xs_errors.XenError('LVMMaster')
+@@ -523,7 +523,7 @@ class LVHDSR(SR.SR):
+ 
+     @override
+     def delete(self, uuid) -> None:
+-        util.SMlog("LVHDSR.delete for %s" % self.uuid)
++        util.SMlog("LVMSR.delete for %s" % self.uuid)
+         if not self.isMaster:
+             raise xs_errors.XenError('LVMMaster')
+         cleanup.gc_force(self.session, self.uuid)
+@@ -534,7 +534,7 @@ class LVHDSR(SR.SR):
+                 continue
+ 
+             if util.doesFileHaveOpenHandles(fileName):
+-                util.SMlog("LVHDSR.delete: The dev mapper entry %s has open " \
++                util.SMlog("LVMSR.delete: The dev mapper entry %s has open " \
+                            "handles" % fileName)
+                 success = False
+                 continue
+@@ -551,7 +551,7 @@ class LVHDSR(SR.SR):
+                 os.unlink(lpath)
+             except OSError as e:
+                 if e.errno != errno.ENOENT:
+-                    util.SMlog("LVHDSR.delete: failed to remove the symlink for " \
++                    util.SMlog("LVMSR.delete: failed to remove the symlink for " \
+                                "file %s. Error: %s" % (fileName, str(e)))
+                     success = False
+ 
+@@ -560,7 +560,7 @@ class LVHDSR(SR.SR):
+                 if util.pathexists(self.path):
+                     os.rmdir(self.path)
+             except Exception as e:
+-                util.SMlog("LVHDSR.delete: failed to remove the symlink " \
++                util.SMlog("LVMSR.delete: failed to remove the symlink " \
+                            "directory %s. Error: %s" % (self.path, str(e)))
+                 success = False
+ 
+@@ -570,7 +570,7 @@ class LVHDSR(SR.SR):
+             raise xs_errors.XenError('SRNotEmpty')
+ 
+         if not success:
+-            raise Exception("LVHDSR delete failed, please refer to the log " \
++            raise Exception("LVMSR delete failed, please refer to the log " \
+                             "for details.")
+ 
+         lvutil.removeVG(self.dconf['device'], self.vgname)
+@@ -578,7 +578,7 @@ class LVHDSR(SR.SR):
+ 
+     @override
+     def attach(self, uuid) -> None:
+-        util.SMlog("LVHDSR.attach for %s" % self.uuid)
++        util.SMlog("LVMSR.attach for %s" % self.uuid)
+ 
+         self._cleanup(True)  # in case of host crashes, if detach wasn't called
+ 
+@@ -617,7 +617,7 @@ class LVHDSR(SR.SR):
+ 
+     @override
+     def detach(self, uuid) -> None:
+-        util.SMlog("LVHDSR.detach for %s" % self.uuid)
++        util.SMlog("LVMSR.detach for %s" % self.uuid)
+         cleanup.abort(self.uuid)
+ 
+         # Do a best effort cleanup of the dev mapper entries
+@@ -632,7 +632,7 @@ class LVHDSR(SR.SR):
+                 if util.doesFileHaveOpenHandles(fileName):
+                     # if yes, log this and signal failure
+                     util.SMlog(
+-                        f"LVHDSR.detach: The dev mapper entry {fileName} has "
++                        f"LVMSR.detach: The dev mapper entry {fileName} has "
+                         "open handles")
+                     success = False
+                     continue
+@@ -649,7 +649,7 @@ class LVHDSR(SR.SR):
+                 lvname = os.path.join(self.path, lvname)
+                 util.force_unlink(lvname)
+             except Exception as e:
+-                util.SMlog("LVHDSR.detach: failed to remove the symlink for " \
++                util.SMlog("LVMSR.detach: failed to remove the symlink for " \
+                            "file %s. Error: %s" % (fileName, str(e)))
+                 success = False
+ 
+@@ -660,7 +660,7 @@ class LVHDSR(SR.SR):
+                 if util.pathexists(self.path):
+                     os.rmdir(self.path)
+             except Exception as e:
+-                util.SMlog("LVHDSR.detach: failed to remove the symlink " \
++                util.SMlog("LVMSR.detach: failed to remove the symlink " \
+                            "directory %s. Error: %s" % (self.path, str(e)))
+                 success = False
+ 
+@@ -678,13 +678,13 @@ class LVHDSR(SR.SR):
+     def forget_vdi(self, uuid) -> None:
+         if not self.legacyMode:
+             LVMMetadataHandler(self.mdpath).deleteVdiFromMetadata(uuid)
+-        super(LVHDSR, self).forget_vdi(uuid)
++        super(LVMSR, self).forget_vdi(uuid)
+ 
+     @override
+     def scan(self, uuid) -> None:
+         activated_lvs = set()
+         try:
+-            util.SMlog("LVHDSR.scan for %s" % self.uuid)
++            util.SMlog("LVMSR.scan for %s" % self.uuid)
+             if not self.isMaster:
+                 util.SMlog('sr_scan blocked for non-master')
+                 raise xs_errors.XenError('LVMMaster')
+@@ -822,7 +822,7 @@ class LVHDSR(SR.SR):
+                     new_vdi.cbt_enabled = True
+                     self.vdis[cbt_uuid] = new_vdi
+ 
+-            super(LVHDSR, self).scan(uuid)
++            super(LVMSR, self).scan(uuid)
+             self._kickGC()
+ 
+         finally:
+@@ -871,7 +871,7 @@ class LVHDSR(SR.SR):
+ 
+     @override
+     def vdi(self, uuid) -> VDI.VDI:
+-        return LVHDVDI(self, uuid)
++        return LVMVDI(self, uuid)
+ 
+     def _loadvdis(self):
+         self.virtual_allocation = 0
+@@ -912,12 +912,12 @@ class LVHDSR(SR.SR):
+             raise xs_errors.XenError('SRNoSpace')
+ 
+     def _handleInterruptedCloneOps(self):
+-        entries = self.journaler.getAll(LVHDVDI.JRN_CLONE)
++        entries = self.journaler.getAll(LVMVDI.JRN_CLONE)
+         for uuid, val in entries.items():
+             util.fistpoint.activate("LVHDRT_clone_vdi_before_undo_clone", self.uuid)
+             self._handleInterruptedCloneOp(uuid, val)
+             util.fistpoint.activate("LVHDRT_clone_vdi_after_undo_clone", self.uuid)
+-            self.journaler.remove(LVHDVDI.JRN_CLONE, uuid)
++            self.journaler.remove(LVMVDI.JRN_CLONE, uuid)
+ 
+     def _handleInterruptedCoalesceLeaf(self):
+         entries = self.journaler.getAll(cleanup.VDI.JRN_LEAF)
+@@ -1308,7 +1308,7 @@ class LVHDSR(SR.SR):
+         self._ensureSpaceAvailable(self.journaler.LV_SIZE)
+ 
+ 
+-class LVHDVDI(VDI.VDI):
++class LVMVDI(VDI.VDI):
+ 
+     JRN_CLONE = "clone"  # journal entry type for the clone operation
+ 
+@@ -1355,7 +1355,7 @@ class LVHDVDI(VDI.VDI):
+ 
+     @override
+     def create(self, sr_uuid, vdi_uuid, size) -> str:
+-        util.SMlog("LVHDVDI.create for %s" % self.uuid)
++        util.SMlog("LVMVDI.create for %s" % self.uuid)
+         if not self.sr.isMaster:
+             raise xs_errors.XenError('LVMMaster')
+         if self.exists:
+@@ -1363,7 +1363,7 @@ class LVHDVDI(VDI.VDI):
+ 
+         size = vhdutil.validate_and_round_vhd_size(int(size))
+ 
+-        util.SMlog("LVHDVDI.create: type = %s, %s (size=%s)" % \
++        util.SMlog("LVMVDI.create: type = %s, %s (size=%s)" % \
+                 (self.vdi_type, self.path, size))
+         lvSize = 0
+         self.sm_config = self.sr.srcmd.params["vdi_sm_config"]
+@@ -1420,13 +1420,13 @@ class LVHDVDI(VDI.VDI):
+ 
+     @override
+     def delete(self, sr_uuid, vdi_uuid, data_only=False) -> None:
+-        util.SMlog("LVHDVDI.delete for %s" % self.uuid)
++        util.SMlog("LVMVDI.delete for %s" % self.uuid)
+         try:
+             self._loadThis()
+         except xs_errors.SRException as e:
+             # Catch 'VDI doesn't exist' exception
+             if e.errno == 46:
+-                return super(LVHDVDI, self).delete(sr_uuid, vdi_uuid, data_only)
++                return super(LVMVDI, self).delete(sr_uuid, vdi_uuid, data_only)
+             raise
+ 
+         vdi_ref = self.sr.srcmd.params['vdi_ref']
+@@ -1462,11 +1462,11 @@ class LVHDVDI(VDI.VDI):
+ 
+         self.sr._updateStats(self.sr.uuid, -self.size)
+         self.sr._kickGC()
+-        return super(LVHDVDI, self).delete(sr_uuid, vdi_uuid, data_only)
++        return super(LVMVDI, self).delete(sr_uuid, vdi_uuid, data_only)
+ 
+     @override
+     def attach(self, sr_uuid, vdi_uuid) -> str:
+-        util.SMlog("LVHDVDI.attach for %s" % self.uuid)
++        util.SMlog("LVMVDI.attach for %s" % self.uuid)
+         if self.sr.journaler.hasJournals(self.uuid):
+             raise xs_errors.XenError('VDIUnavailable',
+                     opterr='Interrupted operation detected on this VDI, '
+@@ -1497,7 +1497,7 @@ class LVHDVDI(VDI.VDI):
+ 
+     @override
+     def detach(self, sr_uuid, vdi_uuid) -> None:
+-        util.SMlog("LVHDVDI.detach for %s" % self.uuid)
++        util.SMlog("LVMVDI.detach for %s" % self.uuid)
+         self._loadThis()
+         already_deflated = (self.utilisation < \
+                 lvhdutil.calcSizeVHDLV(self.size))
+@@ -1529,7 +1529,7 @@ class LVHDVDI(VDI.VDI):
+     # We only support offline resize
+     @override
+     def resize(self, sr_uuid, vdi_uuid, size) -> str:
+-        util.SMlog("LVHDVDI.resize for %s" % self.uuid)
++        util.SMlog("LVMVDI.resize for %s" % self.uuid)
+         if not self.sr.isMaster:
+             raise xs_errors.XenError('LVMMaster')
+ 
+@@ -1578,7 +1578,7 @@ class LVHDVDI(VDI.VDI):
+         self.session.xenapi.VDI.set_physical_utilisation(vdi_ref,
+                 str(self.utilisation))
+         self.sr._updateStats(self.sr.uuid, self.size - oldSize)
+-        super(LVHDVDI, self).resize_cbt(self.sr.uuid, self.uuid, self.size)
++        super(LVMVDI, self).resize_cbt(self.sr.uuid, self.uuid, self.size)
+         return VDI.VDI.get_params(self)
+ 
+     @override
+@@ -1588,7 +1588,7 @@ class LVHDVDI(VDI.VDI):
+ 
+     @override
+     def compose(self, sr_uuid, vdi1, vdi2) -> None:
+-        util.SMlog("LVHDSR.compose for %s -> %s" % (vdi2, vdi1))
++        util.SMlog("LVMSR.compose for %s -> %s" % (vdi2, vdi1))
+         if not VdiType.isCowImage(self.vdi_type):
+             raise xs_errors.XenError('Unimplemented')
+ 
+@@ -1611,7 +1611,7 @@ class LVHDVDI(VDI.VDI):
+         util.SMlog("Compose done")
+ 
+     def reset_leaf(self, sr_uuid, vdi_uuid):
+-        util.SMlog("LVHDSR.reset_leaf for %s" % vdi_uuid)
++        util.SMlog("LVMSR.reset_leaf for %s" % vdi_uuid)
+         if not VdiType.isCowImage(self.vdi_type):
+             raise xs_errors.XenError('Unimplemented')
+ 
+@@ -1685,7 +1685,7 @@ class LVHDVDI(VDI.VDI):
+         return snapResult
+ 
+     def _snapshot(self, snapType, cloneOp=False, cbtlog=None, cbt_consistency=None):
+-        util.SMlog("LVHDVDI._snapshot for %s (type %s)" % (self.uuid, snapType))
++        util.SMlog("LVMVDI._snapshot for %s (type %s)" % (self.uuid, snapType))
+ 
+         if not self.sr.isMaster:
+             raise xs_errors.XenError('LVMMaster')
+@@ -1830,7 +1830,7 @@ class LVHDVDI(VDI.VDI):
+                         pass
+ 
+         except (util.SMException, XenAPI.Failure) as e:
+-            util.logException("LVHDVDI._snapshot")
++            util.logException("LVMVDI._snapshot")
+             self._failClone(origUuid, jval, str(e))
+         util.fistpoint.activate("LVHDRT_clone_vdi_before_remove_journal", self.sr.uuid)
+ 
+@@ -1851,7 +1851,7 @@ class LVHDVDI(VDI.VDI):
+         vhdutil.snapshot(snapPath, self.path, parentRaw, lvhdutil.MSIZE_MB)
+         snapParent = vhdutil.getParent(snapPath, lvhdutil.extractUuid)
+ 
+-        snapVDI = LVHDVDI(self.sr, snapUuid)
++        snapVDI = LVMVDI(self.sr, snapUuid)
+         snapVDI.read_only = False
+         snapVDI.location = snapUuid
+         snapVDI.size = self.size
+@@ -2212,7 +2212,7 @@ class LVHDVDI(VDI.VDI):
+     def _create_cbt_log(self) -> str:
+         logname = self._get_cbt_logname(self.uuid)
+         self.sr.lvmCache.create(logname, self.sr.journaler.LV_SIZE, CBTLOG_TAG)
+-        logpath = super(LVHDVDI, self)._create_cbt_log()
++        logpath = super(LVMVDI, self)._create_cbt_log()
+         self.sr.lvmCache.deactivateNoRefcount(logname)
+         return logpath
+ 
+@@ -2269,6 +2269,6 @@ class LVHDVDI(VDI.VDI):
+         return lvutil.exists(logpath)
+ 
+ if __name__ == '__main__':
+-    SRCommand.run(LVHDSR, DRIVER_INFO)
++    SRCommand.run(LVMSR, DRIVER_INFO)
+ else:
+-    SR.registerSR(LVHDSR)
++    SR.registerSR(LVMSR)
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index b49983c9..d2b4d20e 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1227,7 +1227,7 @@ class FileVDI(VDI):
+         return self._sizeAllocated
+ 
+ 
+-class LVHDVDI(VDI):
++class LVMVDI(VDI):
+     """Object representing a VDI in an LVHD SR"""
+ 
+     JRN_ZERO = "zero"  # journal entry type for zeroing out end of parent
+@@ -1235,7 +1235,7 @@ class LVHDVDI(VDI):
+     @override
+     def load(self, info=None) -> None:
+         # `info` is always set. `None` default value is only here to match parent method.
+-        assert info, "No info given to LVHDVDI.load"
++        assert info, "No info given to LVMVDI.load"
+         self.parent = None
+         self.children = []
+         self._sizePhys = -1
+@@ -1934,7 +1934,7 @@ class SR(object):
+         if type == SR.TYPE_FILE:
+             return FileSR(uuid, xapi, createLock, force)
+         elif type == SR.TYPE_LVHD:
+-            return LVHDSR(uuid, xapi, createLock, force)
++            return LVMSR(uuid, xapi, createLock, force)
+         elif type == SR.TYPE_LINSTOR:
+             return LinstorSR(uuid, xapi, createLock, force)
+         raise util.SMException("SR type %s not recognized" % type)
+@@ -2359,7 +2359,7 @@ class SR(object):
+ 
+     def cleanupJournals(self, dryRun=False):
+         """delete journal entries for non-existing VDIs"""
+-        for t in [LVHDVDI.JRN_ZERO, VDI.JRN_RELINK, SR.JRN_CLONE]:
++        for t in [LVMVDI.JRN_ZERO, VDI.JRN_RELINK, SR.JRN_CLONE]:
+             entries = self.journaler.getAll(t)
+             for uuid, jval in entries.items():
+                 if self.getVDI(uuid):
+@@ -3056,7 +3056,7 @@ class FileSR(SR):
+         Util.log("*** finished leaf-coalesce successfully")
+ 
+ 
+-class LVHDSR(SR):
++class LVMSR(SR):
+     TYPE = SR.TYPE_LVHD
+     SUBTYPES = ["lvhdoiscsi", "lvhdohba"]
+ 
+@@ -3128,7 +3128,7 @@ class LVHDSR(SR):
+             vdi = self.getVDI(uuid)
+             if not vdi:
+                 self.logFilter.logNewVDI(uuid)
+-                vdi = LVHDVDI(self, uuid, vdiInfo.vdiType)
++                vdi = LVMVDI(self, uuid, vdiInfo.vdiType)
+                 self.vdis[uuid] = vdi
+             vdi.load(vdiInfo)
+         self._removeStaleVDIs(vdis.keys())
+@@ -3686,7 +3686,7 @@ def daemonize():
+ 
+ 
+ def normalizeType(type):
+-    if type in LVHDSR.SUBTYPES:
++    if type in LVMSR.SUBTYPES:
+         type = SR.TYPE_LVHD
+     if type in ["lvm", "lvmoiscsi", "lvmohba", "lvmofcoe"]:
+         # temporary while LVHD is symlinked as LVM
+@@ -4158,7 +4158,7 @@ def cache_cleanup(session, srUuid, maxAge):
+ def debug(sr_uuid, cmd, vdi_uuid):
+     Util.log("Debug command: %s" % cmd)
+     sr = SR.getInstance(sr_uuid, None)
+-    if not isinstance(sr, LVHDSR):
++    if not isinstance(sr, LVMSR):
+         print("Error: not an LVHD SR")
+         return
+     sr.scanLocked()
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index 2f58281a..5291dfcf 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -81,7 +81,7 @@ def _is_open(session, args):
+     import LargeBlockSR
+     import GlusterFSSR
+     import LinstorSR
+-    import LVHDSR
++    import LVMSR
+     import MooseFSSR
+     import NFSSR
+     import XFSSR
+diff --git a/drivers/trim_util.py b/drivers/trim_util.py
+index b04f8baf..a0edeaab 100755
+--- a/drivers/trim_util.py
++++ b/drivers/trim_util.py
+@@ -93,7 +93,7 @@ def _log_last_triggered(session, sr_uuid):
+ 
+ 
+ def do_trim(session, args):
+-    """Attempt to trim the given LVHDSR"""
++    """Attempt to trim the given LVMSR"""
+     util.SMlog("do_trim: %s" % args)
+     sr_uuid = args["sr_uuid"]
+     os.environ['LVM_SYSTEM_DIR'] = MASTER_LVM_CONF
+diff --git a/tests/test_LVHDoFCoESR.py b/tests/test_LVHDoFCoESR.py
+index a3feec8f..4bdcf41b 100644
+--- a/tests/test_LVHDoFCoESR.py
++++ b/tests/test_LVHDoFCoESR.py
+@@ -51,8 +51,8 @@ class TestFCoESR(unittest.TestCase):
+     @mock.patch('SR.driver', autospec=True)
+     @mock.patch('util.find_my_pbd', autospec=True)
+     @mock.patch('SR.SR._pathrefresh', autospec=True)
+-    @mock.patch('LVHDoFCoESR.LVHDSR.LVHDSR.load', autospec=True)
+-    def test_load_scsiid(self, lvhdsrload, pathrefresh, find_my_pbd, driver):
++    @mock.patch('LVHDoFCoESR.LVMSR.LVMSR.load', autospec=True)
++    def test_load_scsiid(self, lvmsrload, pathrefresh, find_my_pbd, driver):
+         find_my_pbd.return_value = ['pbd_ref', 'pbd']
+         parameters = {}
+         parameters['device_config'] = ""
+@@ -61,8 +61,8 @@ class TestFCoESR(unittest.TestCase):
+     @mock.patch('SR.driver', autospec=True)
+     @mock.patch('util.find_my_pbd', autospec=True)
+     @mock.patch('SR.SR._pathrefresh', autospec=True)
+-    @mock.patch('LVHDoFCoESR.LVHDSR.LVHDSR.load', autospec=True)
+-    def test_load_pbd_exception(self, lvhdsrload, pathrefresh, find_my_pbd, driver):
++    @mock.patch('LVHDoFCoESR.LVMSR.LVMSR.load', autospec=True)
++    def test_load_pbd_exception(self, lvmsrload, pathrefresh, find_my_pbd, driver):
+         find_my_pbd.side_effect = Exception('exception raised')
+         parameters = {}
+         parameters['device_config'] = ""
+@@ -71,8 +71,8 @@ class TestFCoESR(unittest.TestCase):
+     @mock.patch('SR.driver', autospec=True)
+     @mock.patch('util.find_my_pbd', autospec=True)
+     @mock.patch('SR.SR._pathrefresh', autospec=True)
+-    @mock.patch('LVHDoFCoESR.LVHDSR.LVHDSR.load', autospec=True)
+-    def test_vdi(self, lvhdsrload, pathrefresh, find_my_pbd, driver):
++    @mock.patch('LVHDoFCoESR.LVMSR.LVMSR.load', autospec=True)
++    def test_vdi(self, lvmsrload, pathrefresh, find_my_pbd, driver):
+         sr_uuid = 'bsr_uuid'
+         find_my_pbd.return_value = ['pbd_ref', 'pbd']
+         parameters = {}
+diff --git a/tests/test_LVHDoHBASR.py b/tests/test_LVHDoHBASR.py
+index ce99d736..54686de9 100644
+--- a/tests/test_LVHDoHBASR.py
++++ b/tests/test_LVHDoHBASR.py
+@@ -82,13 +82,13 @@ class TestLVHDoHBASR(unittest.TestCase):
+         self.sr_uuid = str(uuid4())
+         self.scsi_id = '360a98000534b4f4e46704c76692d6d33'
+ 
+-        lock_patcher = mock.patch('LVHDSR.lock.Lock', autospec=True)
++        lock_patcher = mock.patch('LVMSR.lock.Lock', autospec=True)
+         self.mock_lock = lock_patcher.start()
+-        lvhdsr_patcher = mock.patch('LVHDoHBASR.LVHDSR')
+-        self.mock_lvhdsr = lvhdsr_patcher.start()
++        lvmsr_patcher = mock.patch('LVHDoHBASR.LVMSR')
++        self.mock_lvmsr = lvmsr_patcher.start()
+         util_patcher = mock.patch('LVHDoHBASR.util', autospec=True)
+         self.mock_util = util_patcher.start()
+-        lc_patcher = mock.patch('LVHDSR.lvmcache.lvutil.Fairlock', autospec=True)
++        lc_patcher = mock.patch('LVMSR.lvmcache.lvutil.Fairlock', autospec=True)
+         self.mock_lc = lc_patcher.start()
+         xenapi_patcher = mock.patch('SR.XenAPI')
+         self.mock_xapi = xenapi_patcher.start()
+diff --git a/tests/test_LVHDoISCSISR.py b/tests/test_LVHDoISCSISR.py
+index 7153eb38..44cc0fff 100644
+--- a/tests/test_LVHDoISCSISR.py
++++ b/tests/test_LVHDoISCSISR.py
+@@ -140,9 +140,9 @@ class TestLVHDoISCSISR(ISCSITestCase):
+                                        autospec=True)
+         patched_baseiscsi = baseiscsi_patcher.start()
+         patched_baseiscsi.side_effect = self.baseiscsi
+-        lvhdsr_patcher = mock.patch ('LVHDoISCSISR.LVHDSR')
++        lvmsr_patcher = mock.patch ('LVHDoISCSISR.LVMSR')
+ 
+-        self.mock_lvhdsr = lvhdsr_patcher.start()
++        self.mock_lvmsr = lvmsr_patcher.start()
+         self.mock_session = mock.MagicMock()
+         xenapi_patcher = mock.patch('SR.XenAPI')
+         mock_xenapi = xenapi_patcher.start()
+@@ -156,9 +156,9 @@ class TestLVHDoISCSISR(ISCSITestCase):
+ 
+         self.mock_copy.side_effect = deepcopy
+ 
+-        lock_patcher = mock.patch('LVHDSR.lock.Lock')
++        lock_patcher = mock.patch('LVMSR.lock.Lock')
+         self.mock_lock = lock_patcher.start()
+-        lvlock_patcher = mock.patch('LVHDSR.lvutil.Fairlock')
++        lvlock_patcher = mock.patch('LVMSR.lvutil.Fairlock')
+         self.mock_lvlock = lvlock_patcher.start()
+ 
+         pv_check_patcher = mock.patch('LVHDoISCSISR.lvutil.checkPVScsiIds', autospec=True)
+diff --git a/tests/test_LVHDSR.py b/tests/test_LVMSR.py
+similarity index 90%
+rename from tests/test_LVHDSR.py
+rename to tests/test_LVMSR.py
+index ae04323e..bbe611b0 100644
+--- a/tests/test_LVHDSR.py
++++ b/tests/test_LVMSR.py
+@@ -8,7 +8,7 @@ import unittest.mock as mock
+ import uuid
+ 
+ import cleanup
+-import LVHDSR
++import LVMSR
+ import lvhdutil
+ import lvutil
+ import vhdutil
+@@ -38,7 +38,7 @@ class Stubs(object):
+             patcher.stop()
+ 
+ 
+-class TestLVHDSR(unittest.TestCase, Stubs):
++class TestLVMSR(unittest.TestCase, Stubs):
+     @override
+     def setUp(self) -> None:
+         self.init_stubs()
+@@ -47,7 +47,7 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+     def tearDown(self) -> None:
+         self.remove_stubs()
+ 
+-    def create_LVHDSR(self, master=False, command='foo', sr_uuid=None):
++    def create_LVMSR(self, master=False, command='foo', sr_uuid=None):
+         srcmd = mock.Mock()
+         srcmd.dconf = {'device': '/dev/bar'}
+         if master:
+@@ -58,18 +58,18 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+             'sr_ref': 'test_sr_ref'}
+         if sr_uuid is None:
+             sr_uuid = str(uuid.uuid4())
+-        return LVHDSR.LVHDSR(srcmd, sr_uuid)
++        return LVMSR.LVMSR(srcmd, sr_uuid)
+ 
+     @mock.patch('lvutil.Fairlock', autospec=True)
+     @mock.patch('lvhdutil.getVDIInfo', autospec=True)
+-    @mock.patch('LVHDSR.lock.Lock', autospec=True)
++    @mock.patch('LVMSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_loadvids(self, mock_xenapi, mock_lock, mock_getVDIInfo, mock_lvlock):
+         """sr.allVDIs populated by _loadvdis"""
+ 
+         vdi_uuid = 'some VDI UUID'
+         mock_getVDIInfo.return_value = {vdi_uuid: lvhdutil.VDIInfo(vdi_uuid)}
+-        sr = self.create_LVHDSR()
++        sr = self.create_LVMSR()
+ 
+         sr._loadvdis()
+ 
+@@ -78,7 +78,7 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+     @mock.patch('lvhdutil.lvRefreshOnAllSlaves', autospec=True)
+     @mock.patch('lvhdutil.getVDIInfo', autospec=True)
+     @mock.patch('journaler.Journaler.getAll', autospec=True)
+-    @mock.patch('LVHDSR.lock.Lock', autospec=True)
++    @mock.patch('LVMSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_undoAllInflateJournals(
+             self,
+@@ -100,14 +100,14 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+         mock_getAll.return_value = {vdi_uuid: '0'}
+         mock_getVDIInfo.return_value = {vdi_uuid: lvhdutil.VDIInfo(vdi_uuid)}
+ 
+-        sr = self.create_LVHDSR()
++        sr = self.create_LVMSR()
+ 
+         sr._undoAllInflateJournals()
+         self.assertEqual(0, mock_lvhdutil_lvRefreshOnAllSlaves.call_count)
+ 
+-    @mock.patch('LVHDSR.cleanup', autospec=True)
+-    @mock.patch('LVHDSR.IPCFlag', autospec=True)
+-    @mock.patch('LVHDSR.lock.Lock', autospec=True)
++    @mock.patch('LVMSR.cleanup', autospec=True)
++    @mock.patch('LVMSR.IPCFlag', autospec=True)
++    @mock.patch('LVMSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     @testlib.with_context
+     def test_srlifecycle_success(self,
+@@ -191,7 +191,7 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+             lambda x: get_vdi_data('sm-config', x))
+         mock_session.xenapi.VDI.get_by_uuid.side_effect = get_vdi_by_uuid
+ 
+-        sr = self.create_LVHDSR(master=True, command='sr_attach',
++        sr = self.create_LVMSR(master=True, command='sr_attach',
+                                 sr_uuid=sr_uuid)
+         os.makedirs(sr.path)
+ 
+@@ -200,13 +200,13 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+         sr.attach(sr.uuid)
+ 
+         # Arrange (2)
+-        sr = self.create_LVHDSR(master=True, command='sr_detach',
++        sr = self.create_LVMSR(master=True, command='sr_detach',
+                                 sr_uuid=sr_uuid)
+ 
+         # Arrange for detach
+-        self.stubout('LVHDSR.Fairlock')
++        self.stubout('LVMSR.Fairlock')
+         mock_remove_device = self.stubout(
+-            'LVHDSR.lvutil.removeDevMapperEntry')
++            'LVMSR.lvutil.removeDevMapperEntry')
+         mock_glob = self.stubout('glob.glob')
+         mock_vdi_uuid = "72101dbd-bd62-4a14-a03c-afca8cceec86"
+         mock_filepath = os.path.join(
+@@ -215,7 +215,7 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+             f'{mock_vdi_uuid.replace("-", "--")}')
+         mock_glob.return_value = [mock_filepath]
+         mock_open_handles = self.stubout(
+-            'LVHDSR.util.doesFileHaveOpenHandles')
++            'LVMSR.util.doesFileHaveOpenHandles')
+ 
+         # Act (Detach)
+         with self.assertRaises(Exception):
+@@ -232,7 +232,7 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+ 
+         # Create new SR
+         mock_lvm_cache.return_value.checkLV.return_value = True
+-        sr = self.create_LVHDSR(master=True, command='sr_attach',
++        sr = self.create_LVMSR(master=True, command='sr_attach',
+                                 sr_uuid=sr_uuid)
+ 
+         # Act (2)
+@@ -307,24 +307,24 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+         return metadata
+ 
+ 
+-class TestLVHDVDI(unittest.TestCase, Stubs):
++class TestLVMVDI(unittest.TestCase, Stubs):
+     @override
+     def setUp(self) -> None:
+         self.init_stubs()
+ 
+-        lvhdutil_patcher = mock.patch('LVHDSR.lvhdutil', autospec=True)
++        lvhdutil_patcher = mock.patch('LVMSR.lvhdutil', autospec=True)
+         self.mock_lvhdutil = lvhdutil_patcher.start()
+         self.mock_lvhdutil.VG_LOCATION = lvhdutil.VG_LOCATION
+         self.mock_lvhdutil.VG_PREFIX = lvhdutil.VG_PREFIX
+         self.mock_lvhdutil.LV_PREFIX = lvhdutil.LV_PREFIX
+-        vhdutil_patcher = mock.patch('LVHDSR.vhdutil', autospec=True)
++        vhdutil_patcher = mock.patch('LVMSR.vhdutil', autospec=True)
+         self.mock_vhdutil = vhdutil_patcher.start()
+         self.mock_vhdutil.MAX_CHAIN_SIZE = vhdutil.MAX_CHAIN_SIZE
+-        lvutil_patcher = mock.patch('LVHDSR.lvutil', autospec=True)
++        lvutil_patcher = mock.patch('LVMSR.lvutil', autospec=True)
+         self.mock_lvutil = lvutil_patcher.start()
+         vdi_util_patcher = mock.patch('VDI.util', autospec=True)
+         self.mock_vdi_util = vdi_util_patcher.start()
+-        sr_util_patcher = mock.patch('LVHDSR.util', autospec=True)
++        sr_util_patcher = mock.patch('LVMSR.util', autospec=True)
+         self.mock_sr_util = sr_util_patcher.start()
+         self.mock_sr_util.gen_uuid.side_effect = str(uuid.uuid4())
+         xmlrpclib_patcher = mock.patch('VDI.xmlrpc.client', autospec=True)
+@@ -335,12 +335,12 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         self.mock_doexec = doexec_patcher.start()
+ 
+         self.stubout('lvmcache.LVMCache')
+-        self.stubout('LVHDSR.LVHDSR._ensureSpaceAvailable')
++        self.stubout('LVMSR.LVMSR._ensureSpaceAvailable')
+         self.stubout('journaler.Journaler.create')
+         self.stubout('journaler.Journaler.remove')
+-        self.stubout('LVHDSR.RefCounter.set')
+-        self.stubout('LVHDSR.RefCounter.put')
+-        self.stubout('LVHDSR.LVMMetadataHandler')
++        self.stubout('LVMSR.RefCounter.set')
++        self.stubout('LVMSR.RefCounter.put')
++        self.stubout('LVMSR.LVMMetadataHandler')
+ 
+         self.addCleanup(mock.patch.stopall)
+ 
+@@ -348,11 +348,11 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+     def tearDown(self) -> None:
+         self.remove_stubs()
+ 
+-    def create_LVHDSR(self):
++    def create_LVMSR(self):
+         srcmd = mock.Mock()
+         srcmd.dconf = {'device': '/dev/bar'}
+         srcmd.params = {'command': 'foo', 'session_ref': 'some session ref'}
+-        return LVHDSR.LVHDSR(srcmd, "some SR UUID")
++        return LVMSR.LVMSR(srcmd, "some SR UUID")
+ 
+     def get_dummy_vdi(self, vdi_uuid):
+         self.mock_lvhdutil.getVDIInfo.return_value = {
+@@ -374,7 +374,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         test_vhdInfo.hidden = hidden
+         self.mock_vhdutil.getVHDInfo.return_value = test_vhdInfo
+ 
+-    @mock.patch('LVHDSR.lock.Lock', autospec=True)
++    @mock.patch('LVMSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_clone_success(self, mock_xenapi, mock_lock):
+         """
+@@ -388,7 +388,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         mock_lv = self.get_dummy_vdi(vdi_uuid)
+         self.get_dummy_vhd(vdi_uuid, False)
+ 
+-        sr = self.create_LVHDSR()
++        sr = self.create_LVMSR()
+         sr.isMaster = True
+         sr.legacyMode = False
+         sr.srcmd.params = {'vdi_ref': 'test ref'}
+@@ -404,11 +404,11 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         # Assert
+         self.assertIsNotNone(clone)
+ 
+-    @mock.patch('LVHDSR.lock.Lock', autospec=True)
++    @mock.patch('LVMSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_snapshot_attached_success(self, mock_xenapi, mock_lock):
+         """
+-        LVHDSR.snapshot, attached on host, no CBT
++        LVMSR.snapshot, attached on host, no CBT
+         """
+         # Arrange
+         xapi_session = mock_xenapi.xapi_local.return_value
+@@ -418,7 +418,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         mock_lv = self.get_dummy_vdi(vdi_uuid)
+         self.get_dummy_vhd(vdi_uuid, False)
+ 
+-        sr = self.create_LVHDSR()
++        sr = self.create_LVMSR()
+         sr.isMaster = True
+         sr.legacyMode = False
+         sr.srcmd.params = {
+@@ -441,11 +441,11 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         # Assert
+         self.assertIsNotNone(snap)
+ 
+-    @mock.patch('LVHDSR.lock.Lock', autospec=True)
++    @mock.patch('LVMSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_snapshot_attached_cbt_success(self, mock_xenapi, mock_lock):
+         """
+-        LVHDSR.snapshot, attached on host, with CBT
++        LVMSR.snapshot, attached on host, with CBT
+         """
+         # Arrange
+         xapi_session = mock_xenapi.xapi_local.return_value
+@@ -455,7 +455,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         mock_lv = self.get_dummy_vdi(vdi_uuid)
+         self.get_dummy_vhd(vdi_uuid, False)
+ 
+-        sr = self.create_LVHDSR()
++        sr = self.create_LVMSR()
+         sr.isMaster = True
+         sr.legacyMode = False
+         sr.srcmd.params = {
+@@ -495,7 +495,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         mock_lv = self.get_dummy_vdi(vdi_uuid)
+         self.get_dummy_vhd(vdi_uuid, False)
+ 
+-        sr = self.create_LVHDSR()
++        sr = self.create_LVMSR()
+         sr.isMaster = True
+ 
+         vdi = sr.vdi(vdi_uuid)
+@@ -514,7 +514,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+             mock.call('ref2', 'on-slave', 'multi', mock.ANY)
+         ])
+ 
+-    @mock.patch('LVHDSR.Lock', autospec=True)
++    @mock.patch('LVMSR.lock.Lock', autospec=True)
+     @mock.patch('SR.XenAPI')
+     def test_snapshot_secondary_success(self, mock_xenapi, mock_lock):
+         """
+diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
+index 94f4d972..3b28b1bf 100644
+--- a/tests/test_on_slave.py
++++ b/tests/test_on_slave.py
+@@ -21,7 +21,7 @@ class Test_on_slave_is_open(unittest.TestCase):
+         'SR',
+         'NFSSR',
+         'EXTSR',
+-        'LVHDSR',
++        'LVMSR',
+         'LinstorSR',
+         'blktap2'
+     ]

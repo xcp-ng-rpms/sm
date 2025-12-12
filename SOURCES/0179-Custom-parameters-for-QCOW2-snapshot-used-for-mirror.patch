@@ -1,0 +1,284 @@
+From fe4866e0b50483802f2543c60bc0a0996ab0d92d Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 30 Sep 2025 10:45:17 +0200
+Subject: [PATCH] Custom parameters for QCOW2 snapshot used for mirror in
+ migration
+
+It's needed for migration because the mirror parent is empty, meaning
+that if the cluster size is bigger than 512, it will try to read the
+parent to complete with empty data, corrupting part of the cluster
+when we will coalesce it in the real parent.
+This is needed because the blkif blocksize is only 512b, as such it
+will try to only write blocks smaller than the cluster size during
+mirroring.
+The cluster size of the snapshot is the only one changed so that when
+it's coalesced in its parent, we find ourselves with the original
+cluster size again.
+It limits the max size of images to 64TiB otherwise it would not work
+with migration.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/FileSR.py    | 12 ++++++------
+ drivers/LVMSR.py     | 12 ++++++------
+ drivers/LinstorSR.py |  2 +-
+ drivers/VDI.py       |  7 +++++--
+ drivers/cowutil.py   |  3 ++-
+ drivers/qcow2util.py | 30 ++++++++++++++++++++++++++----
+ drivers/vhdutil.py   |  3 ++-
+ tests/test_cbt.py    |  7 ++++---
+ 8 files changed, 52 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index aed006e1..f54c7d1a 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -767,7 +767,7 @@ class FileVDI(VDI.VDI):
+ 
+     @override
+     def _do_snapshot(self, sr_uuid, vdi_uuid, snapType,
+-                     cloneOp=False, secondary=None, cbtlog=None) -> str:
++                     cloneOp=False, secondary=None, cbtlog=None, is_mirror_destination=False) -> str:
+         # If cbt enabled, save file consistency state
+         if cbtlog is not None:
+             if blktap2.VDI.tap_status(self.session, vdi_uuid):
+@@ -785,7 +785,7 @@ class FileVDI(VDI.VDI):
+         if not blktap2.VDI.tap_pause(self.session, sr_uuid, vdi_uuid):
+             raise util.SMException("failed to pause VDI %s" % vdi_uuid)
+         try:
+-            return self._snapshot(snapType, cbtlog, consistency_state)
++            return self._snapshot(snapType, cbtlog, consistency_state, is_mirror_destination)
+         finally:
+             self.disable_leaf_on_secondary(vdi_uuid, secondary=secondary)
+             blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid, secondary)
+@@ -812,7 +812,7 @@ class FileVDI(VDI.VDI):
+     def __fist_enospace(self):
+         raise util.CommandException(28, "cowutil snapshot", reason="No space")
+ 
+-    def _snapshot(self, snap_type, cbtlog=None, cbt_consistency=None):
++    def _snapshot(self, snap_type, cbtlog=None, cbt_consistency=None, is_mirror_destination=False):
+         util.SMlog("FileVDI._snapshot for %s (type %s)" % (self.uuid, snap_type))
+ 
+         args = []
+@@ -864,7 +864,7 @@ class FileVDI(VDI.VDI):
+             util.fistpoint.activate_custom_fn(
+                 "FileSR_fail_snap1",
+                 self.__fist_enospace)
+-            util.ioretry(lambda: self._snap(tmpsrc, newsrcname))
++            util.ioretry(lambda: self._snap(tmpsrc, newsrcname, is_mirror_destination))
+             # SMB3 can return EACCES if we attempt to rename over the
+             # hardlink leaf too quickly after creating it.
+             util.ioretry(lambda: self._rename(tmpsrc, src),
+@@ -983,8 +983,8 @@ class FileVDI(VDI.VDI):
+                   opterr='VDI %s unavailable %s' % (self.uuid, self.path))
+         return super(FileVDI, self).get_params()
+ 
+-    def _snap(self, child, parent):
+-        self.cowutil.snapshot(child, parent, self.vdi_type == VdiType.RAW)
++    def _snap(self, child, parent, is_mirror_destination=False):
++        self.cowutil.snapshot(child, parent, self.vdi_type == VdiType.RAW, is_mirror_image=is_mirror_destination)
+ 
+     def _clonecleanup(self, src, dst, newsrc):
+         try:
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 780d4573..9d65080e 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -1673,7 +1673,7 @@ class LVMVDI(VDI.VDI):
+ 
+     @override
+     def _do_snapshot(self, sr_uuid, vdi_uuid, snapType,
+-                     cloneOp=False, secondary=None, cbtlog=None) -> str:
++                     cloneOp=False, secondary=None, cbtlog=None, is_mirror_destination=False) -> str:
+         # If cbt enabled, save file consistency state
+         if cbtlog is not None:
+             if blktap2.VDI.tap_status(self.session, vdi_uuid):
+@@ -1691,7 +1691,7 @@ class LVMVDI(VDI.VDI):
+ 
+         snapResult = None
+         try:
+-            snapResult = self._snapshot(snapType, cloneOp, cbtlog, consistency_state)
++            snapResult = self._snapshot(snapType, cloneOp, cbtlog, consistency_state, is_mirror_destination)
+         except Exception as e1:
+             try:
+                 blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid,
+@@ -1708,7 +1708,7 @@ class LVMVDI(VDI.VDI):
+                        (unpause_time - pause_time))
+         return snapResult
+ 
+-    def _snapshot(self, snapType, cloneOp=False, cbtlog=None, cbt_consistency=None):
++    def _snapshot(self, snapType, cloneOp=False, cbtlog=None, cbt_consistency=None, is_mirror_destination=False):
+         util.SMlog("LVMVDI._snapshot for %s (type %s)" % (self.uuid, snapType))
+ 
+         if not self.sr.isMaster:
+@@ -1813,7 +1813,7 @@ class LVMVDI(VDI.VDI):
+                 self.utilisation = lvSizeBase
+             util.fistpoint.activate("LVHDRT_clone_vdi_after_shrink_parent", self.sr.uuid)
+ 
+-            snapVDI = self._createSnap(origUuid, snapVdiType, lvSizeOrig, False)
++            snapVDI = self._createSnap(origUuid, snapVdiType, lvSizeOrig, False, is_mirror_destination)
+             util.fistpoint.activate("LVHDRT_clone_vdi_after_first_snap", self.sr.uuid)
+             snapVDI2 = None
+             if snapType == VDI.SNAPSHOT_DOUBLE:
+@@ -1865,7 +1865,7 @@ class LVMVDI(VDI.VDI):
+ 
+         return self._finishSnapshot(snapVDI, snapVDI2, hostRefs, cloneOp, snapType)
+ 
+-    def _createSnap(self, snapUuid, snapVdiType, snapSizeLV, isNew):
++    def _createSnap(self, snapUuid, snapVdiType, snapSizeLV, isNew, is_mirror_destination=False):
+         """Snapshot self and return the snapshot VDI object"""
+ 
+         snapLV = LV_PREFIX[snapVdiType] + snapUuid
+@@ -1877,7 +1877,7 @@ class LVMVDI(VDI.VDI):
+         self.sr.lvActivator.add(snapUuid, snapLV, False)
+         parentRaw = (self.vdi_type == VdiType.RAW)
+         self.cowutil.snapshot(
+-            snapPath, self.path, parentRaw, max(self.size, self.cowutil.getDefaultPreallocationSizeVirt())
++            snapPath, self.path, parentRaw, max(self.size, self.cowutil.getDefaultPreallocationSizeVirt()), is_mirror_image=is_mirror_destination
+         )
+         snapParent = self.cowutil.getParent(snapPath, LvmCowUtil.extractUuid)
+ 
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index b4285de3..535c935b 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -2335,7 +2335,7 @@ class LinstorVDI(VDI.VDI):
+ 
+     @override
+     def _do_snapshot(self, sr_uuid, vdi_uuid, snapType,
+-                     cloneOp=False, secondary=None, cbtlog=None) -> str:
++                     cloneOp=False, secondary=None, cbtlog=None, is_mirror_destination=False) -> str:
+         # If cbt enabled, save file consistency state.
+         if cbtlog is not None:
+             if blktap2.VDI.tap_status(self.session, vdi_uuid):
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index dca659f6..060928b1 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -214,7 +214,7 @@ class VDI(object):
+         raise xs_errors.XenError('Unimplemented')
+ 
+     def _do_snapshot(self, sr_uuid, vdi_uuid, snapType,
+-                     cloneOp=False, secondary=None, cbtlog=None) -> str:
++                     cloneOp=False, secondary=None, cbtlog=None, is_mirror_destination=False) -> str:
+         raise xs_errors.XenError('Unimplemented')
+ 
+     def _delete_cbt_log(self) -> None:
+@@ -379,12 +379,15 @@ class VDI(object):
+         if self.sr.srcmd.params['driver_params'].get("mirror"):
+             secondary = self.sr.srcmd.params['driver_params']["mirror"]
+ 
++        is_mirror_destination = bool(self.sr.srcmd.params['driver_params'].get("base_mirror")) and not secondary
++        # This allow us to know is we are a snapshot for a migration mirror on the destination SR to apply specific configuration on the QCOW2 snapshot. See qcow2util.py::QCowUtil.snapshot() for more details.
++
+         if self._get_blocktracking_status():
+             cbtlog = self._get_cbt_logpath(self.uuid)
+         else:
+             cbtlog = None
+         return  self._do_snapshot(sr_uuid, vdi_uuid, snapType,
+-                                  secondary=secondary, cbtlog=cbtlog)
++                                  secondary=secondary, cbtlog=cbtlog, is_mirror_destination=is_mirror_destination)
+ 
+     def activate(self, sr_uuid, vdi_uuid) -> Optional[Dict[str, str]]:
+         """Activate VDI - called pre tapdisk open"""
+diff --git a/drivers/cowutil.py b/drivers/cowutil.py
+index 05c981b3..be681056 100755
+--- a/drivers/cowutil.py
++++ b/drivers/cowutil.py
+@@ -229,7 +229,8 @@ class CowUtil(ABC):
+         parent: str,
+         parentRaw: bool,
+         msize: int = 0,
+-        checkEmpty: bool = True
++        checkEmpty: bool = True,
++        is_mirror_image: bool = False
+     ) -> None:
+         pass
+ 
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 99113246..e2ad8f16 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -790,16 +790,38 @@ class QCowUtil(CowUtil):
+         parent: str,
+         parentRaw: bool,
+         msize: int = 0,
+-        checkEmpty: bool = True
++        checkEmpty: bool = True,
++        is_mirror_image: bool = False
+     ) -> None:
++        # TODO: msize, it's use to preallocate metadata, could we honor this too?
++        # TODO: checkEmpty? If it is False, then the parent could be empty and should still be used for snapshot
++        # But if True, if the parent is empty, we do what? vhd would just use the parent of parent as base, should we emulate this behavior?
++
++        cmd = [QEMU_IMG, "create"]
++
+         if parentRaw:
+             parent_type = RAW_TYPE
+-            parent_cluster_size = QCOW2_DEFAULT_CLUSTER_SIZE
++            cluster_size = QCOW2_DEFAULT_CLUSTER_SIZE
+         else:
+             parent_type = QCOW2_TYPE
+-            parent_cluster_size = self.getBlockSize(parent)
++            cluster_size = self.getBlockSize(parent)
++        args = ["-f", QCOW2_TYPE, "-F", parent_type, "-b", parent]
++
++        if is_mirror_image:
++            # is_mirror_image override the cluster size to ensure that we have a write of 512b to avoid having to read the parent during a migration.
++            # This is needed because the blkif blocksize is only 512b, as such it will try to only write blocks smaller than the cluster size.
++            # To write a smaller block, we would need to read the parent image cluster then change the 512b block.
++            # The parent being empty during the mirroring phase, reading from it would read zeros and corrupt the cluster.
++            # It also enable extended_l2 for this purpose, this is only done in the snapshot used for the mirror, this configuration will be lost when coalesced in its parent.
++            # Ensuring we go back to a better cluster_size for performance reasons.
++            # This limit our images max size to 64TiB.
++            cluster_size = 16 * 1024 # 16KiB
++            args.extend(["-o", "extended_l2=on"])
++
++        args.extend(["-o", f"cluster_size={cluster_size}"])
++        cmd.extend(args)
++        cmd.append(path)
+ 
+-        cmd = [QEMU_IMG, "create", "-f", QCOW2_TYPE, "-b", parent, "-F", parent_type, "-o", f"cluster_size={parent_cluster_size}", path]
+         self._ioretry(cmd)
+         self.setHidden(path, False) #We add hidden header at creation
+ 
+diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
+index 7f1dda43..5f547db0 100755
+--- a/drivers/vhdutil.py
++++ b/drivers/vhdutil.py
+@@ -356,7 +356,8 @@ class VhdUtil(CowUtil):
+         parent: str,
+         parentRaw: bool,
+         msize: int = 0,
+-        checkEmpty: bool = True
++        checkEmpty: bool = True,
++        is_mirror_image: bool = False
+     ) -> None:
+         cmd = [VHD_UTIL, "snapshot", OPT_LOG_ERR, "-n", path, "-p", parent]
+         if parentRaw:
+diff --git a/tests/test_cbt.py b/tests/test_cbt.py
+index bf8d176c..b990056a 100644
+--- a/tests/test_cbt.py
++++ b/tests/test_cbt.py
+@@ -61,9 +61,9 @@ class TestVDI(VDI.VDI):
+ 
+     @override
+     def _do_snapshot(self, sr_uuid, vdi_uuid, snapType,
+-                     cloneOp=False, secondary=None, cbtlog=None) -> str:
++                     cloneOp=False, secondary=None, cbtlog=None, is_mirror_destination=False) -> str:
+         return self.state_mock._do_snapshot(
+-            sr_uuid, vdi_uuid, snapType, cloneOp, secondary, cbtlog
++            sr_uuid, vdi_uuid, snapType, cloneOp, secondary, cbtlog, is_mirror_destination
+         )
+ 
+     @override
+@@ -366,7 +366,8 @@ class TestCBT(unittest.TestCase):
+                                                             mock.ANY,
+                                                             mock.ANY,
+                                                             mock.ANY,
+-                                                            None)
++                                                            None,
++                                                            False)
+ 
+     @testlib.with_context
+     @mock.patch('VDI.cbtutil', autospec=True)

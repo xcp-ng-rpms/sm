@@ -1,0 +1,23 @@
+From 561b4c618f37c4f0930118f82f9954db7b017f2a Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Fri, 20 Dec 2024 15:33:17 +0100
+Subject: [PATCH] fix(cleanup.py): always use "vdi_type" to display info
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ drivers/cleanup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index ea40a636..822ca5a8 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1388,7 +1388,7 @@ class LVHDVDI(VDI):
+ 
+     @override
+     def __str__(self) -> str:
+-        strType = "VHD"
++        strType = self.vdi_type
+         if self.vdi_type == VdiType.RAW:
+             strType = "RAW"
+         strHidden = ""

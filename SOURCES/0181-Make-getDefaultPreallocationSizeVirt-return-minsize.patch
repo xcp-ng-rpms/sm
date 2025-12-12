@@ -1,0 +1,24 @@
+From bf84b14bea95ffdf878fc220fb932be362054edd Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 6 Oct 2025 17:07:11 +0200
+Subject: [PATCH] Make getDefaultPreallocationSizeVirt return minsize
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index aec25e30..f9cd630d 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -430,7 +430,8 @@ class QCowUtil(CowUtil):
+ 
+     @override
+     def getDefaultPreallocationSizeVirt(self) -> int:
+-        return MAX_QCOW_SIZE
++        """vhdutil answer max size (2TiB) here but we don't want to allocate for max size in QCOW2, it would make small LV a lot bigger."""
++        return MIN_QCOW_SIZE
+ 
+     @override
+     def getMaxChainLength(self) -> int:

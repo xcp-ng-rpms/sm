@@ -1,0 +1,103 @@
+From 79f168174dca667bcf35e5a7fa434ba9b42fe73d Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 1 Jul 2025 17:38:48 +0200
+Subject: [PATCH] Add some type hints fixes
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/FileSR.py  |  4 ++--
+ drivers/blktap2.py | 22 +++++++++++-----------
+ drivers/cleanup.py |  2 +-
+ 3 files changed, 14 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 87c9cc41..aed006e1 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -1024,10 +1024,10 @@ class FileVDI(VDI.VDI):
+     def _is_hidden(self, path):
+         return self.cowutil.getHidden(path) == 1
+ 
+-    def extractUuid(path):
++    @staticmethod
++    def extractUuid(path: str) -> str:
+         fileName = os.path.basename(path)
+         return os.path.splitext(fileName)[0]
+-    extractUuid = staticmethod(extractUuid)
+ 
+     @override
+     def generate_config(self, sr_uuid, vdi_uuid) -> str:
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index f6537d18..bb4c173d 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -18,7 +18,7 @@
+ # blktap2: blktap/tapdisk management layer
+ #
+ 
+-from sm_typing import Any, Callable, ClassVar, Dict, override, List
++from sm_typing import Any, Callable, ClassVar, Dict, override, List, Union
+ 
+ from abc import abstractmethod
+ 
+@@ -56,6 +56,12 @@ from cowutil import getCowUtil
+ from xmlrpc.client import ServerProxy, Transport
+ from socket import socket, AF_UNIX, SOCK_STREAM
+ 
++import fjournaler
++import journaler
++from lvmcowutil import LvmCowUtil
++from FileSR import FileVDI
++import lvmcache
++
+ try:
+     from linstorvolumemanager import log_drbd_openers
+     LINSTOR_AVAILABLE = True
+@@ -1688,22 +1694,16 @@ class VDI(object):
+         level = 0
+         path = self.target.get_vdi_path()
+ 
++        journal: Union[journaler.Journaler, fjournaler.Journaler]
+         # Different extractUUID & journaler function for LVMSR and FileSR
+-        journaler = None
+-        extractUuid = None
+         if path.startswith("/dev/"): #TODO: How to identify SR type easily, we could ask XAPI since we have the sruuid (and even ref)
+-            from lvmcowutil import LvmCowUtil
+-            import lvmcache
+-            import journaler
+             vgName = "VG_XenStorage-{}".format(sr_uuid)
+             lvmCache = lvmcache.LVMCache(vgName)
+-            journaler = journaler.Journaler(lvmCache)
++            journal = journaler.Journaler(lvmCache)
+ 
+             extractUuid = LvmCowUtil.extractUuid
+         else:
+-            from FileSR import FileVDI
+-            import fjournaler
+-            journaler = fjournaler.Journaler(os.getcwd())
++            journal = fjournaler.Journaler(os.getcwd())
+             extractUuid = FileVDI.extractUuid
+ 
+         # Get the VDI chain
+@@ -1722,7 +1722,7 @@ class VDI(object):
+             util.SMlog("{}{}".format(prefix, vdi))
+ 
+         vdi_to_cancel = []
+-        for entry in journaler.getAll("coalesce").keys():
++        for entry in journal.getAll("coalesce").keys():
+             if entry in vdi_chain:
+                 vdi_to_cancel.append(entry)
+                 util.SMlog("Coalescing VDI {} in chain".format(entry))
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index ee506ad0..5c1c3b42 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3903,7 +3903,7 @@ def _gcLoopPause(sr, dryRun=False, immediate=False):
+         Util.log("GC active, quiet period ended")
+ 
+ 
+-def _gcLoop(sr: SR, dryRun=False, immediate=False):
++def _gcLoop(sr, dryRun=False, immediate=False):
+     if not lockGCActive.acquireNoblock():
+         Util.log("Another GC instance already active, exiting")
+         return

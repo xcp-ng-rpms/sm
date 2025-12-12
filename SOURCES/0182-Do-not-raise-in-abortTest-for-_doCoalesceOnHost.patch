@@ -1,0 +1,34 @@
+From 4b0c4ea439d6de4a9a236939f955b3ec67f7d366 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 7 Oct 2025 12:26:21 +0200
+Subject: [PATCH] Do not raise in abortTest for _doCoalesceOnHost
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 0df8b76e..e42c80b6 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -861,8 +861,7 @@ class VDI(object):
+             try:
+                 with open(file, "r") as f:
+                     if not f.read():
+-                        #TODO: Need to call commit cancel on the hostRef if we stop
+-                        util.SMlog("DAMS: Cancelling")
++                        util.SMlog("DAMS: abortTest: Cancelling coalesce")
+                         self._call_plug_cancel(hostRef)
+                         return True
+             except OSError as e:
+@@ -871,6 +870,9 @@ class VDI(object):
+                 else:
+                     util.SMlog("IOError: {}".format(e))
+                 return True
++            except Exception as e2:
++                util.SMlog(f"DAMS: Error in AbortTest for _doCoalesceOnHost: {e2}")
++                return True
+             return False
+ 
+         #TODO: Add exception handling here like when callinng in a runAbortable situation_doCoalesceCOWImage

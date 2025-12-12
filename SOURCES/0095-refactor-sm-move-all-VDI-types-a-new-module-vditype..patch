@@ -1,0 +1,1411 @@
+From 196a2d2f4b3e110a4e7707ac04b0a94ad0025ebf Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.fr>
+Date: Thu, 12 Dec 2024 13:39:23 +0100
+Subject: [PATCH] refactor(sm): move all VDI types a new module `vditype.py`
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+---
+ Makefile                  |  1 +
+ drivers/FileSR.py         | 47 ++++++++++++-----------
+ drivers/ISOSR.py          |  3 +-
+ drivers/LVHDSR.py         | 81 ++++++++++++++++++++-------------------
+ drivers/LinstorSR.py      | 55 +++++++++++++-------------
+ drivers/SHMSR.py          |  3 +-
+ drivers/VDI.py            |  5 ++-
+ drivers/blktap2.py        |  7 ++--
+ drivers/cleanup.py        | 29 +++++++-------
+ drivers/linstorvhdutil.py |  5 ++-
+ drivers/lvhdutil.py       | 21 +++++-----
+ drivers/tapdisk-pause     |  7 ++--
+ drivers/vditype.py        | 23 +++++++++++
+ drivers/verifyVHDsOnSR.py |  5 ++-
+ drivers/vhdutil.py        |  8 ++--
+ tests/test_FileSR.py      | 17 ++++----
+ tests/test_LVHDSR.py      |  9 ++---
+ tests/test_cbt.py         |  3 +-
+ tests/test_on_slave.py    |  3 +-
+ 19 files changed, 184 insertions(+), 148 deletions(-)
+ create mode 100644 drivers/vditype.py
+
+diff --git a/Makefile b/Makefile
+index 608ac4d3..4cce5b30 100755
+--- a/Makefile
++++ b/Makefile
+@@ -25,6 +25,7 @@ SM_DRIVERS += LargeBlock
+ SM_LIBS := SR
+ SM_LIBS += SRCommand
+ SM_LIBS += VDI
++SM_LIBS += vditype
+ SM_LIBS += BaseISCSI
+ SM_LIBS += cleanup
+ SM_LIBS += lvutil
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index c2307571..2f9da575 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -34,6 +34,7 @@ import blktap2
+ import time
+ import glob
+ from uuid import uuid4
++from vditype import VdiType
+ import xmlrpc.client
+ import XenAPI # pylint: disable=import-error
+ from constants import CBTLOG_TAG
+@@ -96,7 +97,7 @@ class FileSR(SR.SR):
+     def load(self, sr_uuid) -> None:
+         self.ops_exclusive = OPS_EXCLUSIVE
+         self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+-        self.sr_vditype = vhdutil.VDI_TYPE_VHD
++        self.sr_vditype = VdiType.VHD
+         if 'location' not in self.dconf or  not self.dconf['location']:
+             raise xs_errors.XenError('ConfigLocationMissing')
+         self.remotepath = self.dconf['location']
+@@ -420,8 +421,8 @@ class FileVDI(VDI.VDI):
+     PARAM_VHD = "vhd"
+     PARAM_RAW = "raw"
+     VDI_TYPE = {
+-            PARAM_VHD: vhdutil.VDI_TYPE_VHD,
+-            PARAM_RAW: vhdutil.VDI_TYPE_RAW
++            PARAM_VHD: VdiType.VHD,
++            PARAM_RAW: VdiType.RAW
+     }
+ 
+     def _find_path_with_retries(self, vdi_uuid, maxretry=5, period=2.0):
+@@ -436,16 +437,16 @@ class FileVDI(VDI.VDI):
+         while tries < maxretry and not found:
+             tries += 1
+             if util.ioretry(lambda: util.pathexists(vhd_path)):
+-                self.vdi_type = vhdutil.VDI_TYPE_VHD
++                self.vdi_type = VdiType.VHD
+                 self.path = vhd_path
+                 found = True
+             elif util.ioretry(lambda: util.pathexists(raw_path)):
+-                self.vdi_type = vhdutil.VDI_TYPE_RAW
++                self.vdi_type = VdiType.RAW
+                 self.path = raw_path
+                 self.hidden = False
+                 found = True
+             elif util.ioretry(lambda: util.pathexists(cbt_path)):
+-                self.vdi_type = CBTLOG_TAG
++                self.vdi_type = VdiType.CBTLOG
+                 self.path = cbt_path
+                 self.hidden = False
+                 found = True
+@@ -463,7 +464,7 @@ class FileVDI(VDI.VDI):
+         self.sr.srcmd.params['o_direct'] = self.sr.o_direct
+ 
+         if self.sr.srcmd.cmd == "vdi_create":
+-            self.vdi_type = vhdutil.VDI_TYPE_VHD
++            self.vdi_type = VdiType.VHD
+             self.key_hash = None
+             if "vdi_sm_config" in self.sr.srcmd.params:
+                 if "key_hash" in self.sr.srcmd.params["vdi_sm_config"]:
+@@ -491,7 +492,7 @@ class FileVDI(VDI.VDI):
+                                          opterr="VDI %s not found" % vdi_uuid)
+ 
+ 
+-        if self.vdi_type == vhdutil.VDI_TYPE_VHD and \
++        if self.vdi_type == VdiType.VHD and \
+                 self.sr.__dict__.get("vhds") and self.sr.vhds.get(vdi_uuid):
+             # VHD info already preloaded: use it instead of querying directly
+             vhdInfo = self.sr.vhds[vdi_uuid]
+@@ -533,13 +534,13 @@ class FileVDI(VDI.VDI):
+                     raise xs_errors.XenError('VDIType', \
+                           opterr='Invalid VDI type %s' % self.vdi_type)
+ 
+-            if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++            if self.vdi_type == VdiType.RAW:
+                 self.exists = True
+                 self.size = self.utilisation
+                 self.sm_config_override = {'type': self.PARAM_RAW}
+                 return
+ 
+-            if self.vdi_type == CBTLOG_TAG:
++            if self.vdi_type == VdiType.CBTLOG:
+                 self.exists = True
+                 self.size = self.utilisation
+                 return
+@@ -578,7 +579,7 @@ class FileVDI(VDI.VDI):
+         if util.ioretry(lambda: util.pathexists(self.path)):
+             raise xs_errors.XenError('VDIExists')
+ 
+-        if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type == VdiType.VHD:
+             try:
+                 size = vhdutil.validate_and_round_vhd_size(int(size))
+                 mb = 1024 * 1024
+@@ -598,7 +599,7 @@ class FileVDI(VDI.VDI):
+ 
+         st = util.ioretry(lambda: os.stat(self.path))
+         self.utilisation = int(st.st_size)
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             self.sm_config = {"type": self.PARAM_RAW}
+ 
+         self._db_introduce()
+@@ -664,7 +665,7 @@ class FileVDI(VDI.VDI):
+             raise xs_errors.XenError('VDIUnavailable', \
+                   opterr='VDI %s unavailable %s' % (vdi_uuid, self.path))
+ 
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+ 
+         if self.hidden:
+@@ -678,7 +679,7 @@ class FileVDI(VDI.VDI):
+         if size == self.size:
+             return VDI.VDI.get_params(self)
+ 
+-        # We already checked it is a VDI_TYPE_VHD
++        # We already checked it is a VHD
+         size = vhdutil.validate_and_round_vhd_size(int(size))
+         
+         jFile = JOURNAL_FILE_PREFIX + self.uuid
+@@ -705,9 +706,9 @@ class FileVDI(VDI.VDI):
+ 
+     @override
+     def compose(self, sr_uuid, vdi1, vdi2) -> None:
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+-        parent_fn = vdi1 + vhdutil.FILE_EXTN[vhdutil.VDI_TYPE_VHD]
++        parent_fn = vdi1 + vhdutil.FILE_EXTN[VdiType.VHD]
+         parent_path = os.path.join(self.sr.path, parent_fn)
+         assert(util.pathexists(parent_path))
+         vhdutil.setParent(self.path, parent_path, False)
+@@ -721,7 +722,7 @@ class FileVDI(VDI.VDI):
+         util.SMlog("VDI.compose: relinked %s->%s" % (vdi2, vdi1))
+ 
+     def reset_leaf(self, sr_uuid, vdi_uuid):
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+ 
+         # safety check
+@@ -745,7 +746,7 @@ class FileVDI(VDI.VDI):
+         else:
+             consistency_state = None
+ 
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+ 
+         if not blktap2.VDI.tap_pause(self.session, sr_uuid, vdi_uuid):
+@@ -949,7 +950,7 @@ class FileVDI(VDI.VDI):
+         return super(FileVDI, self).get_params()
+ 
+     def _snap(self, child, parent):
+-        cmd = [SR.TAPDISK_UTIL, "snapshot", vhdutil.VDI_TYPE_VHD, child, parent]
++        cmd = [SR.TAPDISK_UTIL, "snapshot", VdiType.VHD, child, parent]
+         text = util.pread(cmd)
+ 
+     def _clonecleanup(self, src, dst, newsrc):
+@@ -979,11 +980,11 @@ class FileVDI(VDI.VDI):
+                   opterr='IO error checking path %s' % path)
+ 
+     def _query_v(self, path):
+-        cmd = [SR.TAPDISK_UTIL, "query", vhdutil.VDI_TYPE_VHD, "-v", path]
++        cmd = [SR.TAPDISK_UTIL, "query", VdiType.VHD, "-v", path]
+         return int(util.pread(cmd)) * 1024 * 1024
+ 
+     def _query_p_uuid(self, path):
+-        cmd = [SR.TAPDISK_UTIL, "query", vhdutil.VDI_TYPE_VHD, "-p", path]
++        cmd = [SR.TAPDISK_UTIL, "query", VdiType.VHD, "-p", path]
+         parent = util.pread(cmd)
+         parent = parent[:-1]
+         ls = parent.split('/')
+@@ -994,7 +995,7 @@ class FileVDI(VDI.VDI):
+         qopts = '-vpf'
+         if use_bkp_footer:
+             qopts += 'b'
+-        cmd = [SR.TAPDISK_UTIL, "query", vhdutil.VDI_TYPE_VHD, qopts, path]
++        cmd = [SR.TAPDISK_UTIL, "query", VdiType.VHD, qopts, path]
+         txt = util.pread(cmd).split('\n')
+         diskinfo['size'] = txt[0]
+         lst = [txt[1].split('/')[-1].replace(vhdutil.FILE_EXTN_VHD, "")]
+@@ -1004,7 +1005,7 @@ class FileVDI(VDI.VDI):
+         return diskinfo
+ 
+     def _create(self, size, path):
+-        cmd = [SR.TAPDISK_UTIL, "create", vhdutil.VDI_TYPE_VHD, size, path]
++        cmd = [SR.TAPDISK_UTIL, "create", VdiType.VHD, size, path]
+         text = util.pread(cmd)
+         if self.key_hash:
+             vhdutil.setKey(path, self.key_hash)
+diff --git a/drivers/ISOSR.py b/drivers/ISOSR.py
+index 401461c6..22438e0c 100755
+--- a/drivers/ISOSR.py
++++ b/drivers/ISOSR.py
+@@ -28,6 +28,7 @@ import os
+ import re
+ import xs_errors
+ import cifutils
++from vditype import VdiType
+ 
+ CAPABILITIES = ["VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+                 "SR_SCAN", "SR_ATTACH", "SR_DETACH"]
+@@ -698,7 +699,7 @@ class ISOVDI(VDI.VDI):
+     def load(self, vdi_uuid) -> None:
+         # Nb, in the vdi_create call, the filename is unset, so the following
+         # will fail.
+-        self.vdi_type = "iso"
++        self.vdi_type = VdiType.ISO
+         try:
+             stat = os.stat(self.path)
+             self.utilisation = int(stat.st_size)
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index a5c6a3ff..aefbd180 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -42,6 +42,7 @@ from journaler import Journaler
+ from refcounter import RefCounter
+ from ipc import IPCFlag
+ from lvmanager import LVActivator
++from vditype import VdiType
+ import XenAPI # pylint: disable=import-error
+ import re
+ from srmetadata import ALLOCATION_TAG, NAME_LABEL_TAG, NAME_DESCRIPTION_TAG, \
+@@ -224,11 +225,11 @@ class LVHDSR(SR.SR):
+             type = None
+             vdi = None
+             if contains_uuid_regex.search(key) is not None:
+-                if key.startswith(lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD]):
+-                    type = vhdutil.VDI_TYPE_VHD
++                if key.startswith(lvhdutil.LV_PREFIX[VdiType.VHD]):
++                    type = VdiType.VHD
+                     vdi = key[len(lvhdutil.LV_PREFIX[type]):]
+-                elif key.startswith(lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_RAW]):
+-                    type = vhdutil.VDI_TYPE_RAW
++                elif key.startswith(lvhdutil.LV_PREFIX[VdiType.RAW]):
++                    type = VdiType.RAW
+                     vdi = key[len(lvhdutil.LV_PREFIX[type]):]
+                 else:
+                     continue
+@@ -604,7 +605,7 @@ class LVHDSR(SR.SR):
+         if self.isMaster and self.legacyMode:
+             vdiInfo = lvhdutil.getVDIInfo(self.lvmCache)
+             for uuid, info in vdiInfo.items():
+-                if info.vdiType == vhdutil.VDI_TYPE_VHD:
++                if info.vdiType == VdiType.VHD:
+                     self.legacyMode = False
+                     map = self.session.xenapi.SR.get_sm_config(self.sr_ref)
+                     self._introduceMetaDataVolume()
+@@ -729,9 +730,9 @@ class LVHDSR(SR.SR):
+                         activated_lvs.add(vdi_uuid)
+                         lvPath = os.path.join(self.path, lvname)
+ 
+-                        if info[vdi][VDI_TYPE_TAG] == vhdutil.VDI_TYPE_RAW:
++                        if info[vdi][VDI_TYPE_TAG] == VdiType.RAW:
+                             size = self.lvmCache.getSize( \
+-                                lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_RAW] + \
++                                lvhdutil.LV_PREFIX[VdiType.RAW] + \
+                                     vdi_uuid)
+                             utilisation = \
+                                         util.roundup(lvutil.LVM_SIZE_INCREMENT,
+@@ -742,7 +743,7 @@ class LVHDSR(SR.SR):
+ 
+                             if parent is not None:
+                                 sm_config['vhd-parent'] = parent[len( \
+-                                    lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD]):]
++                                    lvhdutil.LV_PREFIX[VdiType.VHD]):]
+                             size = vhdutil.getSizeVirt(lvPath)
+                             if self.provision == "thin":
+                                 utilisation = \
+@@ -998,7 +999,7 @@ class LVHDSR(SR.SR):
+         origRefcountNormal = 0
+ 
+         # un-hide the parent
+-        if base.vdiType == vhdutil.VDI_TYPE_VHD:
++        if base.vdiType == VdiType.VHD:
+             self.lvActivator.activate(baseUuid, base.name, False)
+             origRefcountNormal = 1
+             vhdInfo = vhdutil.getVHDInfo(basePath, lvhdutil.extractUuid, False)
+@@ -1009,7 +1010,7 @@ class LVHDSR(SR.SR):
+ 
+         # remove the child nodes
+         if clonUuid and lvs.get(clonUuid):
+-            if lvs[clonUuid].vdiType != vhdutil.VDI_TYPE_VHD:
++            if lvs[clonUuid].vdiType != VdiType.VHD:
+                 raise util.SMException("clone %s not VHD" % clonUuid)
+             self.lvmCache.remove(lvs[clonUuid].name)
+             if self.lvActivator.get(clonUuid, False):
+@@ -1018,7 +1019,7 @@ class LVHDSR(SR.SR):
+             self.lvmCache.remove(lvs[origUuid].name)
+ 
+         # inflate the parent to fully-allocated size
+-        if base.vdiType == vhdutil.VDI_TYPE_VHD:
++        if base.vdiType == VdiType.VHD:
+             fullSize = lvhdutil.calcSizeVHDLV(vhdInfo.sizeVirt)
+             lvhdutil.inflate(self.journaler, self.uuid, baseUuid, fullSize)
+ 
+@@ -1056,7 +1057,7 @@ class LVHDSR(SR.SR):
+ 
+         # make sure the parent is hidden and read-only
+         if not base.hidden:
+-            if base.vdiType == vhdutil.VDI_TYPE_RAW:
++            if base.vdiType == VdiType.RAW:
+                 self.lvmCache.setHidden(base.lvName)
+             else:
+                 basePath = os.path.join(self.path, base.lvName)
+@@ -1073,7 +1074,7 @@ class LVHDSR(SR.SR):
+             vdi_ref = self.session.xenapi.VDI.get_by_uuid(origUuid)
+             sm_config = self.session.xenapi.VDI.get_sm_config(vdi_ref)
+             type = self.session.xenapi.VDI.get_type(vdi_ref)
+-            sm_config["vdi_type"] = vhdutil.VDI_TYPE_VHD
++            sm_config["vdi_type"] = VdiType.VHD
+             sm_config['vhd-parent'] = baseUuid
+             self.session.xenapi.VDI.set_sm_config(vdi_ref, sm_config)
+         except XenAPI.Failure:
+@@ -1087,7 +1088,7 @@ class LVHDSR(SR.SR):
+                 clon_vdi.location = clonUuid
+                 clon_vdi.utilisation = clon.sizeLV
+                 clon_vdi.sm_config = {
+-                        "vdi_type": vhdutil.VDI_TYPE_VHD,
++                        "vdi_type": VdiType.VHD,
+                         "vhd-parent": baseUuid}
+ 
+                 if not self.legacyMode:
+@@ -1126,7 +1127,7 @@ class LVHDSR(SR.SR):
+             base_vdi.utilisation = base.sizeLV
+             base_vdi.managed = False
+             base_vdi.sm_config = {
+-                    "vdi_type": vhdutil.VDI_TYPE_VHD,
++                    "vdi_type": VdiType.VHD,
+                     "vhd-parent": baseUuid}
+ 
+             if not self.legacyMode:
+@@ -1316,9 +1317,9 @@ class LVHDVDI(VDI.VDI):
+         self.lock = self.sr.lock
+         self.lvActivator = self.sr.lvActivator
+         self.loaded = False
+-        self.vdi_type = vhdutil.VDI_TYPE_VHD
++        self.vdi_type = VdiType.VHD
+         if self.sr.legacyMode or util.fistpoint.is_active("xenrt_default_vdi_type_legacy"):
+-            self.vdi_type = vhdutil.VDI_TYPE_RAW
++            self.vdi_type = VdiType.RAW
+         self.uuid = vdi_uuid
+         self.location = self.uuid
+         self.exists = True
+@@ -1341,9 +1342,9 @@ class LVHDVDI(VDI.VDI):
+                 "type" in self.sr.srcmd.params["vdi_sm_config"]:
+             type = self.sr.srcmd.params["vdi_sm_config"]["type"]
+             if type == PARAM_RAW:
+-                self.vdi_type = vhdutil.VDI_TYPE_RAW
++                self.vdi_type = VdiType.RAW
+             elif type == PARAM_VHD:
+-                self.vdi_type = vhdutil.VDI_TYPE_VHD
++                self.vdi_type = VdiType.VHD
+                 if self.sr.cmd == 'vdi_create' and self.sr.legacyMode:
+                     raise xs_errors.XenError('VDICreate', \
+                         opterr='Cannot create VHD type disk in legacy mode')
+@@ -1366,7 +1367,7 @@ class LVHDVDI(VDI.VDI):
+                 (self.vdi_type, self.path, size))
+         lvSize = 0
+         self.sm_config = self.sr.srcmd.params["vdi_sm_config"]
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             lvSize = util.roundup(lvutil.LVM_SIZE_INCREMENT, int(size))
+         else:
+             if self.sr.provision == "thin":
+@@ -1379,7 +1380,7 @@ class LVHDVDI(VDI.VDI):
+ 
+         try:
+             self.sr.lvmCache.create(self.lvname, lvSize)
+-            if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++            if self.vdi_type == VdiType.RAW:
+                 self.size = self.sr.lvmCache.getSize(self.lvname)
+             else:
+                 vhdutil.create(self.path, int(size), False, lvhdutil.MSIZE_MB)
+@@ -1474,7 +1475,7 @@ class LVHDVDI(VDI.VDI):
+         writable = ('args' not in self.sr.srcmd.params) or \
+                 (self.sr.srcmd.params['args'][0] == "true")
+         needInflate = True
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW or not writable:
++        if self.vdi_type == VdiType.RAW or not writable:
+             needInflate = False
+         else:
+             self._loadThis()
+@@ -1501,7 +1502,7 @@ class LVHDVDI(VDI.VDI):
+         already_deflated = (self.utilisation < \
+                 lvhdutil.calcSizeVHDLV(self.size))
+         needDeflate = True
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW or already_deflated:
++        if self.vdi_type == VdiType.RAW or already_deflated:
+             needDeflate = False
+         elif self.sr.provision == "thick":
+             needDeflate = False
+@@ -1546,7 +1547,7 @@ class LVHDVDI(VDI.VDI):
+         if size == self.size:
+             return VDI.VDI.get_params(self)
+ 
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             lvSizeOld = self.size
+             lvSizeNew = util.roundup(lvutil.LVM_SIZE_INCREMENT, size)
+         else:
+@@ -1560,7 +1561,7 @@ class LVHDVDI(VDI.VDI):
+         self.sr._ensureSpaceAvailable(spaceNeeded)
+ 
+         oldSize = self.size
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             self.sr.lvmCache.setSize(self.lvname, lvSizeNew)
+             self.size = self.sr.lvmCache.getSize(self.lvname)
+             self.utilisation = self.size
+@@ -1588,11 +1589,11 @@ class LVHDVDI(VDI.VDI):
+     @override
+     def compose(self, sr_uuid, vdi1, vdi2) -> None:
+         util.SMlog("LVHDSR.compose for %s -> %s" % (vdi2, vdi1))
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+ 
+         parent_uuid = vdi1
+-        parent_lvname = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + parent_uuid
++        parent_lvname = lvhdutil.LV_PREFIX[VdiType.VHD] + parent_uuid
+         assert(self.sr.lvmCache.checkLV(parent_lvname))
+         parent_path = os.path.join(self.sr.path, parent_lvname)
+ 
+@@ -1611,7 +1612,7 @@ class LVHDVDI(VDI.VDI):
+ 
+     def reset_leaf(self, sr_uuid, vdi_uuid):
+         util.SMlog("LVHDSR.reset_leaf for %s" % vdi_uuid)
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+ 
+         self.sr.lvActivator.activate(self.uuid, self.lvname, False)
+@@ -1709,7 +1710,7 @@ class LVHDVDI(VDI.VDI):
+             raise xs_errors.XenError('VDIUnavailable', \
+                     opterr='VDI unavailable: %s' % (self.path))
+ 
+-        if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type == VdiType.VHD:
+             depth = vhdutil.getDepth(self.path)
+             if depth == -1:
+                 raise xs_errors.XenError('VDIUnavailable', \
+@@ -1745,7 +1746,7 @@ class LVHDVDI(VDI.VDI):
+         # inflate journal (for the failure handling
+         size_req = lvSizeOrig + lvSizeClon + 2 * self.sr.journaler.LV_SIZE
+         lvSizeBase = self.size
+-        if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type == VdiType.VHD:
+             lvSizeBase = util.roundup(lvutil.LVM_SIZE_INCREMENT,
+                     vhdutil.getSizePhys(self.path))
+             size_req -= (self.utilisation - lvSizeBase)
+@@ -1780,7 +1781,7 @@ class LVHDVDI(VDI.VDI):
+ 
+             # shrink the base copy to the minimum - we do it before creating
+             # the snapshot volumes to avoid requiring double the space
+-            if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++            if self.vdi_type == VdiType.VHD:
+                 lvhdutil.deflate(self.sr.lvmCache, self.lvname, lvSizeBase)
+                 self.utilisation = lvSizeBase
+             util.fistpoint.activate("LVHDRT_clone_vdi_after_shrink_parent", self.sr.uuid)
+@@ -1800,7 +1801,7 @@ class LVHDVDI(VDI.VDI):
+             # new VHD children have been created, which are referencing it;
+             # otherwise we would introduce a race with GC that could reclaim
+             # the parent before we snapshot it
+-            if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++            if self.vdi_type == VdiType.RAW:
+                 self.sr.lvmCache.setHidden(self.lvname)
+             else:
+                 vhdutil.setHidden(self.path)
+@@ -1839,14 +1840,14 @@ class LVHDVDI(VDI.VDI):
+ 
+     def _createSnap(self, snapUuid, snapSizeLV, isNew):
+         """Snapshot self and return the snapshot VDI object"""
+-        snapLV = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + snapUuid
++        snapLV = lvhdutil.LV_PREFIX[VdiType.VHD] + snapUuid
+         snapPath = os.path.join(self.sr.path, snapLV)
+         self.sr.lvmCache.create(snapLV, int(snapSizeLV))
+         util.fistpoint.activate("LVHDRT_clone_vdi_after_lvcreate", self.sr.uuid)
+         if isNew:
+             RefCounter.set(snapUuid, 1, 0, lvhdutil.NS_PREFIX_LVM + self.sr.uuid)
+         self.sr.lvActivator.add(snapUuid, snapLV, False)
+-        parentRaw = (self.vdi_type == vhdutil.VDI_TYPE_RAW)
++        parentRaw = (self.vdi_type == VdiType.RAW)
+         vhdutil.snapshot(snapPath, self.path, parentRaw, lvhdutil.MSIZE_MB)
+         snapParent = vhdutil.getParent(snapPath, lvhdutil.extractUuid)
+ 
+@@ -1861,7 +1862,7 @@ class LVHDVDI(VDI.VDI):
+                     "type", "vdi_type", "vhd-parent", "paused", "relinking", "activating"] and \
+                     not key.startswith("host_"):
+                 snapVDI.sm_config[key] = val
+-        snapVDI.sm_config["vdi_type"] = vhdutil.VDI_TYPE_VHD
++        snapVDI.sm_config["vdi_type"] = VdiType.VHD
+         snapVDI.sm_config["vhd-parent"] = snapParent
+         snapVDI.lvname = snapLV
+         return snapVDI
+@@ -2032,7 +2033,7 @@ class LVHDVDI(VDI.VDI):
+             self.sm_config_override = {'vdi_type': self.vdi_type}
+         if 'vhd-parent' in self.sm_config_override:
+             self.parent = self.sm_config_override['vhd-parent']
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             self.loaded = True
+ 
+     def _initFromVHDInfo(self, vhdInfo):
+@@ -2088,7 +2089,7 @@ class LVHDVDI(VDI.VDI):
+         """Load VDI info for this VDI and activate the LV if it's VHD. We
+         don't do it in VDI.load() because not all VDI operations need it."""
+         if self.loaded:
+-            if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++            if self.vdi_type == VdiType.VHD:
+                 self.sr.lvActivator.activate(self.uuid, self.lvname, False)
+             return
+         try:
+@@ -2099,7 +2100,7 @@ class LVHDVDI(VDI.VDI):
+         if not lvs.get(self.uuid):
+             raise xs_errors.XenError('VDIUnavailable', opterr='LV not found')
+         self._initFromLVInfo(lvs[self.uuid])
+-        if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type == VdiType.VHD:
+             self.sr.lvActivator.activate(self.uuid, self.lvname, False)
+             vhdInfo = vhdutil.getVHDInfo(self.path, lvhdutil.extractUuid, False)
+             if not vhdInfo:
+@@ -2116,7 +2117,7 @@ class LVHDVDI(VDI.VDI):
+                 return  # this is a redundant activation/deactivation call
+ 
+         vdiList = {self.uuid: self.lvname}
+-        if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type == VdiType.VHD:
+             vdiList = vhdutil.getParentChain(self.lvname,
+                     lvhdutil.extractUuid, self.sr.vgname)
+         for uuid, lvName in vdiList.items():
+@@ -2142,7 +2143,7 @@ class LVHDVDI(VDI.VDI):
+         raise xs_errors.XenError('VDIClone', opterr=msg)
+ 
+     def _markHidden(self):
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             self.sr.lvmCache.setHidden(self.lvname)
+         else:
+             vhdutil.setHidden(self.path)
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index f5220ed8..ce64c747 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -62,6 +62,7 @@ from srmetadata import \
+     NAME_LABEL_TAG, NAME_DESCRIPTION_TAG, IS_A_SNAPSHOT_TAG, SNAPSHOT_OF_TAG, \
+     TYPE_TAG, VDI_TYPE_TAG, READ_ONLY_TAG, SNAPSHOT_TIME_TAG, \
+     METADATA_OF_POOL_TAG
++from vditype import VdiType
+ 
+ HIDDEN_TAG = 'hidden'
+ 
+@@ -142,7 +143,7 @@ OPS_EXCLUSIVE = [
+ def attach_thin(session, journaler, linstor, sr_uuid, vdi_uuid):
+     volume_metadata = linstor.get_volume_metadata(vdi_uuid)
+     image_type = volume_metadata.get(VDI_TYPE_TAG)
+-    if image_type == vhdutil.VDI_TYPE_RAW:
++    if image_type == VdiType.RAW:
+         return
+ 
+     device_path = linstor.get_device_path(vdi_uuid)
+@@ -166,7 +167,7 @@ def attach_thin(session, journaler, linstor, sr_uuid, vdi_uuid):
+ def detach_thin_impl(session, linstor, sr_uuid, vdi_uuid):
+     volume_metadata = linstor.get_volume_metadata(vdi_uuid)
+     image_type = volume_metadata.get(VDI_TYPE_TAG)
+-    if image_type == vhdutil.VDI_TYPE_RAW:
++    if image_type == VdiType.RAW:
+         return
+ 
+     def check_vbd_count():
+@@ -1144,9 +1145,9 @@ class LinstorSR(SR.SR):
+                     'vdi_type': vdi_type
+                 }
+ 
+-                if vdi_type == vhdutil.VDI_TYPE_RAW:
++                if vdi_type == VdiType.RAW:
+                     managed = not volume_metadata.get(HIDDEN_TAG)
+-                elif vdi_type == vhdutil.VDI_TYPE_VHD:
++                elif vdi_type == VdiType.VHD:
+                     vhd_info = self._vhdutil.get_vhd_info(vdi_uuid)
+                     managed = not vhd_info.hidden
+                     if vhd_info.parentUuid:
+@@ -1205,7 +1206,7 @@ class LinstorSR(SR.SR):
+             vdi = self.vdi(vdi_uuid)
+             self.vdis[vdi_uuid] = vdi
+ 
+-            if USE_KEY_HASH and vdi.vdi_type == vhdutil.VDI_TYPE_VHD:
++            if USE_KEY_HASH and vdi.vdi_type == VdiType.VHD:
+                 vdi.sm_config_override['key_hash'] = self._vhdutil.get_key_hash(vdi_uuid)
+ 
+             # 4.c. Update CBT status of disks either just added
+@@ -1287,7 +1288,7 @@ class LinstorSR(SR.SR):
+             # If it's a RAW VDI, there is no parent.
+             volume_metadata = self._linstor.get_volume_metadata(vdi_uuid)
+             vdi_type = volume_metadata[VDI_TYPE_TAG]
+-            if vdi_type == vhdutil.VDI_TYPE_RAW:
++            if vdi_type == VdiType.RAW:
+                 return (device_path, None)
+ 
+             # Otherwise it's a VHD and a parent can exist.
+@@ -1408,11 +1409,11 @@ class LinstorSR(SR.SR):
+ 
+         # Un-hide the parent.
+         self._linstor.update_volume_metadata(base_uuid, {READ_ONLY_TAG: False})
+-        if base_type == vhdutil.VDI_TYPE_VHD:
++        if base_type == VdiType.VHD:
+             vhd_info = self._vhdutil.get_vhd_info(base_uuid, False)
+             if vhd_info.hidden:
+                 self._vhdutil.set_hidden(base_path, False)
+-        elif base_type == vhdutil.VDI_TYPE_RAW and \
++        elif base_type == VdiType.RAW and \
+                 base_metadata.get(HIDDEN_TAG):
+             self._linstor.update_volume_metadata(
+                 base_uuid, {HIDDEN_TAG: False}
+@@ -1452,7 +1453,7 @@ class LinstorSR(SR.SR):
+         self._linstor.update_volume_uuid(base_uuid, vdi_uuid)
+ 
+         # Inflate to the right size.
+-        if base_type == vhdutil.VDI_TYPE_VHD:
++        if base_type == VdiType.VHD:
+             vdi = self.vdi(vdi_uuid)
+             volume_size = LinstorVhdUtil.compute_volume_size(vdi.size, vdi.vdi_type)
+             self._vhdutil.inflate(
+@@ -1545,7 +1546,7 @@ class LinstorSR(SR.SR):
+ 
+ 
+ class LinstorVDI(VDI.VDI):
+-    # Warning: Not the same values than vhdutil.VDI_TYPE_*.
++    # Warning: Not the same values than VdiType.*.
+     # These values represents the types given on the command line.
+     TYPE_RAW = 'raw'
+     TYPE_VHD = 'vhd'
+@@ -1584,7 +1585,7 @@ class LinstorVDI(VDI.VDI):
+                 self.sr.srcmd.cmd == 'vdi_attach_from_config' or
+                 self.sr.srcmd.cmd == 'vdi_detach_from_config'
+             ):
+-                self.vdi_type = vhdutil.VDI_TYPE_RAW
++                self.vdi_type = VdiType.RAW
+                 self.path = self.sr.srcmd.params['vdi_path']
+             else:
+                 self._determine_type_and_path()
+@@ -1604,7 +1605,7 @@ class LinstorVDI(VDI.VDI):
+             if self.sr.srcmd.cmd == 'vdi_create':
+                 # Set type attribute of VDI parent class.
+                 # We use VHD by default.
+-                self.vdi_type = vhdutil.VDI_TYPE_VHD
++                self.vdi_type = VdiType.VHD
+                 self._key_hash = None  # Only used in create.
+ 
+                 self._exists = False
+@@ -1613,15 +1614,15 @@ class LinstorVDI(VDI.VDI):
+                     type = vdi_sm_config.get('type')
+                     if type is not None:
+                         if type == self.TYPE_RAW:
+-                            self.vdi_type = vhdutil.VDI_TYPE_RAW
++                            self.vdi_type = VdiType.RAW
+                         elif type == self.TYPE_VHD:
+-                            self.vdi_type = vhdutil.VDI_TYPE_VHD
++                            self.vdi_type = VdiType.VHD
+                         else:
+                             raise xs_errors.XenError(
+                                 'VDICreate',
+                                 opterr='Invalid VDI type {}'.format(type)
+                             )
+-                    if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++                    if self.vdi_type == VdiType.VHD:
+                         self._key_hash = vdi_sm_config.get('key_hash')
+ 
+                 # For the moment we don't have a path.
+@@ -1678,7 +1679,7 @@ class LinstorVDI(VDI.VDI):
+ 
+             self._update_device_name(volume_info.name)
+ 
+-            if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++            if self.vdi_type == VdiType.RAW:
+                 self.size = volume_info.virtual_size
+             else:
+                 self.sr._vhdutil.create(
+@@ -1810,7 +1811,7 @@ class LinstorVDI(VDI.VDI):
+             # than the VHD size + bitmap size.
+             need_inflate = True
+             if (
+-                self.vdi_type == vhdutil.VDI_TYPE_RAW or
++                self.vdi_type == VdiType.RAW or
+                 not writable or
+                 self.capacity >= LinstorVhdUtil.compute_volume_size(self.size, self.vdi_type)
+             ):
+@@ -1852,7 +1853,7 @@ class LinstorVDI(VDI.VDI):
+         if detach_from_config and self.path.startswith('/dev/http-nbd/'):
+             return self._detach_using_http_nbd()
+ 
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             return
+ 
+         # The VDI is already deflated if the VHD image size + metadata is
+@@ -1936,7 +1937,7 @@ class LinstorVDI(VDI.VDI):
+         if size == self.size:
+             return VDI.VDI.get_params(self)
+ 
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             old_volume_size = self.size
+             new_volume_size = LinstorVolumeManager.round_up_volume_size(size)
+         else:
+@@ -1952,7 +1953,7 @@ class LinstorVDI(VDI.VDI):
+         self.sr._ensure_space_available(space_needed)
+ 
+         old_size = self.size
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             self._linstor.resize(self.uuid, new_volume_size)
+         else:
+             if new_volume_size != old_volume_size:
+@@ -1980,7 +1981,7 @@ class LinstorVDI(VDI.VDI):
+     @override
+     def compose(self, sr_uuid, vdi1, vdi2) -> None:
+         util.SMlog('VDI.compose for {} -> {}'.format(vdi2, vdi1))
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+ 
+         parent_uuid = vdi1
+@@ -2081,7 +2082,7 @@ class LinstorVDI(VDI.VDI):
+         return ''
+ 
+     def reset_leaf(self, sr_uuid, vdi_uuid):
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+ 
+         if not self.sr._vhdutil.has_parent(self.uuid):
+@@ -2114,7 +2115,7 @@ class LinstorVDI(VDI.VDI):
+         self.utilisation = volume_info.allocated_size
+         self.capacity = volume_info.virtual_size
+ 
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             self.hidden = int(volume_metadata.get(HIDDEN_TAG) or 0)
+             self.size = volume_info.virtual_size
+             self.parent = ''
+@@ -2137,7 +2138,7 @@ class LinstorVDI(VDI.VDI):
+         if self.hidden == hidden:
+             return
+ 
+-        if self.vdi_type == vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type == VdiType.VHD:
+             self.sr._vhdutil.set_hidden(self.path, hidden)
+         else:
+             self._linstor.update_volume_metadata(self.uuid, {
+@@ -2271,7 +2272,7 @@ class LinstorVDI(VDI.VDI):
+         )
+ 
+         # 2. Write the snapshot content.
+-        is_raw = (self.vdi_type == vhdutil.VDI_TYPE_RAW)
++        is_raw = (self.vdi_type == VdiType.RAW)
+         self.sr._vhdutil.snapshot(
+             snap_path, self.path, is_raw, self.MAX_METADATA_VIRT_SIZE
+         )
+@@ -2288,7 +2289,7 @@ class LinstorVDI(VDI.VDI):
+             SNAPSHOT_OF_TAG: snap_of_uuid,
+             SNAPSHOT_TIME_TAG: '',
+             TYPE_TAG: self.ty,
+-            VDI_TYPE_TAG: vhdutil.VDI_TYPE_VHD,
++            VDI_TYPE_TAG: VdiType.VHD,
+             READ_ONLY_TAG: False,
+             METADATA_OF_POOL_TAG: ''
+         }
+@@ -2344,7 +2345,7 @@ class LinstorVDI(VDI.VDI):
+         else:
+             consistency_state = None
+ 
+-        if self.vdi_type != vhdutil.VDI_TYPE_VHD:
++        if self.vdi_type != VdiType.VHD:
+             raise xs_errors.XenError('Unimplemented')
+ 
+         if not blktap2.VDI.tap_pause(self.session, sr_uuid, vdi_uuid):
+diff --git a/drivers/SHMSR.py b/drivers/SHMSR.py
+index 250d5813..daff4f1e 100644
+--- a/drivers/SHMSR.py
++++ b/drivers/SHMSR.py
+@@ -23,6 +23,7 @@ import SRCommand
+ import util
+ import os
+ import xs_errors
++from vditype import VdiType
+ 
+ CAPABILITIES = ["VDI_ATTACH", "VDI_DETACH", "VDI_CLONE", "VDI_SNAPSHOT",
+                 "SR_SCAN", "SR_ATTACH", "SR_DETACH"]
+@@ -126,7 +127,7 @@ class SHMVDI(VDI.VDI):
+         VDI.VDI.__init__(self, mysr, None)
+         self.label = filename
+         self.location = filename
+-        self.vdi_type = 'file'
++        self.vdi_type = VdiType.FILE
+         self.read_only = True
+         self.shareable = True
+         self.sm_config = {}
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index 6d211742..484d68f3 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -29,6 +29,7 @@ import os
+ import base64
+ from constants import CBTLOG_TAG
+ from bitarray import bitarray
++from vditype import VdiType
+ import uuid
+ 
+ 
+@@ -586,7 +587,7 @@ class VDI(object):
+         vdi_ref = self.sr.srcmd.params['vdi_ref']
+ 
+         # Check if raw VDI or snapshot
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW or \
++        if self.vdi_type == VdiType.RAW or \
+             self.session.xenapi.VDI.get_is_a_snapshot(vdi_ref):
+             raise xs_errors.XenError('VDIType',
+                                      opterr='Raw VDI or snapshot not permitted')
+@@ -818,7 +819,7 @@ class VDI(object):
+         """ Get blocktracking status """
+         if not uuid:
+             uuid = self.uuid
+-        if self.vdi_type == vhdutil.VDI_TYPE_RAW:
++        if self.vdi_type == VdiType.RAW:
+             return False
+         elif 'VDI_CONFIG_CBT' not in util.sr_get_capability(
+                 self.sr.uuid, session=self.sr.session):
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index dfe28735..0cb8b33b 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -43,6 +43,7 @@ import XenAPI # pylint: disable=import-error
+ import scsiutil
+ from syslog import openlog, syslog
+ from stat import *  # S_ISBLK(), ...
++from vditype import VdiType
+ 
+ import resetvdis
+ import vhdutil
+@@ -1670,13 +1671,13 @@ class VDI(object):
+             # This is a fix for CA-155766
+             if hasattr(self.target.vdi.sr, 'DRIVER_TYPE') and \
+                self.target.vdi.sr.DRIVER_TYPE == 'lvhd' and \
+-               vdi_type == vhdutil.VDI_TYPE_VHD:
++               vdi_type == VdiType.VHD:
+                 lock = Lock("lvchange-p", lvhdutil.NS_PREFIX_LVM + sr_uuid)
+                 lock.acquire()
+ 
+             # When we attach a static VDI for HA, we cannot communicate with
+             # xapi, because has not started yet. These VDIs are raw.
+-            if vdi_type != vhdutil.VDI_TYPE_RAW:
++            if vdi_type != VdiType.RAW:
+                 session = self.target.vdi.session
+                 vdi_ref = session.xenapi.VDI.get_by_uuid(vdi_uuid)
+                 # pylint: disable=used-before-assignment
+@@ -1691,7 +1692,7 @@ class VDI(object):
+ 
+             if hasattr(self.target.vdi.sr, 'DRIVER_TYPE') and \
+                self.target.vdi.sr.DRIVER_TYPE == 'lvhd' and \
+-               self.target.get_vdi_type() == vhdutil.VDI_TYPE_VHD:
++               self.target.get_vdi_type() == VdiType.VHD:
+                 lock.release()
+         except:
+             util.SMlog("Exception in activate/attach")
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 57127b05..828b9784 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -51,6 +51,7 @@ from lvmanager import LVActivator
+ from srmetadata import LVMMetadataHandler, VDI_TYPE_TAG
+ from functools import reduce
+ from time import monotonic as _time
++from vditype import VdiType
+ 
+ try:
+     from linstorjournaler import LinstorJournaler
+@@ -1319,9 +1320,9 @@ class LVHDVDI(VDI):
+         oldUuid = self.uuid
+         oldLVName = self.fileName
+         VDI.rename(self, uuid)
+-        self.fileName = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + self.uuid
++        self.fileName = lvhdutil.LV_PREFIX[VdiType.VHD] + self.uuid
+         if self.raw:
+-            self.fileName = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_RAW] + self.uuid
++            self.fileName = lvhdutil.LV_PREFIX[VdiType.RAW] + self.uuid
+         self.path = os.path.join(self.sr.path, self.fileName)
+         assert(not self.sr.lvmCache.checkLV(self.fileName))
+ 
+@@ -1584,7 +1585,7 @@ class LinstorVDI(VDI):
+         self.drbd_size = -1
+         self._hidden = info.hidden
+         self.scanError = False
+-        self.vdi_type = vhdutil.VDI_TYPE_VHD
++        self.vdi_type = VdiType.VHD
+ 
+     @override
+     def getSizeVHD(self, fetch=False) -> int:
+@@ -2733,7 +2734,7 @@ class SR(object):
+ 
+         # update the VDI record
+         if vdi.parent.raw:
+-            vdi.parent.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_RAW)
++            vdi.parent.setConfig(VDI.DB_VDI_TYPE, VdiType.RAW)
+         vdi.parent.delConfig(VDI.DB_VHD_BLOCKS)
+         util.fistpoint.activate("LVHDRT_coaleaf_after_vdirec", self.uuid)
+ 
+@@ -3039,7 +3040,7 @@ class FileSR(SR):
+             child.rename(childUuid)
+             Util.log("Updating the VDI record")
+             child.setConfig(VDI.DB_VHD_PARENT, parentUuid)
+-            child.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_VHD)
++            child.setConfig(VDI.DB_VDI_TYPE, VdiType.VHD)
+             util.fistpoint.activate("LVHDRT_coaleaf_undo_after_rename2", self.uuid)
+ 
+         if child.isHidden():
+@@ -3141,7 +3142,7 @@ class LVHDSR(SR):
+             if not vdi:
+                 self.logFilter.logNewVDI(uuid)
+                 vdi = LVHDVDI(self, uuid,
+-                        vdiInfo.vdiType == vhdutil.VDI_TYPE_RAW)
++                        vdiInfo.vdiType == VdiType.RAW)
+                 self.vdis[uuid] = vdi
+             vdi.load(vdiInfo)
+         self._removeStaleVDIs(vdis.keys())
+@@ -3224,11 +3225,11 @@ class LVHDSR(SR):
+     def _handleInterruptedCoalesceLeaf(self) -> None:
+         entries = self.journaler.getAll(VDI.JRN_LEAF)
+         for uuid, parentUuid in entries.items():
+-            childLV = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + uuid
+-            tmpChildLV = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + \
++            childLV = lvhdutil.LV_PREFIX[VdiType.VHD] + uuid
++            tmpChildLV = lvhdutil.LV_PREFIX[VdiType.VHD] + \
+                     self.TMP_RENAME_PREFIX + uuid
+-            parentLV1 = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + parentUuid
+-            parentLV2 = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_RAW] + parentUuid
++            parentLV1 = lvhdutil.LV_PREFIX[VdiType.VHD] + parentUuid
++            parentLV2 = lvhdutil.LV_PREFIX[VdiType.RAW] + parentUuid
+             parentPresent = (self.lvmCache.checkLV(parentLV1) or \
+                     self.lvmCache.checkLV(parentLV2))
+             if parentPresent or self.lvmCache.checkLV(tmpChildLV):
+@@ -3262,7 +3263,7 @@ class LVHDSR(SR):
+             child.rename(childUuid)
+             Util.log("Updating the VDI record")
+             child.setConfig(VDI.DB_VHD_PARENT, parentUuid)
+-            child.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_VHD)
++            child.setConfig(VDI.DB_VDI_TYPE, VdiType.VHD)
+             util.fistpoint.activate("LVHDRT_coaleaf_undo_after_rename2", self.uuid)
+ 
+             # refcount (best effort - assume that it had succeeded if the
+@@ -3340,7 +3341,7 @@ class LVHDSR(SR):
+                     child)
+             return
+ 
+-        tmpName = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + \
++        tmpName = lvhdutil.LV_PREFIX[VdiType.VHD] + \
+                 self.TMP_RENAME_PREFIX + child.uuid
+         args = {"vgName": self.vgName,
+                 "action1": "deactivateNoRefcount",
+@@ -3526,7 +3527,7 @@ class LinstorSR(SR):
+                 if volume_name.startswith(LINSTOR_PERSISTENT_PREFIX):
+                     # Always RAW!
+                     info = None
+-                elif vdi_type == vhdutil.VDI_TYPE_VHD:
++                elif vdi_type == VdiType.VHD:
+                     info = self._vhdutil.get_vhd_info(vdi_uuid)
+                 else:
+                     # Ensure it's not a VHD...
+@@ -3630,7 +3631,7 @@ class LinstorSR(SR):
+             child.rename(childUuid)
+             Util.log('Updating the VDI record')
+             child.setConfig(VDI.DB_VHD_PARENT, parentUuid)
+-            child.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_VHD)
++            child.setConfig(VDI.DB_VDI_TYPE, VdiType.VHD)
+ 
+         # TODO: Maybe deflate here.
+ 
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index 51b52564..a9472079 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -26,6 +26,7 @@ import time
+ import util
+ import vhdutil
+ import xs_errors
++from vditype import VdiType
+ 
+ MANAGER_PLUGIN = 'linstor-manager'
+ 
+@@ -427,13 +428,13 @@ class LinstorVhdUtil:
+ 
+     @classmethod
+     def compute_volume_size(cls, virtual_size, image_type):
+-        if image_type == vhdutil.VDI_TYPE_VHD:
++        if image_type == VdiType.VHD:
+             # All LINSTOR VDIs have the metadata area preallocated for
+             # the maximum possible virtual size (for fast online VDI.resize).
+             meta_overhead = vhdutil.calcOverheadEmpty(cls.MAX_SIZE)
+             bitmap_overhead = vhdutil.calcOverheadBitmap(virtual_size)
+             virtual_size += meta_overhead + bitmap_overhead
+-        elif image_type != vhdutil.VDI_TYPE_RAW:
++        elif image_type != VdiType.RAW:
+             raise Exception('Invalid image type: {}'.format(image_type))
+ 
+         return LinstorVolumeManager.round_up_volume_size(virtual_size)
+diff --git a/drivers/lvhdutil.py b/drivers/lvhdutil.py
+index f0d4a78c..ac561d41 100755
+--- a/drivers/lvhdutil.py
++++ b/drivers/lvhdutil.py
+@@ -26,6 +26,7 @@ import util
+ import vhdutil
+ 
+ from refcounter import RefCounter
++from vditype import VdiType
+ 
+ MSIZE_MB = 2 * 1024 * 1024  # max virt size for fast resize
+ MSIZE = int(MSIZE_MB * 1024 * 1024)
+@@ -35,10 +36,10 @@ VG_PREFIX = "VG_XenStorage-"
+ LVM_SIZE_INCREMENT = 4 * 1024 * 1024
+ 
+ LV_PREFIX = {
+-        vhdutil.VDI_TYPE_VHD: "VHD-",
+-        vhdutil.VDI_TYPE_RAW: "LV-",
++        VdiType.VHD: "VHD-",
++        VdiType.RAW: "LV-",
+ }
+-VDI_TYPES = [vhdutil.VDI_TYPE_VHD, vhdutil.VDI_TYPE_RAW]
++VDI_TYPES = [VdiType.VHD, VdiType.RAW]
+ 
+ JRN_INFLATE = "inflate"
+ 
+@@ -128,7 +129,7 @@ def getVDIInfo(lvmCache):
+ 
+     haveVHDs = False
+     for uuid, lvInfo in lvs.items():
+-        if lvInfo.vdiType == vhdutil.VDI_TYPE_VHD:
++        if lvInfo.vdiType == VdiType.VHD:
+             haveVHDs = True
+         vdiInfo = VDIInfo(uuid)
+         vdiInfo.vdiType = lvInfo.vdiType
+@@ -142,12 +143,12 @@ def getVDIInfo(lvmCache):
+         vdis[uuid] = vdiInfo
+ 
+     if haveVHDs:
+-        pattern = "%s*" % LV_PREFIX[vhdutil.VDI_TYPE_VHD]
++        pattern = "%s*" % LV_PREFIX[VdiType.VHD]
+         vhds = vhdutil.getAllVHDs(pattern, extractUuid, lvmCache.vgName)
+         uuids = vdis.keys()
+         for uuid in uuids:
+             vdi = vdis[uuid]
+-            if vdi.vdiType == vhdutil.VDI_TYPE_VHD:
++            if vdi.vdiType == VdiType.VHD:
+                 if not vhds.get(uuid):
+                     lvmCache.refresh()
+                     if lvmCache.checkLV(vdi.lvName):
+@@ -169,7 +170,7 @@ def getVDIInfo(lvmCache):
+ def inflate(journaler, srUuid, vdiUuid, size):
+     """Expand a VDI LV (and its VHD) to 'size'. If the LV is already bigger
+     than that, it's a no-op. Does not change the virtual size of the VDI"""
+-    lvName = LV_PREFIX[vhdutil.VDI_TYPE_VHD] + vdiUuid
++    lvName = LV_PREFIX[VdiType.VHD] + vdiUuid
+     vgName = VG_PREFIX + srUuid
+     path = os.path.join(VG_LOCATION, vgName, lvName)
+     lvmCache = journaler.lvmCache
+@@ -207,7 +208,7 @@ def deflate(lvmCache, lvName, size):
+ def setSizeVirt(journaler, srUuid, vdiUuid, size, jFile):
+     """When resizing the VHD virtual size, we might have to inflate the LV in
+     case the metadata size increases"""
+-    lvName = LV_PREFIX[vhdutil.VDI_TYPE_VHD] + vdiUuid
++    lvName = LV_PREFIX[VdiType.VHD] + vdiUuid
+     vgName = VG_PREFIX + srUuid
+     path = os.path.join(VG_LOCATION, vgName, lvName)
+     inflate(journaler, srUuid, vdiUuid, calcSizeVHDLV(size))
+@@ -228,7 +229,7 @@ def _tryAcquire(lock):
+ 
+ def attachThin(journaler, srUuid, vdiUuid):
+     """Ensure that the VDI LV is expanded to the fully-allocated size"""
+-    lvName = LV_PREFIX[vhdutil.VDI_TYPE_VHD] + vdiUuid
++    lvName = LV_PREFIX[VdiType.VHD] + vdiUuid
+     vgName = VG_PREFIX + srUuid
+     sr_lock = lock.Lock(lock.LOCK_TYPE_SR, srUuid)
+     lvmCache = journaler.lvmCache
+@@ -249,7 +250,7 @@ def attachThin(journaler, srUuid, vdiUuid):
+ 
+ def detachThin(session, lvmCache, srUuid, vdiUuid):
+     """Shrink the VDI to the minimal size if no one is using it"""
+-    lvName = LV_PREFIX[vhdutil.VDI_TYPE_VHD] + vdiUuid
++    lvName = LV_PREFIX[VdiType.VHD] + vdiUuid
+     path = os.path.join(VG_LOCATION, VG_PREFIX + srUuid, lvName)
+     sr_lock = lock.Lock(lock.LOCK_TYPE_SR, srUuid)
+     _tryAcquire(sr_lock)
+diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
+index f98257a2..40c6a71e 100755
+--- a/drivers/tapdisk-pause
++++ b/drivers/tapdisk-pause
+@@ -28,6 +28,7 @@ import XenAPI
+ import lvhdutil
+ import vhdutil
+ import lvmcache
++from vditype import VdiType
+ 
+ try:
+     from linstorvhdutil import LinstorVhdUtil
+@@ -135,8 +136,8 @@ class Tapdisk:
+                 if os.path.exists(p):
+                     _mkphylink(self.sr_uuid, self.vdi_uuid, p)
+                     self.realpath = p
+-                    if ty == "LV": self.vdi_type = "aio"
+-                    else: self.vdi_type = "vhd"
++                    if ty == "LV": self.vdi_type = VdiType.RAW
++                    else: self.vdi_type = VdiType.VHD
+         elif realpath.startswith('/dev/drbd/by-res/xcp-volume-'):
+             if not LINSTOR_AVAILABLE:
+                 raise util.SMException(
+@@ -211,7 +212,7 @@ class Tapdisk:
+             vg_name = lvhdutil.VG_PREFIX + self.sr_uuid
+             ns = lvhdutil.NS_PREFIX_LVM + self.sr_uuid
+             lvm_cache = lvmcache.LVMCache(vg_name)
+-            lv_name = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + self.vdi_uuid
++            lv_name = lvhdutil.LV_PREFIX[VdiType.VHD] + self.vdi_uuid
+             vdi_list = vhdutil.getParentChain(lv_name,
+                     lvhdutil.extractUuid, vg_name)
+             for uuid, lv_name in vdi_list.items():
+diff --git a/drivers/vditype.py b/drivers/vditype.py
+new file mode 100644
+index 00000000..27a8d034
+--- /dev/null
++++ b/drivers/vditype.py
+@@ -0,0 +1,23 @@
++#!/usr/bin/env python3
++#
++# Copyright (C) 2024  Vates SAS
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++
++# TODO: Use StrEnum in python 3.11.
++class VdiType(object):
++    RAW = "aio"
++    VHD = "vhd"
++    ISO = "iso"
++    FILE = "file"
++    CBTLOG = "cbtlog"
+diff --git a/drivers/verifyVHDsOnSR.py b/drivers/verifyVHDsOnSR.py
+index 9d5fac4f..e0a56f46 100755
+--- a/drivers/verifyVHDsOnSR.py
++++ b/drivers/verifyVHDsOnSR.py
+@@ -27,8 +27,11 @@ import lvutil
+ import lvhdutil
+ import vhdutil
+ 
++import VDI
++
+ from lock import Lock
+ from refcounter import RefCounter
++from vditype import VdiType
+ 
+ # Stores the vdi activated, comes handy while deactivating
+ VHDs_passed = 0
+@@ -109,7 +112,7 @@ def checkAllVHD(sr_uuid):
+     VHDs_total = 0
+ 
+     vg_name = lvhdutil.VG_PREFIX + sr_uuid
+-    pattern = "%s*" % lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD]
++    pattern = "%s*" % lvhdutil.LV_PREFIX[VdiType.VHD]
+ 
+     # Do a vhd scan and gets all the VHDs
+     vhds = vhdutil.getAllVHDs(pattern, lvhdutil.extractUuid, vg_name)
+diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
+index 8ac7b08d..e4f43fee 100755
+--- a/drivers/vhdutil.py
++++ b/drivers/vhdutil.py
+@@ -23,6 +23,7 @@ import zlib
+ import re
+ import xs_errors
+ import time
++from vditype import VdiType
+ 
+ MIN_VHD_SIZE = 2 * 1024 * 1024
+ MAX_VHD_SIZE = 2040 * 1024 * 1024 * 1024
+@@ -36,14 +37,11 @@ VHD_FOOTER_SIZE = 512
+ # lock to lock the entire SR for short ops
+ LOCK_TYPE_SR = "sr"
+ 
+-VDI_TYPE_VHD = 'vhd'
+-VDI_TYPE_RAW = 'aio'
+-
+ FILE_EXTN_VHD = ".vhd"
+ FILE_EXTN_RAW = ".raw"
+ FILE_EXTN = {
+-        VDI_TYPE_VHD: FILE_EXTN_VHD,
+-        VDI_TYPE_RAW: FILE_EXTN_RAW
++        VdiType.VHD: FILE_EXTN_VHD,
++        VdiType.RAW: FILE_EXTN_RAW
+ }
+ 
+ 
+diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
+index 98bd466e..8dfaca9b 100644
+--- a/tests/test_FileSR.py
++++ b/tests/test_FileSR.py
+@@ -17,15 +17,16 @@ import testlib
+ import util
+ import vhdutil
+ import xs_errors
++from vditype import VdiType
+ 
+ 
+ class FakeFileVDI(FileSR.FileVDI):
+     @override
+     def load(self, uuid) -> None:
+-        self.vdi_type = vhdutil.VDI_TYPE_VHD
++        self.vdi_type = VdiType.VHD
+         self.hidden = False
+         self.path = os.path.join(self.sr.path, '%s.%s' % (
+-               uuid, vhdutil.VDI_TYPE_VHD))
++               uuid, VdiType.VHD))
+         self.key_hash = None
+ 
+ 
+@@ -322,13 +323,12 @@ class TestFileVDI(unittest.TestCase):
+     @mock.patch('FileSR.vhdutil', spec=True)
+     def test_create_vdi_vhd(self, mock_vhdutil):
+         # Arrange
+-        mock_vhdutil.VDI_TYPE_VHD = vhdutil.VDI_TYPE_VHD
+         sr_uuid = str(uuid.uuid4())
+         vdi_uuid = str(uuid.uuid4())
+         sr = mock.MagicMock()
+         sr.path = "sr_path"
+         vdi = FakeFileVDI(sr, vdi_uuid)
+-        vdi.vdi_type = vhdutil.VDI_TYPE_VHD
++        vdi.vdi_type = VdiType.VHD
+         mock_vhdutil.validate_and_round_vhd_size.side_effect = vhdutil.validate_and_round_vhd_size
+ 
+         # Act
+@@ -337,22 +337,21 @@ class TestFileVDI(unittest.TestCase):
+         # Assert
+         expected_path = f"sr_path/{vdi_uuid}.vhd"
+         self.mock_pread.assert_has_calls([
+-            mock.call(["/usr/sbin/td-util", "create", "vhd",
++            mock.call(["/usr/sbin/td-util", "create", vdi.vdi_type,
+                        "20", expected_path]),
+-            mock.call(["/usr/sbin/td-util", "query", "vhd", "-v",
++            mock.call(["/usr/sbin/td-util", "query", vdi.vdi_type, "-v",
+                        expected_path])])
+ 
+     @mock.patch('FileSR.vhdutil', spec=True)
+     @mock.patch('builtins.open', new_callable=mock.mock_open())
+     def test_create_vdi_raw(self, mock_open, mock_vhdutil):
+         # Arrange
+-        mock_vhdutil.VDI_TYPE_RAW = vhdutil.VDI_TYPE_RAW
+         sr_uuid = str(uuid.uuid4())
+         vdi_uuid = str(uuid.uuid4())
+         sr = mock.MagicMock()
+         sr.path = "sr_path"
+         vdi = FakeFileVDI(sr, vdi_uuid)
+-        vdi.vdi_type = vhdutil.VDI_TYPE_RAW
++        vdi.vdi_type = VdiType.RAW
+ 
+         # Act
+         vdi.create(sr_uuid, vdi_uuid, 20 * 1024 * 1024)
+@@ -379,7 +378,7 @@ hidden: 0
+         }
+         sr = FakeSharedFileSR(srcmd, sr_uuid)
+         vdi = FileSR.FileVDI(sr, vdi_uuid)
+-        vdi.vdi_type = vhdutil.VDI_TYPE_VHD
++        vdi.vdi_type = VdiType.VHD
+         mock_pathexists.return_value = True
+ 
+         # Act
+diff --git a/tests/test_LVHDSR.py b/tests/test_LVHDSR.py
+index 55afea39..ae04323e 100644
+--- a/tests/test_LVHDSR.py
++++ b/tests/test_LVHDSR.py
+@@ -12,6 +12,7 @@ import LVHDSR
+ import lvhdutil
+ import lvutil
+ import vhdutil
++from vditype import VdiType
+ 
+ import testlib
+ 
+@@ -318,8 +319,6 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         self.mock_lvhdutil.LV_PREFIX = lvhdutil.LV_PREFIX
+         vhdutil_patcher = mock.patch('LVHDSR.vhdutil', autospec=True)
+         self.mock_vhdutil = vhdutil_patcher.start()
+-        self.mock_vhdutil.VDI_TYPE_VHD = vhdutil.VDI_TYPE_VHD
+-        self.mock_vhdutil.VDI_TYPE_RAW = vhdutil.VDI_TYPE_RAW
+         self.mock_vhdutil.MAX_CHAIN_SIZE = vhdutil.MAX_CHAIN_SIZE
+         lvutil_patcher = mock.patch('LVHDSR.lvutil', autospec=True)
+         self.mock_lvutil = lvutil_patcher.start()
+@@ -363,7 +362,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         mock_lv.size = 10240
+         mock_lv.active = True
+         mock_lv.hidden = False
+-        mock_lv.vdiType = vhdutil.VDI_TYPE_VHD
++        mock_lv.vdiType = VdiType.VHD
+ 
+         self.mock_lvhdutil.getLVInfo.return_value = {
+             vdi_uuid: mock_lv}
+@@ -430,7 +429,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         sr.cmd = "vdi_snapshot"
+ 
+         vdi = sr.vdi('some VDI UUID')
+-        vdi.vdi_type = vhdutil.VDI_TYPE_VHD
++        vdi.vdi_type = VdiType.VHD
+         self.mock_sr_util.pathexists.return_value = True
+         self.mock_sr_util.get_hosts_attached_on.return_value = ["hostref2"]
+         self.mock_sr_util.get_this_host_ref.return_value = ["hostref1"]
+@@ -467,7 +466,7 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+         sr.cmd = "vdi_snapshot"
+ 
+         vdi = sr.vdi('some VDI UUID')
+-        vdi.vdi_type = vhdutil.VDI_TYPE_VHD
++        vdi.vdi_type = VdiType.VHD
+         self.mock_sr_util.pathexists.return_value = True
+         self.mock_sr_util.get_hosts_attached_on.return_value = ["hostref2"]
+         self.mock_sr_util.get_this_host_ref.return_value = ["hostref1"]
+diff --git a/tests/test_cbt.py b/tests/test_cbt.py
+index 18bdc8a0..530aee10 100644
+--- a/tests/test_cbt.py
++++ b/tests/test_cbt.py
+@@ -14,12 +14,13 @@ import cbtutil
+ from bitarray import bitarray
+ import base64
+ import xmlrpc.client
++from vditype import VdiType
+ 
+ 
+ class TestVDI(VDI.VDI):
+     @override
+     def load(self, vdi_uuid) -> None:
+-        self.vdi_type = vhdutil.VDI_TYPE_VHD
++        self.vdi_type = VdiType.VHD
+         self._state_mock = mock.Mock()
+         self.path = "/mock/sr_path/" + str(vdi_uuid)
+         self.block_tracking_state = False
+diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
+index b55e24aa..94f4d972 100644
+--- a/tests/test_on_slave.py
++++ b/tests/test_on_slave.py
+@@ -11,6 +11,7 @@ import util
+ import vhdutil
+ 
+ import on_slave
++from vditype import VdiType
+ 
+ 
+ class Test_on_slave_is_open(unittest.TestCase):
+@@ -205,7 +206,7 @@ class Test_on_slave_multi(unittest.TestCase):
+         child_uuid = str(uuid.uuid4())
+         child_fileName = "child-vdi.vhd"
+         parent_fileName = "parent-vdi.vhd"
+-        tmpName = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + \
++        tmpName = lvhdutil.LV_PREFIX[VdiType.VHD] + \
+                 self.TMP_RENAME_PREFIX + child_uuid
+ 
+         args = {"vgName": vgName,

@@ -1,0 +1,533 @@
+From fc17fef1c0f7fb4cde48fe1c643bb28d044fb7ae Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 5 May 2025 18:01:35 +0200
+Subject: [PATCH] Coalesce on remote WIP
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/blktap2.py   |  10 +++
+ drivers/cleanup.py   | 155 +++++++++++++++++++++++++++++++++++++------
+ drivers/cowutil.py   |  12 ++++
+ drivers/on_slave.py  |  74 ++++++++++++++++++++-
+ drivers/qcow2util.py |  38 ++++++++---
+ drivers/util.py      |   2 +-
+ drivers/vhdutil.py   |  12 ++++
+ 7 files changed, 272 insertions(+), 31 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 9472358e..64f1a232 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -63,6 +63,7 @@ except ImportError:
+     LINSTOR_AVAILABLE = False
+ 
+ PLUGIN_TAP_PAUSE = "tapdisk-pause"
++PLUGIN_ON_SLAVE = "on-slave"
+ 
+ SOCKPATH = "/var/xapi/xcp-rrdd"
+ 
+@@ -460,6 +461,13 @@ class TapCtl(object):
+         total_coalesce = int(m.group(3))
+         return (status, coalesced, total_coalesce)
+ 
++    @classmethod
++    def cancel_commit(cls, pid, minor, wait=True):
++        args = ["cancel", "-p", pid, "-m", minor]
++        if wait:
++            args.append("-w")
++        cls._pread(args)
++
+ class TapdiskExists(Exception):
+     """Tapdisk already running."""
+ 
+@@ -1655,6 +1663,8 @@ class VDI(object):
+         if self.tap_wanted():
+             if not self._add_tag(vdi_uuid, not options["rdonly"]):
+                 return False
++                #TODO: Need to interrupt coalesce on master, the coalesce will check for host_OpaqueRef on the VDI before trying offline coalesce
++                #TODO: The coalesce could happen on another slave in onlinecoalesce, interrupt coalesce on another slave (online coalesce)?
+             refresh = True
+ 
+         try:
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 39ce2c76..cbf3650e 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -757,7 +757,7 @@ class VDI(object):
+ 
+         return maxChildHeight + 1
+ 
+-    def getAllLeaves(self):
++    def getAllLeaves(self) -> List["VDI"]:
+         "Get all leaf nodes in the subtree rooted at self"
+         if len(self.children) == 0:
+             return [self]
+@@ -828,6 +828,57 @@ class VDI(object):
+     def _clearRef(self):
+         self._vdiRef = None
+ 
++    def _call_plug_cancel(self, hostRef):
++        args = {"path": self.path, "vdi_type": self.vdi_type}
++        self.sr.xapi.session.xenapi.host.call_plugin( \
++                    hostRef, XAPI.PLUGIN_ON_SLAVE, "commit_cancel", args)
++
++    def _call_plugin_coalesce(self, hostRef):
++        args = {"path": self.path, "vdi_type": self.vdi_type}
++        self.sr.xapi.session.xenapi.host.call_plugin( \
++                    hostRef, XAPI.PLUGIN_ON_SLAVE, "commit_tapdisk", args)
++
++    def _doCoalesceOnHost(self, hostRef):
++        self.validate()
++        self.parent.validate(True)
++        self.parent._increaseSizeVirt(self.sizeVirt)
++        self.sr._updateSlavesOnResize(self.parent)
++        #TODO: We might need to make the LV RW on the slave directly for coalesce?
++        # Children and parent need to be RW for QCOW2 coalesce, otherwise tapdisk(libqcow) will crash trying to access them
++
++        def abortTest():
++            file = self.sr._gc_running_file(self)
++            try:
++                with open(file, "r") as f:
++                    if not f.read():
++                        #TODO: Need to call commit cancel on the hostRef if we stop
++                        self._call_plug_cancel(hostRef)
++                        return True
++            except OSError as e:
++                if e.errno == errno.ENOENT:
++                    util.SMlog("File {} does not exist".format(file))
++                else:
++                    util.SMlog("IOError: {}".format(e))
++                return True
++            return False
++
++        Util.runAbortable(lambda: self._call_plugin_coalesce(hostRef),
++                          None, self.sr.uuid, abortTest, VDI.POLL_INTERVAL, 0)
++
++        self.parent.validate(True)
++        #self._verifyContents(0)
++        self.parent.updateBlockInfo()
++
++    def _isOpenOnHosts(self) -> Optional[str]:
++        for pbdRecord in self.sr.xapi.getAttachedPBDs():
++            hostRef = pbdRecord["host"]
++            args = {"path": self.path}
++            is_openers = util.strtobool(self.sr.xapi.session.xenapi.host.call_plugin( \
++                    hostRef, XAPI.PLUGIN_ON_SLAVE, "is_openers", args))
++            if is_openers:
++                return hostRef
++        return None
++
+     def _doCoalesce(self) -> None:
+         """Coalesce self onto parent. Only perform the actual coalescing of
+         an image, but not the subsequent relinking. We'll do that as the next step,
+@@ -914,7 +965,7 @@ class VDI(object):
+         return self.cowutil.coalesce(self.path)
+ 
+     @staticmethod
+-    def _doCoalesceCowImage(vdi):
++    def _doCoalesceCowImage(vdi: "VDI"):
+         try:
+             startTime = time.time()
+             allocated_size = vdi.getAllocatedSize()
+@@ -943,7 +994,21 @@ class VDI(object):
+ 
+     def _coalesceCowImage(self, timeOut):
+         Util.log("  Running COW coalesce on %s" % self)
+-        abortTest = lambda: IPCFlag(self.sr.uuid).test(FLAG_TYPE_ABORT)
++        def abortTest():
++            if self.cowutil.isCoalesceableOnRemote():
++                file = self.sr._gc_running_file(self)
++                try:
++                    with open(file, "r") as f:
++                        if not f.read():
++                            return True
++                except OSError as e:
++                    if e.errno == errno.ENOENT:
++                        util.SMlog("File {} does not exist".format(file))
++                    else:
++                        util.SMlog("IOError: {}".format(e))
++                    return True
++            return IPCFlag(self.sr.uuid).test(FLAG_TYPE_ABORT)
++
+         try:
+             util.fistpoint.activate_custom_fn(
+                 "cleanup_coalesceVHD_inject_failure",
+@@ -2393,7 +2458,24 @@ class SR(object):
+     def cleanupCache(self, maxAge=-1) -> int:
+         return 0
+ 
+-    def _coalesce(self, vdi):
++    def _hasLeavesAttachedOn(self, vdi: VDI):
++        leaves = vdi.getAllLeaves()
++        leaves_vdi = [leaf.uuid for leaf in leaves]
++        return util.get_hosts_attached_on(self.xapi.session, leaves_vdi)
++
++    def _gc_running_file(self, vdi: VDI):
++        run_file = "gc_running_{}".format(vdi.uuid)
++        return os.path.join(NON_PERSISTENT_DIR, str(self.uuid), run_file)
++
++    def _create_running_file(self, vdi: VDI):
++        with open(self._gc_running_file(vdi), "w") as f:
++            f.write("1")
++
++    def _delete_running_file(self, vdi: VDI):
++        os.unlink(self._gc_running_file(vdi))
++
++    def _coalesce(self, vdi: VDI):
++        skipRelink = False
+         if self.journaler.get(vdi.JRN_RELINK, vdi.uuid):
+             # this means we had done the actual coalescing already and just
+             # need to finish relinking and/or refreshing the children
+@@ -2403,8 +2485,37 @@ class SR(object):
+             # order to decide whether to abort the coalesce. We remove the
+             # journal as soon as the COW coalesce step is done, because we
+             # don't expect the rest of the process to take long
++
++            #TODO: Create `gc_running` in `/run/nonpersistent/sm/<sr uuid>/`
++            if os.path.exists(self._gc_running_file(vdi)):
++                util.SMlog("gc_running already exist for {}. Ignoring...".format(self.uuid))
++
++            self._create_running_file(vdi)
++
+             self.journaler.create(vdi.JRN_COALESCE, vdi.uuid, "1")
+-            vdi._doCoalesce()
++            host_refs = self._hasLeavesAttachedOn(vdi)
++            #TODO: this check of multiple host_refs should be done earlier in `is_coalesceable` to avoid stopping this late every time
++            if len(host_refs) > 1:
++                util.SMlog("Not coalesceable, chain activated more than once")
++                raise Exception("Not coalesceable, chain activated more than once") #TODO: Use correct error
++
++            try:
++                if host_refs and vdi.cowutil.isCoalesceableOnRemote:
++                    #Leaf opened on another host, we need to call online coalesce
++                    util.SMlog("DAMS: Remote coalesce for {}".format(vdi.path))
++                    vdi._doCoalesceOnHost(list(host_refs)[0])
++                    skipRelink = True
++                else:
++                    util.SMlog("DAMS: Offline coalesce for {}".format(vdi.path))
++                    vdi._doCoalesce()
++            except Exception as e:
++                util.SMlog("DAMS: EXCEPTION {}".format(e))
++                self._delete_running_file(vdi)
++                raise
++            """
++            vdi._doCoalesce will call vdi._coalesceCowImage (after doing other things).
++            It will then call VDI._doCoalesceCowImage in a runAbortable context
++            """
+             self.journaler.remove(vdi.JRN_COALESCE, vdi.uuid)
+ 
+             util.fistpoint.activate("LVHDRT_before_create_relink_journal", self.uuid)
+@@ -2413,19 +2524,22 @@ class SR(object):
+             # like SM.clone from manipulating the VDIs we'll be relinking and
+             # rescan the SR first in case the children changed since the last
+             # scan
+-            self.journaler.create(vdi.JRN_RELINK, vdi.uuid, "1")
++            if not skipRelink:
++                self.journaler.create(vdi.JRN_RELINK, vdi.uuid, "1")
+ 
+-        self.lock()
+-        try:
+-            vdi.parent._tagChildrenForRelink()
+-            self.scan()
+-            vdi._relinkSkip()
+-        finally:
+-            self.unlock()
+-            # Reload the children to leave things consistent
+-            vdi.parent._reloadChildren(vdi)
++        if not skipRelink:
++            self.lock()
++            try:
++                vdi.parent._tagChildrenForRelink()
++                self.scan()
++                vdi._relinkSkip()
++            finally:
++                self.unlock()
++                # Reload the children to leave things consistent
++                vdi.parent._reloadChildren(vdi)
++            self.journaler.remove(vdi.JRN_RELINK, vdi.uuid)
+ 
+-        self.journaler.remove(vdi.JRN_RELINK, vdi.uuid)
++        self._delete_running_file(vdi)
+         self.deleteVDI(vdi)
+ 
+     class CoalesceTracker:
+@@ -2684,6 +2798,7 @@ class SR(object):
+             try:
+                 try:
+                     # "vdi" object will no longer be valid after this call
++                    self._create_running_file(vdi)
+                     self._doCoalesceLeaf(vdi)
+                 except:
+                     Util.logException("_doCoalesceLeaf")
+@@ -2693,6 +2808,7 @@ class SR(object):
+                 vdi = self.getVDI(uuid)
+                 if vdi:
+                     vdi.ensureUnpaused()
++                self._delete_running_file(vdi)
+                 vdiOld = self.getVDI(self.TMP_RENAME_PREFIX + uuid)
+                 if vdiOld:
+                     util.fistpoint.activate("LVHDRT_coaleaf_before_delete", self.uuid)
+@@ -2704,7 +2820,7 @@ class SR(object):
+             self.logFilter.logState()
+         return True
+ 
+-    def _doCoalesceLeaf(self, vdi):
++    def _doCoalesceLeaf(self, vdi: VDI):
+         """Actual coalescing of a leaf VDI onto parent. Must be called in an
+         offline/atomic context"""
+         self.journaler.create(VDI.JRN_LEAF, vdi.uuid, vdi.parent.uuid)
+@@ -3755,8 +3871,7 @@ def _gc_init_file(sr_uuid):
+ 
+ def _create_init_file(sr_uuid):
+     util.makedirs(os.path.join(NON_PERSISTENT_DIR, str(sr_uuid)))
+-    with open(os.path.join(
+-            NON_PERSISTENT_DIR, str(sr_uuid), 'gc_init'), 'w+') as f:
++    with open(os.path.join(_gc_init_file(sr_uuid)), 'w+') as f:
+         f.write('1')
+ 
+ 
+@@ -3785,7 +3900,7 @@ def _gcLoopPause(sr, dryRun=False, immediate=False):
+         Util.log("GC active, quiet period ended")
+ 
+ 
+-def _gcLoop(sr, dryRun=False, immediate=False):
++def _gcLoop(sr: SR, dryRun=False, immediate=False):
+     if not lockGCActive.acquireNoblock():
+         Util.log("Another GC instance already active, exiting")
+         return
+diff --git a/drivers/cowutil.py b/drivers/cowutil.py
+index a6f6a8f8..b874f341 100755
+--- a/drivers/cowutil.py
++++ b/drivers/cowutil.py
+@@ -266,6 +266,18 @@ class CowUtil(ABC):
+     def setKey(self, path: str, key_hash: str) -> None:
+         pass
+ 
++    @abstractmethod
++    def isCoalesceableOnRemote(self) -> bool:
++        pass
++
++    @abstractmethod
++    def coalesceOnline(self, path: str) -> int:
++        pass
++
++    @abstractmethod
++    def cancelCoalesceOnline(self, path: str) -> None:
++        pass
++
+     def getParentChain(self, lvName: str, extractUuidFunction: Callable[[str], str], vgName: str) -> Dict[str, str]:
+         """
+         Get the chain of all parents of 'path'. Safe to call for raw VDI's as well.
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index 5291dfcf..c38b307c 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -18,6 +18,9 @@
+ # A plugin for synchronizing slaves when something changes on the Master
+ 
+ import sys
++import os
++import time
++import errno
+ sys.path.append("/opt/xensource/sm/")
+ import util
+ import lock
+@@ -148,7 +151,6 @@ def is_open(session, args):
+         util.logException("is_open")
+         raise
+ 
+-
+ def refresh_lun_size_by_SCSIid(session, args):
+     """Refresh the size of LUNs backing the SCSIid on the local node."""
+     util.SMlog("on-slave.refresh_lun_size_by_SCSIid(,%s)" % args)
+@@ -160,10 +162,78 @@ def refresh_lun_size_by_SCSIid(session, args):
+         util.SMlog("on-slave.refresh_lun_size_by_SCSIid with %s failed" % args)
+         return "False"
+ 
++def commit_tapdisk(session, args):
++    path = args["path"]
++    vdi_type = args["vdi_type"]
++    #TODO: Miss activating/changing RW, naming should reflect that it does more than coalesceing
++    from cowutil import getCowUtil
++    cowutil = getCowUtil(vdi_type)
++    try:
++        return str(cowutil.coalesceOnline(path))
++    except:
++        return "0"
++
++def commit_cancel(session, args):
++    path = args["path"]
++    vdi_type = args["vdi_type"]
++    from cowutil import getCowUtil
++    cowutil = getCowUtil(vdi_type)
++    try:
++        cowutil.cancelCoalesceOnline(path)
++    except:
++        return "False"
++    return "True"
++
++def cancel_coalesce_master(session, args):
++    sr_uuid = args["sr_uuid"]
++    vdi_uuid = args["vdi_uuid"]
++
++    # from ipc import IPCFlag
++    # flag = IPCFlag(sr_uuid)
++
++    # runningStr = "gc_running_{}".format(vdi_uuid)
++    # abortStr = "abort_{}".format(vdi_uuid)
++
++    # if not flag.test(runningStr):
++    #     return "True"
++
++    # if not flag.test(abortStr):
++    #     flag.set(abortStr)
++
++    # while flag.test(abortStr) or flag.test(runningStr):
++    #     time.sleep(1)
++
++    # return "True"
++
++    path = "/run/nonpersistent/sm/{}/gc_running_{}".format(sr_uuid, vdi_uuid)
++
++    try:
++        with open(path, "r+") as f:
++            f.truncate(0)
++            f.flush()
++            os.fsync(f.fileno())
++    except IOError as e:
++        if e.errno == errno.ENOENT:
++            return "True"
++        raise
++
++    while os.path.exists(path):
++        time.sleep(1)
++
++    return "True"
++
++def is_openers(session, args):
++    path = args["path"]
++    openers_pid= util.get_openers_pid(path)
++    return str(bool(openers_pid))
+ 
+ if __name__ == "__main__":
+     import XenAPIPlugin
+     XenAPIPlugin.dispatch({
+         "multi": multi,
+         "is_open": is_open,
+-        "refresh_lun_size_by_SCSIid": refresh_lun_size_by_SCSIid})
++        "refresh_lun_size_by_SCSIid": refresh_lun_size_by_SCSIid,
++        "is_openers": is_openers,
++        "commit_tapdisk": commit_tapdisk,
++        "commit_cancel": commit_cancel,
++        })
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index b6a44ab0..cf05cb56 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -718,35 +718,53 @@ class QCowUtil(CowUtil):
+         return zlib.compress(self._create_bitmap())
+ 
+     @override
+-    def coalesce(self, path: str) -> int:
+-        pid_openers = util.get_openers_pid(path)
++    def coalesceOnline(self, path: str) -> int:
++        pid_openers = util.get_openers_pid(path) # TODO: need to check other hosts and call tap-ctl on the host where it runs
+         if pid_openers:
+             if len(pid_openers) > 1:
+-                util.SMlog("Multiple openers for {}".format(path)) #TODO: There might be multiple PID?
++                raise xs_errors.XenError("Multiple openers for {}".format(path)) # TODO: There might be multiple PID? Yes, we can have the chain enabled for multiple leaf (i.e. after a clone)
+             pid = pid_openers[0]
+             l = TapCtl.list(pid=pid)
+             if len(l) > 1: #TODO: There might more than one minor for this blktap?
+                 raise xs_errors.XenError("TapdiskAlreadyRunning", "There is multiple minor for this tapdisk process")
+             minor = l[0]["minor"]
+-            TapCtl.commit(pid, minor, QCOW2_TYPE, path) #TODO: Handle commit call failing
++            TapCtl.commit(pid, minor, QCOW2_TYPE, path) #TODO: Handle commit call failing, it's needed if the tapdisk hasn't started yet or crashed
+             #We need to wait for query to return concluded
+             #TODO: We are technically ininterruptible since being interrupted will only stop checking if the job is done
+             # We should call `tap-ctl cancel` if we are interrupted
+             try:
+                 status, nb, _ = TapCtl.query(pid, minor)
+                 if status == "undefined":
++                    util.SMlog("Tapdisk {} (m: {}) coalesce status undefined for {}".format(pid, minor, path))
+                     return 0
+                 while status !=  "concluded":
+                     time.sleep(1)
+                     status, nb, _ = TapCtl.query(pid, minor)
+-                    util.SMlog("Got status {} for tapdisk {} minor: {}".format(status, pid, minor))
++                    util.SMlog("Got status {} for tapdisk {} (m: {})".format(status, pid, minor))
+                 return nb
+             except TapCtl.CommandFailure as e:
+-                # util.SMlog("Query command failed on tapdisk instance {}. Retrying with offline coalesce...".format(pid))
+-                # return self.coalesce(path)
+                 util.SMlog("Query command failed on tapdisk instance {}. Raising...".format(pid))
+                 raise
+-        else:
++
++    @override
++    def cancelCoalesceOnline(self, path: str) -> None:
++        pid_openers = util.get_openers_pid(path) # TODO: need to check other hosts and call tap-ctl on the host where it runs
++        if pid_openers:
++            if len(pid_openers) > 1:
++                raise xs_errors.XenError("Multiple openers for {}".format(path)) # TODO: There might be multiple PID? Yes, we can have the chain enabled for multiple leaf (i.e. after a clone)
++            pid = pid_openers[0]
++            l = TapCtl.list(pid=pid)
++            if len(l) > 1: #TODO: There might more than one minor for this blktap?
++                raise xs_errors.XenError("TapdiskAlreadyRunning", "There is multiple minor for this tapdisk process")
++            minor = l[0]["minor"]
++            try:
++                TapCtl.cancel_commit(pid, minor)
++            except TapCtl.CommandFailure as e:
++                util.SMlog("Cancel command failed on tapdisk instance {}. Raising...".format(pid))
++                raise
++
++    @override
++    def coalesce(self, path: str) -> int:
+             allocated_blocks = self.getAllocatedSize(path)
+             # -d on commit make it not empty the original image since we don't intend to keep it
+             cmd = [QEMU_IMG, "commit", "-f", QCOW2_TYPE, path, "-d"]
+@@ -822,3 +840,7 @@ class QCowUtil(CowUtil):
+     @override
+     def setKey(self, path: str, key_hash: str) -> None:
+         pass
++
++    @override
++    def isCoalesceableOnRemote(self) -> bool:
++        return True
+\ No newline at end of file
+diff --git a/drivers/util.py b/drivers/util.py
+index 9d776318..335b9663 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -2146,7 +2146,7 @@ def make_profile(name, function):
+         SMlog('* End profiling of {} ({}) *'.format(name, filename))
+ 
+ 
+-def strtobool(str):
++def strtobool(str: str) -> bool:
+     # Note: `distutils` package is deprecated and slated for removal in Python 3.12.
+     # There is not alternative for strtobool.
+     # See: https://peps.python.org/pep-0632/#migration-advice
+diff --git a/drivers/vhdutil.py b/drivers/vhdutil.py
+index f0bfe22a..2e8917f5 100755
+--- a/drivers/vhdutil.py
++++ b/drivers/vhdutil.py
+@@ -442,6 +442,18 @@ class VhdUtil(CowUtil):
+         """
+         self._ioretry([VHD_UTIL, "key", "-s", "-n", path, "-H", key_hash])
+ 
++    @override
++    def isCoalesceableOnRemote(self) -> bool:
++        return False
++
++    @override
++    def coalesceOnline(self, path: str) -> int:
++        raise NotImplementedError("Online coalesce not implemented for vhdutil")
++
++    @override
++    def cancelCoalesceOnline(self, path: str) -> None:
++        raise NotImplementedError("Online coalesce not implemented for vhdutil")
++
+     @staticmethod
+     def _convertAllocatedSizeToBytes(size: int):
+         # Assume we have standard 2MB allocation blocks

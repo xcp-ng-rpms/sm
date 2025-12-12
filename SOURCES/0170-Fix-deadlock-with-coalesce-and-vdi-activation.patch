@@ -1,0 +1,40 @@
+From b276692986591d2609587100e44f125c6c71bfea Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 19 Aug 2025 16:38:29 +0200
+Subject: [PATCH] Fix deadlock with coalesce and vdi activation
+
+If the VDI is being coalesced, the VDI activation would want to
+interrupt it.
+But the LVMSR coalesce needs the lvchange-p lock of the SR.
+Moved the check for chain coalesce before taking the lock.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/blktap2.py | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index ee4c3dc5..76de7791 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -1772,6 +1772,8 @@ class VDI(object):
+ 
+             vdi_type = self.target.get_vdi_type()
+ 
++            if not self._check_journal_coalesce_chain(sr_uuid, vdi_uuid):
++                return False
+ 
+             # Take lvchange-p Lock before running
+             # tap-ctl open
+@@ -1784,11 +1786,6 @@ class VDI(object):
+                 lock = Lock("lvchange-p", NS_PREFIX_LVM + sr_uuid)
+                 lock.acquire()
+ 
+-            if not self._check_journal_coalesce_chain(sr_uuid, vdi_uuid):
+-                return False
+-            # we could return false from here if we need to retry after relink
+-            # #TODO: handling error here
+-
+             # When we attach a static VDI for HA, we cannot communicate with
+             # xapi, because has not started yet. These VDIs are raw.
+             if VdiType.isCowImage(vdi_type):

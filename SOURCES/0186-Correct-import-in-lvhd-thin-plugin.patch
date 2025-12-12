@@ -1,0 +1,23 @@
+From 800c84940f3f4766e541eeb7bd90d276b307bbc4 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 28 Nov 2025 14:12:14 +0100
+Subject: [PATCH] Correct import in lvhd-thin plugin
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/lvhd-thin | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/lvhd-thin b/drivers/lvhd-thin
+index 2d66a2ba..3c810a70 100755
+--- a/drivers/lvhd-thin
++++ b/drivers/lvhd-thin
+@@ -21,7 +21,7 @@
+ import sys
+ import XenAPIPlugin
+ sys.path.append("/opt/xensource/sm/")
+-import lvmcowutil
++from lvmcowutil import LvmCowUtil, getCowUtil
+ import util
+ from lvmcache import LVMCache
+ from journaler import Journaler

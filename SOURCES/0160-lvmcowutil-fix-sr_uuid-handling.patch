@@ -1,0 +1,30 @@
+From fa25cad5adf1be404e3c8f2fd26b0146efefd5e4 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 17 Jul 2025 11:44:11 +0200
+Subject: [PATCH] lvmcowutil: fix sr_uuid handling
+
+The `uuid.replace(VG_PREFIX, "")` does nothing.
+This codepath is only used if we give path = "VG_XenStorage-<SR UUID>",
+the goal maybe being to get the SR UUID from VG Name, in this case we
+return the UUID.
+Otherwise, the function will only return an empty string.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/lvmcowutil.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/lvmcowutil.py b/drivers/lvmcowutil.py
+index d38c719f..10d1607f 100755
+--- a/drivers/lvmcowutil.py
++++ b/drivers/lvmcowutil.py
+@@ -229,7 +229,8 @@ class LvmCowUtil(object):
+         if uuid.startswith(VG_PREFIX):
+             # we are dealing with realpath
+             uuid = uuid.replace("--", "-")
+-            uuid.replace(VG_PREFIX, "")
++            uuid = uuid.replace(VG_PREFIX, "")
++            return uuid
+         for prefix in LV_PREFIX.values():
+             if uuid.find(prefix) != -1:
+                 uuid = uuid.split(prefix)[-1]

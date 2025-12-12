@@ -1,0 +1,23 @@
+From 5c696d387a1cbd7eec3d3504f3b93dd4d8b48449 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 27 Mar 2025 10:09:47 +0100
+Subject: [PATCH] fix(qcow2util): explicitely cast in str for mypy
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index fc6bb46f..dfbd2bbb 100644
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -707,7 +707,7 @@ class QCowUtil(CowUtil):
+     @override
+     def getDepth(self, path: str) -> int:
+         cmd = [QEMU_IMG, "info", "--backing-chain", "--output=json", path]
+-        ret = self._ioretry(cmd)
++        ret = str(self._ioretry(cmd))
+         depth = len(re.findall("\"backing-filename\"", ret))+1
+         #chain depth is beginning at one for VHD, meaning a VHD without parent has depth = 1
+         return depth

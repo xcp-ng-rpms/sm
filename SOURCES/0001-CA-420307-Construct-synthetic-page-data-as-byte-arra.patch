@@ -1,0 +1,83 @@
+From 5709665d6107abce4547f70132fc8b4b7d373ed6 Mon Sep 17 00:00:00 2001
+From: Owen Smith <owen.smith@citrix.com>
+Date: Thu, 6 Nov 2025 09:44:27 +0000
+Subject: [PATCH] CA-420307: Construct synthetic page data as byte arrays
+
+Build the synthetic page data as byte arrays, rather than as strings.
+Convert the string portions in the synthetic page data as needed.
+
+str.encode() does not deal with embedded bytes in strings, as when converting
+using UTF-8 (the default), this will convert '\x80' into '\xC2\x80', which
+leads to incorrect data getting reported.
+
+Signed-off-by: Owen Smith <owen.smith@citrix.com>
+Co-authored-by: Mark Syms <mark.syms@citrix.com>
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+diff --git a/drivers/scsiutil.py b/drivers/scsiutil.py
+index abced6f..a2c07bb 100755
+--- a/drivers/scsiutil.py
++++ b/drivers/scsiutil.py
+@@ -294,21 +294,21 @@ def gen_synthetic_page_data(uuid):
+     # we set the vendor ID to XENSRC
+     # Note that the Page 80 serial number must be limited
+     # to 16 characters
+-    page80 = ""
+-    page80 += "\x00\x80"
+-    page80 += "\x00\x12"
+-    page80 += uuid[0:16]
+-    page80 += "  "
+-
+-    page83 = ""
+-    page83 += "\x00\x83"
+-    page83 += "\x00\x31"
+-    page83 += "\x02\x01\x00\x2d"
+-    page83 += "XENSRC  "
+-    page83 += uuid
+-    page83 += " "
+-    return ["", base64.b64encode(str.encode(page80)).decode(),
+-            base64.b64encode(str.encode(page83)).decode()]
++    page80 = b''
++    page80 += b'\x00\x80'
++    page80 += b'\x00\x12'
++    page80 += str.encode(uuid[0:16])
++    page80 += str.encode("  ")
++
++    page83 = b''
++    page83 += b'\x00\x83'
++    page83 += b'\x00\x31'
++    page83 += b'\x02\x01\x00\x2d'
++    page83 += str.encode("XENSRC  ")
++    page83 += str.encode(uuid)
++    page83 += str.encode(" ")
++    return ["", base64.b64encode(page80).decode(),
++            base64.b64encode(page83).decode()]
+ 
+ 
+ def gen_raw_page_data(path):
+diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
+index bd47892..b5d5257 100644
+--- a/tests/test_blktap2.py
++++ b/tests/test_blktap2.py
+@@ -1,3 +1,4 @@
++import base64
+ import errno
+ import json
+ from io import StringIO
+@@ -611,6 +612,17 @@ class TestVDI(unittest.TestCase):
+         # Assert
+         mock_shutdown.assert_called_once()
+ 
++    def test_scsi_page_data(self):
++        """
++        Check that the scsi page data is correctly encoded
++        """
++        page_80 = base64.b64decode(self.vdi.xenstore_data["scsi/0x12/0x80"])
++        page_83 = base64.b64decode(self.vdi.xenstore_data["scsi/0x12/0x83"])
++
++        self.assertEqual(b'\x00\x80\x00\x12', page_80[:4])
++        self.assertEqual(b'\x00\x83\x00\x31\x02\x01\x00\x2d', page_83[:8])
++        self.assertEqual('XENSRC  ', page_83[8:16].decode())
++
+ 
+ class TestTapCtl(unittest.TestCase):
+ 

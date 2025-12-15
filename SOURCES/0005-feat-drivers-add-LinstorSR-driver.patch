@@ -1,4 +1,4 @@
-From 615a18a87a9797f2989a4f03f4bbbd4adbd94be3 Mon Sep 17 00:00:00 2001
+From 45637767724dd9065434e8d670a90f6bf9d3133c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH] feat(drivers): add LinstorSR driver
@@ -2291,7 +2291,7 @@ index c7de5c0d..a2dea049 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 67b1015f..341faa73 100755
+index 912c9401..c6a6110a 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -2468,7 +2468,7 @@ index 67b1015f..341faa73 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2955,6 +3085,232 @@ class LVHDSR(SR):
+@@ -2974,6 +3104,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2701,7 +2701,7 @@ index 67b1015f..341faa73 100755
  ################################################################################
  #
  #  Helpers
-@@ -2996,7 +3352,9 @@ def normalizeType(type):
+@@ -3015,7 +3371,9 @@ def normalizeType(type):
          "xfs", "zfs"
      ]:
          type = SR.TYPE_FILE
@@ -5133,10 +5133,10 @@ index 6b7fc09f..932fc3ca 100755
      def Pause(self):
          util.SMlog("Pause for %s" % self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 00d45cc8..2e42c6ac 100755
+index 15d13e30..a9cf18e8 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -700,10 +700,35 @@ def get_this_host():
+@@ -701,10 +701,35 @@ def get_this_host():
      return uuid
  
  
@@ -5175,7 +5175,7 @@ index 00d45cc8..2e42c6ac 100755
  
  
  def get_localhost_ref(session):
-@@ -1559,13 +1584,21 @@ def get_connected_sockets(pid):
+@@ -1560,13 +1585,21 @@ def get_connected_sockets(pid):
      return sockets
  
  

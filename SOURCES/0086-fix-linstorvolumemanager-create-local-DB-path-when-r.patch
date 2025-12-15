@@ -1,0 +1,28 @@
+From f020131a7271341ab9ffc2ea77e68dfab2fb41fb Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Thu, 9 Oct 2025 18:36:58 +0200
+Subject: [PATCH] fix(linstorvolumemanager): create local DB path when required
+ (#102)
+
+When the pool master is changed and if it doesn't have a local DB path
+then `get_database_path` fails during SR.scan call.
+This patch allows creating a diskless path if necessary.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index daa84553..eea5c367 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1747,7 +1747,7 @@ class LinstorVolumeManager(object):
+         :return: The current database path.
+         :rtype: str
+         """
+-        return self._request_database_path(self._linstor)
++        return self._request_database_path(self._linstor, activate=True)
+ 
+     @classmethod
+     def get_all_group_names(cls, base_name):

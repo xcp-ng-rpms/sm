@@ -1,4 +1,4 @@
-From 68a4cf8466c233b9c2611cf40f6cbceaa254cddd Mon Sep 17 00:00:00 2001
+From 52f2e6b9188b00d5fbe1e8ecbae0628d14189625 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 14:52:40 +0200
 Subject: [PATCH] Fix override of `VDI._do_snapshot`

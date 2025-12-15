@@ -1,4 +1,4 @@
-From da7074a6aa6e373a721d6de6a68b8c30259e6d3e Mon Sep 17 00:00:00 2001
+From c318dda196afc5cc24da2fdcefcb561266ba6ffd Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Mon, 18 Aug 2025 14:30:18 +0200
 Subject: [PATCH] fix(linstorvolumemanager): robustify "usable size" getters

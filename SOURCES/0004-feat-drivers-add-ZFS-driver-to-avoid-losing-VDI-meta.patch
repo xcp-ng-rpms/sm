@@ -1,4 +1,4 @@
-From 293a234598560a4884e52289a9d8db51606324dd Mon Sep 17 00:00:00 2001
+From d263baf0c180ccc6c006d3acd068ee43a24cd68f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
 Subject: [PATCH] feat(drivers): add ZFS driver to avoid losing VDI metadata
@@ -188,10 +188,10 @@ index 00000000..1b2f398f
 +else:
 +    SR.registerSR(ZFSSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 6b644b8c..67b1015f 100755
+index d4d92e06..912c9401 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2993,7 +2993,7 @@ def normalizeType(type):
+@@ -3012,7 +3012,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

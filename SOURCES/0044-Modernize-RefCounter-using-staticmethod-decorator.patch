@@ -1,4 +1,4 @@
-From 47e0a27ed50d665b65c48f3453c28ae35d2c011e Mon Sep 17 00:00:00 2001
+From f87b0c1f8c308e123705f813f5a37e4d7f3a7dd6 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 15:38:33 +0200
 Subject: [PATCH] Modernize RefCounter using `staticmethod` decorator

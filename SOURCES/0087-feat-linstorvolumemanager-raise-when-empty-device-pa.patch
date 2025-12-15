@@ -1,0 +1,37 @@
+From 56303943972bd0d8eff3ab31642c08af123f55ca Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Fri, 24 Oct 2025 10:44:12 +0200
+Subject: [PATCH] feat(linstorvolumemanager): raise when empty device path is
+ detected (#104)
+
+In `_request_device_path`:
+Before this change, an exception was thrown when a resource was missing,
+but not when the returned path was empty. Now it's raised in both cases.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index eea5c367..c969d0b4 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -2391,11 +2391,15 @@ class LinstorVolumeManager(object):
+                 )
+                 return self._request_device_path(volume_uuid, volume_name)
+             raise LinstorVolumeManagerError(
+-                'Empty dev path for `{}`, but definition "seems" to exist'
++                'Unable to get dev path for `{}`, no resource found but definition "seems" to exist'
+                 .format(volume_uuid)
+             )
++
+         # Contains a path of the /dev/drbd<id> form.
+-        return resource.volumes[0].device_path
++        device_path = resource.volumes[0].device_path
++        if not device_path:
++            raise LinstorVolumeManagerError('Empty dev path for `{}`!'.format(volume_uuid))
++        return device_path
+ 
+     def _destroy_resource(self, resource_name, force=False):
+         result = self._linstor.resource_dfn_delete(resource_name)

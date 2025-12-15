@@ -1,4 +1,4 @@
-From d2337fe03d53782bdab74b25a549014a86df7a55 Mon Sep 17 00:00:00 2001
+From e2a741e0b17ee1b5e66baaed7278c4cf66c198d1 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:02:30 +0200
 Subject: [PATCH] Prevent wrong mypy error regarding `_linstor` member not set

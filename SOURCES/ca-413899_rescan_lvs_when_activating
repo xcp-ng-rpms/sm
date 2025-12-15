@@ -1,0 +1,33 @@
+From f49a35032211d7b0008bf54dca1a258b5ab8a15f Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Wed, 3 Sep 2025 15:04:27 +0100
+Subject: [PATCH] CA-413899: Rescan LVs whilst activating
+
+There is a small window where, if a VM is leaf coalesced whilst it is
+shutdown, that a subsequent atempt to activate the VDI will fail with
+`SR_BACKEND_FAILURE_46 (The VDI is not available)`. This appears to be
+due to the GC process not issuing a `_updateSlavesOnRename` request
+because the VDI is not active. To avoid this ensure that the
+`--refresh` is performed when attempting to attach/activate.
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+---
+ drivers/lvmcache.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/lvmcache.py b/drivers/lvmcache.py
+index 8c63d45..bf56819 100644
+--- a/drivers/lvmcache.py
++++ b/drivers/lvmcache.py
+@@ -144,7 +144,7 @@ class LVMCache:
+             count = RefCounter.get(ref, binary, ns)
+             if count == 1:
+                 try:
+-                    self.activateNoRefcount(lvName)
++                    self.activateNoRefcount(lvName, True)
+                 except util.CommandException:
+                     RefCounter.put(ref, binary, ns)
+                     raise
+-- 
+2.51.0
+

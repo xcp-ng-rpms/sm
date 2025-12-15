@@ -1,0 +1,47 @@
+diff --git a/drivers/lvutil.py b/drivers/lvutil.py
+index ad844aa..3e7d716 100755
+--- a/drivers/lvutil.py
++++ b/drivers/lvutil.py
+@@ -656,6 +656,12 @@ def exists(path):
+     (rc, stdout, stderr) = cmd_lvm([CMD_LVS, "--noheadings", path], pread_func=util.doexec)
+     return rc == 0
+ 
++def listLv(path=None):
++    rc, stdout, stderr = cmd_lvm([CMD_LVS, "--noheadings", path or ""], pread_func=util.doexec)
++    if rc == 0:
++        return stdout
++
++    raise xs_errors.XenError('VolNotFound')
+ 
+ @lvmretry
+ def setSize(path, size, confirm):
+@@ -729,6 +735,8 @@ def _checkActive(path):
+     symlinkExists = os.path.lexists(path)
+     util.SMlog("_checkActive: symlink exists: %s" % symlinkExists)
+ 
++    util.SMlog(f"LVM says {listLv(path=path)}")
++
+     mapperDeviceExists = False
+     mapperDevice = path[5:].replace("-", "--").replace("/", "-")
+     cmd = [CMD_DMSETUP, "status", mapperDevice]
+diff --git a/tests/lvmlib.py b/tests/lvmlib.py
+index c57b32e..849bd05 100644
+--- a/tests/lvmlib.py
++++ b/tests/lvmlib.py
+@@ -50,6 +50,7 @@ class LVSubsystem(object):
+         executable_injector('/sbin/dmsetup', self.fake_dmsetup)
+         executable_injector('/usr/sbin/lvchange', self.fake_lvchange)
+         executable_injector('/sbin/lvchange', self.fake_lvchange)
++        executable_injector('/usr/sbin/lvs', self.fake_lvs)
+ 
+     def add_volume_group(self, name):
+         self._volume_groups.append(VolumeGroup(name))
+@@ -129,3 +130,7 @@ class LVSubsystem(object):
+ 
+     def fake_dmsetup(self, args, stdin):
+         return 0, b'', b''
++
++    def fake_lvs(self, args, stdin):
++        # TODO: return real data if needed
++        return 0, b'', b''
+\ No newline at end of file

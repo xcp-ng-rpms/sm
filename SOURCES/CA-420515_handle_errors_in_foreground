@@ -1,0 +1,165 @@
+From 5d1aba56cf688e40e916b2a2a9f9afe4117ee5eb Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@citrix.com>
+Date: Mon, 10 Nov 2025 16:48:03 +0000
+Subject: [PATCH] CA-420515: log errors when in foreground
+
+With the introduction of the systemd templated service for the garbage
+collection process the previous handler for unhandled errors was no
+longer in the execution path. Update to ensure that both foreground
+and background GC processes go through the same error log process.
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 469b20e..4db3f3f 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3256,6 +3256,19 @@ def abort(srUuid, soft=False):
+         return False
+ 
+ 
++def run_gc(session, srUuid, dryRun, immediate=False):
++    try:
++        _gc(session, srUuid, dryRun, immediate=immediate)
++        return 0
++    except AbortException:
++        Util.log("Aborted")
++        return 2
++    except Exception:
++        Util.logException("gc")
++        Util.log("* * * * * SR %s: ERROR\n" % srUuid)
++        return 1
++
++
+ def gc(session, srUuid, inBackground, dryRun=False):
+     """Garbage collect all deleted VDIs in SR "srUuid". Fork & return 
+     immediately if inBackground=True. 
+@@ -3281,16 +3294,10 @@ def gc(session, srUuid, inBackground, dryRun=False):
+             # because there is no other way to propagate them back at this
+             # point
+ 
+-            try:
+-                _gc(None, srUuid, dryRun)
+-            except AbortException:
+-                Util.log("Aborted")
+-            except Exception:
+-                Util.logException("gc")
+-                Util.log("* * * * * SR %s: ERROR\n" % srUuid)
++            run_gc(None, srUuid, dryRun)
+             os._exit(0)
+     else:
+-        _gc(session, srUuid, dryRun, immediate=True)
++        os._exit(run_gc(session, srUuid, dryRun, immediate=True))
+ 
+ 
+ def start_gc(session, sr_uuid):
+diff --git a/drivers/coalesce-leaf b/drivers/coalesce-leaf
+index f45e248..96d17ba 100755
+--- a/drivers/coalesce-leaf
++++ b/drivers/coalesce-leaf
+@@ -113,7 +113,7 @@ def leaf_coalesce(session, coalesceable_vdis):
+                 cleanup.Util.logException("leaf_coalesce")
+                 return RET_ERROR_XAPI
+         log_msg("Coalescing all in SR %s..." % sr_uuid)
+-        cleanup.gc(session, sr_uuid, False)
++        cleanup.run_gc(session, sr_uuid, False, immediate=True)
+     return RET_SUCCESS
+ 
+ 
+@@ -183,7 +183,7 @@ def vm_leaf_coalesce(session, vm_uuid):
+ 
+     for sr_uuid in coalesceable_vdis:
+         # do regular GC now to minimize downtime
+-        cleanup.gc(session, sr_uuid, False)
++        cleanup.run_gc(session, sr_uuid, False, immediate=True)
+ 
+     suspended = False
+     if vm_rec["power_state"] == "Running":
+@@ -202,7 +202,7 @@ def vm_leaf_coalesce(session, vm_uuid):
+             session.xenapi.VM.resume(vm_ref, False, False)
+         for sr_uuid in list(coalesceable_vdis.keys()):
+             # cleans up any potential failures
+-            cleanup.gc(session, sr_uuid, True)
++            cleanup.run_gc(session, sr_uuid, True, immediate=True)
+     return ret, messages
+ 
+ 
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index dfe9c9d..463319a 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -187,9 +187,10 @@ class TestSR(unittest.TestCase):
+ 
+         self.assertTrue(cleanup.SIGTERM)
+ 
++    @mock.patch('cleanup.os._exit', autospec=True)
+     @mock.patch('cleanup._create_init_file', autospec=True)
+     @mock.patch('cleanup.SR', autospec=True)
+-    def test_loop_exits_on_term(self, mock_init, mock_sr):
++    def test_loop_exits_on_term(self, mock_init, mock_sr, mock_exit):
+         # Set the term signel
+         cleanup.receiveSignal(signal.SIGTERM, None)
+         mock_session = mock.MagicMock(name='MockSession')
+@@ -1757,9 +1758,10 @@ class TestSR(unittest.TestCase):
+         mock_sr.coalesce.assert_called_with(vdis['vdi'], False)
+         mock_sr.coalesceLeaf.assert_called_with(vdis['vdi'], False)
+ 
++    @mock.patch('cleanup.os._exit', autospec=True)
+     @mock.patch('cleanup.Util')
+     @mock.patch('cleanup._gc', autospec=True)
+-    def test_gc_foreground_is_immediate(self, mock_gc, mock_util):
++    def test_gc_foreground_is_immediate(self, mock_gc, mock_util, mock_exit):
+         """
+         GC called in foreground will run immediate
+         """
+@@ -1774,6 +1776,42 @@ class TestSR(unittest.TestCase):
+         mock_gc.assert_called_with(mock_session, sr_uuid,
+                                    False, immediate=True)
+ 
++    @mock.patch('cleanup.os._exit', autospec=True)
++    @mock.patch('cleanup.Util')
++    @mock.patch('cleanup._gc', autospec=True)
++    def test_gc_foreground_abort_exit_code(self, mock_gc, mock_util, mock_exit):
++        """
++        GC called in foreground will run immediate
++        """
++        ## Arrange
++        mock_session = mock.MagicMock(name='MockSession')
++        sr_uuid = str(uuid4())
++        mock_gc.side_effect = cleanup.AbortException
++
++        ## Act
++        cleanup.gc(mock_session, sr_uuid, inBackground=False)
++
++        ## Assert
++        mock_exit.assert_called_once_with(2)
++
++    @mock.patch('cleanup.os._exit', autospec=True)
++    @mock.patch('cleanup.Util')
++    @mock.patch('cleanup._gc', autospec=True)
++    def test_gc_foreground_exception_exit_code(self, mock_gc, mock_util, mock_exit):
++        """
++        GC called in foreground will run immediate
++        """
++        ## Arrange
++        mock_session = mock.MagicMock(name='MockSession')
++        sr_uuid = str(uuid4())
++        mock_gc.side_effect = Exception
++
++        ## Act
++        cleanup.gc(mock_session, sr_uuid, inBackground=False)
++
++        ## Assert
++        mock_exit.assert_called_once_with(1)
++
+     @mock.patch('cleanup.os._exit', autospec=True)
+     @mock.patch('cleanup.daemonize', autospec=True)
+     @mock.patch('cleanup.Util')
+@@ -1792,7 +1830,7 @@ class TestSR(unittest.TestCase):
+         cleanup.gc(mock_session, sr_uuid, inBackground=True)
+ 
+         ## Assert
+-        mock_gc.assert_called_with(None, sr_uuid, False)
++        mock_gc.assert_called_with(None, sr_uuid, False, immediate=False)
+         mock_daemonize.assert_called_with()
+ 
+     def test_not_plugged(self):

@@ -1,4 +1,4 @@
-From ae3a4c1d2e79e16b61ec619e583b4932eb5ee0d0 Mon Sep 17 00:00:00 2001
+From bfb65407ee8430f0fcb1a92f046b884f81d2510e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 22 Apr 2025 11:27:12 +0200
 Subject: [PATCH] Fix warns reported by new github workflow
@@ -27,7 +27,7 @@ index e3583a59..070c6711 100755
              if not vdi['managed'] \
                     and int(vdi['virtual_size']) >= int(size) \
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index e966920a..dfa60fba 100755
+index 77f56d81..1ea6eed4 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -222,6 +222,7 @@ class LVHDSR(SR.SR):
@@ -64,7 +64,7 @@ index c2579a53..2ecb0e38 100755
              # 4.c. Update CBT status of disks either just added
              # or already in XAPI.
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e222c5c2..528fcf9a 100755
+index 7132afe8..f2105b6c 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -1151,6 +1151,7 @@ class VDI(object):
@@ -83,7 +83,7 @@ index e222c5c2..528fcf9a 100755
      @staticmethod
      def extractUuid(path):
          return lvhdutil.extractUuid(path)
-@@ -4154,6 +4156,7 @@ def abort_optional_reenable(uuid):
+@@ -4185,6 +4187,7 @@ def abort_optional_reenable(uuid):
  #
  def main():
      action = ""

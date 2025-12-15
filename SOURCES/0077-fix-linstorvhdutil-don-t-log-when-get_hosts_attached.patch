@@ -1,4 +1,4 @@
-From ce49cdee46434898e890c10de2975d30b64f35be Mon Sep 17 00:00:00 2001
+From d9c0eed6015b12f2fa68460d45cb7ad3fa042a62 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Mon, 15 Sep 2025 11:01:21 +0200
 Subject: [PATCH] fix(linstorvhdutil): don't log when get_hosts_attached_on()

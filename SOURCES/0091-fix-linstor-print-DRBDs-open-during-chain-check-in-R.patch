@@ -1,0 +1,32 @@
+From 8fb7ee84791b1b44fca0d39e4f9c782f992b5129 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Mon, 8 Dec 2025 14:00:40 +0100
+Subject: [PATCH] fix(linstor): print DRBDs open during chain check in RO mode
+ (#116)
+
+Before this change `EMEDIUMTYPE` was not tested, so we only checked
+the DRBD openers if we attempted a local opening in write mode.
+
+As a reminder, `EMEDIUMTYPE` is returned if a local read-only opening
+is attempted and the volume is open for writing on another machine.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvhdutil.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/linstorvhdutil.py b/drivers/linstorvhdutil.py
+index b44c7176..51b52564 100644
+--- a/drivers/linstorvhdutil.py
++++ b/drivers/linstorvhdutil.py
+@@ -191,8 +191,8 @@ class LinstorVhdUtil:
+                         if e.errno == errno.ENODATA:
+                             time.sleep(2)
+                             continue
+-                        if e.errno == errno.EROFS:
+-                            util.SMlog('Volume not attachable because RO. Openers: {}'.format(
++                        if e.errno == errno.EROFS or e.errno == errno.EMEDIUMTYPE:
++                            util.SMlog('Volume not attachable because used. Openers: {}'.format(
+                                 self._linstor.get_volume_openers(vdi_uuid)
+                             ))
+                         raise

@@ -1,4 +1,4 @@
-From c41e0210cf229bb1c18116c0d26afcf3734132e3 Mon Sep 17 00:00:00 2001
+From 1fde83ae9470ed4ec94e426a67762eb8ce547391 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 30 Jul 2024 15:31:23 +0200
 Subject: [PATCH] feat(LVHDSR): add a way to modify config of LVMs (#60)
@@ -22,7 +22,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 21 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 7b745af1..b444acc2 100755
+index fe9544af..2379f971 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -161,14 +161,24 @@ class LVHDSR(SR.SR):
@@ -61,10 +61,10 @@ index 7b745af1..b444acc2 100755
              self.testMode = self.other_conf[self.TEST_MODE_KEY]
              self._prepareTestMode()
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 8520699d..0318e742 100755
+index 04066259..dfcba47b 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2938,7 +2938,12 @@ class LVHDSR(SR):
+@@ -2957,7 +2957,12 @@ class LVHDSR(SR):
          SR.__init__(self, uuid, xapi, createLock, force)
          self.vgName = "%s%s" % (lvhdutil.VG_PREFIX, self.uuid)
          self.path = os.path.join(lvhdutil.VG_LOCATION, self.vgName)
@@ -79,7 +79,7 @@ index 8520699d..0318e742 100755
          self.journaler = journaler.Journaler(self.lvmCache)
  
 diff --git a/drivers/lvmcache.py b/drivers/lvmcache.py
-index 8c63d45a..6e21568e 100644
+index bf568193..02264669 100644
 --- a/drivers/lvmcache.py
 +++ b/drivers/lvmcache.py
 @@ -59,10 +59,11 @@ class LVMCache:

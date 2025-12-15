@@ -1,4 +1,4 @@
-From 1309f7c3975479529ab32cda1264d65f33c28106 Mon Sep 17 00:00:00 2001
+From 684b49133bcb33ff9f8f45953fd1f6eea063fbe2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 26 Sep 2024 18:53:04 +0200
 Subject: [PATCH] Synchronization with 8.2 LINSTOR before a stable release

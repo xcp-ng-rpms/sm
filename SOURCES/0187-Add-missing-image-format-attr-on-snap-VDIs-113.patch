@@ -1,0 +1,55 @@
+From 276e1e4f5df1036454f3c657906cdf35b706b200 Mon Sep 17 00:00:00 2001
+From: Goulven Riou <94641077+Lankou66@users.noreply.github.com>
+Date: Tue, 16 Dec 2025 15:05:24 +0100
+Subject: [PATCH] Add missing image-format attr on snap VDIs (#113)
+
+Signed-off-by: Goulven Riou <goulven.riou@vates.tech>
+---
+ drivers/FileSR.py | 6 ++++++
+ drivers/LVMSR.py  | 2 ++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index f54c7d1a..60e0f09c 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -905,6 +905,8 @@ class FileVDI(VDI.VDI):
+                 leaf_vdi.utilisation = self.utilisation
+                 leaf_vdi.sm_config = {}
+                 leaf_vdi.sm_config['vhd-parent'] = dstparent
++                # TODO: fix the raw snapshot case  
++                leaf_vdi.sm_config["image-format"] = getImageStringFromVdiType(self.vdi_type)
+                 # If the parent is encrypted set the key_hash
+                 # for the new snapshot disk
+                 vdi_ref = self.sr.srcmd.params['vdi_ref']
+@@ -925,6 +927,8 @@ class FileVDI(VDI.VDI):
+                 base_vdi.size = self.size
+                 base_vdi.utilisation = self.utilisation
+                 base_vdi.sm_config = {}
++                # TODO: fix the raw snapshot case 
++                base_vdi.sm_config["image-format"] = getImageStringFromVdiType(self.vdi_type)
+                 grandparent = self.cowutil.getParent(newsrc, FileVDI.extractUuid)
+                 if grandparent:
+                     base_vdi.sm_config['vhd-parent'] = grandparent
+@@ -942,6 +946,8 @@ class FileVDI(VDI.VDI):
+                 vdi_ref = self.sr.srcmd.params['vdi_ref']
+                 sm_config = self.session.xenapi.VDI.get_sm_config(vdi_ref)
+                 sm_config['vhd-parent'] = srcparent
++                # TODO: fix the raw snapshot case 
++                sm_config["image-format"] = getImageStringFromVdiType(self.vdi_type)
+                 self.session.xenapi.VDI.set_sm_config(vdi_ref, sm_config)
+             except Exception as e:
+                 util.SMlog("vdi_clone: caught error during VDI.db_introduce: %s" % (str(e)))
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 9d65080e..5e60f53e 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -1894,6 +1894,8 @@ class LVMVDI(VDI.VDI):
+                 snapVDI.sm_config[key] = val
+         snapVDI.sm_config["vdi_type"] = snapVdiType
+         snapVDI.sm_config["vhd-parent"] = snapParent
++        # TODO: fix the raw snapshot case  
++        snapVDI.sm_config["image-format"] = getImageStringFromVdiType(self.vdi_type)
+         snapVDI.lvname = snapLV
+         return snapVDI
+ 

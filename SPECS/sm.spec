@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1.0.qcow2.1%{?dist}
+Release: %{?xsrel}.1.0.qcow2.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -269,6 +269,7 @@ Patch1183: 0183-qcow2util-fix-name-in-getLVInfoFromVG.patch
 Patch1184: 0184-cleanup.py-rework-cancel-online-coalesce.patch
 Patch1185: 0185-Fix-relinking-for-online-coalesce.patch
 Patch1186: 0186-Correct-import-in-lvhd-thin-plugin.patch
+Patch1187: 0187-Add-missing-image-format-attr-on-snap-VDIs-113.patch
 
 %description
 This package contains storage backends used in XCP
@@ -589,6 +590,9 @@ then
 fi
 
 %changelog
+* Fri Dec 16 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.2
+- Add 0187-Add-missing-image-format-attr-on-snap-VDIs-113.patch
+
 * Fri Dec 16 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.1
 - Rebase QCOW2 support on release 3.2.12-16.1
 

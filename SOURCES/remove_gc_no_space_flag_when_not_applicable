@@ -1,0 +1,28 @@
+From 7e42ec8b9cc54b8c6685474d6164de95441f5ae5 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 27 Aug 2025 13:47:59 +0200
+Subject: [PATCH] fix: remove flag gc_no_space from SR sm-config
+
+The message OpaqueRef in the SR sm-config was not removed, causing to
+try to remove it multiple time and failing.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 9eb8832..09aa8fe 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1625,6 +1625,7 @@ class SR:
+                 candidate.setConfig(VDI.DB_GC_NO_SPACE, msg_id)
+         elif msg_id is not None:
+             # Everything was coalescable, remove the message
++            xapi_session.xenapi.SR.remove_from_sm_config(self.xapi.srRef, VDI.DB_GC_NO_SPACE)
+             xapi_session.xenapi.message.destroy(msg_id)
+ 
+     def clear_no_space_msg(self, vdi):
+-- 
+2.52.0
+

@@ -1,6 +1,6 @@
-%global package_speccommit 8741def89f3c6eefdc97b6e11d03b23f2ecf8b92
+%global package_speccommit 2f759838752640a6974fd7a67f1c40c22d115bca
 %global usver 3.2.12
-%global xsver 16
+%global xsver 17
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -21,31 +21,33 @@ Patch3: CP-53692-SR-attach-calls-mpathcount-async.patch
 Patch4: ca_409231_report_intellicache_stats_with_nbd
 Patch5: CA-395221_use_systemd_target_for_gc_enable
 Patch6: CA-413209_remove_dangling_reference_to_rawhba
-Patch7: cp-51633__tidy_up_intellicache_code.patch
-Patch8: cp-51843__advertise_sr_caching_on_lvhdoiscsi_and_hba.patch
-Patch9: cp-51843__add_unit_tests_for_setup_cache.patch
-Patch10: cp-51843__remove_unused_params.patch
-Patch11: cp-51843__add_unit_tests_for_remove_cache.patch
-Patch12: cp-51843__disable_read-caching_on_block.patch
-Patch13: ca_407343_do_not_remove_vhd_parent_in_leaf_gc
-Patch14: CA-408452_remove_vhd_parent_if_it_does_not_have_one
-Patch15: revert-2979937bbb7
-Patch16: CA-408105_add_logging_to__finishInterruptedCoalesceLeaf
-Patch17: ca_411163_verify_pv_scsi_ids
-Patch18: add_udev_rules_for_purestorage_-_best_practices.patch
-Patch19: update_pure_storage_udev_1.patch
-Patch20: update_pure_storage_udev_2.patch
-Patch21: CA-418775_ensure_size_consistent_for_resize
-Patch22: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
-Patch23: CA-420515_handle_errors_in_foreground
-Patch24: ca-419706_update_print_calls
-Patch25: ca-421013_ensure_cbt_refresh_on_supporter
-Patch26: CP-308587_update_netapp_multipath
-Patch27: CA-413325_log_what_lvs_shows_on_failure
-Patch28: ca-414438_defend_against_unexpected_vdi_name_description_contents.patch
-Patch29: ca-413899_rescan_lvs_when_activating
-Patch30: cp-309718_lc_moving_average
+Patch7: ca-414438_defend_against_unexpected_vdi_name_description_contents.patch
+Patch8: cp-51633__tidy_up_intellicache_code.patch
+Patch9: cp-51843__advertise_sr_caching_on_lvhdoiscsi_and_hba.patch
+Patch10: cp-51843__add_unit_tests_for_setup_cache.patch
+Patch11: cp-51843__remove_unused_params.patch
+Patch12: cp-51843__add_unit_tests_for_remove_cache.patch
+Patch13: cp-51843__disable_read-caching_on_block.patch
+Patch14: ca_407343_do_not_remove_vhd_parent_in_leaf_gc
+Patch15: CA-408452_remove_vhd_parent_if_it_does_not_have_one
+Patch16: revert-2979937bbb7
+Patch17: CA-408105_add_logging_to__finishInterruptedCoalesceLeaf
+Patch18: ca_411163_verify_pv_scsi_ids
+Patch19: ca-413899_rescan_lvs_when_activating
+Patch20: remove_gc_no_space_flag_when_not_applicable
+Patch21: improve_messages_vdi_type_missing
+Patch22: cp-309718_lc_moving_average
+Patch23: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch24: update_pure_storage_udev_1.patch
+Patch25: update_pure_storage_udev_2.patch
+Patch26: CA-418775_ensure_size_consistent_for_resize
+Patch27: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
+Patch28: CA-420515_handle_errors_in_foreground
+Patch29: ca-419706_update_print_calls
+Patch30: ca-421013_ensure_cbt_refresh_on_supporter
 Patch31: CA-416486_leaf_coalesce_wait_for_GC
+Patch32: CP-308587_update_netapp_multipath
+Patch33: CA-413325_log_what_lvs_shows_on_failure
 
 %define __python python3
 
@@ -337,6 +339,11 @@ then
 fi
 
 %changelog
+* Fri Dec 12 2025 Mark Syms <mark.syms@citrix.com> - 3.2.12-17
+- Backport changes from upstream.
+- remove flag gc_no_space from SR sm-config when not applicable
+- improve error messages when vdi_type is missing
+
 * Fri Nov 21 2025 Mark Syms <mark.syms@citrix.com> - 3.2.12-16
 - CA-420515: log errors in GC when running in foreground
 - CA-419706: fix incorrect print syntax

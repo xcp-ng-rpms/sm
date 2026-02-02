@@ -1,4 +1,4 @@
-From 6b7869241b519b3f45e977e709f783baa32d257e Mon Sep 17 00:00:00 2001
+From 9d73ab9f8cf4c145cc4ee27162a9ba4a57c7aa5f Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 12 Apr 2024 15:08:59 +0200
 Subject: [PATCH] feat(LargeBlock): introduce largeblocksr (#51)
@@ -345,10 +345,10 @@ index 25b9e9ca..91407810 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 038d15c6..04066259 100755
+index e7f50a45..49900324 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3553,7 +3553,7 @@ def normalizeType(type):
+@@ -3554,7 +3554,7 @@ def normalizeType(type):
          type = SR.TYPE_LVHD
      if type in [
          "ext", "nfs", "ocfsoiscsi", "ocfsohba", "smb", "cephfs", "glusterfs",

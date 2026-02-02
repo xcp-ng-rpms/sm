@@ -1,0 +1,27 @@
+From 257d9397da967b471a69fa302b27bc1985d50e76 Mon Sep 17 00:00:00 2001
+From: Arnaud Garcia-Fernandez <arnaud.garcia-fernandez@vates.tech>
+Date: Fri, 13 Feb 2026 09:47:37 +0100
+Subject: [PATCH] fix(cleanup): properly handle FileSR exception for slave
+ check (#123)
+
+A plugin is used by the `_checkSlave` helper.
+Therefore, `call_plugin` is executed instead of a command helper, which means that `CommandException` cannot be raised.
+
+Signed-off-by: Arnaud Garcia-Fernandez <arnaud.garcia-fernandez@vates.tech>
+---
+ drivers/cleanup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index e4deb0ad..7c647d7d 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3000,7 +3000,7 @@ class FileSR(SR):
+                 raise AbortException("Aborting due to signal")
+             try:
+                 self._checkSlave(hostRef, vdi)
+-            except util.CommandException:
++            except XenAPI.Failure:
+                 if hostRef in onlineHosts:
+                     raise
+ 

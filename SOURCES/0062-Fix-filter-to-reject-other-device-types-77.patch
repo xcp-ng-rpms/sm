@@ -1,4 +1,4 @@
-From e76a8b0ac578b02ab9193a65080c985ab954823e Mon Sep 17 00:00:00 2001
+From 3a0ed915b3cbd36be9e827d6b81e135c3646dcf0 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 9 Jan 2025 17:41:32 +0100
 Subject: [PATCH] Fix filter to reject other device types (#77)

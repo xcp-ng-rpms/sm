@@ -1,0 +1,60 @@
+From ec47cd03a8647dafec8ec7d92eaf2bf156e8e4f7 Mon Sep 17 00:00:00 2001
+From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+Date: Fri, 14 Nov 2025 14:17:36 +0100
+Subject: [PATCH] fix(linstorvolumemanager): fix typo (#106)
+
+Fix some typo in docstring
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 49d67d70..249ebf58 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1176,7 +1176,7 @@ class LinstorVolumeManager(object):
+         """
+         Check if a volume is currently used.
+         :param str volume_uuid: The volume uuid to check.
+-        :return: A dictionnary that contains states.
++        :return: A dictionary that contains states.
+         :rtype: dict(str, bool or None)
+         """
+ 
+@@ -1194,14 +1194,14 @@ class LinstorVolumeManager(object):
+         """
+         Get openers of a volume.
+         :param str volume_uuid: The volume uuid to monitor.
+-        :return: A dictionnary that contains openers.
++        :return: A dictionary that contains openers.
+         :rtype: dict(str, obj)
+         """
+         return get_all_volume_openers(self.get_volume_name(volume_uuid), '0')
+ 
+     def get_volumes_with_name(self):
+         """
+-        Give a volume dictionnary that contains names actually owned.
++        Give a volume dictionary that contains names actually owned.
+         :return: A volume/name dict.
+         :rtype: dict(str, str)
+         """
+@@ -1209,7 +1209,7 @@ class LinstorVolumeManager(object):
+ 
+     def get_volumes_with_info(self):
+         """
+-        Give a volume dictionnary that contains VolumeInfos.
++        Give a volume dictionary that contains VolumeInfos.
+         :return: A volume/VolumeInfo dict.
+         :rtype: dict(str, VolumeInfo)
+         """
+@@ -1233,7 +1233,7 @@ class LinstorVolumeManager(object):
+ 
+     def get_volumes_with_metadata(self):
+         """
+-        Give a volume dictionnary that contains metadata.
++        Give a volume dictionary that contains metadata.
+         :return: A volume/metadata dict.
+         :rtype: dict(str, dict)
+         """

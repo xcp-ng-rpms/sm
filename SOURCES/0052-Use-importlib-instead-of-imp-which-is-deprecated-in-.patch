@@ -1,4 +1,4 @@
-From feb6433cb911c2ddd0bd2adcc3f5ebcfbc9e1994 Mon Sep 17 00:00:00 2001
+From 7b6bc3100c1b099f851646ce3e12b20ac60e83af Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 10 Oct 2024 14:58:02 +0200
 Subject: [PATCH] Use importlib instead of imp which is deprecated in python

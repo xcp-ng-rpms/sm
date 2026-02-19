@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1.0.qcow2.2%{?dist}
+Release: %{?xsrel}.1.0.qcow2.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -270,6 +270,10 @@ Patch1184: 0184-cleanup.py-rework-cancel-online-coalesce.patch
 Patch1185: 0185-Fix-relinking-for-online-coalesce.patch
 Patch1186: 0186-Correct-import-in-lvhd-thin-plugin.patch
 Patch1187: 0187-Add-missing-image-format-attr-on-snap-VDIs-113.patch
+Patch1188: 0188-Fix-vdi_type-and-image_format-for-udevSR.patch
+Patch1189: 0189-fix-LVMSR-compute-the-size-of-a-cbtlog-for-LV.patch
+Patch1190: 0190-Adapt-verifyVHDsOnSR-for-QCOW2-support.patch
+
 
 %description
 This package contains storage backends used in XCP
@@ -476,7 +480,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/udevSR.py
 /opt/xensource/sm/util.py
 /opt/xensource/sm/cifutils.py
-/opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/verifyVDIsOnSR.py
 /opt/xensource/sm/vditype.py
 /opt/xensource/sm/vhdutil.py
 /opt/xensource/sm/trim_util.py
@@ -590,10 +594,15 @@ then
 fi
 
 %changelog
-* Fri Dec 16 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.2
+* Wed Feb 18 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.3
+- Add 0188-Fix-vdi_type-and-image_format-for-udevSR.patch
+- Add 0189-fix-LVMSR-compute-the-size-of-a-cbtlog-for-LV.patch
+- Add 0190-Adapt-verifyVHDsOnSR-for-QCOW2-support.patch
+
+* Tue Dec 16 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.2
 - Add 0187-Add-missing-image-format-attr-on-snap-VDIs-113.patch
 
-* Fri Dec 16 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.1
+* Tue Dec 16 2025 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.1
 - Rebase QCOW2 support on release 3.2.12-16.1
 
 * Mon Dec 15 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-16.1

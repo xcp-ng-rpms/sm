@@ -1,0 +1,107 @@
+From c7cb714b54c7dcc2362f3d2e83a5d77193e9e632 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 13 Feb 2026 18:27:58 +0100
+Subject: [PATCH] fix(LVMSR): compute the size of a cbtlog for LV
+
+With VHD, the cbtlog LV size was hardcoded to 4MiB.
+With QCOW2, the CBT max size can be bigger than this.
+This commit the minimum size of the LV to 4MiB but compute the possible size from
+the VDI virtual size to ensure we have enough room in case it's bigger.
+The behaviour from before would make the creation of the cbtlog fail for bigger
+VDI.
+Modified test_LVMSR SetUp() to mock `util.roundup` used for CBT size computation.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LVMSR.py    | 15 ++++++++++-----
+ drivers/VDI.py      |  6 ++++--
+ tests/test_LVMSR.py |  1 +
+ 3 files changed, 15 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 5e60f53e..692e2fb5 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -39,7 +39,7 @@ import blktap2
+ from journaler import Journaler
+ from refcounter import RefCounter
+ from ipc import IPCFlag
+-from constants import NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX
++from constants import NS_PREFIX_LVM, VG_LOCATION, VG_PREFIX, CBT_BLOCK_SIZE
+ from cowutil import CowUtil, getCowUtil, getImageStringFromVdiType, getVdiTypeFromImageFormat
+ from lvmcowutil import LV_PREFIX, LvmCowUtil
+ from lvmanager import LVActivator
+@@ -1321,9 +1321,10 @@ class LVMSR(SR.SR):
+         util.SMlog("Kicking GC")
+         cleanup.start_gc_service(self.uuid)
+ 
+-    def ensureCBTSpace(self):
++    def ensureCBTSpace(self, virtual_size=0):
+         # Ensure we have space for at least one LV
+-        self._ensureSpaceAvailable(self.journaler.LV_SIZE)
++        size = max(util.roundup(CBT_BLOCK_SIZE, virtual_size//CBT_BLOCK_SIZE), self.journaler.LV_SIZE)
++        self._ensureSpaceAvailable(size)
+ 
+ 
+ class LVMVDI(VDI.VDI):
+@@ -2250,12 +2251,16 @@ class LVMVDI(VDI.VDI):
+ 
+     @override
+     def _ensure_cbt_space(self) -> None:
+-        self.sr.ensureCBTSpace()
++        # We need virtual_size to compute the size in case of a bigger VDI
++        self.sr.ensureCBTSpace(self.size)
+ 
+     @override
+     def _create_cbt_log(self) -> str:
+         logname = self._get_cbt_logname(self.uuid)
+-        self.sr.lvmCache.create(logname, self.sr.journaler.LV_SIZE, CBTLOG_TAG)
++        logsize = max(util.roundup(CBT_BLOCK_SIZE, self.size//CBT_BLOCK_SIZE), self.sr.journaler.LV_SIZE)
++        # We choose 4MiB as the minimum for the log size to maintain the old behavior and compute the correct amount
++        # if we need a bigger LV for the CBT (can happen with big QCOW2)
++        self.sr.lvmCache.create(logname, logsize, CBTLOG_TAG)
+         logpath = super(LVMVDI, self)._create_cbt_log()
+         self.sr.lvmCache.deactivateNoRefcount(logname)
+         return logpath
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index 060928b1..b2a12d1b 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -30,14 +30,13 @@ from constants import CBTLOG_TAG
+ from bitarray import bitarray
+ from vditype import VdiType
+ import uuid
+-
++from constants import CBT_BLOCK_SIZE
+ 
+ SM_CONFIG_PASS_THROUGH_FIELDS = ["base_mirror", "key_hash"]
+ 
+ SNAPSHOT_SINGLE = 1  # true snapshot: 1 leaf, 1 read-only parent
+ SNAPSHOT_DOUBLE = 2  # regular snapshot/clone that creates 2 leaves
+ SNAPSHOT_INTERNAL = 3  # SNAPSHOT_SINGLE but don't update SR's virtual allocation
+-CBT_BLOCK_SIZE = (64 * 1024)
+ 
+ 
+ class VDI(object):
+@@ -585,6 +584,9 @@ class VDI(object):
+             raise xs_errors.XenError('CBTActivateFailed', opterr=error)
+         logfile = None
+ 
++        self.size = int(self.session.xenapi.VDI.get_virtual_size(vdi_ref))
++        # We need virtual_size to compute the CBT volume size in case of a bigger VDI (e.g. for creating LV) but it's not already available
++
+         try:
+             if enable:
+                 try:
+diff --git a/tests/test_LVMSR.py b/tests/test_LVMSR.py
+index 00e8dcc7..4ca083c4 100644
+--- a/tests/test_LVMSR.py
++++ b/tests/test_LVMSR.py
+@@ -355,6 +355,7 @@ class TestLVMVDI(unittest.TestCase, Stubs):
+         sr_util_patcher = mock.patch('LVMSR.util')
+         self.mock_sr_util = sr_util_patcher.start()
+         self.mock_sr_util.gen_uuid.side_effect = str(uuid.uuid4())
++        self.mock_sr_util.roundup.return_value = 4 * 1024 * 1024
+         xmlrpclib_patcher = mock.patch('VDI.xmlrpc.client', autospec=True)
+         self.mock_xmlrpclib = xmlrpclib_patcher.start()
+         cbtutil_patcher = mock.patch('VDI.cbtutil', autospec=True)

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1.0.qcow2.3%{?dist}
+Release: %{?xsrel}.1.0.qcow2.2.0.dtt.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -594,7 +594,7 @@ then
 fi
 
 %changelog
-* Wed Feb 18 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.3
+* Wed Feb 18 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-16.1.0.qcow2.2.0.dtt.1
 - Add 0188-Fix-vdi_type-and-image_format-for-udevSR.patch
 - Add 0189-fix-LVMSR-compute-the-size-of-a-cbtlog-for-LV.patch
 - Add 0190-Adapt-verifyVHDsOnSR-for-QCOW2-support.patch

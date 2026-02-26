@@ -1,4 +1,4 @@
-From 5c2663f18bf3e5342a937d35f1091dcf7df5ba0b Mon Sep 17 00:00:00 2001
+From 41b9c6ed387198edc5cd2a0dc6325bb2858b53eb Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 9 Jan 2025 17:41:02 +0100
 Subject: [PATCH] fix(cleanup.py): protect LinstorSR init against race
@@ -17,10 +17,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 4619ece9..cf3088ab 100755
+index bdc7b597..11775709 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3339,7 +3339,7 @@ class LinstorSR(SR):
+@@ -3340,7 +3340,7 @@ class LinstorSR(SR):
  
          SR.__init__(self, uuid, xapi, createLock, force)
          self.path = LinstorVolumeManager.DEV_ROOT_PATH
@@ -29,7 +29,7 @@ index 4619ece9..cf3088ab 100755
  
      @override
      def deleteVDI(self, vdi) -> None:
-@@ -3374,7 +3374,7 @@ class LinstorSR(SR):
+@@ -3375,7 +3375,7 @@ class LinstorSR(SR):
          )
          return super(LinstorSR, self).pauseVDIs(vdiList)
  
@@ -38,7 +38,7 @@ index 4619ece9..cf3088ab 100755
          session = self.xapi.session
          host_ref = util.get_this_host_ref(session)
          sr_ref = session.xenapi.SR.get_by_uuid(self.uuid)
-@@ -3391,6 +3391,9 @@ class LinstorSR(SR):
+@@ -3392,6 +3392,9 @@ class LinstorSR(SR):
              controller_uri, group_name, logger=util.SMlog
          )
  

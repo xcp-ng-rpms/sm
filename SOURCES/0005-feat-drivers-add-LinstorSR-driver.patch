@@ -1,4 +1,4 @@
-From 45637767724dd9065434e8d670a90f6bf9d3133c Mon Sep 17 00:00:00 2001
+From e9af43789670861a9c9119a8394ea0233945f039 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH] feat(drivers): add LinstorSR driver
@@ -2291,7 +2291,7 @@ index c7de5c0d..a2dea049 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 912c9401..c6a6110a 100755
+index 0bfcd441..d96ee851 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -2468,7 +2468,7 @@ index 912c9401..c6a6110a 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2974,6 +3104,232 @@ class LVHDSR(SR):
+@@ -2975,6 +3105,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2701,7 +2701,7 @@ index 912c9401..c6a6110a 100755
  ################################################################################
  #
  #  Helpers
-@@ -3015,7 +3371,9 @@ def normalizeType(type):
+@@ -3016,7 +3372,9 @@ def normalizeType(type):
          "xfs", "zfs"
      ]:
          type = SR.TYPE_FILE

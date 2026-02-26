@@ -1,4 +1,4 @@
-From 9e539dd263b0137af7994a97c18c177cad102bdc Mon Sep 17 00:00:00 2001
+From 26c584543b99ca7755eb8dc7ae0cc255c374c2e3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 15:52:18 +0200
 Subject: [PATCH] Replace deprecated calls to distutils.util.strtobool

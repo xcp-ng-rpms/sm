@@ -1,4 +1,4 @@
-From c29e64352d479d0f1ff12a349a1b07100edff0a5 Mon Sep 17 00:00:00 2001
+From ea33a7ce166ccd032b6ea0c6742b45105c968dfe Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 18:21:07 +0200
 Subject: [PATCH] Fix many invalid escape sequences on regexes

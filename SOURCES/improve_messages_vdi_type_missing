@@ -1,0 +1,132 @@
+From 059aa60240a24aaf00d7ef67944638fdc45385f4 Mon Sep 17 00:00:00 2001
+From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+Date: Fri, 10 Oct 2025 10:54:40 +0200
+Subject: [PATCH] metadata: improve error messages when vdi_type is missing
+
+Explicit error message pointing to missing vdi_type on SRMetadata update
+Add a distinction for unpacking corrupted empty metadata headers for easier diagnostic
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index 7b745af..d25a79c 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -246,6 +246,10 @@ class LVHDSR(SR.SR):
+             for vdi in self.session.xenapi.SR.get_VDIs(self.sr_ref):
+                 vdi_uuid = self.session.xenapi.VDI.get_uuid(vdi)
+ 
++                vdi_type = self.session.xenapi.VDI.get_sm_config(vdi).get('vdi_type')
++                if not vdi_type:
++                    raise xs_errors.XenError('MetadataError', opterr=f"Missing `vdi_type` for VDI {vdi_uuid}")
++
+                 # Create the VDI entry in the SR metadata
+                 vdi_info[vdi_uuid] = \
+                 {
+@@ -261,7 +265,7 @@ class LVHDSR(SR.SR):
+                     TYPE_TAG: \
+                         self.session.xenapi.VDI.get_type(vdi),
+                     VDI_TYPE_TAG: \
+-                       self.session.xenapi.VDI.get_sm_config(vdi)['vdi_type'],
++                       vdi_type,
+                     READ_ONLY_TAG: \
+                         int(self.session.xenapi.VDI.get_read_only(vdi)),
+                     METADATA_OF_POOL_TAG: \
+diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
+index 685c11d..2fabfb1 100755
+--- a/drivers/srmetadata.py
++++ b/drivers/srmetadata.py
+@@ -178,12 +178,13 @@ def buildHeader(length, major=metadata.MD_MAJOR, minor=metadata.MD_MINOR):
+ 
+ 
+ def unpackHeader(header):
+-    vals = from_utf8(header).split(HEADER_SEP)
++    decoded = from_utf8(header)
++    if len(decoded.rstrip('\x00')) == 0:
++        raise xs_errors.XenError('MetadataError', opterr='Empty header')
++    vals = decoded.split(HEADER_SEP)
+     if len(vals) != 4 or vals[0] != metadata.HDR_STRING:
+-        util.SMlog("Exception unpacking metadata header: "
+-                   "Error: Bad header '%s'" % (header))
+-        raise xs_errors.XenError('MetadataError', \
+-                        opterr='Bad header')
++        util.SMlog(f"Exception unpacking metadata header: Error: Bad header {header!r}")
++        raise xs_errors.XenError('MetadataError', opterr='Bad header')
+     return (vals[0], vals[1], vals[2], vals[3])
+ 
+ 
+diff --git a/tests/test_LVHDSR.py b/tests/test_LVHDSR.py
+index 600f137..f8ce696 100644
+--- a/tests/test_LVHDSR.py
++++ b/tests/test_LVHDSR.py
+@@ -276,6 +276,16 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+             self.assertEqual(1, lvm_cache.activate.call_count)
+             self.assertEqual(1, lvm_cache.deactivate.call_count)
+ 
++        # Act (3)
++        # This tests SR metadata updates
++        sr.updateSRMetadata('thick')
++
++        # Test that removing vdi_type on a vdi does crash properly
++        del vdi_data['vdi2_ref']['sm-config']['vdi_type']
++        with self.assertRaises(Exception):
++            # Fail on vdi2_ref
++            sr.updateSRMetadata('thick')
++
+     def convert_vdi_to_meta(self, vdi_data):
+         metadata = {}
+         for item in vdi_data.items():
+diff --git a/tests/test_srmetadata.py b/tests/test_srmetadata.py
+index 720f12f..0b66e18 100644
+--- a/tests/test_srmetadata.py
++++ b/tests/test_srmetadata.py
+@@ -5,6 +5,7 @@ import testlib
+ import uuid
+ import unittest
+ import unittest.mock as mock
++import xs_errors
+ 
+ from srmetadata import (LVMMetadataHandler, buildHeader, buildXMLSector,
+                         getMetadataLength, unpackHeader, updateLengthInHeader,
+@@ -25,6 +26,42 @@ class TestSRMetadataFunctions(unittest.TestCase):
+         self.assertEqual(int(major), 1)
+         self.assertEqual(int(minor), 2)
+ 
++    def test_unpackHeader_empty(self):
++        # Given
++        headers = [b"", b"\x00", b"\x00"]
++
++        for header in headers:
++            # When
++            with self.assertRaises(xs_errors.SROSError) as error:
++                unpackHeader(header)
++
++            # Then
++            self.assertEqual(
++                str(error.exception),
++                'Error in Metadata volume operation for SR. [opterr=Empty header]'
++            )
++
++    def test_unpackHeader_bad(self):
++        # Given
++        headers = [
++            b"BAD:4096      :1:2" + (b' ' * 493),
++            b"BAD:4096      :1:2",
++            b"XSSM:4096      :1",
++            b"XSSM:4096      ",
++            b"XSSM",
++        ]
++
++        for header in headers:
++            # When
++            with self.assertRaises(xs_errors.SROSError) as error:
++                unpackHeader(header)
++
++            # Then
++            self.assertEqual(
++                str(error.exception),
++                'Error in Metadata volume operation for SR. [opterr=Bad header]'
++            )
++
+     def test_buildHeader_unpackHeader_roundTrip(self):
+         # Given
+         orig_length = 12345

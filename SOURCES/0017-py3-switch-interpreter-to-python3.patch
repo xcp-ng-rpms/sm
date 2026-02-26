@@ -1,4 +1,4 @@
-From 92f64f31073788d04217b9596e8888c415b4cca5 Mon Sep 17 00:00:00 2001
+From 5d6349325be38fa2f6cd03da7b5bf7947dfa0325 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Mon, 27 Mar 2023 15:30:46 +0200
 Subject: [PATCH] py3: switch interpreter to python3

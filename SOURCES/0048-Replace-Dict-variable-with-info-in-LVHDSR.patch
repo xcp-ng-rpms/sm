@@ -1,4 +1,4 @@
-From 4010a5fe9e132e89c889937ca109362c735be0ee Mon Sep 17 00:00:00 2001
+From b414e7b597b8b3f07c867c835044ed6777a96280 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:10:55 +0200
 Subject: [PATCH] Replace `Dict` variable with `info` in `LVHDSR`
@@ -11,10 +11,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 19 insertions(+), 19 deletions(-)
 
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 2379f971..3cc46b0c 100755
+index 0e0d2045..31169f15 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
-@@ -690,21 +690,21 @@ class LVHDSR(SR.SR):
+@@ -694,21 +694,21 @@ class LVHDSR(SR.SR):
                  for vdi in vdis:
                      vdi_uuids.add(self.session.xenapi.VDI.get_uuid(vdi))
  
@@ -44,7 +44,7 @@ index 2379f971..3cc46b0c 100755
                          lvname = "%s%s" % \
                              (lvhdutil.LV_PREFIX[sm_config['vdi_type']], vdi_uuid)
                          self.lvActivator.activate(
-@@ -712,7 +712,7 @@ class LVHDSR(SR.SR):
+@@ -716,7 +716,7 @@ class LVHDSR(SR.SR):
                          activated_lvs.add(vdi_uuid)
                          lvPath = os.path.join(self.path, lvname)
  
@@ -53,7 +53,7 @@ index 2379f971..3cc46b0c 100755
                              size = self.lvmCache.getSize( \
                                  lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_RAW] + \
                                      vdi_uuid)
-@@ -736,31 +736,31 @@ class LVHDSR(SR.SR):
+@@ -740,31 +740,31 @@ class LVHDSR(SR.SR):
  
                          vdi_ref = self.session.xenapi.VDI.db_introduce(
                                          vdi_uuid,

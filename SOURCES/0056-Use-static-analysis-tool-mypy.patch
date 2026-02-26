@@ -1,4 +1,4 @@
-From f53b0a2287f3bcec83c888723d8dc34ba91e616b Mon Sep 17 00:00:00 2001
+From beba05d62f52fda3911305f19a58086d45704086 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 17:51:25 +0200
 Subject: [PATCH] Use static analysis tool (mypy)
@@ -121,7 +121,7 @@ index 04a6543e..155983fc 100755
                  "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", \
                  "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 3cc46b0c..1f710f59 100755
+index 31169f15..046d08c3 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -18,6 +18,8 @@
@@ -306,7 +306,7 @@ index 3faf1ed2..1d35e7c9 100755
  
      util.SMlog("MPATH: Update done")
 diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
-index 685c11d1..a8af20f1 100755
+index 2fabfb1e..f6d253e2 100755
 --- a/drivers/srmetadata.py
 +++ b/drivers/srmetadata.py
 @@ -15,6 +15,9 @@
@@ -319,7 +319,7 @@ index 685c11d1..a8af20f1 100755
  from io import SEEK_SET
  
  import util
-@@ -254,7 +257,7 @@ def getMetadataLength(fd):
+@@ -255,7 +258,7 @@ def getMetadataLength(fd):
  # ----------------- # General helper functions - end # -----------------
  class MetadataHandler:
  

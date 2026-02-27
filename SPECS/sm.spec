@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.1.0.qcow2.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -84,7 +84,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.12-16-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
+# git format-patch v3.2.12-17-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -185,6 +185,106 @@ Patch1097: 0097-fix-linstor-ignore-unknown-res-to-get-volume-info-12.patch
 Patch1098: 0098-feat-linstor-parallelize-SR.scan-cleanup-vhd-util-ca.patch
 Patch1099: 0099-fix-cleanup-properly-handle-FileSR-exception-for-sla.patch
 Patch1100: 0100-Ensure-DRBD-sync-before-resizing-volumes-in-thick-co.patch
+Patch1101: 0101-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
+Patch1102: 0102-refactor-sm-move-all-VDI-types-a-new-module-vditype..patch
+Patch1103: 0103-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
+Patch1104: 0104-feat-VdiType-add-an-helper-to-test-cow-images.patch
+Patch1105: 0105-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
+Patch1106: 0106-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
+Patch1107: 0107-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
+Patch1108: 0108-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
+Patch1109: 0109-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
+Patch1110: 0110-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
+Patch1111: 0111-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
+Patch1112: 0112-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
+Patch1113: 0113-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
+Patch1114: 0114-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
+Patch1115: 0115-refactor-LVHDSR-rename-to-LVMSR.patch
+Patch1116: 0116-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
+Patch1117: 0117-refactor-constants.py-move-VG_LOCATION-VG_PREFIX-and.patch
+Patch1118: 0118-fix-test_blktap2.py-replace-phy-VDI-with-raw-VDI.patch
+Patch1119: 0119-Add-CowUtil-class.patch
+Patch1120: 0120-Support-image-format-param-during-VDI-creation.patch
+Patch1121: 0121-Always-store-image-format-in-sm-config.patch
+Patch1122: 0122-to-drop.patch
+Patch1123: 0123-feat-SR-support-QCOW2-format.patch
+Patch1124: 0124-fix-linstorvolumemanager-report-unexpected-DRBD-devi.patch
+Patch1125: 0125-feat-LinstorSR-prohibit-QCOW2.patch
+Patch1126: 0126-fix-linstor-handle-correctly-type-with-multi-cow-uti.patch
+Patch1127: 0127-fix-linstor-set-vdiType-on-info-object.patch
+Patch1128: 0128-metadata-improve-error-messages-when-vdi_type-is-mis.patch
+Patch1129: 0129-Fix-warns-reported-by-new-github-workflow.patch
+Patch1130: 0130-Fix-for-type-in-cleanup.py.patch
+Patch1131: 0131-Add-getBlockBitmap-coalesce-setParent.patch
+Patch1132: 0132-Fix-getSizePhys-and-size-in-calcOverheadEmpty.patch
+Patch1133: 0133-Add-getDefaultPreallocationSizeVirt-in-qcow2util.patch
+Patch1134: 0134-Enable-QCOW2-by-default-on-creation-for-SR.patch
+Patch1135: 0135-Implement-getInfo-for-LVM-raw-parents-and-getDepth.patch
+Patch1136: 0136-Add-function-get_openers_pid-in-util.py.patch
+Patch1137: 0137-Fix-getSizePhys-to-work-for-block-devices.patch
+Patch1138: 0138-Add-check-to-see-if-a-QCOW2-is-used-for-coalesce.patch
+Patch1139: 0139-Add-commit-and-query-to-TapCtl.patch
+Patch1140: 0140-Add-coalesce-with-call-to-blktap.patch
+Patch1141: 0141-cleanup.py-Change-VDI-to-be-RW-for-qemu-img-commit.patch
+Patch1142: 0142-Add-parents-for-getAllInfoFromVG.patch
+Patch1143: 0143-blktap2.py-correct-TapCtl.commit-call.patch
+Patch1144: 0144-Set-RW-children-of-a-LVM-VDI-to-coalesce.patch
+Patch1145: 0145-Limit-setParent-when-QCOW-is-opened.patch
+Patch1146: 0146-fix-getLvInfo-a-LV-could-disappear-during-scan.patch
+Patch1147: 0147-fix-qcow2util-explicitely-cast-in-str-for-mypy.patch
+Patch1148: 0148-fix-qcow2util-handle-online-coalesce-correctly.patch
+Patch1149: 0149-Add-qcow2util-to-Makefile.patch
+Patch1150: 0150-fix-FileSR-info-were-not-correctly-used.patch
+Patch1151: 0151-fix-FileSR-remove-a-dot-added-at-the-extension.patch
+Patch1152: 0152-Coalesce-on-remote-WIP.patch
+Patch1153: 0153-fix-setParent-setParent-only-warn-about-openers.patch
+Patch1154: 0154-Enable-qcow2util-to-cowutil.patch
+Patch1155: 0155-Add-is_shared-function-on-SR.patch
+Patch1156: 0156-WIP-for-cancelling-coalesce-for-VDI-activation.patch
+Patch1157: 0157-fix-on_slave-wrong-type-for-lvm-SR.patch
+Patch1158: 0158-fix-tapdisk-pause-missing-LvmCowUtil-import.patch
+Patch1159: 0159-fix-blktap2.py-change-chain-check-position-to-be-aft.patch
+Patch1160: 0160-fix-on-slave-temporary-fix-for-linstor-import-error.patch
+Patch1161: 0161-fix-cleanup.py-call-correctly-isCoalesceableOnRemote.patch
+Patch1162: 0162-fix-qcow2util-refactor-coalesce-online.patch
+Patch1163: 0163-Add-qcow2helper-to-compute-allocated-blocks.patch
+Patch1164: 0164-qcow2_helper-create-qcow2_helper.h.patch
+Patch1165: 0165-Add-some-type-hints-fixes.patch
+Patch1166: 0166-Type-fixes-on-cowutil.patch
+Patch1167: 0167-MooseFSSR-type-hint-fix.patch
+Patch1168: 0168-qcow2util.py-reduce-log-spam-for-onlinecoalesce.patch
+Patch1169: 0169-cowutil-add-a-comment-for-isCoalesceableOnRemote.patch
+Patch1170: 0170-lvmcowutil-fix-sr_uuid-handling.patch
+Patch1171: 0171-Redo-LV-activation-in-qcow2-case.patch
+Patch1172: 0172-Fix-unit-tests-with-QCOW2-changes.patch
+Patch1173: 0173-Fix-lvutil.extractUuid.patch
+Patch1174: 0174-fix-qcow2util-add-size-limit-for-qcow2.patch
+Patch1175: 0175-Optimize-qcow2-helper-with-OpenMP.patch
+Patch1176: 0176-fix-cleanup-remove-running-file-before-relink.patch
+Patch1177: 0177-fix-qcow2util-read-clusters-with-kill-data.patch
+Patch1178: 0178-Try-bitmap-dump-with-qcow2helper.patch
+Patch1179: 0179-Remove-limitation-on-blocksize.patch
+Patch1180: 0180-Fix-deadlock-with-coalesce-and-vdi-activation.patch
+Patch1181: 0181-fix-coalesce-Big-vhd-blocks-cause-exception.patch
+Patch1182: 0182-Mock-check_journal_coalesce-for-VDI-activation-in-te.patch
+Patch1183: 0183-qcow2util-read-commit-size-correctly.patch
+Patch1184: 0184-qcow2_helper-Remove-space.patch
+Patch1185: 0185-qcow2_helper-print-errno-on-read-error.patch
+Patch1186: 0186-qcow2_helper-check-read-return-value.patch
+Patch1187: 0187-qcow2_helper-Fix-bound-array-warning.patch
+Patch1188: 0188-qcow2_helper-support-extended_l2-feature.patch
+Patch1189: 0189-Custom-parameters-for-QCOW2-snapshot-used-for-mirror.patch
+Patch1190: 0190-Use-measure-to-compute-overhead-in-qcow2.patch
+Patch1191: 0191-Make-getDefaultPreallocationSizeVirt-return-minsize.patch
+Patch1192: 0192-Do-not-raise-in-abortTest-for-_doCoalesceOnHost.patch
+Patch1193: 0193-qcow2util-fix-name-in-getLVInfoFromVG.patch
+Patch1194: 0194-cleanup.py-rework-cancel-online-coalesce.patch
+Patch1195: 0195-Fix-relinking-for-online-coalesce.patch
+Patch1196: 0196-Correct-import-in-lvhd-thin-plugin.patch
+Patch1197: 0197-Add-missing-image-format-attr-on-snap-VDIs-113.patch
+Patch1198: 0198-Fix-vdi_type-and-image_format-for-udevSR.patch
+Patch1199: 0199-fix-LVMSR-compute-the-size-of-a-cbtlog-for-LV.patch
+Patch1200: 0200-Adapt-verifyVHDsOnSR-for-QCOW2-support.patch
 
 %description
 This package contains storage backends used in XCP
@@ -338,10 +438,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/ISOSR
 /opt/xensource/sm/ISOSR.py
 /opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/LVHDSR.py
-/opt/xensource/sm/LVHDoHBASR.py
-/opt/xensource/sm/LVHDoISCSISR.py
-/opt/xensource/sm/LVHDoFCoESR.py
+/opt/xensource/sm/LVMSR.py
+/opt/xensource/sm/LVMoHBASR.py
+/opt/xensource/sm/LVMoISCSISR.py
+/opt/xensource/sm/LVMoFCoESR.py
 /opt/xensource/sm/LVMSR
 /opt/xensource/sm/LVMoHBASR
 /opt/xensource/sm/LVMoISCSISR
@@ -357,6 +457,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/XE_SR_ERRORCODES.xml
 /opt/xensource/sm/blktap2.py
 /opt/xensource/sm/cleanup.py
+/opt/xensource/sm/cowutil.py
 /opt/xensource/sm/devscan.py
 /opt/xensource/sm/fjournaler.py
 /opt/xensource/sm/flock.py
@@ -367,9 +468,9 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/lcache.py
 /opt/xensource/sm/lock.py
 /opt/xensource/sm/lock_queue.py
-/opt/xensource/sm/lvhdutil.py
 /opt/xensource/sm/lvmanager.py
 /opt/xensource/sm/lvmcache.py
+/opt/xensource/sm/lvmcowutil.py
 /opt/xensource/sm/lvutil.py
 /opt/xensource/sm/metadata.py
 /opt/xensource/sm/srmetadata.py
@@ -388,8 +489,10 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/udevSR.py
 /opt/xensource/sm/util.py
 /opt/xensource/sm/cifutils.py
-/opt/xensource/sm/verifyVHDsOnSR.py
+/opt/xensource/sm/verifyVDIsOnSR.py
 /opt/xensource/sm/vhdutil.py
+/opt/xensource/sm/qcow2util.py
+/opt/xensource/sm/vditype.py
 /opt/xensource/sm/trim_util.py
 /opt/xensource/sm/xs_errors.py
 /opt/xensource/sm/wwid_conf.py
@@ -434,6 +537,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/libexec/fork-log-daemon
 /opt/xensource/libexec/linstor-monitord
 /opt/xensource/libexec/safe-umount
+/opt/xensource/libexec/qcow2_helper
 /opt/xensource/sm/CephFSSR
 /opt/xensource/sm/CephFSSR.py
 /opt/xensource/sm/GlusterFSSR
@@ -441,7 +545,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/linstorjournaler.py
 /opt/xensource/sm/LinstorSR
 /opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/linstorvhdutil.py
+/opt/xensource/sm/linstorcowutil.py
 /opt/xensource/sm/linstorvolumemanager.py
 /opt/xensource/sm/MooseFSSR
 /opt/xensource/sm/MooseFSSR.py
@@ -501,6 +605,9 @@ then
 fi
 
 %changelog
+* Tue Mar 03 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.1.0.qcow2.1
+- Rebase on 3.2.12-17.1 with QCOW2 support
+
 * Mon Feb 02 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-17.1
 - Rebase on 3.2.12-17
 - Remove patches merged upstream:

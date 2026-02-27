@@ -1,0 +1,28 @@
+From 45eaed5109d6bf3c62a039eeceacd7fe9ebd9562 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 16 Jan 2026 15:47:27 +0100
+Subject: [PATCH] Fix vdi_type and image_format for udevSR
+
+Add `vdi_type` on udevVDI
+Add `image_format` for udevVDI
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/udevSR.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/udevSR.py b/drivers/udevSR.py
+index a8442764..40cb5352 100755
+--- a/drivers/udevSR.py
++++ b/drivers/udevSR.py
+@@ -153,6 +153,10 @@ class udevVDI(VDI.VDI):
+         self.utilisation = 0
+         self.label = self.path
+         self.sm_config = {}
++        self.vdi_type = "phy" # We give phy but there is a special case in blktap2.py:VDI.tap_wanted() for udevSR
++        self.image_format = "raw"
++        self.sm_config["image-format"] = self.image_format
++
+         try:
+             s = os.stat(self.path)
+             self.deleted = False

@@ -1,0 +1,26 @@
+From 8276db4aff2a3a1a057d44fcf2523b65d198228b Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 16 Jan 2025 16:29:51 +0100
+Subject: [PATCH] feat(cleanup.py): always print type in VDI.__str__
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 971cb1eb..4c75fd1a 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -808,10 +808,7 @@ class VDI(object):
+         strSizeAllocated = "?"
+         if self._sizeAllocated >= 0:
+             strSizeAllocated = "/%s" % Util.num2str(self._sizeAllocated)
+-        strType = ""
+-        if self.vdi_type == VdiType.RAW:
+-            strType = "[RAW]"
+-            strSizePhys = ""
++        strType = "[{}]".format(self.vdi_type)
+ 
+         return "%s%s(%s%s%s)%s" % (strHidden, self.uuid[0:8], strSizeVirt,
+                 strSizePhys, strSizeAllocated, strType)

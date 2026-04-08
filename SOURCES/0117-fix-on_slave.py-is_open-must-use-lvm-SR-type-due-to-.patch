@@ -1,0 +1,39 @@
+From fecac14a65b167be7a542f89970f53fbaac7bd86 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 2 Jun 2025 09:09:54 +0200
+Subject: [PATCH] fix(on_slave.py): `is_open` must use lvm SR type due to
+ LVHD/LVM refactor
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+Co-authored-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/on_slave.py    | 2 +-
+ tests/test_on_slave.py | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/on_slave.py b/drivers/on_slave.py
+index 5291dfcf..f84034bc 100755
+--- a/drivers/on_slave.py
++++ b/drivers/on_slave.py
+@@ -97,7 +97,7 @@ def _is_open(session, args):
+     # FIXME: ugly hacks to create a VDI object without a real SRCommand to
+     # avoid having to refactor the core files
+     if srType.startswith("lvm"):
+-        srType = "lvhd"
++        srType = "lvm"
+     cmd = SRCommand.SRCommand(None)
+     cmd.driver_info = {"capabilities": None}
+     cmd.dconf = {
+diff --git a/tests/test_on_slave.py b/tests/test_on_slave.py
+index 3b28b1bf..0b0c70b4 100644
+--- a/tests/test_on_slave.py
++++ b/tests/test_on_slave.py
+@@ -84,7 +84,7 @@ class Test_on_slave_is_open(unittest.TestCase):
+                                        'vdiUuid': vdi_uuid,
+                                        'srRef': 'opaqueref:sr_mine'
+                                    })
+-        self.mock_sr.driver.assert_called_once_with('lvhd')
++        self.mock_sr.driver.assert_called_once_with('lvm')
+         self.assertEqual('True', is_open)
+ 
+     def test_is_open_false(self):

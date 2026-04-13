@@ -223,6 +223,9 @@ Patch1135: 0135-fix-qcow2-fix-mirror-for-migration.patch
 Patch1136: 0136-fix-qcow2-Use-measure-to-compute-overhead-in-qcow2.patch
 Patch1137: 0137-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
 Patch1138: 0138-Add-missing-image-format-attr-on-snap-VDIs-113.patch
+Patch1139: 0139-Fix-vdi_type-and-image_format-for-udevSR.patch
+Patch1140: 0140-feat-qcow2-live-leaf-coalesce.patch
+
 
 %description
 This package contains storage backends used in XCP

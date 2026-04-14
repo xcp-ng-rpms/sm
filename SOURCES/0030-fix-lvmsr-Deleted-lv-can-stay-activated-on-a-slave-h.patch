@@ -1,0 +1,39 @@
+From d67a605692eb744835a9fa0d1b0a26bf537603ca Mon Sep 17 00:00:00 2001
+From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+Date: Fri, 10 Apr 2026 16:19:31 +0200
+Subject: [PATCH 30/30] fix(lvmsr): Deleted lv can stay activated on a slave
+ host
+
+Notify slave host before deletion of an lv during snapshot
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+---
+ drivers/LVHDSR.py | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index 66a50fa2..d716ea01 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -1283,6 +1283,10 @@ class LVHDSR(SR.SR):
+             if not rv:
+                 raise Exception('plugin %s failed' % self.PLUGIN_ON_SLAVE)
+ 
++    def _deactivateOnSlave(self, hostRefs, lvname):
++        """Tell the slave we need to deactivate the base image"""
++        self._updateSlavesPreClone(hostRefs, lvname)
++
+     def _cleanup(self, skipLockCleanup=False):
+         """delete stale refcounter, flag, and lock files"""
+         RefCounter.resetAll(lvhdutil.NS_PREFIX_LVM + self.uuid)
+@@ -1871,6 +1875,10 @@ class LVHDVDI(VDI.VDI):
+             util.SMlog("%s != %s != %s => deleting unused base %s" % \
+                     (snapParent, self.uuid, snap2Parent, self.lvname))
+             RefCounter.put(self.uuid, False, lvhdutil.NS_PREFIX_LVM + self.sr.uuid)
++
++            if hostRefs:
++                self.sr._deactivateOnSlave(hostRefs, self.lvname)
++
+             self.sr.lvmCache.remove(self.lvname)
+             self.sr.lvActivator.remove(self.uuid, False)
+             if hostRefs:

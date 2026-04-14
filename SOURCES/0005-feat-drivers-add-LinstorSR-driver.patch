@@ -1,7 +1,7 @@
 From ee88ac2658f10fe367a1a299f8b17b10209388ff Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
-Subject: [PATCH 05/29] feat(drivers): add LinstorSR driver
+Subject: [PATCH 05/30] feat(drivers): add LinstorSR driver
 
 Some important points:
 
@@ -51,6 +51,8 @@ Without symlink update the previous "A" path is reused instead of
 module imports are protected by try.. except... blocks.
 
 - Provide a linstor-monitor daemon to check master changes
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
 ---
  Makefile                        |   12 +-
  drivers/LinstorSR.py            | 2100 +++++++++++++++++++++++++++++++

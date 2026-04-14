@@ -1,7 +1,7 @@
 From 4517b34462a3285630dc134de99eb84f6aa4fb58 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jul 2020 16:26:42 +0200
-Subject: [PATCH 03/29] feat(drivers): add XFS driver
+Subject: [PATCH 03/30] feat(drivers): add XFS driver
 
 Originally-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 
@@ -13,6 +13,7 @@ ff1bf65e57f1c7584748628a5731e40e8a041d51:
  git restore -SW drivers/EXTSR.py
 
 Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
 ---
  Makefile           |   1 +
  drivers/XFSSR.py   | 249 +++++++++++++++++++++++++++++++++++++++++++++

@@ -1,7 +1,7 @@
 From 3c420bca8372e1441f977562b61439ff2235003f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:37:07 +0200
-Subject: [PATCH 11/29] Remove SR_CACHING capability for many SR types (#24)
+Subject: [PATCH 11/30] Remove SR_CACHING capability for many SR types (#24)
 
 SR_CACHING offers the capacity to use IntelliCache, but this
 feature is only available using NFS SR.
@@ -10,6 +10,7 @@ For more details, the implementation of `_setup_cache` in blktap2.py
 uses only an instance of NFSFileVDI for the shared target.
 
 Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
 ---
  drivers/CephFSSR.py    | 2 +-
  drivers/GlusterFSSR.py | 2 +-

@@ -74,6 +74,7 @@ Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
 Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
 Patch1028: 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
 Patch1029: 0029-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
+Patch1030: 0030-fix-lvmsr-Deleted-lv-can-stay-activated-on-a-slave-h.patch
 
 %description
 This package contains storage backends used in XCP

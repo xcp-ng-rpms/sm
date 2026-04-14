@@ -1,7 +1,7 @@
 From 2e7fa79a4d7d4ebbee00959326b8f8151a816889 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 8 Mar 2023 13:53:21 +0100
-Subject: [PATCH 16/29] test_on_slave: allow to work with SR using absolute
+Subject: [PATCH 16/30] test_on_slave: allow to work with SR using absolute
  PROBE_MOUNTPOINT
 
 PROBE_MOUNTPOINT in a some drivers is a relative path, which is resolved
@@ -31,6 +31,7 @@ Note this same idiom is also used in upstream SMBFS, although that does not
 appear to cause any problem with the tests.
 
 Signed-off-by: Yann Dirson <yann.dirson@vates.fr>
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
 ---
  tests/test_on_slave.py | 1 +
  1 file changed, 1 insertion(+)

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -536,6 +536,9 @@ Manager and some other packages
 ## so this is safe.
 if [ $1 -gt 1 ];
 then
+    # echo "Workaround for late reload of unit file on package upgrade (RHBZ/#1614751)"
+    %{_bindir}/systemctl daemon-reload > /dev/null 2>&1 || :
+
     /usr/bin/systemctl list-units fairlock@* --all --no-legend | /usr/bin/cut -d' ' -f1 | while read service;
     do
         /usr/bin/systemctl stop "$service"
@@ -543,6 +546,9 @@ then
 fi
 
 %changelog
+* Wed Apr 15 2026 Philippe Coval <philippe.coval@vates.tech> - 3.2.12-17.3
+- fairlock: Fix upgrade warning by reloading service files
+
 * Wed Apr 08 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.2
 - Add QCOW2 support
 

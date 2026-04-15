@@ -225,6 +225,7 @@ Patch1137: 0137-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
 Patch1138: 0138-Add-missing-image-format-attr-on-snap-VDIs-113.patch
 Patch1139: 0139-Fix-vdi_type-and-image_format-for-udevSR.patch
 Patch1140: 0140-feat-qcow2-live-leaf-coalesce.patch
+Patch1141: 0141-Regroup-all-session-creation-in-util-get_localAPI_se.patch
 
 
 %description

@@ -1,0 +1,786 @@
+From f7cc4b1573a2c96427e9e8eb8380219e2baec95e Mon Sep 17 00:00:00 2001
+From: Arnaud Garcia-Fernandez <arnaud.garcia-fernandez@vates.tech>
+Date: Thu, 26 Mar 2026 14:02:38 +0100
+Subject: [PATCH] Regroup all session creation in util get_localAPI_session or
+ APISession class.
+
+New APISession class to handle lifecycle of the session, with context, or atexit handlers.
+Use various originator for xapi session creation, to differentiate where they are being created.
+
+Signed-off-by: Arnaud Garcia-Fernandez <arnaud.garcia-fernandez@vates.tech>
+---
+ drivers/LinstorSR.py              |  8 +++-
+ drivers/blktap2.py                | 11 ++---
+ drivers/cleanup.py                | 67 ++++++++++++--------------
+ drivers/coalesce-leaf             | 19 ++++----
+ drivers/lcache.py                 |  9 ++--
+ drivers/linstorcowutil.py         | 21 ++------
+ drivers/linstorvolumemanager.py   | 50 +++++++++----------
+ drivers/mpathcount.py             | 25 +++-------
+ drivers/plugins/keymanagerutil.py |  6 +--
+ drivers/resetvdis.py              | 76 ++++++++++++++---------------
+ drivers/sr_health_check.py        | 10 +---
+ drivers/util.py                   | 80 ++++++++++++++++++++-----------
+ tests/test_cleanup.py             |  6 ++-
+ tests/test_mpathcount.py          | 33 -------------
+ tests/test_sr_health_check.py     |  4 +-
+ 15 files changed, 184 insertions(+), 241 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 47e13eb2..05337462 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -2579,7 +2579,9 @@ class LinstorVDI(VDI.VDI):
+                 # Use a timeout call because XAPI may be unusable on startup
+                 # or if the host has been ejected. So in this case the call can
+                 # block indefinitely.
+-                session = util.timeout_call(5, util.get_localAPI_session)
++                apisession = util.timeout_call(
++                    5, util.APISession, "SM-LinstorSR-http")
++                session = apisession.session
+                 host_ip = util.get_this_host_address(session)
+             except:
+                 # Fallback using the XHA file if session not available.
+@@ -2663,7 +2665,9 @@ class LinstorVDI(VDI.VDI):
+                 device_size = 256 * 1024 * 1024
+ 
+             try:
+-                session = util.timeout_call(5, util.get_localAPI_session)
++                apisession = util.timeout_call(
++                    5, util.APISession, "SM-LinstorSR-nbd")
++                session = apisession.session
+                 ips = util.get_host_addresses(session)
+             except Exception as e:
+                 _, ips = get_ips_from_xha_config_file()
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 76de7791..be20d6d7 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -1091,14 +1091,9 @@ class VDI(object):
+ 
+     @classmethod
+     def from_cli(cls, uuid):
+-        session = XenAPI.xapi_local()
+-        session.xenapi.login_with_password('root', '', '', 'SM')
+-
+-        target = sm.VDI.from_uuid(session, uuid)
+-        driver_info = target.sr.srcmd.driver_info
+-
+-        session.xenapi.session.logout()
+-
++        with util.APISession("SM-blktap2") as session:
++            target = sm.VDI.from_uuid(session, uuid)
++            driver_info = target.sr.srcmd.driver_info
+         return cls(uuid, target, driver_info)
+ 
+     @staticmethod
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 47506f73..cecc3fbc 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -300,18 +300,12 @@ class XAPI:
+     class LookupError(util.SMException):
+         pass
+ 
+-    @staticmethod
+-    def getSession():
+-        session = XenAPI.xapi_local()
+-        session.xenapi.login_with_password(XAPI.USER, '', '', 'SM')
+-        return session
+-
+     def __init__(self, session, srUuid):
+-        self.sessionPrivate = False
+         self.session = session
++        self.apisession = None
+         if self.session is None:
+-            self.session = self.getSession()
+-            self.sessionPrivate = True
++            self.apisession = util.APISession("SM-cleanup-XAPI")
++            self.session = self.apisession.session
+         self._srRef = self.session.xenapi.SR.get_by_uuid(srUuid)
+         self.srRecord = self.session.xenapi.SR.get_record(self._srRef)
+         self.hostUuid = util.get_this_host()
+@@ -320,8 +314,8 @@ class XAPI:
+         self.task_progress = {"coalescable": 0, "done": 0}
+ 
+     def __del__(self):
+-        if self.sessionPrivate:
+-            self.session.xenapi.session.logout()
++        if self.apisession:
++            self.apisession.logout()
+ 
+     @property
+     def srRef(self):
+@@ -2117,32 +2111,31 @@ class SR(object):
+         return msg is None
+ 
+     def check_no_space_candidates(self):
+-        xapi_session = self.xapi.getSession()
+-
+-        msg_id = self.xapi.srRecord["sm_config"].get(VDI.DB_GC_NO_SPACE)
+-        if self.no_space_candidates:
+-            if msg_id is None or self.msg_cleared(xapi_session, msg_id):
+-                util.SMlog("Could not coalesce due to a lack of space "
+-                           f"in SR {self.uuid}")
+-                msg_body = ("Unable to perform data coalesce due to a lack "
+-                            f"of space in SR {self.uuid}")
+-                msg_id = xapi_session.xenapi.message.create(
+-                    'SM_GC_NO_SPACE',
+-                    3,
+-                    "SR",
+-                    self.uuid,
+-                    msg_body)
+-                xapi_session.xenapi.SR.remove_from_sm_config(
+-                    self.xapi.srRef, VDI.DB_GC_NO_SPACE)
+-                xapi_session.xenapi.SR.add_to_sm_config(
+-                    self.xapi.srRef, VDI.DB_GC_NO_SPACE, msg_id)
+-
+-            for candidate in self.no_space_candidates.values():
+-                candidate.setConfig(VDI.DB_GC_NO_SPACE, msg_id)
+-        elif msg_id is not None:
+-            # Everything was coalescable, remove the message
+-            xapi_session.xenapi.SR.remove_from_sm_config(self.xapi.srRef, VDI.DB_GC_NO_SPACE)
+-            xapi_session.xenapi.message.destroy(msg_id)
++        with util.APISession("SM-cleanup-SR-check_no_space_candidates") as xapi_session:
++            msg_id = self.xapi.srRecord["sm_config"].get(VDI.DB_GC_NO_SPACE)
++            if self.no_space_candidates:
++                if msg_id is None or self.msg_cleared(xapi_session, msg_id):
++                    util.SMlog("Could not coalesce due to a lack of space "
++                               f"in SR {self.uuid}")
++                    msg_body = ("Unable to perform data coalesce due to a lack "
++                                f"of space in SR {self.uuid}")
++                    msg_id = xapi_session.xenapi.message.create(
++                        'SM_GC_NO_SPACE',
++                        3,
++                        "SR",
++                        self.uuid,
++                        msg_body)
++                    xapi_session.xenapi.SR.remove_from_sm_config(
++                        self.xapi.srRef, VDI.DB_GC_NO_SPACE)
++                    xapi_session.xenapi.SR.add_to_sm_config(
++                        self.xapi.srRef, VDI.DB_GC_NO_SPACE, msg_id)
++
++                for candidate in self.no_space_candidates.values():
++                    candidate.setConfig(VDI.DB_GC_NO_SPACE, msg_id)
++            elif msg_id is not None:
++                # Everything was coalescable, remove the message
++                xapi_session.xenapi.SR.remove_from_sm_config(self.xapi.srRef, VDI.DB_GC_NO_SPACE)
++                xapi_session.xenapi.message.destroy(msg_id)
+ 
+     def clear_no_space_msg(self, vdi):
+         msg_id = None
+diff --git a/drivers/coalesce-leaf b/drivers/coalesce-leaf
+index e50ce7d8..377c4ada 100755
+--- a/drivers/coalesce-leaf
++++ b/drivers/coalesce-leaf
+@@ -2,13 +2,13 @@
+ #
+ # Copyright (C) Citrix Systems Inc.
+ #
+-# This program is free software; you can redistribute it and/or modify 
+-# it under the terms of the GNU Lesser General Public License as published 
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU Lesser General Public License as published
+ # by the Free Software Foundation; version 2.1 only.
+ #
+-# This program is distributed in the hope that it will be useful, 
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ # GNU Lesser General Public License for more details.
+ #
+ # You should have received a copy of the GNU Lesser General Public License
+@@ -229,12 +229,9 @@ def main():
+         print(USAGE_STRING % sys.argv[0])
+         sys.exit(-1)
+ 
+-    session = XenAPI.xapi_local()
+-    session.xenapi.login_with_password('root', '', '', 'SM')
+-    atexit.register(session.xenapi.session.logout)
+-
+-    ret, messages = vm_leaf_coalesce(session, uuid)
+-    if len(messages):
++    with util.APISession("SM-coalesce-leaf") as session:
++        ret, messages = vm_leaf_coalesce(session, uuid)
++    if messages:
+         print("\n".join(messages))
+     sys.exit(ret)
+ 
+diff --git a/drivers/lcache.py b/drivers/lcache.py
+index 255dac23..c9648f71 100755
+--- a/drivers/lcache.py
++++ b/drivers/lcache.py
+@@ -221,12 +221,9 @@ class CacheFileSR(object):
+ 
+     @classmethod
+     def from_cli(cls):
+-        import XenAPI # pylint: disable=import-error
+-
+-        session = XenAPI.xapi_local()
+-        session.xenapi.login_with_password('root', '', '', 'SM')
+-
+-        return cls.from_session(session)
++        import util
++        with util.APISession("SM-lcache-CacheFileSR") as session:
++            return cls.from_session(session)
+ 
+     def statvfs(self):
+         return os.statvfs(self.sr_path)
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 1aa35d8c..e7b122c3 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -607,19 +607,10 @@ class MultiLinstorCowUtil:
+             self.linstor = None
+             self.vdi_type_to_cowutil = {}
+ 
+-    class Load:
+-        def __init__(self, session):
+-            self.session = session
+-
+-        def cleanup(self):
+-            if self.session:
+-                self.session.xenapi.session.logout()
+-                self.session = None
+-
+     def __init__(self, uri, group_name) -> None:
+         self._uri = uri
+         self._group_name = group_name
+-        self._loads: List[MultiLinstorCowUtil.Load] = []
++        self._loads: List[util.APISession] = []
+         self._executor_data = self.ExecutorData()
+ 
+     def __del__(self):
+@@ -646,8 +637,8 @@ class MultiLinstorCowUtil:
+         return instance
+ 
+     def _init_executor_thread(self):
+-        session = util.get_localAPI_session()
+-        load = self.Load(session)
++        apisession = util.APISession("SM-linstorvhdutil")
++        session = apisession.session
+         try:
+             linstor = LinstorVolumeManager(
+                 self._uri,
+@@ -659,15 +650,13 @@ class MultiLinstorCowUtil:
+             self._executor_data.session = session
+         except:
+             self._executor_data.clear()
+-            load.cleanup()
+             raise
+-
+-        self._loads.append(load)
++        self._loads.append(apisession)
+ 
+     def _cleanup(self):
+         for load in self._loads:
+             try:
+-                load.cleanup()
++                load.logout()
+             except Exception as e:
+                 util.SMlog(f"Failed to clean load executor: {e}")
+         self._loads.clear()
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index c8e89483..cd497c41 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -90,28 +90,27 @@ def get_all_volume_openers(resource_name, volume):
+     volume = str(volume)
+     openers = {}
+ 
+-    session = util.get_localAPI_session()
+-
+-    hosts = session.xenapi.host.get_all_records()
+-    for host_ref, host_record in hosts.items():
+-        node_name = host_record['hostname']
+-        try:
+-            if not session.xenapi.host_metrics.get_record(
+-                host_record['metrics']
+-            )['live']:
+-                # Ensure we call plugin on online hosts only.
+-                continue
++    with util.APISession("SM-linstorvolumemanager-get_all_volume_openers") as session:
++        hosts = session.xenapi.host.get_all_records()
++        for host_ref, host_record in hosts.items():
++            node_name = host_record['hostname']
++            try:
++                if not session.xenapi.host_metrics.get_record(
++                    host_record['metrics']
++                )['live']:
++                    # Ensure we call plugin on online hosts only.
++                    continue
+ 
+-            openers[node_name] = json.loads(
+-                session.xenapi.host.call_plugin(host_ref, PLUGIN, PLUGIN_CMD, {
+-                    'resourceName': resource_name,
+-                    'volume': volume
+-                })
+-            )
+-        except Exception as e:
+-            util.SMlog('Failed to get openers of `{}` on `{}`: {}'.format(
+-                resource_name, node_name, e
+-            ))
++                openers[node_name] = json.loads(
++                    session.xenapi.host.call_plugin(host_ref, PLUGIN, PLUGIN_CMD, {
++                        'resourceName': resource_name,
++                        'volume': volume
++                    })
++                )
++            except Exception as e:
++                util.SMlog('Failed to get openers of `{}` on `{}`: {}'.format(
++                    resource_name, node_name, e
++                ))
+ 
+     return openers
+ 
+@@ -180,7 +179,8 @@ def get_controller_node_name():
+         if res:
+             return res.groups()[0]
+ 
+-    session = util.timeout_call(5, util.get_localAPI_session)
++    apisession = util.timeout_call(5, util.APISession, "SM-linstorvolumemanager-get_controller_node_name")
++    session = apisession.session
+ 
+     for host_ref, host_record in session.xenapi.host.get_all_records().items():
+         node_name = host_record['hostname']
+@@ -203,7 +203,8 @@ def get_controller_node_name():
+ def demote_drbd_resource(node_name, resource_name):
+     PLUGIN_CMD = 'demoteDrbdResource'
+ 
+-    session = util.timeout_call(5, util.get_localAPI_session)
++    apisession = util.timeout_call(5, util.APISession, "SM-linstorvolumemanager-demote_drbd_resource")
++    session = apisession.session
+ 
+     for host_ref, host_record in session.xenapi.host.get_all_records().items():
+         if host_record['hostname'] != node_name:
+@@ -1396,7 +1397,8 @@ class LinstorVolumeManager(object):
+             # It needs to be done locally by each host so we go through the linstor-manager plugin.
+             # If we don't do this sometimes, the destroy will fail when trying to destroy the resource groups with:
+             # "linstor-manager:destroy error: Failed to destroy SP `xcp-sr-linstor_group_thin_device` on node `r620-s2`: The specified storage pool 'xcp-sr-linstor_group_thin_device' on node 'r620-s2' can not be deleted as volumes / snapshot-volumes are still using it."
+-            session = util.timeout_call(5, util.get_localAPI_session)
++            apisession = util.timeout_call(5, util.APISession, "SM-linstorvolumemanager-destroy")
++            session = apisession.session
+             for host_ref in session.xenapi.host.get_all():
+                 try:
+                     response = session.xenapi.host.call_plugin(
+diff --git a/drivers/mpathcount.py b/drivers/mpathcount.py
+index a07d2a20..0328d62d 100755
+--- a/drivers/mpathcount.py
++++ b/drivers/mpathcount.py
+@@ -53,15 +53,6 @@ def get_dm_major():
+     return cached_DM_maj
+ 
+ 
+-def mpc_exit(session, code):
+-    if session is not None:
+-        try:
+-            session.xenapi.session.logout()
+-        except:
+-            pass
+-    sys.exit(code)
+-
+-
+ def match_host_id(s):
+     regex = re.compile("^INSTALLATION_UUID")
+     return regex.search(s, 0)
+@@ -231,9 +222,9 @@ def check_xapi_is_enabled():
+ 
+ if __name__ == '__main__':
+     try:
+-        session = util.get_localAPI_session()
+-    except:
+-        print("Unable to open local XAPI session")
++        apisession = util.APISession("SM-mpathcount")
++        session = apisession.session
++    except xs_errors.XenError:
+         sys.exit(-1)
+ 
+     localhost = session.xenapi.host.get_by_uuid(get_localhost_uuid())
+@@ -252,7 +243,6 @@ if __name__ == '__main__':
+         def _remove(key):
+             session.xenapi.host.remove_from_other_config(localhost, key)
+ 
+-
+         def _add(key, val):
+             session.xenapi.host.add_to_other_config(localhost, key, val)
+         config = session.xenapi.host.get_other_config(localhost)
+@@ -261,12 +251,12 @@ if __name__ == '__main__':
+ 
+     except:
+         util.SMlog("MPATH: Failure updating Host.other-config:mpath-boot db")
+-        mpc_exit(session, -1)
++        sys.exit(-1)
+ 
+     try:
+         pbds = session.xenapi.PBD.get_all_records_where("field \"host\" = \"%s\"" % localhost)
+     except:
+-        mpc_exit(session, -1)
++        sys.exit(-1)
+ 
+     try:
+         mpath_status: Dict[str, str] = {}
+@@ -274,7 +264,6 @@ if __name__ == '__main__':
+             def remove(key):
+                 session.xenapi.PBD.remove_from_other_config(pbd, key)
+ 
+-
+             def add(key, val):
+                 session.xenapi.PBD.add_to_other_config(pbd, key, val)
+             record = pbds[pbd]
+@@ -290,8 +279,8 @@ if __name__ == '__main__':
+         os.chmod(MPATH_FILE_NAME, 0o0644)
+     except:
+         util.SMlog("MPATH: Failure updating db. %s" % str(sys.exc_info()))
+-        mpc_exit(session, -1)
++        sys.exit(-1)
+ 
+     util.SMlog("MPATH: Update done")
+ 
+-    mpc_exit(session, 0)
++    sys.exit(0)
+diff --git a/drivers/plugins/keymanagerutil.py b/drivers/plugins/keymanagerutil.py
+index 1a6ce01e..7e51be11 100755
+--- a/drivers/plugins/keymanagerutil.py
++++ b/drivers/plugins/keymanagerutil.py
+@@ -39,9 +39,7 @@ def load_key(key_hash, vdi_uuid):
+ 
+ 
+ def _check_key(key_hash, vdi_uuid):
+-    session = XenAPI.xapi_local()
+-    session.xenapi.login_with_password('root', '', '', PROGRAM_NAME)
+-    try:
++    with util.APISession(PROGRAM_NAME) as session:
+         vdi = session.xenapi.VDI.get_by_uuid(vdi_uuid)
+         sm_config = session.xenapi.VDI.get_sm_config(vdi)
+         if 'key_hash' in sm_config:
+@@ -54,8 +52,6 @@ def _check_key(key_hash, vdi_uuid):
+             raise Exception('Encryption key requested for VDI {}'
+                             ' whose sm_config does not contain the key_hash'
+                             ' entry. Its sm_config is {}'.format(vdi_uuid, sm_config))
+-    finally:
+-        session.xenapi.logout()
+ 
+ 
+ class InputError(Exception):
+diff --git a/drivers/resetvdis.py b/drivers/resetvdis.py
+index 0be98e69..475ea3de 100755
+--- a/drivers/resetvdis.py
++++ b/drivers/resetvdis.py
+@@ -139,48 +139,44 @@ def usage():
+             "the VDI is not in use before running this script.")
+     sys.exit(1)
+ 
+-if __name__ == '__main__':
+-    import atexit
+ 
++if __name__ == '__main__':
+     if len(sys.argv) not in [3, 4, 5]:
+         usage()
+ 
+-    session = XenAPI.xapi_local()
+-    session.xenapi.login_with_password('root', '', '', 'SM')
+-    atexit.register(session.xenapi.session.logout)
+-
+-    mode = sys.argv[1]
+-    if mode == "all":
+-        if len(sys.argv) not in [4, 5]:
+-            usage()
+-        host_uuid = sys.argv[2]
+-        sr_uuid = sys.argv[3]
+-        is_master = False
+-        if len(sys.argv) == 5:
+-            if sys.argv[4] == "--master":
+-                is_master = True
+-            else:
++    with util.APISession("SM-resetvdis") as session:
++        mode = sys.argv[1]
++        if mode == "all":
++            if len(sys.argv) not in [4, 5]:
+                 usage()
+-        reset_sr(session, host_uuid, sr_uuid, is_master)
+-    elif mode == "single":
+-        vdi_uuid = sys.argv[2]
+-        force = False
+-        if len(sys.argv) == 4 and sys.argv[3] == "--force":
+-            force = True
+-        reset_vdi(session, vdi_uuid, force)
+-    elif len(sys.argv) in [3, 4]:
+-        # backwards compatibility: the arguments for the "all" case used to be
+-        # just host_uuid, sr_uuid, [is_master] (i.e., no "all" string, since it
+-        # was the only mode available). To avoid having to change XAPI, accept
+-        # the old format here as well.
+-        host_uuid = sys.argv[1]
+-        sr_uuid = sys.argv[2]
+-        is_master = False
+-        if len(sys.argv) == 4:
+-            if sys.argv[3] == "--master":
+-                is_master = True
+-            else:
+-                usage()
+-        reset_sr(session, host_uuid, sr_uuid, is_master)
+-    else:
+-        usage()
++            host_uuid = sys.argv[2]
++            sr_uuid = sys.argv[3]
++            is_master = False
++            if len(sys.argv) == 5:
++                if sys.argv[4] == "--master":
++                    is_master = True
++                else:
++                    usage()
++            reset_sr(session, host_uuid, sr_uuid, is_master)
++        elif mode == "single":
++            vdi_uuid = sys.argv[2]
++            force = False
++            if len(sys.argv) == 4 and sys.argv[3] == "--force":
++                force = True
++            reset_vdi(session, vdi_uuid, force)
++        elif len(sys.argv) in [3, 4]:
++            # backwards compatibility: the arguments for the "all" case used to be
++            # just host_uuid, sr_uuid, [is_master] (i.e., no "all" string, since it
++            # was the only mode available). To avoid having to change XAPI, accept
++            # the old format here as well.
++            host_uuid = sys.argv[1]
++            sr_uuid = sys.argv[2]
++            is_master = False
++            if len(sys.argv) == 4:
++                if sys.argv[3] == "--master":
++                    is_master = True
++                else:
++                    usage()
++            reset_sr(session, host_uuid, sr_uuid, is_master)
++        else:
++            usage()
+diff --git a/drivers/sr_health_check.py b/drivers/sr_health_check.py
+index 1146ae35..34355aed 100755
+--- a/drivers/sr_health_check.py
++++ b/drivers/sr_health_check.py
+@@ -33,13 +33,7 @@ def main():
+     """
+     For all locally plugged SRs check that they are healthy
+     """
+-    try:
+-        session = util.get_localAPI_session()
+-    except xs_errors.SROSError:
+-        util.SMlog("Unable to open local XAPI session", priority=util.LOG_ERR)
+-        return
+-
+-    try:
++    with util.APISession("SM-sr_health_check") as session:
+         localhost = util.get_localhost_ref(session)
+         if not check_xapi_is_enabled(session, localhost):
+             # Xapi not enabled, skip and let the next timer trigger this
+@@ -63,8 +57,6 @@ def main():
+                 sr_uuid = srs[sr]['uuid']
+                 sr_obj = SR.SR.from_uuid(session, sr_uuid)
+                 sr_obj.check_sr(sr_uuid)
+-    finally:
+-        session.xenapi.session.logout()
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/drivers/util.py b/drivers/util.py
+index 0bd832bb..a1a02b3d 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -16,6 +16,7 @@
+ # Miscellaneous utility functions
+ #
+ 
++import atexit
+ import os
+ import re
+ import sys
+@@ -413,25 +414,19 @@ def ioretry_stat(path, maxretry=IORETRY_MAX):
+ 
+ def sr_get_capability(sr_uuid, session=None):
+     result = []
+-    local_session = None
+     if session is None:
+-        local_session = get_localAPI_session()
+-        session = local_session
++        apisession = APISession("SM-util-sr_get_capability")
++        session = apisession.session
++    sr_ref = session.xenapi.SR.get_by_uuid(sr_uuid)
++    sm_type = session.xenapi.SR.get_record(sr_ref)['type']
++    sm_rec = session.xenapi.SM.get_all_records_where(
++        "field \"type\" = \"%s\"" % sm_type)
+ 
+-    try:
+-        sr_ref = session.xenapi.SR.get_by_uuid(sr_uuid)
+-        sm_type = session.xenapi.SR.get_record(sr_ref)['type']
+-        sm_rec = session.xenapi.SM.get_all_records_where(
+-            "field \"type\" = \"%s\"" % sm_type)
+-
+-        # SM expects at least one entry of any SR type
+-        if len(sm_rec) > 0:
+-            result = list(sm_rec.values())[0]['capabilities']
++    # SM expects at least one entry of any SR type
++    if len(sm_rec) > 0:
++        result = list(sm_rec.values())[0]['capabilities']
+ 
+-        return result
+-    finally:
+-        if local_session:
+-            local_session.xenapi.session.logout()
++    return result
+ 
+ def sr_get_driver_info(driver_info):
+     results = {}
+@@ -720,14 +715,45 @@ def getrootdevID():
+     return rootdevID
+ 
+ 
+-def get_localAPI_session():
+-    # First acquire a valid session
+-    session = XenAPI.xapi_local()
+-    try:
+-        session.xenapi.login_with_password('root', '', '', 'SM')
+-    except:
+-        raise xs_errors.XenError('APISession')
+-    return session
++class APISession:
++    def __init__(self, originator="SM"):
++        self.originator = originator
++        self.session = self.login()
++        SMlog("APISession [{}] login".format(self.originator))
++        atexit.register(self.atexit)
++
++    def login(self):
++        # First acquire a valid session
++        session = XenAPI.xapi_local()
++        try:
++            session.xenapi.login_with_password('root', '', '', self.originator)
++        except Exception as exc:
++            msg = f"APISession [{self.originator}] Unable to open local XAPI session"
++            SMlog(msg)
++            raise xs_errors.XenError(msg) from exc
++        return session
++
++    def logout(self, log="logout"):
++        if self.session is None:
++            SMlog("APISession [{}] session is None {}".format(self.originator, log))
++            return
++        self.session.xenapi.session.logout()
++        SMlog("APISession [{}] {}".format(self.originator, log))
++        self.session = None
++
++    def __del__(self):
++        """Closes an API session"""
++        atexit.unregister(self.atexit)
++        self.logout(log="logout del")
++
++    def atexit(self):
++        self.logout(log="logout atexit")
++
++    def __enter__(self):
++        return self.session
++
++    def __exit__(self, _type, _value, _traceback):
++        self.logout(log=f"logout exception[{_type}] {_value}" if _type else "logout context")
+ 
+ 
+ def get_this_host():
+@@ -1379,16 +1405,12 @@ class FistPoint:
+         return os.path.exists("/tmp/fist_%s" % name)
+ 
+     def mark_sr(self, name, sruuid, started):
+-        session = get_localAPI_session()
+-        try:
++        with APISession("SM-util-FistPoint-mark_sr") as session:
+             sr = session.xenapi.SR.get_by_uuid(sruuid)
+-
+             if started:
+                 session.xenapi.SR.add_to_other_config(sr, name, "active")
+             else:
+                 session.xenapi.SR.remove_from_other_config(sr, name)
+-        finally:
+-            session.xenapi.session.logout()
+ 
+     def activate(self, name, sruuid):
+         if name in self.points:
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index 10ebbf83..018750c5 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -60,7 +60,6 @@ class TestRelease(object):
+ class IrrelevantLock(object):
+     pass
+ 
+-
+ def create_cleanup_sr(xapi, uuid=None):
+     return cleanup.SR(uuid=uuid, xapi=xapi, createLock=False, force=False)
+ 
+@@ -85,7 +84,10 @@ class TestSR(unittest.TestCase):
+         self.xapi_mock.isPluggedHere.return_value = True
+         self.xapi_mock.isMaster.return_value = True
+         self.mock_xapi_session = mock.MagicMock(name="MockSession")
+-        self.xapi_mock.getSession.return_value = self.mock_xapi_session
++
++        util_apisession_patcher = mock.patch('cleanup.util.APISession.login')
++        self.mock_util_apisession_patcher = util_apisession_patcher.start()
++        self.mock_util_apisession_patcher.return_value = self.mock_xapi_session
+ 
+         self.addCleanup(mock.patch.stopall)
+ 
+diff --git a/tests/test_mpathcount.py b/tests/test_mpathcount.py
+index 922e1f20..aed7fea9 100644
+--- a/tests/test_mpathcount.py
++++ b/tests/test_mpathcount.py
+@@ -177,39 +177,6 @@ class TestMpathCount(unittest.TestCase):
+         self.assertNotIn('multipathed', store)
+         self.assertNotIn('mpath-3600a098038303973743f486833396d40', store)
+ 
+-    @mock.patch('mpathcount.sys.exit', autospec=True)
+-    def test_exit_logs_out(self, mock_exit):
+-        # Arrange
+-        session = mock.MagicMock()
+-
+-        # Act
+-        mpathcount.mpc_exit(session, 0)
+-
+-        # Assert
+-        mock_exit.assert_called_once_with(0)
+-        session.xenapi.session.logout.assert_called_once()
+-
+-    @mock.patch('mpathcount.sys.exit', autospec=True)
+-    def test_exit_no_session(self, mock_exit):
+-        # Act
+-        mpathcount.mpc_exit(None, 0)
+-
+-        # Assert
+-        mock_exit.assert_called_once_with(0)
+-
+-    @mock.patch('mpathcount.sys.exit', autospec=True)
+-    def test_exit_log_out_error(self, mock_exit):
+-        # Arrange
+-        session = mock.MagicMock()
+-        session.xenapi.session.logout.side_effect = XenAPI.Failure
+-
+-        # Act
+-        mpathcount.mpc_exit(session, 0)
+-
+-        # Assert
+-        mock_exit.assert_called_once_with(0)
+-        session.xenapi.session.logout.assert_called_once()
+-
+     @mock.patch('mpathcount.sys.exit', autospec=True)
+     @mock.patch('mpathcount.util.SMlog', autospec=True)
+     @mock.patch('mpathcount.subprocess.Popen', autospec=True)
+diff --git a/tests/test_sr_health_check.py b/tests/test_sr_health_check.py
+index bc879f96..241ea004 100644
+--- a/tests/test_sr_health_check.py
++++ b/tests/test_sr_health_check.py
+@@ -17,7 +17,9 @@ class TestSrHealthCheck(unittest.TestCase):
+         util_patcher = mock.patch('sr_health_check.util')
+         self.mock_util = util_patcher.start()
+         self.mock_session = mock.MagicMock()
+-        self.mock_util.get_localAPI_session.return_value = self.mock_session
++        self.mock_apisession = mock.MagicMock()
++        self.mock_util.APISession.return_value = self.mock_apisession
++        self.mock_apisession.__enter__.return_value = self.mock_session
+         sr_patcher = mock.patch('sr_health_check.SR.SR', autospec=True)
+         self.mock_sr = sr_patcher.start()
+ 

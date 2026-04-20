@@ -1,0 +1,33 @@
+From d0a40774580e50d3f7b6aa829d92544045a120b2 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Fri, 17 Apr 2026 17:58:19 +0200
+Subject: [PATCH] Fix cbtlog on FileSR
+
+The `_get_blocktracking_status` function would return false if the `vdi_type`
+was something not referenced as being a COWImage. But in the case of
+`vdi-data-destroy` on FileSR, the `vdi_type` become `cbtlog` which would return
+False.
+As such, the call to `VDI.list_changed_blocks` would error saying the CBT are
+not related (the default error).
+The LVM-based SR appear to maintain the VDI type instead of using cbtlog here.
+
+This commit return the behaviour to the one before cowutil but with current interface.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/VDI.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index b2a12d1b..4c2ef3c3 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -802,7 +802,7 @@ class VDI(object):
+         """ Get blocktracking status """
+         if not uuid:
+             uuid = self.uuid
+-        if not VdiType.isCowImage(self.vdi_type):
++        if self.vdi_type == VdiType.RAW:
+             return False
+         elif 'VDI_CONFIG_CBT' not in util.sr_get_capability(
+                 self.sr.uuid, session=self.sr.session):

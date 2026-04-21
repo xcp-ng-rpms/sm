@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.4%{?dist}
+Release: %{?xsrel}.5%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -185,46 +185,47 @@ Patch1097: 0097-fix-linstor-ignore-unknown-res-to-get-volume-info-12.patch
 Patch1098: 0098-feat-linstor-parallelize-SR.scan-cleanup-vhd-util-ca.patch
 Patch1099: 0099-fix-cleanup-properly-handle-FileSR-exception-for-sla.patch
 Patch1100: 0100-Ensure-DRBD-sync-before-resizing-volumes-in-thick-co.patch
-Patch1101: 0101-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
-Patch1102: 0102-refactor-sm-move-all-VDI-types-a-new-module-vditype..patch
-Patch1103: 0103-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
-Patch1104: 0104-feat-VdiType-add-an-helper-to-test-cow-images.patch
-Patch1105: 0105-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
-Patch1106: 0106-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
-Patch1107: 0107-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
-Patch1108: 0108-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
-Patch1109: 0109-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
-Patch1110: 0110-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
-Patch1111: 0111-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
-Patch1112: 0112-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
-Patch1113: 0113-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
-Patch1114: 0114-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
-Patch1115: 0115-refactor-LVHDSR-rename-to-LVMSR.patch
-Patch1116: 0116-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
-Patch1117: 0117-fix-on_slave.py-is_open-must-use-lvm-SR-type-due-to-.patch
-Patch1118: 0118-refactor-constants.py-move-VG_LOCATION-VG_PREFIX-and.patch
-Patch1119: 0119-fix-test_blktap2.py-replace-phy-VDI-with-raw-VDI.patch
-Patch1120: 0120-feat-cleanup.py-always-print-type-in-VDI.__str__.patch
-Patch1121: 0121-Add-CowUtil-class.patch
-Patch1122: 0122-fix-linstor-handle-correctly-type-with-multi-cow-uti.patch
-Patch1123: 0123-Support-image-format-param-during-VDI-creation.patch
-Patch1124: 0124-Always-store-image-format-in-sm-config.patch
-Patch1125: 0125-fix-linstorvolumemanager-report-unexpected-DRBD-devi.patch
-Patch1126: 0126-feat-SR-add-QCOW2-image-format-backend-not-implement.patch
-Patch1127: 0127-feat-LinstorSR-prohibit-QCOW2.patch
-Patch1128: 0128-feat-qcow2-Add-QCOW2-support.patch
-Patch1129: 0129-feat-qcow2-Add-coalesce-with-call-to-tapdisk.patch
-Patch1130: 0130-feat-qcow2-Add-qcow2helper.patch
-Patch1131: 0131-fix-MooseFSSR-type-hint-fix.patch
-Patch1132: 0132-feat-qcow2-Remove-limitation-on-blocksize.patch
-Patch1133: 0133-fix-coalesce-Big-vhd-blocks-cause-exception.patch
-Patch1134: 0134-feat-qcow2_helper-support-extended_l2-feature.patch
-Patch1135: 0135-fix-qcow2-fix-mirror-for-migration.patch
-Patch1136: 0136-fix-qcow2-Use-measure-to-compute-overhead-in-qcow2.patch
-Patch1137: 0137-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
-Patch1138: 0138-Add-missing-image-format-attr-on-snap-VDIs-113.patch
-Patch1139: 0139-Fix-vdi_type-and-image_format-for-udevSR.patch
-Patch1140: 0140-Fix-cbtlog-on-FileSR.patch
+Patch1101: 0101-fix-LVMSR-deactivate-unused-LVM-snap-base-before-del.patch
+Patch1102: 0102-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
+Patch1103: 0103-refactor-sm-move-all-VDI-types-a-new-module-vditype..patch
+Patch1104: 0104-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
+Patch1105: 0105-feat-VdiType-add-an-helper-to-test-cow-images.patch
+Patch1106: 0106-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
+Patch1107: 0107-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
+Patch1108: 0108-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
+Patch1109: 0109-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
+Patch1110: 0110-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
+Patch1111: 0111-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
+Patch1112: 0112-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
+Patch1113: 0113-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
+Patch1114: 0114-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
+Patch1115: 0115-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
+Patch1116: 0116-refactor-LVHDSR-rename-to-LVMSR.patch
+Patch1117: 0117-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
+Patch1118: 0118-fix-on_slave.py-is_open-must-use-lvm-SR-type-due-to-.patch
+Patch1119: 0119-refactor-constants.py-move-VG_LOCATION-VG_PREFIX-and.patch
+Patch1120: 0120-fix-test_blktap2.py-replace-phy-VDI-with-raw-VDI.patch
+Patch1121: 0121-feat-cleanup.py-always-print-type-in-VDI.__str__.patch
+Patch1122: 0122-Add-CowUtil-class.patch
+Patch1123: 0123-fix-linstor-handle-correctly-type-with-multi-cow-uti.patch
+Patch1124: 0124-Support-image-format-param-during-VDI-creation.patch
+Patch1125: 0125-Always-store-image-format-in-sm-config.patch
+Patch1126: 0126-fix-linstorvolumemanager-report-unexpected-DRBD-devi.patch
+Patch1127: 0127-feat-SR-add-QCOW2-image-format-backend-not-implement.patch
+Patch1128: 0128-feat-LinstorSR-prohibit-QCOW2.patch
+Patch1129: 0129-feat-qcow2-Add-QCOW2-support.patch
+Patch1130: 0130-feat-qcow2-Add-coalesce-with-call-to-tapdisk.patch
+Patch1131: 0131-feat-qcow2-Add-qcow2helper.patch
+Patch1132: 0132-fix-MooseFSSR-type-hint-fix.patch
+Patch1133: 0133-feat-qcow2-Remove-limitation-on-blocksize.patch
+Patch1134: 0134-fix-coalesce-Big-vhd-blocks-cause-exception.patch
+Patch1135: 0135-feat-qcow2_helper-support-extended_l2-feature.patch
+Patch1136: 0136-fix-qcow2-fix-mirror-for-migration.patch
+Patch1137: 0137-fix-qcow2-Use-measure-to-compute-overhead-in-qcow2.patch
+Patch1138: 0138-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
+Patch1139: 0139-Add-missing-image-format-attr-on-snap-VDIs-113.patch
+Patch1140: 0140-Fix-vdi_type-and-image_format-for-udevSR.patch
+Patch1141: 0141-Fix-cbtlog-on-FileSR.patch
 
 %description
 This package contains storage backends used in XCP
@@ -548,6 +549,9 @@ then
 fi
 
 %changelog
+* Tue Apr 21 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.5
+- Add 0101-fix-LVMSR-deactivate-unused-LVM-snap-base-before-del.patch
+
 * Mon Apr 20 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.4
 - Add patch for cbtlog on FileSR
 - Add patch for udevSR not having a vdi_type

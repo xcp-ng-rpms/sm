@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.4%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -223,6 +223,8 @@ Patch1135: 0135-fix-qcow2-fix-mirror-for-migration.patch
 Patch1136: 0136-fix-qcow2-Use-measure-to-compute-overhead-in-qcow2.patch
 Patch1137: 0137-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
 Patch1138: 0138-Add-missing-image-format-attr-on-snap-VDIs-113.patch
+Patch1139: 0139-Fix-vdi_type-and-image_format-for-udevSR.patch
+Patch1140: 0140-Fix-cbtlog-on-FileSR.patch
 
 %description
 This package contains storage backends used in XCP
@@ -546,6 +548,10 @@ then
 fi
 
 %changelog
+* Mon Apr 20 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.4
+- Add patch for cbtlog on FileSR
+- Add patch for udevSR not having a vdi_type
+
 * Wed Apr 15 2026 Philippe Coval <philippe.coval@vates.tech> - 3.2.12-17.3
 - fairlock: Fix upgrade warning by reloading service files
 

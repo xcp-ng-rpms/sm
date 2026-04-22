@@ -226,6 +226,7 @@ Patch1138: 0138-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
 Patch1139: 0139-Add-missing-image-format-attr-on-snap-VDIs-113.patch
 Patch1140: 0140-Fix-vdi_type-and-image_format-for-udevSR.patch
 Patch1141: 0141-Fix-cbtlog-on-FileSR.patch
+Patch1142: 0142-feat-qcow2-live-leaf-coalesce.patch
 
 %description
 This package contains storage backends used in XCP

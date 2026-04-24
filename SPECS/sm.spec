@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.5%{?dist}
+Release: %{?xsrel}.6%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -226,6 +226,8 @@ Patch1138: 0138-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
 Patch1139: 0139-Add-missing-image-format-attr-on-snap-VDIs-113.patch
 Patch1140: 0140-Fix-vdi_type-and-image_format-for-udevSR.patch
 Patch1141: 0141-Fix-cbtlog-on-FileSR.patch
+Patch1142: 0142-fix-qcow2-Set-the-max-size-to-be-under-16TiB.patch
+
 
 %description
 This package contains storage backends used in XCP
@@ -549,6 +551,9 @@ then
 fi
 
 %changelog
+* Fri Apr 24 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.6
+- Limit the max size of QCOW2 VDI to be under 16TiB for compatibility with EXTSR
+
 * Tue Apr 21 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.5
 - Add 0101-fix-LVMSR-deactivate-unused-LVM-snap-base-before-del.patch
 

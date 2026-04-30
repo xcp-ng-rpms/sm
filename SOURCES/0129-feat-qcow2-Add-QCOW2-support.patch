@@ -1,4 +1,4 @@
-From 5ea4ce5876b58d60ab3f8b8f208fc4d0b616ee12 Mon Sep 17 00:00:00 2001
+From c772e4bc6d25f5f054b567e32506a72bda9536f6 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Sun, 15 Mar 2026 17:08:51 +0100
 Subject: [PATCH] feat(qcow2): Add QCOW2 support
@@ -158,7 +158,7 @@ index f8e8a8b0..d68d9c77 100755
      assert False, f"Unsupported image format: {image_format}"
  
 diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
-index 80b9e1a9..9f485908 100755
+index 80b9e1a9..a9bcd925 100755
 --- a/drivers/qcow2util.py
 +++ b/drivers/qcow2util.py
 @@ -14,24 +14,431 @@
@@ -990,7 +990,7 @@ index 80b9e1a9..9f485908 100755
 +        if size < 0 or size > MAX_QCOW_SIZE:
 +            raise xs_errors.XenError(
 +                "VDISize",
-+                opterr="VDI size must be between {} MB and {} MB".format(MIN_QCOW_SIZE // (1024*1024), MAX_QCOW_SIZE // (1024 * 1024))
++                opterr="VDI size must be between 1 MB and {} MB".format(MAX_QCOW_SIZE // (1024 * 1024))
 +            )
 +
 +        return util.roundup(QCOW_CLUSTER_SIZE, size)

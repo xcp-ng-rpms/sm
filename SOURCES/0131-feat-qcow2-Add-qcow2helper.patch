@@ -1,4 +1,4 @@
-From cc37e22698bf40487668566cf9bab74c3790f949 Mon Sep 17 00:00:00 2001
+From ba8dd4c95474fb0dd535dfa4ab7ed9d13fdeb043 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 25 Jun 2025 17:00:22 +0200
 Subject: [PATCH] feat(qcow2): Add qcow2helper
@@ -43,7 +43,7 @@ index 4669979f..afa87a03 100755
  	$(MAKE) -C sm_typing install DESTDIR=$(SM_STAGING)
  	ln -sf $(SM_DEST)blktap2.py $(SM_STAGING)$(BIN_DEST)/blktap2
 diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
-index a2bbe68f..49da9917 100755
+index 54878aa9..8cf2a7f9 100755
 --- a/drivers/qcow2util.py
 +++ b/drivers/qcow2util.py
 @@ -43,6 +43,7 @@ MIN_QCOW_SIZE: Final = QCOW_CLUSTER_SIZE

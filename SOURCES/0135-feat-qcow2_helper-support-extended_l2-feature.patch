@@ -1,4 +1,4 @@
-From 6c0a5161ce1251b575c8fa5a66a49d3d78b92425 Mon Sep 17 00:00:00 2001
+From 63fbc5a4732dd76b7db88956cca0c88ba0e11365 Mon Sep 17 00:00:00 2001
 From: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
 Date: Sat, 27 Sep 2025 00:08:29 +0200
 Subject: [PATCH] feat(qcow2_helper): support extended_l2 feature

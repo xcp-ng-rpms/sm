@@ -1,4 +1,4 @@
-From df4054477b8c01c926d314405bfe8dd167357948 Mon Sep 17 00:00:00 2001
+From 6a5772249cc3b84429153a02ecdf84522cb27b24 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 25 Aug 2025 17:07:34 +0200
 Subject: [PATCH] fix(coalesce): Big vhd-blocks cause exception

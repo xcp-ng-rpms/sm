@@ -1,4 +1,4 @@
-From dac09eacf4e2c9b6b91651c1a881483f06e28af7 Mon Sep 17 00:00:00 2001
+From 6f69a459c4399336d6697ef2d68a391601b24658 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 19 Aug 2025 15:21:43 +0200
 Subject: [PATCH] feat(qcow2): Remove limitation on blocksize
@@ -30,7 +30,7 @@ index e2b44935..a1d59c01 100755
  
      @abstractmethod
 diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
-index 49da9917..037bb51b 100755
+index 8cf2a7f9..b74ba8b6 100755
 --- a/drivers/qcow2util.py
 +++ b/drivers/qcow2util.py
 @@ -36,9 +36,9 @@ from constants import NS_PREFIX_LVM, VG_PREFIX
@@ -134,7 +134,7 @@ index 49da9917..037bb51b 100755
          self.setHidden(path, False) #We add hidden header at creation
  
 @@ -863,7 +866,7 @@ class QCowUtil(CowUtil):
-                 opterr="VDI size must be between {} MB and {} MB".format(MIN_QCOW_SIZE // (1024*1024), MAX_QCOW_SIZE // (1024 * 1024))
+                 opterr="VDI size must be between 1 MB and {} MB".format(MAX_QCOW_SIZE // (1024 * 1024))
              )
  
 -        return util.roundup(QCOW_CLUSTER_SIZE, size)

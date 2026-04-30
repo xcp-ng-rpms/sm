@@ -1,4 +1,4 @@
-From 9699fe3984bf923c0a53a02fa2752b22330d936f Mon Sep 17 00:00:00 2001
+From 73335c6ba992f1da72032b8e9745cb1e640ed6c1 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 30 Sep 2025 10:45:17 +0200
 Subject: [PATCH] fix(qcow2): fix mirror for migration
@@ -201,7 +201,7 @@ index a1d59c01..daf8842e 100755
          pass
  
 diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
-index 037bb51b..4892d608 100755
+index b74ba8b6..a7d4adc3 100755
 --- a/drivers/qcow2util.py
 +++ b/drivers/qcow2util.py
 @@ -812,16 +812,38 @@ class QCowUtil(CowUtil):

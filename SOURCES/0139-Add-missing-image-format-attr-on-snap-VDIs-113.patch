@@ -1,4 +1,4 @@
-From ba9c87f67dc9c6106db907e585dc646b34a4a2b8 Mon Sep 17 00:00:00 2001
+From 59b499f7a0d6ee1066e08a47d3806181b375985c Mon Sep 17 00:00:00 2001
 From: Goulven Riou <goulven.riou@vates.tech>
 Date: Tue, 16 Dec 2025 15:05:24 +0100
 Subject: [PATCH] Add missing image-format attr on snap VDIs (#113)

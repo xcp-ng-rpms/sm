@@ -1,4 +1,4 @@
-From 030a57632a2a29557e659d80f9da745992836f3f Mon Sep 17 00:00:00 2001
+From bc6bc610ccf812f8730ec45aaa2099462e7e73e8 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 14 Feb 2025 17:01:16 +0100
 Subject: [PATCH] feat(qcow2): Add coalesce with call to tapdisk
@@ -811,7 +811,7 @@ index f84034bc..0fc4f499 100755
 +        "cancel_coalesce_master": cancel_coalesce_master,
 +        })
 diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
-index 9f485908..a2bbe68f 100755
+index a9bcd925..54878aa9 100755
 --- a/drivers/qcow2util.py
 +++ b/drivers/qcow2util.py
 @@ -14,20 +14,23 @@

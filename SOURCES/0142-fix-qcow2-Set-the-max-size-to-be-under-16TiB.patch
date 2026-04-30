@@ -1,4 +1,4 @@
-From 2e7a0602dd75e9a030389f2fc8ee1f5e09e5650d Mon Sep 17 00:00:00 2001
+From 68945266259040ce15444e84c63a67400901c9ae Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 23 Apr 2026 17:55:17 +0200
 Subject: [PATCH] fix(qcow2): Set the max size to be under 16TiB
@@ -17,7 +17,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
-index c696041e..e8280563 100755
+index 0e254f27..2f27ea93 100755
 --- a/drivers/qcow2util.py
 +++ b/drivers/qcow2util.py
 @@ -41,7 +41,7 @@ QCOW2_DEFAULT_CLUSTER_SIZE: Final = 64 * 1024 # 64 KiB

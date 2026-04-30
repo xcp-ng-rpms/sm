@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.6%{?dist}
+Release: %{?xsrel}.7%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -227,6 +227,10 @@ Patch1139: 0139-Add-missing-image-format-attr-on-snap-VDIs-113.patch
 Patch1140: 0140-Fix-vdi_type-and-image_format-for-udevSR.patch
 Patch1141: 0141-Fix-cbtlog-on-FileSR.patch
 Patch1142: 0142-fix-qcow2-Set-the-max-size-to-be-under-16TiB.patch
+Patch1143: 0143-fix-LVMSR-activate-chain-for-QCOW2-resize.patch
+Patch1144: 0144-Fix-qcow2util-fix-exception-handling-in-coalesceOnli.patch
+Patch1145: 0145-feat-use-preferred-image-formats-as-a-list.patch
+Patch1146: 0146-fix-cleanup-online-coalesce-would-crash.patch
 
 
 %description
@@ -551,6 +555,12 @@ then
 fi
 
 %changelog
+* Thu Apr 30 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.7
+- Add 0143-fix-LVMSR-activate-chain-for-QCOW2-resize.patch
+- Add 0144-Fix-qcow2util-fix-exception-handling-in-coalesceOnli.patch
+- Add 0145-feat-use-preferred-image-formats-as-a-list.patch
+- Add 0146-fix-cleanup-online-coalesce-would-crash.patch
+
 * Fri Apr 24 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.6
 - Limit the max size of QCOW2 VDI to be under 16TiB for compatibility with EXTSR
 

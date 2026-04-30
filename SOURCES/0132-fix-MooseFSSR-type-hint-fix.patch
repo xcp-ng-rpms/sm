@@ -1,4 +1,4 @@
-From 9ae18d97c6b62400c6dde090962e8fa5e389a87a Mon Sep 17 00:00:00 2001
+From 8e5e4537e3a55efe277afedd203db7c5cf390de2 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 2 Jul 2025 14:58:46 +0200
 Subject: [PATCH] fix(MooseFSSR): type hint fix

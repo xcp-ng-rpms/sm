@@ -1,4 +1,4 @@
-From cd50bcdedde62391a9a1f9880570baa4e39ba45f Mon Sep 17 00:00:00 2001
+From debafc6b707900e66c59966e35adbd94c6baf935 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 6 Oct 2025 14:37:32 +0200
 Subject: [PATCH] fix(qcow2): Use measure to compute overhead in qcow2
@@ -30,7 +30,7 @@ index daf8842e..84874df8 100755
  
      @abstractmethod
 diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
-index 4892d608..2178527c 100755
+index a7d4adc3..7d08edde 100755
 --- a/drivers/qcow2util.py
 +++ b/drivers/qcow2util.py
 @@ -23,6 +23,7 @@ import re

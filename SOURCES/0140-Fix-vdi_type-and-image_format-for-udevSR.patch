@@ -1,4 +1,4 @@
-From d710f2b6ccc3bd43d704b5dd6bb2e3ec083f6b7b Mon Sep 17 00:00:00 2001
+From b4afc437c6c5e710b768763cf467a0adf2ebc965 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 16 Jan 2026 15:47:27 +0100
 Subject: [PATCH] Fix vdi_type and image_format for udevSR

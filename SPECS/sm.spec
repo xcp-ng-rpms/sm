@@ -1,15 +1,18 @@
-%global package_speccommit eb20118552753e3d609cbdbd8102ecfc2a31f4fa
-%global package_srccommit v3.2.3
+%global package_speccommit aea35276e3140983078b1382eb0320d581ea6342
+%global package_srccommit v3.2.12
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.3
-Release: 1.1%{?xsrel}%{?dist}
+Version: 3.2.12
+Release: 1%{?xsrel}.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.3.tar.gz
+Source0: sm-3.2.12.tar.gz
+Source1: update-cgrules.patch
+Patch0: ca-403593__dont_log_the_session_ref.patch
+Patch1: ca-405381_mpathcount_info_does_not_automatically_refresh_in_xencenter_after_disabling_and_enabling_multipath.patch
 
 %define __python python3
 
@@ -39,40 +42,15 @@ Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
+Conflicts: blktap < 3.55.3
+Requires: sg3_utils
 
 Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.3..3.2.3-8.3
-Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
-Patch1003: 0003-feat-drivers-add-XFS-driver.patch
-Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
-Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
-Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
-Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
-Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
-Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
-Patch1015: 0015-py3-use-of-integer-division-operator.patch
-Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
-Patch1017: 0017-py3-switch-interpreter-to-python3.patch
-Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
-Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
-Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
-Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
-Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
-Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
-Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
-Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
-Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
-Patch1027: 0027-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
-Patch1028: 0028-reflect-upstream-changes-in-our-tests.patch
+# git format-patch v3.2.3..3.2.3-8.3 --no-signature --no-numbered
+TODO
 
 %description
 This package contains storage backends used in XCP
@@ -87,20 +65,20 @@ make -C misc/fairlock
 %install
 make -C misc/fairlock install DESTDIR=%{buildroot}
 make install DESTDIR=%{buildroot}
+mkdir -p %{buildroot}%{_datadir}/%{name}/
+install -m 400 %SOURCE1 %{buildroot}%{_datadir}/%{name}/
 
 # Mark processes that should be moved to the data path
 %triggerin -- libcgroup-tools
-( patch -tsN -r - -d / -p0 )>/dev/null << 'EOF'
---- /etc/cgrules.conf	2018-04-11 02:33:52.000000000 +0000
-+++ /tmp/cgrules.conf	2024-01-26 17:30:29.204242549 +0000
-@@ -7,4 +7,6 @@
- #@student	cpu,memory	usergroup/student/
- #peter		cpu		test1/
- #%		memory		test2/
-+*:tapdisk	cpu,cpuacct	vm.slice/
-+%		blkio		vm.slice/
- # End of file
-EOF
+# Do not apply patch if it was already applied
+if ! patch --dry-run -RsN -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch >/dev/null; then
+    # Apply patch. Output NOT redirected to /dev/null so that error messages are displayed
+    if ! patch -tsN -r - -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch; then
+        echo "Error: failed to apply patch:"
+        cat %{_datadir}/%{name}/update-cgrules.patch
+        false
+    fi
+fi
 
 %pre
 # Remove sm-multipath on install or upgrade, to ensure it goes
@@ -114,6 +92,8 @@ EOF
 %systemd_post storage-init.service
 %systemd_post usb-scan.socket
 %systemd_post mpathcount.socket
+%systemd_post sr_health_check.timer
+%systemd_post sr_health_check.service
 
 # On upgrade, migrate from the old statefile to the new statefile so that
 # storage is not reinitialized.
@@ -130,6 +110,9 @@ if [ -e /etc/multipath.conf -a ! -h /etc/multipath.conf ]; then
    mv -f /etc/multipath.conf /etc/multipath.conf.$(date +%F_%T)
 fi
 update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.xenserver/multipath.conf 90
+
+systemctl enable sr_health_check.timer
+systemctl start sr_health_check.timer
 
 # XCP-ng: enable linstor-monitor by default.
 # However it won't start without linstor-controller.service
@@ -151,16 +134,19 @@ fi
 %systemd_preun storage-init.service
 %systemd_preun usb-scan.socket
 %systemd_preun mpathcount.socket
+%systemd_preun sr_health_check.timer
+%systemd_preun sr_health_check.service
 # Remove sm-multipath on upgrade or uninstall, to ensure it goes
 [ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
 # only remove in case of erase (but not at upgrade)
 if [ $1 -eq 0 ] ; then
     update-alternatives --remove multipath.conf /etc/multipath.xenserver/multipath.conf
 fi
-exit 0
 
 # XCP-ng
 %systemd_preun linstor-monitor.service
+
+exit 0
 
 %postun
 %systemd_postun make-dummy-sr.service
@@ -168,6 +154,8 @@ exit 0
 %systemd_postun sm-mpath-root.service
 %systemd_postun xs-sm.service
 %systemd_postun storage-init.service
+%systemd_postun sr_health_check.timer
+%systemd_postun sr_health_check.service
 
 # XCP-ng
 %systemd_postun linstor-monitor.service
@@ -189,6 +177,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /etc/xapi.d/plugins/testing-hooks
 /etc/xapi.d/plugins/intellicache-clean
 /etc/xapi.d/plugins/trim
+/etc/xapi.d/xapi-pre-shutdown/*
 /etc/xensource/master.d/02-vhdcleanup
 /opt/xensource/bin/blktap2
 /opt/xensource/bin/tapdisk-cache-stats
@@ -274,6 +263,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/constants.py
 /opt/xensource/sm/cbtutil.py
 /opt/xensource/sm/multipath-root-setup
+/opt/xensource/sm/sr_health_check.py
 %dir /opt/xensource/sm/plugins
 /opt/xensource/sm/plugins/__init__.py*
 /sbin/mpathutil
@@ -286,6 +276,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/mpathcount.service
 %{_unitdir}/mpathcount.socket
 %{_unitdir}/storage-init.service
+%{_unitdir}/sr_health_check.timer
+%{_unitdir}/sr_health_check.service
 %{_unitdir}/SMGC@.service
 %config /etc/udev/rules.d/65-multipath.rules
 %config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
@@ -297,6 +289,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/logrotate.d/SMlog
 %config /etc/udev/rules.d/57-usb.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
+%{_datadir}/%{name}/update-cgrules.patch
 # XCP-ng
 /etc/systemd/system/drbd-reactor.service.d/override.conf
 /etc/systemd/system/linstor-satellite.service.d/override.conf
@@ -324,6 +317,8 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/LargeBlockSR
 /opt/xensource/sm/LargeBlockSR.py
 %{_unitdir}/linstor-monitor.service
+%{python3_sitelib}/__pycache__/sm_typing*pyc
+%{python3_sitelib}/sm_typing.py
 
 %package testresults
 Summary:  test results for SM package
@@ -358,8 +353,109 @@ Manager and some other packages
 %{_unitdir}/fairlock@.service
 %{_libexecdir}/fairlock
 
+%post fairlock
+## On upgrade, shut down existing lock services so new ones will
+## be started. There should be no locks held during upgrade operations
+## so this is safe.
+if [ $1 -gt 1 ];
+then
+    /usr/bin/systemctl list-units fairlock@* --all --no-legend | /usr/bin/cut -d' ' -f1 | while read service;
+    do
+        /usr/bin/systemctl stop "$service"
+    done
+fi
 
 %changelog
+* Tue May 05 2026 Yann Dirson <yann.dirson@vates.tech> - 3.2.12-1.1
+- Rebase on 3.2.12-1, based on 3.2.12-3.1 by Ronan
+- TODO: Update XCP-ng patches
+- *** Upstream changelog ***
+  * Mon Jan 06 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-1
+  - CA-400789: Do not exclude parentless VDIs from cacheing
+  - CP-52844: allow for open session to be passed to sr_get_capability
+  - CP-52852: add handler for xmlrpc ProtocolError
+  - fix(cleanup.py): bad live coalesce check regarding FileSR
+  * Tue Nov 19 2024 Mark Syms <mark.syms@cloud.com> - 3.2.11-1
+  - CP-42675: send messages to Xapi if GC has insufficient space
+  - CP-52620: enable read-through cache on persistent leaf
+  * Tue Nov 05 2024 Mark Syms <mark.syms@cloud.com> - 3.2.10-1
+  - CA-397084: SR scan tries to deactivate LV in use by tapdisk
+  - CA-399644: if we make progress do not abort the GC or evaluate criteria
+  - CA-400743: perform post snapshot rename in ioretry
+  - CA-401068: if iSCSI device path is not found scan the bus
+  * Wed Oct 09 2024 Mark Syms <mark.syms@cloud.com> - 3.2.9-3
+  - CP-51658: install stop gc helper script
+  - CA-399643 Use full paths when stopping fairlock on upgrade
+  - CA-396655: check xapi is enabled before starting multipath reporting
+  - CA-396658: check xapi is enabled before checking SR health
+  - CA-400106: disable leaf coalesce with VDI snapshot secondary
+  * Tue Sep 24 2024 Tim Smith <tim.smith@cloud.com> - 3.2.8-2
+  - CA-399643 Use full paths when stopping fairlock on upgrade
+  * Fri Sep 06 2024 Robin Newton <robin.newton@cloud.com> - 3.2.8-1
+  - CA-398958 Cope with concurrent read-only activations
+  * Wed Sep 04 2024 Mark Syms <mark.syms@cloud.com> - 3.2.7-1
+  - CA-398425: correctly check for multiple targets in iSCSI
+  * Wed Aug 21 2024 Mark Syms <mark.syms@cloud.com> - 3.2.6-1
+  - CA-395560: Log exception details when LUN refresh fails
+  - CA-396124: amend criteria under which the garbage collector aborts
+  - CA-397084: Log any user of LV at deactivate
+  - CP-51214: stop cgrules triggering errors on update
+  * Tue Jul 23 2024 Tim Smith <tim.smith@cloud.com> - 3.2.5-1
+  - CA-395554 Stop fairlock services on package upgrade
+  * Mon Jul 22 2024 Mark Syms <mark.syms@cloud.com> - 3.2.4-1
+  - Add missing sg3_utils dependency
+  - Update multipath config for Dell, IBM and Nimble arrays
+
+* Tue Feb 18 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.17
+- Add 0065-fix-cleanup.py-resize-on-a-primary-host-82.patch
+
+* Mon Jan 20 2025 Yann LE BRIS <yann.lebris@vates.tech> - 3.2.3-1.16
+- Add 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+- Add 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+- Add 0063-Fix-filter-to-reject-other-device-types-77.patch
+- Add 0064-feat-add-HPE-Nimble-multipath-configuration.patch
+
+* Thu Dec 19 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.15
+- Fix missing mypy "@override" import in nfs-on-slave script
+
+* Wed Dec 11 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.14
+- Sync fork-load-daemon script with http-nbd-transfer (v1.5.0)
+- Fix coalesce process for LINSTOR SRs
+- Many code improvements for issues detected by mypy
+
+* Wed Nov 27 2024 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.13
+- Replace 0030-fix-cleanup.py-bad-live-coalesce-check-regarding-Fil.patch with 0030-fix-getAllocatedSize-is-incorrect-75.patch
+- Ensure correct allocatedSize for FileVDI in cleanup.py
+
+* Tue Nov 26 2024 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.12
+- Add 0030-fix-cleanup.py-bad-live-coalesce-check-regarding-Fil.patch
+
+* Mon Sep 09 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.7
+- Import 8.2 LINSTOR changes on 8.3:
+- Robustify HA: use a specific group with a replication count of 3
+- Export helpers in linstor-manager regarding network interfaces
+- Improve health-check helper: more details and simple API
+- Fix pause/unpause: always load a valid VHD chain
+- Robustify remote "vhdutil check" command
+- Robustify SR destruction
+- Prevent diskless destruction on master host
+- Prevent tiebreaker destruction
+- Reduce LINSTOR vhdutil queries
+
+* Tue Sep 03 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.4
+- Add 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
+- Restore the sr_health_check service and the code which goes with it.
+
+* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.3
+- %%preun: Move command above exit 0 so that it's executed
+- Properly disable the removed sr_health_check.timer
+- Also remove the dangling symlink if still present due to improper removal
+  of the timer in sm-3.2.0-1.5
+
+* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.2
+- Don't try to patch /etc/cgrules.conf when the patch was already applied
+- Fixes update warning
+
 * Tue Aug 13 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.3-1.1
 - Rebase on 3.2.3-1
 - Add 0028-reflect-upstream-changes-in-our-tests.patch

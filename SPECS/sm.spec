@@ -18,7 +18,6 @@ BuildRequires: python3-devel
 BuildRequires: python3-pylint
 BuildRequires: python3-coverage
 BuildRequires: python3-bitarray
-BuildRequires: python3-future
 
 # XCP-ng: gcc must be explicitly required in our build system
 BuildRequires: gcc
@@ -323,6 +322,7 @@ in /opt/xensource
 - Rebase on 4.1.12-1
 - Adjust deps for Almalinux 9
 - Skipped all XCP-ng patches for now, drop BuildRequires: python-mock
+- Dropped obsolete dependency on python3-future
 - TODO: XCP-ng patches were not ported yet to 4.x, XCP-ng-specific files commented out
 - *** Upstream changelog ***
   * Mon Jan 26 2026 Mark Syms <mark.syms@citrix.com> - 4.1.12-1

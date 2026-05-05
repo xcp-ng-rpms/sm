@@ -1,15 +1,15 @@
-%global package_speccommit 37d64d7ed2c11c041100710c42044df647cdebc9
-%global package_srccommit v4.1.9
+%global package_speccommit 961596c641e84de8fa5ed2f98768b4c7cbeb4b30
+%global package_srccommit v4.1.12
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 4.1.9
+Version: 4.1.12
 Release: 1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-4.1.9.tar.gz
+Source0: sm-4.1.12.tar.gz
 
 %define __python python3
 
@@ -258,6 +258,24 @@ in /opt/xensource
 /opt/xensource/libexec/dcopy
 
 %changelog
+* Mon Jan 26 2026 Mark Syms <mark.syms@citrix.com> - 4.1.12-1
+- Revert: use VHD header to fetch block size
+
+* Thu Jan 22 2026 Mark Syms  <mark.syms@citrix.com> - 4.1.11-1
+- Fix tests
+
+* Thu Jan 22 2026 Mark Syms <mark.syms@citrix.com> - 4.1.10-1
+- CA-420307: Construct synthetic page data as byte arrays
+- fix(cleanup): ensure VDI is active before relink
+- CA-411988 Fix TypeError in LVHDoHBASR.load() with dynamic module loading
+- CA-418775: ensure getsize and sg_readcap agree on resize
+- CA-420515: log errors when in foreground
+- CA-419706: update print calls
+- CA-416486: leaf coalesce wait for GC
+- LVHDSR: convert refvdi retured by get_snapshot_of to vdi_uuid
+- check that the snapshot_of field is not 'OpaqueRef:' format
+- use VHD header to fetch block size
+
 * Mon Dec 15 2025 Mark Syms <mark.syms@citrix.com> - 4.1.9-1
 - CA-421013: ensure cbt log removed on supporter after disable
 

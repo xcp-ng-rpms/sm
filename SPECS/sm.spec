@@ -1,15 +1,15 @@
-%global package_speccommit 6041ef4a60fa49d96a27c370aa7390f76b832bc2
-%global package_srccommit v3.2.11
+%global package_speccommit aea35276e3140983078b1382eb0320d581ea6342
+%global package_srccommit v3.2.12
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.11
+Version: 3.2.12
 Release: 1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.11.tar.gz
+Source0: sm-3.2.12.tar.gz
 Source1: update-cgrules.patch
 
 %define __python python3
@@ -301,6 +301,12 @@ then
 fi
 
 %changelog
+* Mon Jan 06 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-1
+- CA-400789: Do not exclude parentless VDIs from cacheing
+- CP-52844: allow for open session to be passed to sr_get_capability
+- CP-52852: add handler for xmlrpc ProtocolError
+- fix(cleanup.py): bad live coalesce check regarding FileSR
+
 * Tue Nov 19 2024 Mark Syms <mark.syms@cloud.com> - 3.2.11-1
 - CP-42675: send messages to Xapi if GC has insufficient space
 - CP-52620: enable read-through cache on persistent leaf

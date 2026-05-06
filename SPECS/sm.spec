@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.7%{?dist}
+Release: %{?xsrel}.8%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -231,6 +231,8 @@ Patch1143: 0143-fix-LVMSR-activate-chain-for-QCOW2-resize.patch
 Patch1144: 0144-Fix-qcow2util-fix-exception-handling-in-coalesceOnli.patch
 Patch1145: 0145-feat-use-preferred-image-formats-as-a-list.patch
 Patch1146: 0146-fix-cleanup-online-coalesce-would-crash.patch
+Patch1147: 0147-fix-linstor-add-backward-compatibility-for-getInfo.patch
+Patch1148: 0148-fix-linstor-add-backward-compatibility-for-manager-p.patch
 
 
 %description
@@ -555,6 +557,10 @@ then
 fi
 
 %changelog
+* Wed May 06 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-17.8
+- Add 0147-fix-linstor-add-backward-compatibility-for-getInfo.patch
+- Add 0148-fix-linstor-add-backward-compatibility-for-manager-p.patch
+
 * Thu Apr 30 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.7
 - Add 0143-fix-LVMSR-activate-chain-for-QCOW2-resize.patch
 - Add 0144-Fix-qcow2util-fix-exception-handling-in-coalesceOnli.patch

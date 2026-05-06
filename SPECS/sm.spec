@@ -93,17 +93,17 @@ touch "%{_sysconfdir}/lvm/cache/.cache"
 systemctl enable sr_health_check.timer
 systemctl start sr_health_check.timer
 
-# XCP-ng: enable linstor-monitor by default.
-# However it won't start without linstor-controller.service
-systemctl enable linstor-monitor.service
+# # XCP-ng: enable linstor-monitor by default.
+# # However it won't start without linstor-controller.service
+# systemctl enable linstor-monitor.service
 
-# XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
-# the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
-# it blocks its access to other hosts.
-# This command is also important if our multipath conf is modified for other drivers.
-if [ $1 -gt 1 ]; then
-    multipathd reconfigure
-fi
+# # XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
+# # the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
+# # it blocks its access to other hosts.
+# # This command is also important if our multipath conf is modified for other drivers.
+# if [ $1 -gt 1 ]; then
+#     multipathd reconfigure
+# fi
 
 %preun
 %systemd_preun make-dummy-sr.service
@@ -116,8 +116,8 @@ fi
 %systemd_preun sr_health_check.timer
 %systemd_preun sr_health_check.service
 
-# XCP-ng
-%systemd_preun linstor-monitor.service
+# # XCP-ng
+# %systemd_preun linstor-monitor.service
 
 exit 0
 
@@ -130,8 +130,8 @@ exit 0
 %systemd_postun sr_health_check.timer
 %systemd_postun sr_health_check.service
 
-# XCP-ng
-%systemd_postun linstor-monitor.service
+# # XCP-ng
+# %systemd_postun linstor-monitor.service
 
 %check
 tests/run_python_unittests.sh
@@ -176,35 +176,35 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config %{_sysconfdir}/udev/rules.d/57-usb.rules
 %config %{_sysconfdir}/udev/rules.d/99-purestorage.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
-# XCP-ng
-/etc/systemd/system/drbd-reactor.service.d/override.conf
-/etc/systemd/system/linstor-satellite.service.d/override.conf
-/etc/systemd/system/var-lib-linstor.service
-/etc/xapi.d/plugins/linstor-manager
-/opt/xensource/bin/linstor-kv-tool
-/opt/xensource/libexec/fork-log-daemon
-/opt/xensource/libexec/linstor-monitord
-/opt/xensource/libexec/safe-umount
-/opt/xensource/sm/CephFSSR
-/opt/xensource/sm/CephFSSR.py
-/opt/xensource/sm/GlusterFSSR
-/opt/xensource/sm/GlusterFSSR.py
-/opt/xensource/sm/linstorjournaler.py
-/opt/xensource/sm/LinstorSR
-/opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/linstorvhdutil.py
-/opt/xensource/sm/linstorvolumemanager.py
-/opt/xensource/sm/MooseFSSR
-/opt/xensource/sm/MooseFSSR.py
-/opt/xensource/sm/XFSSR
-/opt/xensource/sm/XFSSR.py
-/opt/xensource/sm/ZFSSR
-/opt/xensource/sm/ZFSSR.py
-/opt/xensource/sm/LargeBlockSR
-/opt/xensource/sm/LargeBlockSR.py
-%{_unitdir}/linstor-monitor.service
-%{python3_sitelib}/__pycache__/sm_typing*pyc
-%{python3_sitelib}/sm_typing.py
+# # XCP-ng
+# /etc/systemd/system/drbd-reactor.service.d/override.conf
+# /etc/systemd/system/linstor-satellite.service.d/override.conf
+# /etc/systemd/system/var-lib-linstor.service
+# /etc/xapi.d/plugins/linstor-manager
+# /opt/xensource/bin/linstor-kv-tool
+# /opt/xensource/libexec/fork-log-daemon
+# /opt/xensource/libexec/linstor-monitord
+# /opt/xensource/libexec/safe-umount
+# /opt/xensource/sm/CephFSSR
+# /opt/xensource/sm/CephFSSR.py
+# /opt/xensource/sm/GlusterFSSR
+# /opt/xensource/sm/GlusterFSSR.py
+# /opt/xensource/sm/linstorjournaler.py
+# /opt/xensource/sm/LinstorSR
+# /opt/xensource/sm/LinstorSR.py
+# /opt/xensource/sm/linstorvhdutil.py
+# /opt/xensource/sm/linstorvolumemanager.py
+# /opt/xensource/sm/MooseFSSR
+# /opt/xensource/sm/MooseFSSR.py
+# /opt/xensource/sm/XFSSR
+# /opt/xensource/sm/XFSSR.py
+# /opt/xensource/sm/ZFSSR
+# /opt/xensource/sm/ZFSSR.py
+# /opt/xensource/sm/LargeBlockSR
+# /opt/xensource/sm/LargeBlockSR.py
+# %{_unitdir}/linstor-monitor.service
+# %{python3_sitelib}/__pycache__/sm_typing*pyc
+# %{python3_sitelib}/sm_typing.py
 
 %package testresults
 Summary:  test results for SM package
@@ -324,7 +324,7 @@ in /opt/xensource
 %changelog
 * Tue May 05 2026 Yann Dirson <yann.dirson@vates.tech> - 4.1.12-1.1
 - Rebase on 4.1.12-1
-- TODO: XCP-ng patches were not ported yet to 4.x
+- TODO: XCP-ng patches were not ported yet to 4.x, XCP-ng-specific files commented out
 - *** Upstream changelog ***
   * Mon Jan 26 2026 Mark Syms <mark.syms@citrix.com> - 4.1.12-1
   - Revert: use VHD header to fetch block size

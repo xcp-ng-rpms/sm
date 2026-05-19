@@ -1,0 +1,29 @@
+From cbbda7420940fcc43ee27bc5348308d6342c15c7 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@citrix.com>
+Date: Tue, 7 Apr 2026 10:42:33 +0100
+Subject: [PATCH] CA-425972: log sg_readcap errors
+
+If `sg_readcap -b` fails during LUN resize we need to know why.
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+---
+ drivers/scsiutil.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/scsiutil.py b/drivers/scsiutil.py
+index a2c07bb..95bf03f 100755
+--- a/drivers/scsiutil.py
++++ b/drivers/scsiutil.py
+@@ -692,7 +692,8 @@ def sg_readcap(device):
+         # retry one time for "Capacity data has changed"
+         (rc, stdout, stderr) = util.doexec(readcapcommand)
+     if rc != 0:
+-        raise util.SMException("scsiutil.sg_readcap(%s) failed" % (device))
++        util.SMlog(f"scsiutil.sg_readcap({device}) failed.\n{stdout}\n{stderr}")
++        raise util.SMException(f"scsiutil.sg_readcap({device}) failed.")
+     match = re.search('(^|.*\n)(0x[0-9a-fA-F]+) (0x[0-9a-fA-F]+)\n$', stdout)
+     if not match:
+         raise util.SMException("scsiutil.sg_readcap(%s) failed to parse: %s"
+-- 
+2.53.0
+

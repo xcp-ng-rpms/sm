@@ -1,4 +1,4 @@
-From c78e42fa08db7dba45aaa8797d23cf89a6a17a1f Mon Sep 17 00:00:00 2001
+From 19bbb482c94c6bc8c308a0c71b551ed8c7a5e7e9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 22 Oct 2024 14:33:13 +0200
 Subject: [PATCH] Fix override of VDI.load in LVHDVDI cleanup.py
@@ -11,10 +11,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 12 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 29c4ee2a..04764e5b 100755
+index 8e283b0f..5eb79e09 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -1222,20 +1222,22 @@ class LVHDVDI(VDI):
+@@ -1225,20 +1225,22 @@ class LVHDVDI(VDI):
      JRN_ZERO = "zero"  # journal entry type for zeroing out end of parent
      DRIVER_NAME_RAW = "aio"
  

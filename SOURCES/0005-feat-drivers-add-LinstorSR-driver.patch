@@ -1,4 +1,4 @@
-From e9af43789670861a9c9119a8394ea0233945f039 Mon Sep 17 00:00:00 2001
+From 291ea8620b480558ff1465eb85b8a9c84638860f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH] feat(drivers): add LinstorSR driver
@@ -2291,7 +2291,7 @@ index c7de5c0d..a2dea049 100755
 +        </code>
  </SM-errorcodes>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 0bfcd441..d96ee851 100755
+index 5d593850..deaf4d3c 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -46,10 +46,19 @@ import xs_errors
@@ -2336,7 +2336,7 @@ index 0bfcd441..d96ee851 100755
              vdiList.append(self)
          return vdiList
  
-@@ -1482,6 +1503,112 @@ class LVHDVDI(VDI):
+@@ -1488,6 +1509,112 @@ class LVHDVDI(VDI):
                  lvhdutil.calcSizeLV(self.getSizeVHD())
  
  
@@ -2449,7 +2449,7 @@ index 0bfcd441..d96ee851 100755
  ################################################################################
  #
  # SR
-@@ -1536,7 +1663,8 @@ class SR:
+@@ -1542,7 +1669,8 @@ class SR:
  
      TYPE_FILE = "file"
      TYPE_LVHD = "lvhd"
@@ -2459,7 +2459,7 @@ index 0bfcd441..d96ee851 100755
  
      LOCK_RETRY_INTERVAL = 3
      LOCK_RETRY_ATTEMPTS = 20
-@@ -1557,6 +1685,8 @@ class SR:
+@@ -1563,6 +1691,8 @@ class SR:
              return FileSR(uuid, xapi, createLock, force)
          elif type == SR.TYPE_LVHD:
              return LVHDSR(uuid, xapi, createLock, force)
@@ -2468,7 +2468,7 @@ index 0bfcd441..d96ee851 100755
          raise util.SMException("SR type %s not recognized" % type)
      getInstance = staticmethod(getInstance)
  
-@@ -2975,6 +3105,232 @@ class LVHDSR(SR):
+@@ -2985,6 +3115,232 @@ class LVHDSR(SR):
                  vdi.fileName, vdi.uuid, slaves)
  
  
@@ -2701,7 +2701,7 @@ index 0bfcd441..d96ee851 100755
  ################################################################################
  #
  #  Helpers
-@@ -3016,7 +3372,9 @@ def normalizeType(type):
+@@ -3026,7 +3382,9 @@ def normalizeType(type):
          "xfs", "zfs"
      ]:
          type = SR.TYPE_FILE
@@ -5063,7 +5063,7 @@ index 00000000..d4004217
 +                    return True
 +        return False
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 6b7fc09f..932fc3ca 100755
+index e8e48b27..169d410f 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
 @@ -29,6 +29,12 @@ import lvhdutil

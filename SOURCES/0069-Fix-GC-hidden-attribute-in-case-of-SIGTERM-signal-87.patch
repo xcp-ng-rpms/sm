@@ -1,4 +1,4 @@
-From 1dfd3241683e91baf8d79b64af7cb87da55e8bca Mon Sep 17 00:00:00 2001
+From 9cc028246ee6ac8c226cf9b9dfa1d46ade06e364 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 19 Aug 2025 23:25:04 +0200
 Subject: [PATCH] Fix GC hidden attribute in case of SIGTERM signal (#87)
@@ -91,7 +91,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  1 file changed, 29 insertions(+), 21 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index e9f40eb3..933bb044 100755
+index 11c1c7e0..a12b252c 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -561,7 +561,7 @@ class VDI(object):
@@ -148,9 +148,9 @@ index e9f40eb3..933bb044 100755
              strHidden = "*"
          strSizeVirt = "?"
          if self.sizeVirt > 0:
-@@ -1055,13 +1055,19 @@ class VDI(object):
-             Util.log("Failed to update %s with vhd-parent field %s" % \
-                      (self.uuid, self.parentUuid))
+@@ -1058,13 +1058,19 @@ class VDI(object):
+     def _ensureParentActiveForRelink(self) -> None:
+         pass
  
 +    def isHidden(self) -> bool:
 +        if self._hidden is None:
@@ -170,7 +170,7 @@ index e9f40eb3..933bb044 100755
  
      def _increaseSizeVirt(self, size, atomic=True) -> None:
          """ensure the virtual size of 'self' is at least 'size'. Note that
-@@ -1186,7 +1192,7 @@ class FileVDI(VDI):
+@@ -1189,7 +1195,7 @@ class FileVDI(VDI):
          self.sizeVirt = info.sizeVirt
          self._sizeVHD = info.sizePhys
          self._sizeAllocated = info.sizeAllocated
@@ -179,7 +179,7 @@ index e9f40eb3..933bb044 100755
          self.scanError = False
          self.path = os.path.join(self.sr.path, "%s%s" % \
                  (self.uuid, vhdutil.FILE_EXTN_VHD))
-@@ -1245,7 +1251,7 @@ class LVHDVDI(VDI):
+@@ -1248,7 +1254,7 @@ class LVHDVDI(VDI):
          self.lvActive = info.lvActive
          self.lvOpen = info.lvOpen
          self.lvReadonly = info.lvReadonly
@@ -188,7 +188,7 @@ index e9f40eb3..933bb044 100755
          self.parentUuid = info.parentUuid
          self.path = os.path.join(self.sr.path, self.fileName)
  
-@@ -1379,15 +1385,16 @@ class LVHDVDI(VDI):
+@@ -1382,15 +1388,16 @@ class LVHDVDI(VDI):
      @override
      def _loadInfoHidden(self) -> None:
          if self.raw:
@@ -207,7 +207,7 @@ index e9f40eb3..933bb044 100755
          else:
              VDI._setHidden(self, hidden)
  
-@@ -1397,7 +1404,7 @@ class LVHDVDI(VDI):
+@@ -1400,7 +1407,7 @@ class LVHDVDI(VDI):
          if self.raw:
              strType = "RAW"
          strHidden = ""
@@ -216,7 +216,7 @@ index e9f40eb3..933bb044 100755
              strHidden = "*"
          strSizeVHD = ""
          if self._sizeVHD > 0:
-@@ -1575,7 +1582,7 @@ class LinstorVDI(VDI):
+@@ -1582,7 +1589,7 @@ class LinstorVDI(VDI):
          self._sizeVHD = -1
          self._sizeAllocated = -1
          self.drbd_size = -1
@@ -225,7 +225,7 @@ index e9f40eb3..933bb044 100755
          self.scanError = False
          self.vdi_type = vhdutil.VDI_TYPE_VHD
  
-@@ -1749,10 +1756,11 @@ class LinstorVDI(VDI):
+@@ -1756,10 +1763,11 @@ class LinstorVDI(VDI):
          HIDDEN_TAG = 'hidden'
  
          if self.raw:
@@ -238,7 +238,7 @@ index e9f40eb3..933bb044 100755
          else:
              VDI._setHidden(self, hidden)
  
-@@ -3035,9 +3043,9 @@ class FileSR(SR):
+@@ -3046,9 +3054,9 @@ class FileSR(SR):
              child.setConfig(VDI.DB_VDI_TYPE, vhdutil.VDI_TYPE_VHD)
              util.fistpoint.activate("LVHDRT_coaleaf_undo_after_rename2", self.uuid)
  
@@ -250,7 +250,7 @@ index e9f40eb3..933bb044 100755
              parent._setHidden(True)
          self._updateSlavesOnUndoLeafCoalesce(parent, child)
          util.fistpoint.activate("LVHDRT_coaleaf_undo_end", self.uuid)
-@@ -3271,9 +3279,9 @@ class LVHDSR(SR):
+@@ -3282,9 +3290,9 @@ class LVHDSR(SR):
          parent.deflate()
          child.inflateFully()
          util.fistpoint.activate("LVHDRT_coaleaf_undo_after_deflate", self.uuid)
@@ -262,7 +262,7 @@ index e9f40eb3..933bb044 100755
              parent._setHidden(True)
          if not parent.lvReadonly:
              self.lvmCache.setReadonly(parent.fileName, True)
-@@ -3627,9 +3635,9 @@ class LinstorSR(SR):
+@@ -3638,9 +3646,9 @@ class LinstorSR(SR):
  
          # TODO: Maybe deflate here.
  

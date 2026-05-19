@@ -1,4 +1,4 @@
-From 0b4b3fbe73f9df3e934ca0d7da83ecf9098e2fa7 Mon Sep 17 00:00:00 2001
+From 17c3ae1e0a24880982ee55df2203658be7d41973 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@gmail.com>
 Date: Thu, 23 Jun 2022 10:37:07 +0200
 Subject: [PATCH] Remove SR_CACHING capability for many SR types (#24)

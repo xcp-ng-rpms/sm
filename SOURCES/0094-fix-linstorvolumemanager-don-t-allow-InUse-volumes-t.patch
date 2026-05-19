@@ -1,4 +1,4 @@
-From da0f5a66001c86b8ab96bd03f4cdbf26a35e54f0 Mon Sep 17 00:00:00 2001
+From 4c0de0eafdb41f0dfe9cd13664250e40ad062d66 Mon Sep 17 00:00:00 2001
 From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
 Date: Fri, 31 Oct 2025 13:00:42 +0100
 Subject: [PATCH] fix(linstorvolumemanager): don't allow InUse volumes to be

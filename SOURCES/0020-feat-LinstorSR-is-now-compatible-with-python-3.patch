@@ -1,4 +1,4 @@
-From ef061123da472ec0b8d903d3ffc79eb15262c0f4 Mon Sep 17 00:00:00 2001
+From fd315d01a6bf8bc0d22a4b05b89a5f81ae42a7c4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 30 Jun 2023 12:41:43 +0200
 Subject: [PATCH] feat(LinstorSR): is now compatible with python 3
@@ -88,10 +88,10 @@ index 52d5c26e..1c9bd54a 100755
                  str(device_size)
              ]
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 6be02089..e7f50a45 100755
+index 3f5d6ae1..803f12a7 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3505,7 +3505,7 @@ class LinstorSR(SR):
+@@ -3515,7 +3515,7 @@ class LinstorSR(SR):
      def _checkSlaves(self, vdi):
          try:
              all_openers = self._linstor.get_volume_openers(vdi.uuid)

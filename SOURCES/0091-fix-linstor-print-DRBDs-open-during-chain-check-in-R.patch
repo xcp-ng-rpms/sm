@@ -1,4 +1,4 @@
-From 0c99938056494f05b96f3b4616092d5c80d67bc0 Mon Sep 17 00:00:00 2001
+From e81067a6f2d92e30e92cb7063b96c8601ab09a85 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Mon, 8 Dec 2025 14:00:40 +0100
 Subject: [PATCH] fix(linstor): print DRBDs open during chain check in RO mode

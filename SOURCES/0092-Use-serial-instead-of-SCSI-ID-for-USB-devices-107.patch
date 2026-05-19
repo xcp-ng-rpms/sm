@@ -1,4 +1,4 @@
-From 54957d1fc9d289f6a8bb70d6441e03f2532d280f Mon Sep 17 00:00:00 2001
+From 099c79649cfb2ce2747099273a68ce6d82aa97d3 Mon Sep 17 00:00:00 2001
 From: Frederic Bor <42858062+f-bor@users.noreply.github.com>
 Date: Tue, 9 Dec 2025 18:12:03 +0100
 Subject: [PATCH] Use serial instead of SCSI ID for USB devices (#107)

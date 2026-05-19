@@ -1,0 +1,51 @@
+From 8d0d625a0a73d15acd6a8034e26e49c5a10b3520 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 29 Apr 2026 19:16:36 +0200
+Subject: [PATCH] fix(cleanup): online coalesce would crash
+
+On a LVMSR, the online coalesce would try to get the parent from children to
+know if they needed offline relink but these child LVs weren't enabled.
+We add a override for getParent where we activate the LV.
+We also remove some validate from _doCoalesceOnHost since we shouldn't do a
+validate on a QCOW2 being used, it can lead to wrongly assume a VDI corrupted.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 04ea2c98..a8271ee2 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -859,8 +859,6 @@ class VDI(object):
+             raise
+ 
+     def _doCoalesceOnHost(self, hostRef):
+-        self.validate()
+-        self.parent.validate(True)
+         self.parent._increaseSizeVirt(self.sizeVirt)
+         self.sr._updateSlavesOnResize(self.parent)
+         #TODO: We might need to make the LV RW on the slave directly for coalesce?
+@@ -884,7 +882,6 @@ class VDI(object):
+         Util.runAbortable(lambda: self._call_plugin_coalesce(hostRef), \
+                           None, self.sr.uuid, abortTest, VDI.POLL_INTERVAL, 0, prefSig=signal.SIGTERM)
+ 
+-        self.parent.validate(True)
+         #self._verifyContents(0)
+         self.parent.updateBlockInfo()
+ 
+@@ -1654,6 +1651,13 @@ class LVMVDI(VDI):
+         self._activate()
+         return VDI._queryCowBlocks(self)
+ 
++    @override
++    def getParent(self) -> str:
++        self._activate()
++        parent = VDI.getParent(self)
++        self._deactivate()
++        return parent
++
+     @override
+     def _calcExtraSpaceForCoalescing(self) -> int:
+         if not VdiType.isCowImage(self.parent.vdi_type):

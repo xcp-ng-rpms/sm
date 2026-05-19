@@ -1,4 +1,4 @@
-From 00d53a4534c0ed4f7f1231358d2f9378b88d4b25 Mon Sep 17 00:00:00 2001
+From 3ff2a03b5cceff188bba3168bab0a873606a7feb Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Fri, 24 Oct 2025 10:44:12 +0200
 Subject: [PATCH] feat(linstorvolumemanager): raise when empty device path is

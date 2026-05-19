@@ -1,0 +1,38 @@
+From 87fda6f304997f049a839d4ecb4833cb46e43cb1 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 28 Apr 2026 18:08:39 +0200
+Subject: [PATCH] Fix(qcow2util): fix exception handling in coalesceOnline
+
+The previous exception handling didn't make a difference between commit failing
+or query failing. This change the log to mark the difference.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 2f27ea93..5ffe64c5 100755
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -755,7 +755,11 @@ class QCowUtil(CowUtil):
+             # We need to wait for query to return concluded
+             # We are technically ininterruptible since being interrupted will only stop checking if the job is done.
+             # We need to call `tap-ctl cancel` if we are interrupted, it is done in cleanup.py code.
++        except TapCtl.CommandFailure:
++            util.SMlog(f"Commit command failed on tapdisk instance {pid} (m: {minor}). Raising...")
++            raise
+ 
++        try:
+             status, nb, _ = TapCtl.query(pid, minor)
+             if status == "undefined":
+                 util.SMlog("Tapdisk {} (m: {}) coalesce status undefined for {}".format(pid, minor, path))
+@@ -767,7 +771,7 @@ class QCowUtil(CowUtil):
+                 logger.log("Got status {} for tapdisk {} (m: {})".format(status, pid, minor))
+             return nb
+         except TapCtl.CommandFailure:
+-            util.SMlog("Query command failed on tapdisk instance {}. Raising...".format(pid))
++            util.SMlog(f"Query command failed on tapdisk instance {pid} (m: {minor}). Raising...")
+             raise
+ 
+     @override

@@ -1,4 +1,4 @@
-From 869a67964b7fec8cea95cec6ea8f8263dc0214f0 Mon Sep 17 00:00:00 2001
+From c82080729d0d4942a9ca5ff3059b459bc212ea73 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 18 Feb 2025 00:53:36 +0100
 Subject: [PATCH] fix(cleanup.py): resize on a primary host (#82)
@@ -18,10 +18,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  4 files changed, 110 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 11775709..560b01fd 100755
+index aae654df..17578207 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -1754,6 +1754,61 @@ class LinstorVDI(VDI):
+@@ -1761,6 +1761,61 @@ class LinstorVDI(VDI):
          else:
              VDI._setHidden(self, hidden)
  

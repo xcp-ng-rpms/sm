@@ -90,8 +90,158 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.12-17-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
-TODO
+# git format-patch v3.2.12-21-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
+Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
+Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
+Patch1003: 0003-feat-drivers-add-XFS-driver.patch
+Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
+Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
+Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
+Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
+Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
+Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
+Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
+Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
+Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
+Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
+Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
+Patch1015: 0015-py3-use-of-integer-division-operator.patch
+Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
+Patch1017: 0017-py3-switch-interpreter-to-python3.patch
+Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
+Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
+Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
+Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
+Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
+Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
+Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
+Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
+Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
+Patch1027: 0027-reflect-upstream-changes-in-our-tests.patch
+Patch1028: 0028-Synchronization-with-8.2-LINSTOR-before-a-stable-rel.patch
+Patch1029: 0029-fix-LinstorSR-sync-fork-load-daemon-with-http-nbd-tr.patch
+Patch1030: 0030-fix-LinstorSR-simplify-_kick_gc-code-using-systemd-s.patch
+Patch1031: 0031-fix-LinstorSR-imitate-the-CA-400106-change.patch
+Patch1032: 0032-fix-linstorvhdutil-coalesce-helper-returns-the-secto.patch
+Patch1033: 0033-Prevent-wrong-mypy-error-regarding-_linstor-member-n.patch
+Patch1034: 0034-Fix-many-invalid-escape-sequences.patch
+Patch1035: 0035-Fix-many-invalid-escape-sequences-on-regexes.patch
+Patch1036: 0036-Fix-override-of-FileSR.attach.patch
+Patch1037: 0037-Fix-override-of-BaseISCSISR.detach.patch
+Patch1038: 0038-Fix-override-of-VDI.delete-in-many-subclasses.patch
+Patch1039: 0039-Fix-override-of-VDI._do_snapshot.patch
+Patch1040: 0040-Fix-override-of-VDI.load-in-LVHDVDI-cleanup.py.patch
+Patch1041: 0041-Use-a-specific-var-for-NFS-options-in-ISOSR.attach.patch
+Patch1042: 0042-Modernize-Lock-class-using-staticmethod-decorator.patch
+Patch1043: 0043-Modernize-GC-using-staticmethod-decorator.patch
+Patch1044: 0044-Modernize-RefCounter-using-staticmethod-decorator.patch
+Patch1045: 0045-Simplify-FakeSMBSR-implementation-remove-member-vars.patch
+Patch1046: 0046-Use-for-session-instead-of-for-e.patch
+Patch1047: 0047-Fix-util.SRtoXML-calls-in-many-drivers.patch
+Patch1048: 0048-Replace-Dict-variable-with-info-in-LVHDSR.patch
+Patch1049: 0049-Prevent-mypy-errors-when-a-variable-type-is-changed-.patch
+Patch1050: 0050-Prevent-bad-mypy-error-in-TestMultiLUNISCSISR-using-.patch
+Patch1051: 0051-Count-correctly-IQN-sessions-during-ISCSISR-attach.patch
+Patch1052: 0052-Use-importlib-instead-of-imp-which-is-deprecated-in-.patch
+Patch1053: 0053-Replace-deprecated-calls-to-distutils.spawn.find_exe.patch
+Patch1054: 0054-Replace-deprecated-calls-to-distutils.util.strtobool.patch
+Patch1055: 0055-Fix-_locked_load-calls-compatibility-with-python-3.1.patch
+Patch1056: 0056-Use-static-analysis-tool-mypy.patch
+Patch1057: 0057-Add-mypy-stubs.patch
+Patch1058: 0058-Use-override-everywhere.patch
+Patch1059: 0059-Makefile-fix-don-t-execute-precheck-during-installat.patch
+Patch1060: 0060-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+Patch1061: 0061-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+Patch1062: 0062-Fix-filter-to-reject-other-device-types-77.patch
+Patch1063: 0063-fix-cleanup.py-resize-on-a-primary-host-82.patch
+Patch1064: 0064-chore-.github-workflows-use-ubuntu-24.04.patch
+Patch1065: 0065-Fix-warns-reported-by-new-github-workflow.patch
+Patch1066: 0066-Improve-LinstorSR.py-to-handle-thick-SR-creation-85.patch
+Patch1067: 0067-Fix-LINSTOR-satellite-LS_KEEP_RES-regex.patch
+Patch1068: 0068-fix-LinstorSR-Correctly-reference-a-variable-excepti.patch
+Patch1069: 0069-Fix-GC-hidden-attribute-in-case-of-SIGTERM-signal-87.patch
+Patch1070: 0070-fix-LinstorSR-robustify-DB-umount-call.patch
+Patch1071: 0071-feat-Linstor-rewrite-linstorhostcall-logic.patch
+Patch1072: 0072-feat-linstor-Add-new-debug-log-in-linstorhostcall-67.patch
+Patch1073: 0073-fix-linstor-subsequent-fixes-for-linstorhostcall.patch
+Patch1074: 0074-Fix-tests-of-CP-51843-add-unit-tests-for-setup_cache.patch
+Patch1075: 0075-feat-LinstorSR-improve-DB-volume-robustness.patch
+Patch1076: 0076-fix-linstorvolumemanager-robustify-usable-size-gette.patch
+Patch1077: 0077-fix-linstorvhdutil-don-t-log-when-get_hosts_attached.patch
+Patch1078: 0078-refactor-linstorvhdutil-simplify-linstorhostcall.patch
+Patch1079: 0079-fix-linstorvhdutil-call-local-method-when-possible-i.patch
+Patch1080: 0080-fix-linstorvhdutil.py-remove-useless-param-on-call_r.patch
+Patch1081: 0081-chore-pylintrc-get-rid-of-E1120-errors-for-LINSTOR-u.patch
+Patch1082: 0082-fix-linstorvhdutil-support-missing-session-97.patch
+Patch1083: 0083-Remove-useless-loadLocked-param-on-vdi-methods-98.patch
+Patch1084: 0084-fix-largeblock-redo-VG-activation-using-custom-confi.patch
+Patch1085: 0085-Stop-SMGC-service-on-SR-detach-to-prevent-orphaned-s.patch
+Patch1086: 0086-fix-linstorvolumemanager-create-local-DB-path-when-r.patch
+Patch1087: 0087-feat-linstorvolumemanager-raise-when-empty-device-pa.patch
+Patch1088: 0088-fix-linstorvolumemanager-prevent-ops-on-version-mism.patch
+Patch1089: 0089-fix-linstor-handle-deleted-volumes-during-UUID-updat.patch
+Patch1090: 0090-fix-linstor-don-t-raise-if-volume-cannot-be-deleted-.patch
+Patch1091: 0091-fix-linstor-print-DRBDs-open-during-chain-check-in-R.patch
+Patch1092: 0092-Use-serial-instead-of-SCSI-ID-for-USB-devices-107.patch
+Patch1093: 0093-fix-linstorvolumemanager-fix-typo-106.patch
+Patch1094: 0094-fix-linstorvolumemanager-don-t-allow-InUse-volumes-t.patch
+Patch1095: 0095-feat-linstor-simplify-get_controller_uri-using-ss-co.patch
+Patch1096: 0096-fix-linstor-ignore-unknown-res-to-get-volume-info-12.patch
+Patch1097: 0097-feat-linstor-parallelize-SR.scan-cleanup-vhd-util-ca.patch
+Patch1098: 0098-fix-cleanup-properly-handle-FileSR-exception-for-sla.patch
+Patch1099: 0099-Ensure-DRBD-sync-before-resizing-volumes-in-thick-co.patch
+Patch1100: 0100-fix-LVMSR-deactivate-unused-LVM-snap-base-before-del.patch
+Patch1101: 0101-feat-linstor-backup-on-major-ops-and-regularly-on-ch.patch
+Patch1102: 0102-fix-SR-add-missing-mypy-annotations.patch
+Patch1103: 0103-refactor-vhdutil-move-LOCK_TYPE_SR-from-vhdutil.py-t.patch
+Patch1104: 0104-refactor-sm-move-all-VDI-types-in-a-new-module-vdity.patch
+Patch1105: 0105-refactor-sm-move-all-vhdutil.FILE_EXTN-helpers-in-vd.patch
+Patch1106: 0106-feat-VdiType-add-an-helper-to-test-cow-images.patch
+Patch1107: 0107-refactor-cleanup.py-rename-DB_VHD_PARENT-to-DB_VDI_P.patch
+Patch1108: 0108-refactor-cleanup.py-rename-DB_VHD_BLOCKS-to-DB_VDI_B.patch
+Patch1109: 0109-refactor-cleanup.py-rename-getVHDBlocks-to-getVDIBlo.patch
+Patch1110: 0110-refactor-cleanup.py-rename-_sizeVHD-and-getter-to-_s.patch
+Patch1111: 0111-fix-cleanup.py-always-use-vdi_type-to-display-info.patch
+Patch1112: 0112-refactor-cleanup.py-rename-vhdSize-to-coalescedSize-.patch
+Patch1113: 0113-refactor-cleanup.py-use-allocated_size-var-for-getAl.patch
+Patch1114: 0114-refactor-cleanup.py-rename-coalesceVHD-helpers-to-co.patch
+Patch1115: 0115-Remove-dead-code-in-VDI.py-VDIMetadataSize-class.patch
+Patch1116: 0116-fix-EXTSR-change-ext3-doc-references-to-ext4.patch
+Patch1117: 0117-refactor-LVHDSR-rename-to-LVMSR.patch
+Patch1118: 0118-refactor-LVHDo-SR-rename-to-LVMo-SR.patch
+Patch1119: 0119-fix-on_slave.py-is_open-must-use-lvm-SR-type-due-to-.patch
+Patch1120: 0120-refactor-constants.py-move-VG_LOCATION-VG_PREFIX-and.patch
+Patch1121: 0121-fix-test_blktap2.py-replace-phy-VDI-with-raw-VDI.patch
+Patch1122: 0122-feat-cleanup.py-always-print-type-in-VDI.__str__.patch
+Patch1123: 0123-Add-CowUtil-class.patch
+Patch1124: 0124-fix-linstor-handle-correctly-type-with-multi-cow-uti.patch
+Patch1125: 0125-Support-image-format-param-during-VDI-creation.patch
+Patch1126: 0126-Always-store-image-format-in-sm-config.patch
+Patch1127: 0127-fix-linstorvolumemanager-report-unexpected-DRBD-devi.patch
+Patch1128: 0128-feat-SR-add-QCOW2-image-format-backend-not-implement.patch
+Patch1129: 0129-feat-LinstorSR-prohibit-QCOW2.patch
+Patch1130: 0130-feat-SR-add-a-supported-image-format-list-defined-by.patch
+Patch1131: 0131-feat-qcow2-Add-QCOW2-support.patch
+Patch1132: 0132-feat-qcow2-Add-coalesce-with-call-to-tapdisk.patch
+Patch1133: 0133-feat-qcow2-Add-qcow2helper.patch
+Patch1134: 0134-fix-MooseFSSR-type-hint-fix.patch
+Patch1135: 0135-feat-qcow2-Remove-limitation-on-blocksize.patch
+Patch1136: 0136-fix-coalesce-Big-vhd-blocks-cause-exception.patch
+Patch1137: 0137-feat-qcow2_helper-support-extended_l2-feature.patch
+Patch1138: 0138-fix-qcow2-fix-mirror-for-migration.patch
+Patch1139: 0139-fix-qcow2-Use-measure-to-compute-overhead-in-qcow2.patch
+Patch1140: 0140-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
+Patch1141: 0141-Add-missing-image-format-attr-on-snap-VDIs-113.patch
+Patch1142: 0142-Fix-vdi_type-and-image_format-for-udevSR.patch
+Patch1143: 0143-Fix-cbtlog-on-FileSR.patch
+Patch1144: 0144-fix-qcow2-Set-the-max-size-to-be-under-16TiB.patch
+Patch1145: 0145-fix-LVMSR-activate-chain-for-QCOW2-resize.patch
+Patch1146: 0146-Fix-qcow2util-fix-exception-handling-in-coalesceOnli.patch
+Patch1147: 0147-feat-use-preferred-image-formats-as-a-list.patch
+Patch1148: 0148-fix-cleanup-online-coalesce-would-crash.patch
+Patch1149: 0149-fix-linstor-add-backward-compatibility-for-getInfo.patch
+Patch1150: 0150-fix-linstor-add-backward-compatibility-for-manager-p.patch
+Patch1151: 0151-fix-LVMSR-scan-with-cbt_metadata.patch
 
 
 %description
@@ -416,9 +566,14 @@ then
 fi
 
 %changelog
-* Tue May 19 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-21.1
+* Tue May 26 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-21.1
 - Rebase on 3.2.12-21
-- TODO: Update XCP-ng patches
+- Remove patches merged upstream:
+  - 0095-fix-cleanup-ensure-VDI-is-active-before-relink-119.patch
+- Add new patches:
+  - 0101-feat-linstor-backup-on-major-ops-and-regularly-on-ch.patch
+  - 0102-fix-SR-add-missing-mypy-annotations.patch
+  - 0130-feat-SR-add-a-supported-image-format-list-defined-by.patch
 - *** Upstream changelog ***
   * Tue Apr 07 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-21
   - CA-425972: log sg_readcap errors

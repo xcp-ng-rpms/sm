@@ -1,4 +1,4 @@
-From 259be8b634e3426a44842ca20392de9c352c17c7 Mon Sep 17 00:00:00 2001
+From 3f9b6341a7f2b331b86b8fcff8adf7e70eeef301 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 14:58:18 +0200
 Subject: [PATCH] Prevent mypy errors when a variable type is changed in

@@ -1,4 +1,4 @@
-From 60b9c3d3862e8f5b3955e187059c9301e20e5164 Mon Sep 17 00:00:00 2001
+From 40ec8c5113d2d7c5fe3e4a9e6a0b15750b6c4d73 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 15:33:11 +0200
 Subject: [PATCH] Modernize GC using `staticmethod` decorator
@@ -9,7 +9,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 12 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 04764e5b..cc229ae2 100755
+index 5eb79e09..5b325773 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -123,10 +123,11 @@ class Util:
@@ -131,7 +131,7 @@ index 04764e5b..cc229ae2 100755
  
      def _vdi_is_raw(self, vdi_path):
          """
-@@ -1828,6 +1828,7 @@ class SR(object):
+@@ -1834,6 +1834,7 @@ class SR(object):
      KEY_OFFLINE_COALESCE_NEEDED = "leaf_coalesce_need_offline"
      KEY_OFFLINE_COALESCE_OVERRIDE = "leaf_coalesce_offline_override"
  
@@ -139,7 +139,7 @@ index 04764e5b..cc229ae2 100755
      def getInstance(uuid, xapiSession, createLock=True, force=False):
          xapi = XAPI(xapiSession, uuid)
          type = normalizeType(xapi.srRecord["type"])
-@@ -1838,7 +1839,6 @@ class SR(object):
+@@ -1844,7 +1845,6 @@ class SR(object):
          elif type == SR.TYPE_LINSTOR:
              return LinstorSR(uuid, xapi, createLock, force)
          raise util.SMException("SR type %s not recognized" % type)

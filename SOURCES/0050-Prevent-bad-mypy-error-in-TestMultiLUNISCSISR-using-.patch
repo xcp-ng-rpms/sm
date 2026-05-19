@@ -1,4 +1,4 @@
-From 6d4f1ada14d99657c002d8bb897b8c8608a51769 Mon Sep 17 00:00:00 2001
+From 504d6023286209555d869dc6aba03552ff8b359d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:13:52 +0200
 Subject: [PATCH] Prevent bad mypy error in TestMultiLUNISCSISR using

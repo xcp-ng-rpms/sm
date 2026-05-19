@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.8%{?dist}
+Release: %{?xsrel}.9%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -233,6 +233,7 @@ Patch1145: 0145-feat-use-preferred-image-formats-as-a-list.patch
 Patch1146: 0146-fix-cleanup-online-coalesce-would-crash.patch
 Patch1147: 0147-fix-linstor-add-backward-compatibility-for-getInfo.patch
 Patch1148: 0148-fix-linstor-add-backward-compatibility-for-manager-p.patch
+Patch1149: 0149-fix-LVMSR-scan-with-cbt_metadata.patch
 
 
 %description
@@ -557,6 +558,9 @@ then
 fi
 
 %changelog
+* Wed May 13 2026 Anthoine Bourgeois <anthoine.bourgeois@vates.tech> - 3.2.12-17.9
+- Fix VDIs scan with CBT that trigger 'list index out of range' exception on SMAPI code
+
 * Wed May 06 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-17.8
 - Add 0147-fix-linstor-add-backward-compatibility-for-getInfo.patch
 - Add 0148-fix-linstor-add-backward-compatibility-for-manager-p.patch

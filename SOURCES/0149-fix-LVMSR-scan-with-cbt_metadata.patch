@@ -1,0 +1,52 @@
+From 7a084c9dbe5ddac23e59d8a7c7185afea35d52a9 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Sun, 10 May 2026 19:15:56 +0200
+Subject: [PATCH] fix(LVMSR): scan with cbt_metadata
+
+Scan with cbt_metadata VDIs find itself in the vdi_create part of `LVMVDI.load`
+without the size parameter expected.
+We added a special case for this.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LVMSR.py | 27 ++++++++++++++++-----------
+ 1 file changed, 16 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 5d48528b..3b05acac 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -1372,17 +1372,22 @@ class LVMVDI(VDI.VDI):
+                     raise xs_errors.XenError('VDICreate', opterr='Cannot create COW type disk in legacy mode')
+ 
+         if not self.vdi_type:
+-            size = int(self.sr.srcmd.params['args'][0])
+-            # In the case of vdi_create, the first parameter is size.
+-            # We need it to validate the vdi_type choice
+-            for image_format in self.sr.preferred_image_formats:
+-                vdi_type = getVdiTypeFromImageFormat(image_format)
+-                self._setType(vdi_type)
+-                try:
+-                    self.cowutil.validateAndRoundImageSize(size)
+-                    break
+-                except xs_errors.SROSError:
+-                    util.SMlog(f"We won't be able to create the VDI with format {vdi_type}.")
++            if self.sr.srcmd.cmd == "vdi_create":
++                size = int(self.sr.srcmd.params['args'][0])
++                # In the case of vdi_create, the first parameter is size.
++                # We need it to validate the vdi_type choice
++                for image_format in self.sr.preferred_image_formats:
++                    vdi_type = getVdiTypeFromImageFormat(image_format)
++                    self._setType(vdi_type)
++                    try:
++                        self.cowutil.validateAndRoundImageSize(size)
++                        break
++                    except xs_errors.SROSError:
++                        util.SMlog(f"We won't be able to create the VDI with format {vdi_type}.")
++            else:
++                # For cbt_metadata, we found ourselves here without being a vdi_create, we don't have size
++                util.SMlog("Not a vdi_create, must be cbtlog")
++                self._setType(getVdiTypeFromImageFormat(self.sr.preferred_image_formats[0]))
+ 
+         self.lvname = "%s%s" % (LV_PREFIX[self.vdi_type], vdi_uuid)
+         self.path = os.path.join(self.sr.path, self.lvname)

@@ -1,6 +1,6 @@
-%global package_speccommit 2f759838752640a6974fd7a67f1c40c22d115bca
+%global package_speccommit 3bdaf6892d4654ea875b92b28de24ce15da5957b
 %global usver 3.2.12
-%global xsver 17
+%global xsver 21
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -37,17 +37,23 @@ Patch19: ca-413899_rescan_lvs_when_activating
 Patch20: remove_gc_no_space_flag_when_not_applicable
 Patch21: improve_messages_vdi_type_missing
 Patch22: cp-309718_lc_moving_average
-Patch23: add_udev_rules_for_purestorage_-_best_practices.patch
-Patch24: update_pure_storage_udev_1.patch
-Patch25: update_pure_storage_udev_2.patch
-Patch26: CA-418775_ensure_size_consistent_for_resize
-Patch27: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
-Patch28: CA-420515_handle_errors_in_foreground
-Patch29: ca-419706_update_print_calls
-Patch30: ca-421013_ensure_cbt_refresh_on_supporter
-Patch31: CA-416486_leaf_coalesce_wait_for_GC
-Patch32: CP-308587_update_netapp_multipath
-Patch33: CA-413325_log_what_lvs_shows_on_failure
+Patch23: ensure_vdi_is_active_before_relink.patch
+Patch24: CP-311969-skip-introduce-and-clean-metadata-for-VDIs.patch
+Patch25: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch26: update_pure_storage_udev_1.patch
+Patch27: update_pure_storage_udev_2.patch
+Patch28: CA-418775_ensure_size_consistent_for_resize
+Patch29: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
+Patch30: CA-420515_handle_errors_in_foreground
+Patch31: ca-419706_update_print_calls
+Patch32: ca-421013_ensure_cbt_refresh_on_supporter
+Patch33: CA-416486_leaf_coalesce_wait_for_GC
+Patch34: CA-423293_decode_error_string
+Patch35: CA-425972_log_sg_readcap_errors
+Patch36: CA-425974_resolve_device_names_correctly
+Patch37: CP-308587_update_netapp_multipath
+Patch38: CA-413325_log_what_lvs_shows_on_failure
+Patch39: CP-311724_optimise_tapdisk_from_minor
 
 %define __python python3
 
@@ -332,13 +338,28 @@ Manager and some other packages
 ## so this is safe.
 if [ $1 -gt 1 ];
 then
-    /usr/bin/systemctl list-units fairlock@* --all --no-legend | /usr/bin/cut -d' ' -f1 | while read service;
+    /usr/bin/systemctl list-units fairlock@* --all --no-legend --plain | /usr/bin/cut -d' ' -f1 | while read service;
     do
         /usr/bin/systemctl stop "$service"
     done
 fi
 
 %changelog
+* Tue Apr 07 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-21
+- CA-425972: log sg_readcap errors
+- CA-425974: resolve device names correctly
+
+* Tue Mar 31 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-20
+- CP-311969: skip introduce and clean metadata for VDIs missing in Xapi and SR
+
+* Wed Mar 04 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-19
+- CA-424060 Fix sm-fairlock post-install script
+- CP-311724: find tapdisk process from filesystem.
+
+* Tue Feb 17 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-18
+- CA-422719 Backport "ensure VDI is active before relink"
+- CA-423293: decode stderr string before logging
+
 * Fri Dec 12 2025 Mark Syms <mark.syms@citrix.com> - 3.2.12-17
 - Backport changes from upstream.
 - remove flag gc_no_space from SR sm-config when not applicable

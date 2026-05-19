@@ -1,0 +1,99 @@
+From 75ec7ad8e51d36e83b062d65469a184828594a02 Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@citrix.com>
+Date: Tue, 7 Apr 2026 13:17:44 +0100
+Subject: [PATCH] CA-425974: resolve device names correctly
+
+This code makes the tacit and sometimes incorrect assumption that the
+symlinks in `/dev/disk/by-scsid/<scsi ID>/` have names which can be
+appended to `/dev/` and then resolve to a valid device node. As this
+is not always the case the code is unsafe so resolve the paths and
+take basename of the actual path which should be a path in `/dev/`.
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+diff --git a/drivers/scsiutil.py b/drivers/scsiutil.py
+index 95bf03f..86e35b1 100755
+--- a/drivers/scsiutil.py
++++ b/drivers/scsiutil.py
+@@ -209,10 +209,20 @@ def getdev(path):
+ 
+ 
+ def get_devices_by_SCSIid(SCSIid):
+-    devices = os.listdir(os.path.join('/dev/disk/by-scsid', SCSIid))
++    """
++    Return the canonical device path(s) for a given SCSI ID
++    Args:
++        SCSIid: The SCSI ID of the devices to return
++
++    Returns:
++        List of canonicalised devices
++    """
++    scsid_path = os.path.join('/dev/disk/by-scsid', SCSIid)
++    devices = os.listdir(scsid_path)
+     if 'mapper' in devices:
+         devices.remove('mapper')
+-    return devices
++    return [os.path.realpath(os.path.join(scsid_path, d)) for
++            d in devices]
+ 
+ 
+ def rawdev(dev):
+diff --git a/tests/test_scsiutil.py b/tests/test_scsiutil.py
+index 6568f45..a7d60dc 100644
+--- a/tests/test_scsiutil.py
++++ b/tests/test_scsiutil.py
+@@ -40,3 +40,55 @@ class Test_sg_readcap(unittest.TestCase):
+         adapter.add_disk()
+ 
+         scsiutil.refreshdev(["/dev/sda"])
++
++
++class TestGetDevicesByScsciId(unittest.TestCase):
++
++    def setUp(self):
++        self.addCleanup(mock.patch.stopall)
++
++        listdir_patcher = mock.patch('os.listdir')
++        self.mock_listdir = listdir_patcher.start()
++        realpath_patcher = mock.patch('os.path.realpath')
++        self.mock_realpath = realpath_patcher.start()
++
++    def test_get_devices_by_SCSIid_no_devices(self):
++        self.mock_listdir.return_value = []
++
++        # Act
++        paths = scsiutil.get_devices_by_SCSIid("scsiid")
++
++        # Assert
++        self.assertListEqual([], paths)
++
++    def test_get_devices_by_SCSIid_devices(self):
++        self.mock_listdir.return_value = ['sda', 'sdc', 'sday']
++        path_map = {
++            '/dev/disk/by-scsid/scsiid/sda': '/dev/sda',
++            '/dev/disk/by-scsid/scsiid/sdc': '/dev/sdc',
++            '/dev/disk/by-scsid/scsiid/sday': '/dev/sday'
++        }
++        self.mock_realpath.side_effect = path_map.get
++
++        # Act
++        paths = scsiutil.get_devices_by_SCSIid("scsiid")
++
++        # Assert
++        print(paths)
++        self.assertListEqual(list(path_map.values()), paths)
++
++    def test_get_devices_by_SCSIid_different_target(self):
++        self.mock_listdir.return_value = ['1', '2', '3']
++        path_map = {
++            '/dev/disk/by-scsid/scsiid/1': '/dev/sda',
++            '/dev/disk/by-scsid/scsiid/2': '/dev/sdc',
++            '/dev/disk/by-scsid/scsiid/3': '/dev/sday'
++        }
++        self.mock_realpath.side_effect = path_map.get
++
++        # Act
++        paths = scsiutil.get_devices_by_SCSIid("scsiid")
++
++        # Assert
++        print(paths)
++        self.assertListEqual(list(path_map.values()), paths)

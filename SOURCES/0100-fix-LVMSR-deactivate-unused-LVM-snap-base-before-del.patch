@@ -1,0 +1,72 @@
+From 24731860f4059593fd93d46c3278df898c59a648 Mon Sep 17 00:00:00 2001
+From: Bartuccio Antoine <antoine.bartuccio@gmail.com>
+Date: Mon, 20 Apr 2026 14:04:14 +0200
+Subject: [PATCH] fix(LVMSR): deactivate unused LVM snap base before deletion
+ (#130)
+
+During normal operations, unused LV bases appear to stay enabled on slaves after they get deleted, causing an accumulation of activated deleted LVs on slaves.
+This is mostly benign and this automatically gets resolved after a reboot of the slave. But if it accumulates a lot (on a big infra for example) it causes LVM commands to slow down so much that the whole SR gets unusable.
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+---
+ drivers/LVHDSR.py | 26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
+index 2af2d5ec..cb089d01 100755
+--- a/drivers/LVHDSR.py
++++ b/drivers/LVHDSR.py
+@@ -1248,13 +1248,6 @@ class LVHDSR(SR.SR):
+             if not rv:
+                 raise Exception('plugin %s failed' % self.PLUGIN_ON_SLAVE)
+ 
+-    def _updateSlavesPreClone(self, hostRefs, origOldLV):
+-        args = {"vgName": self.vgname,
+-                "action1": "deactivateNoRefcount",
+-                "lvName1": origOldLV}
+-        message = "Deactivate VDI"
+-        self.call_on_slave(args, hostRefs, message)
+-
+     def _updateSlavesOnClone(self, hostRefs, origOldLV, origLV,
+             baseUuid, baseLV):
+         """We need to reactivate the original LV on each slave (note that the
+@@ -1292,6 +1285,16 @@ class LVHDSR(SR.SR):
+         message = f"Cleaning locks for {baseLV}"
+         self.call_on_slave(args, hostRefs, message)
+ 
++    def _deactivateOnSlave(self, hostRefs, lvname):
++        """Tell the slave we need to deactivate the base image"""
++        args = {
++            "vgName": self.vgname,
++            "action1": "deactivateNoRefcount",
++            "lvName1": lvname}
++
++        message = f"Deactivating {lvname}"
++        self.call_on_slave(args, hostRefs, message)
++
+     def _cleanup(self, skipLockCleanup=False):
+         """delete stale refcounter, flag, and lock files"""
+         RefCounter.resetAll(lvhdutil.NS_PREFIX_LVM + self.uuid)
+@@ -1760,7 +1763,7 @@ class LVHDVDI(VDI.VDI):
+         self.sr._ensureSpaceAvailable(size_req)
+ 
+         if hostRefs:
+-            self.sr._updateSlavesPreClone(hostRefs, self.lvname)
++            self.sr._deactivateOnSlave(hostRefs, self.lvname)
+ 
+         baseUuid = util.gen_uuid()
+         origUuid = self.uuid
+@@ -1890,6 +1893,13 @@ class LVHDVDI(VDI.VDI):
+             util.SMlog("%s != %s != %s => deleting unused base %s" % \
+                     (snapParent, self.uuid, snap2Parent, self.lvname))
+             RefCounter.put(self.uuid, False, lvhdutil.NS_PREFIX_LVM + self.sr.uuid)
++
++            # The removed LV could still be activated on a slave host if it's
++            # part of a VM currently running there, we need to deactivate it
++            # before it gets removed to avoid a LV leak.
++            if hostRefs:
++                self.sr._deactivateOnSlave(hostRefs, self.lvname)
++
+             self.sr.lvmCache.remove(self.lvname)
+             self.sr.lvActivator.remove(self.uuid, False)
+             if hostRefs:

@@ -1,0 +1,110 @@
+From 5b01f8346b67b9a5291251a3eeaae95bcb6c5497 Tue Jan 6 12:04:52 2026 +0100
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, Jan 6 12:04:52 2026 +0100
+Subject: fix(cleanup): ensure VDI is active before relink
+
+A VDI can have the `JRN_RELINK` tag which triggers a parent change,
+but this can fail with LVM driver if a host has been rebooted,
+in this situation the parent is not active. Before this fix:
+```
+Jan  2 16:01:16 xcp-host-1 SMGC: [3802739] Coalescing *85ff84a8[VHD](65.000G///33.836G|n) -> *cf4a78da[VHD](65.000G///52.555G|n)
+Jan  2 16:01:16 xcp-host-1 SMGC: [3802739] ==> Coalesce apparently already done: skipping
+Jan  2 16:01:16 xcp-host-1 SM: [3802739] lock: tried lock /var/lock/sm/1f74d512-a410-be6f-c816-8a1e43ea1801/sr, acquired: True (exists: True)
+Jan  2 16:01:16 xcp-host-1 SMGC: [3802739] Got sm-config for 568e74bb[VHD](65.000G///65.133G|n): {'relinking': 'True', 'import_task': 'OpaqueRef:28d03111-0fee-0a21-e659-a1e90a1f3a91', 'vdi_type': 'vhd', 'vhd-parent': '85ff84a8-153a-4fff-9c59-0fbab710d373'}
+Jan  2 16:01:16 xcp-host-1 SMGC: [3802739] Set relinking = True for 568e74bb[VHD](65.000G///65.133G|n)
+Jan  2 16:01:16 xcp-host-1 SMGC: [3802739] Got sm-config for 568e74bb[VHD](65.000G///65.133G|n): {'relinking': 'True', 'import_task': 'OpaqueRef:28d03111-0fee-0a21-e659-a1e90a1f3a91', 'vdi_type': 'vhd', 'vhd-parent': '85ff84a8-153a-4fff-9c59-0fbab710d373'}
+Jan  2 16:01:16 xcp-host-1 SMGC: [3802739] Got sm-config for dd9c344a[VHD](65.000G///8.000M|n): {'relinking': 'True', 'import_task': 'OpaqueRef:28d03111-0fee-0a21-e659-a1e90a1f3a91', 'vdi_type': 'vhd', 'vhd-parent': '85ff84a8-153a-4fff-9c59-0fbab710d373'}
+Jan  2 16:01:16 xcp-host-1 SMGC: [3802739] Set relinking = True for dd9c344a[VHD](65.000G///8.000M|n)
+Jan  2 16:01:16 xcp-host-1 SMGC: [3802739] Got sm-config for dd9c344a[VHD](65.000G///8.000M|n): {'relinking': 'True', 'import_task': 'OpaqueRef:28d03111-0fee-0a21-e659-a1e90a1f3a91', 'vdi_type': 'vhd', 'vhd-parent': '85ff84a8-153a-4fff-9c59-0fbab710d373'}
+Jan  2 16:01:16 xcp-host-1 SM: [3802739] LVMCache: refreshing
+Jan  2 16:01:16 xcp-host-1 fairlock[3906]: /run/fairlock/devicemapper acquired
+Jan  2 16:01:16 xcp-host-1 fairlock[3906]: /run/fairlock/devicemapper sent '3802739 - 20917096.949649855-'
+Jan  2 16:01:16 xcp-host-1 SM: [3802739] ['/sbin/lvs', '--noheadings', '--units', 'b', '-o', '+lv_tags', '/dev/VG_XenStorage-1f74d512-a410-be6f-c816-8a1e43ea1801']
+Jan  2 16:01:16 xcp-host-1 SM: [3802739]   pread SUCCESS
+Jan  2 16:01:16 xcp-host-1 fairlock[3906]: /run/fairlock/devicemapper released
+Jan  2 16:01:16 xcp-host-1 SM: [3802739] ['/usr/bin/vhd-util', 'scan', '-f', '-m', 'VHD-*', '-l', 'VG_XenStorage-1f74d512-a410-be6f-c816-8a1e43ea1801']
+Jan  2 16:01:18 xcp-host-1 SM: [3802739]   pread SUCCESS
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739] SR 1f74 ('sr001-clu001-tdeaz-az07-svc-data23') (538 VDIs in 68 VHD trees): no changes
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   Relinking 568e74bb[VHD](65.000G///65.133G|n) from *85ff84a8[VHD](65.000G///33.836G|n) to *cf4a78da[VHD](65.000G///52.555G|n)
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] lock: opening lock file /var/lock/sm/lvm-1f74d512-a410-be6f-c816-8a1e43ea1801/568e74bb-3eab-4e15-974a-a34a4bf7d779
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] lock: acquired /var/lock/sm/lvm-1f74d512-a410-be6f-c816-8a1e43ea1801/568e74bb-3eab-4e15-974a-a34a4bf7d779
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] Refcount for lvm-1f74d512-a410-be6f-c816-8a1e43ea1801:568e74bb-3eab-4e15-974a-a34a4bf7d779 (0, 0) + (1, 0) => (1, 0)
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] Refcount for lvm-1f74d512-a410-be6f-c816-8a1e43ea1801:568e74bb-3eab-4e15-974a-a34a4bf7d779 set => (1, 0b)
+Jan  2 16:01:18 xcp-host-1 fairlock[3906]: /run/fairlock/devicemapper acquired
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] ['/sbin/lvchange', '-ay', '/dev/VG_XenStorage-1f74d512-a410-be6f-c816-8a1e43ea1801/VHD-568e74bb-3eab-4e15-974a-a34a4bf7d779']
+Jan  2 16:01:18 xcp-host-1 fairlock[3906]: /run/fairlock/devicemapper sent '3802739 - 20917099.141269115-'
+Jan  2 16:01:18 xcp-host-1 SM: [3802739]   pread SUCCESS
+Jan  2 16:01:18 xcp-host-1 fairlock[3906]: /run/fairlock/devicemapper released
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] lock: released /var/lock/sm/lvm-1f74d512-a410-be6f-c816-8a1e43ea1801/568e74bb-3eab-4e15-974a-a34a4bf7d779
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] ['/usr/bin/vhd-util', 'modify', '--debug', '-p', '/dev/VG_XenStorage-1f74d512-a410-be6f-c816-8a1e43ea1801/VHD-cf4a78da-316f-4fd9-a82d-07a47c142a39', '-n', '/dev/VG_XenStorage-1f74d512-a410-be6f-c816-8a1e43ea1801/VHD-568e74bb-3eab-4e15-974a-a34a4bf7d779']
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] FAILED in util.pread: (rc 2) stdout: 'failed to set parent to '/dev/VG_XenStorage-1f74d512-a410-be6f-c816-8a1e43ea1801/VHD-cf4a78da-316f-4fd9-a82d-07a47c142a39': -2
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] ', stderr: ''
+Jan  2 16:01:18 xcp-host-1 SM: [3802739] lock: released /var/lock/sm/1f74d512-a410-be6f-c816-8a1e43ea1801/sr
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739] *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]          ***********************
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]          *  E X C E P T I O N  *
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]          ***********************
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739] coalesce: EXCEPTION <class 'util.CommandException'>, No such file or directory
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/cleanup.py", line 2024, in coalesce
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     self._coalesce(vdi)
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/cleanup.py", line 2228, in _coalesce
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     vdi._relinkSkip()
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/cleanup.py", line 963, in _relinkSkip
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     child._setParent(self.parent)
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/cleanup.py", line 1396, in _setParent
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     vhdutil.setParent(self.path, parent.path, parent.raw)
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/vhdutil.py", line 215, in setParent
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     ioretry(cmd)
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/vhdutil.py", line 94, in ioretry
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     errlist=[errno.EIO, errno.EAGAIN])
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/util.py", line 347, in ioretry
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     return f()
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/vhdutil.py", line 93, in <lambda>
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     return util.ioretry(lambda: util.pread2(cmd, text=text),
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/util.py", line 255, in pread2
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     return pread(cmdlist, quiet=quiet, text=text)
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]   File "/opt/xensource/sm/util.py", line 217, in pread
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]     raise CommandException(rc, str(cmdlist), stderr.strip())
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739]
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739] *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
+Jan  2 16:01:18 xcp-host-1 SMGC: [3802739] Coalesce failed, skipping
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+Signed-off-by: Tim Smith <tim.smith@citrix.com>
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 9eb8832..9746f5e 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1019,6 +1019,9 @@ class VDI:
+             Util.log("Failed to update %s with vhd-parent field %s" % \
+                      (self.uuid, self.parentUuid))
+ 
++    def _ensureParentActiveForRelink(self):
++        pass
++
+     def _loadInfoHidden(self):
+         hidden = vhdutil.getHidden(self.path)
+         self.hidden = (hidden != 0)
+@@ -1410,6 +1413,9 @@ class LVHDVDI(VDI):
+     def _deactivate(self):
+         self.sr.lvActivator.deactivate(self.uuid, False)
+ 
++    def _ensureParentActiveForRelink(self):
++        self.parent._activate()
++
+     def _increaseSizeVirt(self, size, atomic=True):
+         "ensure the virtual size of 'self' is at least 'size'"
+         self._activate()
+@@ -2001,6 +2007,10 @@ class SR:
+             # this means we had done the actual coalescing already and just
+             # need to finish relinking and/or refreshing the children
+             Util.log("==> Coalesce apparently already done: skipping")
++
++            # The parent volume must be active for the parent change to occur.
++            # The parent volume may become inactive if the host is rebooted.
++            vdi._ensureParentActiveForRelink()
+         else:
+             # JRN_COALESCE is used to check which VDI is being coalesced in
+             # order to decide whether to abort the coalesce. We remove the

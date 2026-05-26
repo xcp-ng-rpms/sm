@@ -1,4 +1,4 @@
-From 547c1c69340f752d23f05af8eb43f2d0e995d7c5 Mon Sep 17 00:00:00 2001
+From 8c016403ef8eeb9f018892b66c683a7c4090f6b8 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Mon, 14 Jul 2025 16:23:17 +0200
 Subject: [PATCH] Fix LINSTOR satellite LS_KEEP_RES regex

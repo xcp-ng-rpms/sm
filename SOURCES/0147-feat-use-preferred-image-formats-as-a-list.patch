@@ -1,0 +1,77 @@
+From 6759c8f165ff694137bffef520ee0db9d2fa2d42 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 29 Apr 2026 11:55:48 +0200
+Subject: [PATCH] feat: use preferred-image-formats as a list
+
+The preferred image formats input is a list but wasn't used as such.
+This commit add the check for the first image format in the list that will
+accept the size when no image format is manually chosen.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/FileSR.py | 18 +++++++++++++++---
+ drivers/LVMSR.py  | 13 +++++++++++--
+ 2 files changed, 26 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index e17d5265..2259f914 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -33,7 +33,7 @@ import blktap2
+ import time
+ import glob
+ from uuid import uuid4
+-from cowutil import getCowUtil, getImageStringFromVdiType
++from cowutil import getCowUtil, getImageStringFromVdiType, getVdiTypeFromImageFormat
+ from vditype import VdiType, VdiTypeExtension, VDI_COW_TYPES, VDI_TYPE_TO_EXTENSION
+ import xmlrpc.client
+ import XenAPI # pylint: disable=import-error
+@@ -500,10 +500,22 @@ class FileVDI(VDI.VDI):
+                 self.key_hash = vdi_sm_config.get("key_hash")
+ 
+             if not image_format:
+-                image_format = self.sr.preferred_image_formats[0]
++                size = int(self.sr.srcmd.params['args'][0])
++                # In the case of vdi_create, the first parameter is size.
++                # We need it to validate the vdi_type choice
++                for image_format in self.sr.preferred_image_formats:
++                    vdi_type = getVdiTypeFromImageFormat(image_format)
++                    cowutil = getCowUtil(vdi_type)
++                    try:
++                        cowutil.validateAndRoundImageSize(size)
++                        break
++                    except xs_errors.SROSError:
++                        util.SMlog(f"We won't be able to create the VDI with format {vdi_type}.")
++                        # If the last one also fail we still give the vdi_type and cowutil,
++                        # it will fail in the `create` function instead when re-running `validateAndRoundImageSize`
+             self.vdi_type = self.sr._resolve_vdi_type_from_image_format(image_format)
+-
+             self.cowutil = getCowUtil(self.vdi_type)
++
+             self.path = os.path.join(self.sr.path, "%s%s" %
+                 (vdi_uuid, VDI_TYPE_TO_EXTENSION[self.vdi_type]))
+         else:
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index c24c5b10..6f3229fa 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -1369,8 +1369,17 @@ class LVMVDI(VDI.VDI):
+             image_format = self.sr.read_config_image_format(vdi_sm_config)
+ 
+         if not image_format:
+-            image_format = self.sr.preferred_image_formats[0]
+-        self._setType(self.sr._resolve_vdi_type_from_image_format(image_format))
++            size = int(self.sr.srcmd.params['args'][0])
++            # In the case of vdi_create, the first parameter is size.
++            # We need it to validate the vdi_type choice
++            for image_format in self.sr.preferred_image_formats:
++                vdi_type = self.sr._resolve_vdi_type_from_image_format(image_format)
++                self._setType(vdi_type)
++                try:
++                    self.cowutil.validateAndRoundImageSize(size)
++                    break
++                except xs_errors.SROSError:
++                    util.SMlog(f"We won't be able to create the VDI with format {vdi_type}.")
+ 
+         if self.sr.legacyMode and self.sr.cmd == 'vdi_create' and VdiType.isCowImage(self.vdi_type):
+             raise xs_errors.XenError('VDICreate', opterr='Cannot create COW type disk in legacy mode')

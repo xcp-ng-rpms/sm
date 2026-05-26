@@ -1,4 +1,4 @@
-From 5ed9625176327075a55f5cc4f774f0e64b8b6af2 Mon Sep 17 00:00:00 2001
+From a291caf780f894091acbecbc95a5f25269c91056 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 14 Oct 2024 17:33:49 +0200
 Subject: [PATCH] Fix override of FileSR.attach

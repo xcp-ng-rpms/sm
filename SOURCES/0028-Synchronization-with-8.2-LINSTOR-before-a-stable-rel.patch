@@ -1,4 +1,4 @@
-From 4e3e31bd02414f7bb6220481f62c31a20b23af80 Mon Sep 17 00:00:00 2001
+From b895dc7e5010df6c99b4fc1cf412749c049011ec Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 26 Sep 2024 18:53:04 +0200
 Subject: [PATCH] Synchronization with 8.2 LINSTOR before a stable release
@@ -1384,7 +1384,7 @@ index dbca3b41..a470dfec 100755
              raise LinstorVolumeManagerError(
                  'Failed to create volume `{}` from SR `{}`: {}'.format(
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 75328757..f98257a2 100755
+index 933afddd..057f8a87 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
 @@ -30,6 +30,7 @@ import vhdutil

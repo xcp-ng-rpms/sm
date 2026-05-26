@@ -1,4 +1,4 @@
-From beba05d62f52fda3911305f19a58086d45704086 Mon Sep 17 00:00:00 2001
+From c08dfc35c565806d55c3f7452fb72105231c142d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 17:51:25 +0200
 Subject: [PATCH] Use static analysis tool (mypy)
@@ -121,7 +121,7 @@ index 04a6543e..155983fc 100755
                  "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", \
                  "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 31169f15..046d08c3 100755
+index e1564933..766f3b43 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -18,6 +18,8 @@
@@ -143,7 +143,7 @@ index 31169f15..046d08c3 100755
          "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", "VDI_MIRROR",
          "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "ATOMIC_PAUSE",
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 3403c262..129528a5 100755
+index 9f4088f1..fcc940f0 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -17,6 +17,9 @@
@@ -156,7 +156,7 @@ index 3403c262..129528a5 100755
  import grp
  import os
  import re
-@@ -512,7 +515,7 @@ def mkdirs(path, mode=0o777):
+@@ -510,7 +513,7 @@ def mkdirs(path, mode=0o777):
  
  class KObject(object):
  
@@ -165,7 +165,7 @@ index 3403c262..129528a5 100755
  
      def sysfs_devname(self):
          raise NotImplementedError("sysfs_devname is undefined")
-@@ -520,7 +523,7 @@ class KObject(object):
+@@ -518,7 +521,7 @@ class KObject(object):
  
  class Attribute(object):
  
@@ -174,7 +174,7 @@ index 3403c262..129528a5 100755
  
      def __init__(self, path):
          self.path = path
-@@ -1164,7 +1167,7 @@ class VDI(object):
+@@ -1171,7 +1174,7 @@ class VDI(object):
          # before VDI.activate. Therefore those link steps where we
          # relink existing devices under deterministic path names.
  
@@ -183,7 +183,7 @@ index 3403c262..129528a5 100755
  
          def _mklink(self, target):
              raise NotImplementedError("_mklink is not defined")
-@@ -2120,7 +2123,7 @@ class UEventHandler(object):
+@@ -2127,7 +2130,7 @@ class UEventHandler(object):
              return "Uevent '%s' not handled by %s" % \
                  (self.event, self.handler.__class__.__name__)
  
@@ -192,7 +192,7 @@ index 3403c262..129528a5 100755
  
      def run(self):
  
-@@ -2216,7 +2219,7 @@ class PagePool(KObject):
+@@ -2223,7 +2226,7 @@ class PagePool(KObject):
  
  class BusDevice(KObject):
  
@@ -201,7 +201,7 @@ index 3403c262..129528a5 100755
  
      @classmethod
      def sysfs_bus_path(cls):
-@@ -2234,7 +2237,7 @@ class XenbusDevice(BusDevice):
+@@ -2241,7 +2244,7 @@ class XenbusDevice(BusDevice):
  
      XBT_NIL = ""
  
@@ -210,7 +210,7 @@ index 3403c262..129528a5 100755
  
      def __init__(self, domid, devid):
          self.domid = int(domid)
-@@ -2383,7 +2386,7 @@ class Blkback(XenBackendDevice):
+@@ -2390,7 +2393,7 @@ class Blkback(XenBackendDevice):
          self._q_events = None
  
      class XenstoreValueError(Exception):
@@ -219,7 +219,7 @@ index 3403c262..129528a5 100755
  
          def __init__(self, vbd, _str):
              self.vbd = vbd
-@@ -2820,7 +2823,7 @@ if __name__ == '__main__':
+@@ -2827,7 +2830,7 @@ if __name__ == '__main__':
  
      elif _class == 'tap':
  

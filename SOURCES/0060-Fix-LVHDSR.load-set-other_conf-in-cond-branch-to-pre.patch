@@ -1,4 +1,4 @@
-From 8ffff6b9e7f9e6ad5e23a5c26ac63b1924372d96 Mon Sep 17 00:00:00 2001
+From aa2ebd725dbecf485c4712d8182212481a1f4883 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 8 Jan 2025 11:12:13 +0100
 Subject: [PATCH] Fix LVHDSR.load: set other_conf in cond-branch to prevent
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index a821afd5..048c6923 100755
+index f280fbaa..0a5b2c4b 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -166,10 +166,11 @@ class LVHDSR(SR.SR):

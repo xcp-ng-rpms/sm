@@ -1,4 +1,4 @@
-From 9f9d2c8a25369f78559c380fa1ebd322010addfc Mon Sep 17 00:00:00 2001
+From f445ec014df072fa3b91ed2db23f9e7c4ebafa8c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 22 Apr 2025 11:27:12 +0200
 Subject: [PATCH] Fix warns reported by new github workflow
@@ -27,7 +27,7 @@ index e3583a59..070c6711 100755
              if not vdi['managed'] \
                     and int(vdi['virtual_size']) >= int(size) \
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 048c6923..52c337a3 100755
+index 0a5b2c4b..2af2d5ec 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -222,6 +222,7 @@ class LVHDSR(SR.SR):
@@ -38,7 +38,7 @@ index 048c6923..52c337a3 100755
              if contains_uuid_regex.search(key) is not None:
                  if key.startswith(lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD]):
                      type = vhdutil.VDI_TYPE_VHD
-@@ -1001,8 +1002,8 @@ class LVHDSR(SR.SR):
+@@ -1009,8 +1010,8 @@ class LVHDSR(SR.SR):
              self.lvActivator.activate(baseUuid, base.name, False)
              origRefcountNormal = 1
              vhdInfo = vhdutil.getVHDInfo(basePath, lvhdutil.extractUuid, False)
@@ -64,10 +64,10 @@ index c2579a53..2ecb0e38 100755
              # 4.c. Update CBT status of disks either just added
              # or already in XAPI.
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 560b01fd..e9f40eb3 100755
+index 17578207..11c1c7e0 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -1151,6 +1151,7 @@ class VDI(object):
+@@ -1154,6 +1154,7 @@ class VDI(object):
  class FileVDI(VDI):
      """Object representing a VDI in a file-based SR (EXT or NFS)"""
  
@@ -75,7 +75,7 @@ index 560b01fd..e9f40eb3 100755
      @staticmethod
      def extractUuid(path):
          path = os.path.basename(path.strip())
-@@ -1248,6 +1249,7 @@ class LVHDVDI(VDI):
+@@ -1251,6 +1252,7 @@ class LVHDVDI(VDI):
          self.parentUuid = info.parentUuid
          self.path = os.path.join(self.sr.path, self.fileName)
  
@@ -83,7 +83,7 @@ index 560b01fd..e9f40eb3 100755
      @staticmethod
      def extractUuid(path):
          return lvhdutil.extractUuid(path)
-@@ -4186,6 +4188,7 @@ def abort_optional_reenable(uuid):
+@@ -4197,6 +4199,7 @@ def abort_optional_reenable(uuid):
  #
  def main():
      action = ""

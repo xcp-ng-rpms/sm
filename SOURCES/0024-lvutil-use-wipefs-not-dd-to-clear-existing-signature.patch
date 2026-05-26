@@ -1,4 +1,4 @@
-From b134f3b29374b9fa024e102d3b189fa38a002af5 Mon Sep 17 00:00:00 2001
+From a827e2a7864da7264501a0d93e96ad5364fd7e16 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 5 Jul 2023 16:57:26 +0200
 Subject: [PATCH] lvutil: use wipefs not dd to clear existing signatures

@@ -1,4 +1,4 @@
-From cecae3531d1d2f70860cb9a978ff349b00d3fcb6 Mon Sep 17 00:00:00 2001
+From aedbee081d01a43b1d855b524875e9f1a8750631 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 30 Jul 2024 15:31:23 +0200
 Subject: [PATCH] feat(LVHDSR): add a way to modify config of LVMs (#60)
@@ -22,7 +22,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 21 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 3b0810e1..0e0d2045 100755
+index d763bcc1..11c300ff 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -161,14 +161,24 @@ class LVHDSR(SR.SR):
@@ -61,10 +61,10 @@ index 3b0810e1..0e0d2045 100755
              self.testMode = self.other_conf[self.TEST_MODE_KEY]
              self._prepareTestMode()
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 49900324..29c4ee2a 100755
+index b0a321e0..8e283b0f 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2958,7 +2958,12 @@ class LVHDSR(SR):
+@@ -2968,7 +2968,12 @@ class LVHDSR(SR):
          SR.__init__(self, uuid, xapi, createLock, force)
          self.vgName = "%s%s" % (lvhdutil.VG_PREFIX, self.uuid)
          self.path = os.path.join(lvhdutil.VG_LOCATION, self.vgName)

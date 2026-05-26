@@ -1,4 +1,4 @@
-From 471cef1159e9c1d435e0e14a86f64714d1be5ebc Mon Sep 17 00:00:00 2001
+From 16772113b685a363abd579a158f5ff20a9df497b Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 9 Oct 2024 15:44:05 +0200
 Subject: [PATCH] Add mypy stubs

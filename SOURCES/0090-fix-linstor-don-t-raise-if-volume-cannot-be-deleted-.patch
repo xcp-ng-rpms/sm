@@ -1,4 +1,4 @@
-From de28bb8c19039dfd2be5e5c391e6867bca1b5d23 Mon Sep 17 00:00:00 2001
+From 06d09503a1b1922678c1a7f9efa207bc9e639429 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Thu, 27 Nov 2025 20:55:18 +0100
 Subject: [PATCH] fix(linstor): don't raise if volume cannot be deleted

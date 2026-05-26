@@ -1,4 +1,4 @@
-From 34f0b5af020ea01dc40a0aed8bfa57b45bc5af3e Mon Sep 17 00:00:00 2001
+From 7c21980fee3316c303a14efa53e9ba482d5dda32 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 22 Apr 2025 11:10:24 +0200
 Subject: [PATCH] chore(.github/workflows): use ubuntu-24.04

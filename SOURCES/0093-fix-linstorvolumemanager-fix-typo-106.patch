@@ -1,4 +1,4 @@
-From ec47cd03a8647dafec8ec7d92eaf2bf156e8e4f7 Mon Sep 17 00:00:00 2001
+From 85a0167a4cabd7523688dd16e69a7ee23564ef8f Mon Sep 17 00:00:00 2001
 From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
 Date: Fri, 14 Nov 2025 14:17:36 +0100
 Subject: [PATCH] fix(linstorvolumemanager): fix typo (#106)

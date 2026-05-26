@@ -1,0 +1,64 @@
+From 1dfb7016f29d273f4893f0c3b2905e68f4b2e865 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, 19 May 2026 18:17:10 +0200
+Subject: [PATCH] fix(SR): add missing mypy annotations
+
+Fix errors reported by mypy update (mypy-2.1.0) on our workflow.
+
+In `SR.py` on `backends`:
+```
+drivers/SR.py:51: error: Need type annotation for "backends" (hint: "backends: list[<type>] = ...")  [var-annotated]
+```
+
+In `test_lock_queue.py`:
+```
+tests/test_lock_queue.py:15: error: Need type annotation for "saved_queue" (hint: "saved_queue: list[<type>] = ...")  [var-annotated]
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/SR.py            | 4 +++-
+ tests/test_lock_queue.py | 4 ++--
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/SR.py b/drivers/SR.py
+index 736ba8b4..22adfff4 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -18,6 +18,8 @@
+ # SR: Base class for storage repositories
+ #
+ 
++from sm_typing import List
++
+ import VDI
+ import xml.dom.minidom
+ import xs_errors
+@@ -48,7 +50,7 @@ def deviceCheck(op):
+     return wrapper
+ 
+ 
+-backends = []
++backends: List["SR"] = []
+ 
+ 
+ def registerSR(SRClass):
+diff --git a/tests/test_lock_queue.py b/tests/test_lock_queue.py
+index e9622cff..4f6246e9 100644
+--- a/tests/test_lock_queue.py
++++ b/tests/test_lock_queue.py
+@@ -1,4 +1,4 @@
+-from sm_typing import override
++from sm_typing import Any, List, override
+ 
+ import builtins
+ import copy
+@@ -12,7 +12,7 @@ import lock_queue
+ 
+ ## Instead of saving the process queue to disk the mocks will save it here.
+ ## It needs to be global because it is shared between threads.
+-saved_queue = []
++saved_queue: List[Any] = []
+ 
+ def mock_pickle_dump_fn(*args):
+    global saved_queue

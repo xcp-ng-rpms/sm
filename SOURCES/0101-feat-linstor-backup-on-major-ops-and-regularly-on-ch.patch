@@ -1,0 +1,159 @@
+From 51e6a4f921e0277f590bc94ba1a2c0c5af3e83db Mon Sep 17 00:00:00 2001
+From: Ythogtha <yth@ythogtha.org>
+Date: Tue, 12 May 2026 14:55:34 +0200
+Subject: [PATCH] feat(linstor): backup on major ops, and regularly on check_sr
+ (#126)
+
+- Retention of 10 backups from operations, and check_sr always saves on latest.
+- Provides a secondary backup location, with the same retention policy.
+
+Signed-off-by: Arnaud Garcia-Fernandez <arnaud.garcia-fernandez@vates.tech>
+---
+ drivers/LinstorSR.py            | 16 ++++++++-
+ drivers/linstorvolumemanager.py | 57 ++++++++++++++++++++++++++++++++-
+ 2 files changed, 71 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index d6365b4c..38cc3c0a 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -809,6 +809,11 @@ class LinstorSR(SR.SR):
+ 
+         return self._is_master
+ 
++    @override
++    def check_sr(self, sr_uuid) -> None:
++        self.database_backup("auto", delay=3600)
++
++
+     @override
+     @_locked_load
+     def vdi(self, uuid) -> VDI.VDI:
+@@ -1558,6 +1563,11 @@ class LinstorSR(SR.SR):
+         util.SMlog('Kicking GC')
+         cleanup.start_gc_service(self.uuid)
+ 
++    def database_backup(self, name="", *, delay=0):
++        if not self._linstor:
++            self._reconnect()
++        self._linstor.database_backup(name, delay=delay)
++
+ # ==============================================================================
+ # LinstorSr VDI
+ # ==============================================================================
+@@ -1757,6 +1767,8 @@ class LinstorVDI(VDI.VDI):
+         self.ref = self._db_introduce()
+         self.sr._update_stats(self.size)
+ 
++        self.sr.database_backup("create")
++
+         return VDI.VDI.get_params(self)
+ 
+     @override
+@@ -1804,7 +1816,8 @@ class LinstorVDI(VDI.VDI):
+         # TODO: Check size after delete.
+         self.sr._update_stats(-self.size)
+         self.sr._kick_gc()
+-        return super(LinstorVDI, self).delete(sr_uuid, vdi_uuid, data_only)
++        super(LinstorVDI, self).delete(sr_uuid, vdi_uuid, data_only)
++        self.sr.database_backup("delete")
+ 
+     @override
+     def attach(self, sr_uuid, vdi_uuid) -> str:
+@@ -2379,6 +2392,7 @@ class LinstorVDI(VDI.VDI):
+         finally:
+             self.disable_leaf_on_secondary(vdi_uuid, secondary=secondary)
+             blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid, secondary)
++            self.sr.database_backup("snapshot")
+ 
+     def _snapshot(self, snap_type, cbtlog=None, cbt_consistency=None):
+         util.SMlog(
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 3e339895..dc06c51f 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -32,6 +32,9 @@ import stat
+ import time
+ import util
+ import uuid
++from datetime import datetime
++from pathlib import Path
++import contextlib
+ 
+ # Persistent prefix to add to RAW persistent volumes.
+ PERSISTENT_PREFIX = 'xcp-persistent-'
+@@ -41,7 +44,12 @@ DATABASE_VOLUME_NAME = PERSISTENT_PREFIX + 'database'
+ DATABASE_SIZE = 1 << 30  # 1GB.
+ DATABASE_PATH = '/var/lib/linstor'
+ DATABASE_MKFS = 'mkfs.ext4'
+-
++DATABASE_BACKUP_DIR_MAIN = Path(DATABASE_PATH)
++DATABASE_BACKUP_DIR_SPARE = Path('/var/lib/linstor.d/db-backups')
++DATABASE_BACKUP_NAME_FORMAT = "linstor_database_backup-{}-{}"
++DATABASE_BACKUP_NAME_LATEST = "linstor_database_backup-latest.zip"
++DATABASE_BACKUP_RETENTION = 10
++DATABASE_BACKUP_DATE_FORMAT = "%Y%m%d_%H%M%S"
+ LINSTOR_SATELLITE_PORT = 3366
+ 
+ REG_DRBDADM_PRIMARY = re.compile("([^\\s]+)\\s+role:Primary")
+@@ -1758,6 +1766,35 @@ class LinstorVolumeManager(object):
+         """
+         return self._request_database_path(self._linstor, activate=True)
+ 
++    def database_backup(self, name="", *, delay=0):
++        now = datetime.now()
++        # Throttling to avoid too many backups of the same kind on a short period
++        if delay:
++            _, date_latest = self._get_latest_database_backup(name)
++            if date_latest and ((now - date_latest).total_seconds() < delay):
++                return  # No backup for now
++
++        # Create new backup with link to latest
++        filename = DATABASE_BACKUP_NAME_FORMAT.format(now.strftime(DATABASE_BACKUP_DATE_FORMAT), name)
++        self._linstor.controller_backupdb(filename)
++        # Copy to secondary backup location
++        with contextlib.suppress(OSError):
++            os.makedirs(DATABASE_BACKUP_DIR_SPARE, mode=0o755, exist_ok=True)
++            shutil.copy2(
++                (DATABASE_BACKUP_DIR_MAIN / filename).with_suffix(".zip"),
++                DATABASE_BACKUP_DIR_SPARE,
++            )
++        for directory in (DATABASE_BACKUP_DIR_MAIN, DATABASE_BACKUP_DIR_SPARE):
++            # Remove and set latest
++            with contextlib.suppress(OSError):
++                (directory / DATABASE_BACKUP_NAME_LATEST).unlink()
++            os.link(str((directory / filename).with_suffix(".zip")),
++                    str((directory / DATABASE_BACKUP_NAME_LATEST)))
++            # Apply retention
++            for old_file, _ in self._get_sorted_database_backup(directory)[DATABASE_BACKUP_RETENTION:]:
++                os.unlink(old_file)
++        util.SMlog("[database_backup] Created: {}".format(filename))
++
+     @classmethod
+     def get_all_group_names(cls, base_name):
+         """
+@@ -2614,6 +2651,24 @@ class LinstorVolumeManager(object):
+         properties.namespace = self._build_volume_namespace(volume_uuid)
+         return properties
+ 
++    def _list_database_backup(self, database_backup_dir, name="*"):
++        for path in database_backup_dir.glob(DATABASE_BACKUP_NAME_FORMAT.format(
++                "20[0-9][0-9][01][0-9][0-3][0-9]_[0-2][0-9][0-5][0-9][0-5][0-9]", name) + ".zip"):
++            try:
++                yield path, datetime.strptime(path.name.split("-")[1], DATABASE_BACKUP_DATE_FORMAT)
++            except (ValueError, IndexError):
++                continue
++
++    def _get_sorted_database_backup(self, database_backup_dir, name="*"):
++        return sorted(self._list_database_backup(database_backup_dir, name),
++                      reverse=True,
++                      key=lambda p: p[0].stat().st_mtime)
++
++    def _get_latest_database_backup(self, name="*"):
++        return max(self._list_database_backup(DATABASE_BACKUP_DIR_MAIN, name),
++                   default=(None, None),
++                   key=lambda p: p[0].stat().st_mtime)
++
+     @classmethod
+     def _build_sr_namespace(cls):
+         return '/{}/'.format(cls.NAMESPACE_SR)

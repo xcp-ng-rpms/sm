@@ -1,4 +1,4 @@
-From 25fdf2f873bb9b9ed679eea42055178f13fee9da Mon Sep 17 00:00:00 2001
+From 8c0af213840328a142fc6b9bc233daa673cae419 Mon Sep 17 00:00:00 2001
 From: Bartuccio Antoine <antoine.bartuccio@gmail.com>
 Date: Mon, 24 Nov 2025 17:15:47 +0100
 Subject: [PATCH] fix(linstorvolumemanager): prevent ops on version mismatch

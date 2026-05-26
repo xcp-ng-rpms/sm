@@ -1,4 +1,4 @@
-From a33ded83203b33d1bfff3a508e8ce9c3dec59f2f Mon Sep 17 00:00:00 2001
+From f320f2bacfcb9a078a814558cbcbd1cdcfc58692 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Nov 2024 13:44:57 +0100
 Subject: [PATCH] Use `override` everywhere!
@@ -33,7 +33,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/XFSSR.py                |  32 +++-
  drivers/ZFSSR.py                |  32 +++-
  drivers/blktap2.py              | 129 ++++++++-----
- drivers/cleanup.py              | 320 ++++++++++++++++++++------------
+ drivers/cleanup.py              | 325 ++++++++++++++++++++------------
  drivers/flock.py                |   5 +-
  drivers/lcache.py               |  14 +-
  drivers/linstorvhdutil.py       |   5 +-
@@ -67,12 +67,13 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_lvutil.py            |  15 +-
  tests/test_mpath_dmp.py         |   6 +-
  tests/test_on_slave.py          |  11 +-
+ tests/test_scsiutil.py          |   6 +-
  tests/test_sr_health_check.py   |   6 +-
  tests/test_srmetadata.py        |  11 +-
  tests/test_storage_init.py      |  14 +-
  tests/test_util.py              |  16 +-
  tests/testlib.py                |  13 +-
- 65 files changed, 1306 insertions(+), 688 deletions(-)
+ 66 files changed, 1313 insertions(+), 692 deletions(-)
  create mode 100644 .mypy.ini
 
 diff --git a/.mypy.ini b/.mypy.ini
@@ -1465,7 +1466,7 @@ index 497ba6b5..e3583a59 100755
          if 'SCSIid' in self.sm_config:
              self.sr.mpathmodule.reset(self.sm_config['SCSIid'], True)  # explicitly unmap
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 046d08c3..a821afd5 100755
+index 766f3b43..f280fbaa 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
 @@ -18,7 +18,7 @@
@@ -1577,7 +1578,7 @@ index 046d08c3..a821afd5 100755
                  # get VDIs from XAPI
                  vdis = self.session.xenapi.SR.get_VDIs(self.sr_ref)
                  vdi_uuids = set([])
-@@ -818,7 +827,8 @@ class LVHDSR(SR.SR):
+@@ -826,7 +835,8 @@ class LVHDSR(SR.SR):
                  self.lvActivator.deactivate(
                      vdi, LVActivator.NORMAL, False)
  
@@ -1587,7 +1588,7 @@ index 046d08c3..a821afd5 100755
          if not lvutil._checkVG(self.vgname):
              return
          self._updateStats(uuid, 0)
-@@ -847,15 +857,17 @@ class LVHDSR(SR.SR):
+@@ -855,15 +865,17 @@ class LVHDSR(SR.SR):
          self.physical_utilisation = stats['physical_utilisation']
          self._db_update()
  
@@ -1607,7 +1608,7 @@ index 046d08c3..a821afd5 100755
          return LVHDVDI(self, uuid)
  
      def _loadvdis(self):
-@@ -1292,12 +1304,13 @@ class LVHDSR(SR.SR):
+@@ -1300,12 +1312,13 @@ class LVHDSR(SR.SR):
          # Ensure we have space for at least one LV
          self._ensureSpaceAvailable(self.journaler.LV_SIZE)
  
@@ -1623,7 +1624,7 @@ index 046d08c3..a821afd5 100755
          self.lock = self.sr.lock
          self.lvActivator = self.sr.lvActivator
          self.loaded = False
-@@ -1337,7 +1350,8 @@ class LVHDVDI(VDI.VDI):
+@@ -1345,7 +1358,8 @@ class LVHDVDI(VDI.VDI):
          self.lvname = "%s%s" % (lvhdutil.LV_PREFIX[self.vdi_type], vdi_uuid)
          self.path = os.path.join(self.sr.path, self.lvname)
  
@@ -1633,7 +1634,7 @@ index 046d08c3..a821afd5 100755
          util.SMlog("LVHDVDI.create for %s" % self.uuid)
          if not self.sr.isMaster:
              raise xs_errors.XenError('LVMMaster')
-@@ -1401,7 +1415,8 @@ class LVHDVDI(VDI.VDI):
+@@ -1409,7 +1423,8 @@ class LVHDVDI(VDI.VDI):
  
          return VDI.VDI.get_params(self)
  
@@ -1643,7 +1644,7 @@ index 046d08c3..a821afd5 100755
          util.SMlog("LVHDVDI.delete for %s" % self.uuid)
          try:
              self._loadThis()
-@@ -1446,7 +1461,8 @@ class LVHDVDI(VDI.VDI):
+@@ -1454,7 +1469,8 @@ class LVHDVDI(VDI.VDI):
          self.sr._kickGC()
          return super(LVHDVDI, self).delete(sr_uuid, vdi_uuid, data_only)
  
@@ -1653,7 +1654,7 @@ index 046d08c3..a821afd5 100755
          util.SMlog("LVHDVDI.attach for %s" % self.uuid)
          if self.sr.journaler.hasJournals(self.uuid):
              raise xs_errors.XenError('VDIUnavailable',
-@@ -1476,7 +1492,8 @@ class LVHDVDI(VDI.VDI):
+@@ -1484,7 +1500,8 @@ class LVHDVDI(VDI.VDI):
              if not self.sr.lvActivator.deactivateAll():
                  util.SMlog("Failed to deactivate LVs back (%s)" % self.uuid)
  
@@ -1663,7 +1664,7 @@ index 046d08c3..a821afd5 100755
          util.SMlog("LVHDVDI.detach for %s" % self.uuid)
          self._loadThis()
          already_deflated = (self.utilisation < \
-@@ -1507,7 +1524,8 @@ class LVHDVDI(VDI.VDI):
+@@ -1515,7 +1532,8 @@ class LVHDVDI(VDI.VDI):
                  raise xs_errors.XenError("SMGeneral", opterr="deactivation")
  
      # We only support offline resize
@@ -1673,7 +1674,7 @@ index 046d08c3..a821afd5 100755
          util.SMlog("LVHDVDI.resize for %s" % self.uuid)
          if not self.sr.isMaster:
              raise xs_errors.XenError('LVMMaster')
-@@ -1560,11 +1578,13 @@ class LVHDVDI(VDI.VDI):
+@@ -1568,11 +1586,13 @@ class LVHDVDI(VDI.VDI):
          super(LVHDVDI, self).resize_cbt(self.sr.uuid, self.uuid, self.size)
          return VDI.VDI.get_params(self)
  
@@ -1689,7 +1690,7 @@ index 046d08c3..a821afd5 100755
          util.SMlog("LVHDSR.compose for %s -> %s" % (vdi2, vdi1))
          if self.vdi_type != vhdutil.VDI_TYPE_VHD:
              raise xs_errors.XenError('Unimplemented')
-@@ -1624,8 +1644,9 @@ class LVHDVDI(VDI.VDI):
+@@ -1632,8 +1652,9 @@ class LVHDVDI(VDI.VDI):
          self._chainSetActive(False, True)
          self.attached = False
  
@@ -1700,7 +1701,7 @@ index 046d08c3..a821afd5 100755
          # If cbt enabled, save file consistency state
          if cbtlog is not None:
              if blktap2.VDI.tap_status(self.session, vdi_uuid):
-@@ -2159,7 +2180,8 @@ class LVHDVDI(VDI.VDI):
+@@ -2167,7 +2188,8 @@ class LVHDVDI(VDI.VDI):
              self.session.xenapi.SR.set_physical_utilisation(self.sr.sr_ref,
                      str(sr_utilisation))
  
@@ -1710,7 +1711,7 @@ index 046d08c3..a821afd5 100755
          if self.sr.legacyMode:
              return
  
-@@ -2179,28 +2201,33 @@ class LVHDVDI(VDI.VDI):
+@@ -2187,28 +2209,33 @@ class LVHDVDI(VDI.VDI):
              self.session.xenapi.VDI.get_metadata_of_pool(vdi_ref)
          LVMMetadataHandler(self.sr.mdpath).updateMetadata(update_map)
  
@@ -1749,7 +1750,7 @@ index 046d08c3..a821afd5 100755
          args = {
              "vgName": self.sr.vgname,
              "action1": "deactivateNoRefcount",
-@@ -2212,7 +2239,8 @@ class LVHDVDI(VDI.VDI):
+@@ -2220,7 +2247,8 @@ class LVHDVDI(VDI.VDI):
          message = f"Deactivating {cbtlog}"
          self.sr.call_on_slave(args, host_refs, message)
  
@@ -1759,7 +1760,7 @@ index 046d08c3..a821afd5 100755
          self.sr.lvmCache.refresh()
          if not self.sr.lvmCache.is_active(lv_name):
              try:
-@@ -2225,14 +2253,16 @@ class LVHDVDI(VDI.VDI):
+@@ -2233,14 +2261,16 @@ class LVHDVDI(VDI.VDI):
          else:
              return False
  
@@ -3527,7 +3528,7 @@ index cf5eb12d..13a895a2 100644
              self.xenstore_data = {}
  
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 129528a5..dfe28735 100755
+index fcc940f0..60275e6a 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -18,7 +18,9 @@
@@ -3551,7 +3552,7 @@ index 129528a5..dfe28735 100755
              items = self.info.items()
              info = ", ".join("%s=%s" % item
                               for item in items)
-@@ -447,7 +450,8 @@ class TapdiskExists(Exception):
+@@ -445,7 +448,8 @@ class TapdiskExists(Exception):
      def __init__(self, tapdisk):
          self.tapdisk = tapdisk
  
@@ -3561,7 +3562,7 @@ index 129528a5..dfe28735 100755
          return "%s already running" % self.tapdisk
  
  
-@@ -457,7 +461,8 @@ class TapdiskNotRunning(Exception):
+@@ -455,7 +459,8 @@ class TapdiskNotRunning(Exception):
      def __init__(self, **attrs):
          self.attrs = attrs
  
@@ -3571,7 +3572,7 @@ index 129528a5..dfe28735 100755
          items = iter(self.attrs.items())
          attrs = ", ".join("%s=%s" % attr
                            for attr in items)
-@@ -470,7 +475,8 @@ class TapdiskNotUnique(Exception):
+@@ -468,7 +473,8 @@ class TapdiskNotUnique(Exception):
      def __init__(self, tapdisks):
          self.tapdisks = tapdisks
  
@@ -3581,7 +3582,7 @@ index 129528a5..dfe28735 100755
          tapdisks = map(str, self.tapdisks)
          return "Found multiple tapdisks: %s" % tapdisks
  
-@@ -482,7 +488,8 @@ class TapdiskFailed(Exception):
+@@ -480,7 +486,8 @@ class TapdiskFailed(Exception):
          self.arg = arg
          self.err = err
  
@@ -3591,7 +3592,7 @@ index 129528a5..dfe28735 100755
          return "Tapdisk(%s): %s" % (self.arg, self.err)
  
      def get_error(self):
-@@ -495,7 +502,8 @@ class TapdiskInvalidState(Exception):
+@@ -493,7 +500,8 @@ class TapdiskInvalidState(Exception):
      def __init__(self, tapdisk):
          self.tapdisk = tapdisk
  
@@ -3601,7 +3602,7 @@ index 129528a5..dfe28735 100755
          return str(self.tapdisk)
  
  
-@@ -517,8 +525,9 @@ class KObject(object):
+@@ -515,8 +523,9 @@ class KObject(object):
  
      SYSFS_CLASSTYPE: ClassVar[str] = ""
  
@@ -3613,7 +3614,7 @@ index 129528a5..dfe28735 100755
  
  
  class Attribute(object):
-@@ -537,7 +546,8 @@ class Attribute(object):
+@@ -535,7 +544,8 @@ class Attribute(object):
          def __init__(self, name):
              self.name = name
  
@@ -3623,7 +3624,7 @@ index 129528a5..dfe28735 100755
              return "No such attribute: %s" % self.name
  
      def _open(self, mode='r'):
-@@ -594,10 +604,12 @@ class Blktap(ClassDevice):
+@@ -592,10 +602,12 @@ class Blktap(ClassDevice):
      def free(self):
          TapCtl.free(self.minor)
  
@@ -3638,7 +3639,7 @@ index 129528a5..dfe28735 100755
          return "blktap!blktap%d" % self.minor
  
      class Pool(Attribute):
-@@ -665,7 +677,8 @@ class Tapdisk(object):
+@@ -663,7 +675,8 @@ class Tapdisk(object):
          self._dirty = False
          self._blktap = None
  
@@ -3648,7 +3649,7 @@ index 129528a5..dfe28735 100755
          state = self.pause_state()
          return "Tapdisk(%s, pid=%d, minor=%s, state=%s)" % \
              (self.get_arg(), self.pid, self.minor, state)
-@@ -751,7 +764,8 @@ class Tapdisk(object):
+@@ -758,7 +771,8 @@ class Tapdisk(object):
              self.type = _type
              self.path = path
  
@@ -3658,7 +3659,7 @@ index 129528a5..dfe28735 100755
              return "%s:%s" % (self.type, self.path)
  
          @classmethod
-@@ -771,14 +785,16 @@ class Tapdisk(object):
+@@ -778,14 +792,16 @@ class Tapdisk(object):
              def __init__(self, _type):
                  self.type = _type
  
@@ -3677,7 +3678,7 @@ index 129528a5..dfe28735 100755
                  return "Not a Tapdisk image: %s" % self.arg
  
      def get_arg(self):
-@@ -920,7 +936,8 @@ class Tapdisk(object):
+@@ -927,7 +943,8 @@ class Tapdisk(object):
          t = self.from_minor(__get('minor'))
          self.__init__(t.pid, t.minor, t.type, t.path, t.state)
  
@@ -3687,7 +3688,7 @@ index 129528a5..dfe28735 100755
          def __get(name):
              # NB. avoid(rec(ursion)
              return object.__getattribute__(self, name)
-@@ -1084,7 +1101,8 @@ class VDI(object):
+@@ -1091,7 +1108,8 @@ class VDI(object):
              self.vdi_type = vdi_type
              self.target = target
  
@@ -3697,7 +3698,7 @@ index 129528a5..dfe28735 100755
              return \
                  "Target %s has unexpected VDI type '%s'" % \
                  (type(self.target), self.vdi_type)
-@@ -1169,11 +1187,12 @@ class VDI(object):
+@@ -1176,11 +1194,12 @@ class VDI(object):
  
          BASEDIR: ClassVar[str] = ""
  
@@ -3714,7 +3715,7 @@ index 129528a5..dfe28735 100755
  
          def __init__(self, path):
              self._path = path
-@@ -1194,7 +1213,7 @@ class VDI(object):
+@@ -1201,7 +1220,7 @@ class VDI(object):
          def stat(self):
              return os.stat(self.path())
  
@@ -3723,7 +3724,7 @@ index 129528a5..dfe28735 100755
  
              path = self.path()
              util.SMlog("%s -> %s" % (self, target))
-@@ -1217,7 +1236,8 @@ class VDI(object):
+@@ -1224,7 +1243,8 @@ class VDI(object):
                  if e.errno != errno.ENOENT:
                      raise
  
@@ -3733,7 +3734,7 @@ index 129528a5..dfe28735 100755
              path = self.path()
              return "%s(%s)" % (self.__class__.__name__, path)
  
-@@ -1230,10 +1250,12 @@ class VDI(object):
+@@ -1237,10 +1257,12 @@ class VDI(object):
          def symlink(self):
              return self.path()
  
@@ -3748,7 +3749,7 @@ index 129528a5..dfe28735 100755
              return self.readlink() == target
  
      class DeviceNode(Link):
-@@ -1250,7 +1272,8 @@ class VDI(object):
+@@ -1257,7 +1279,8 @@ class VDI(object):
              """Whether @target refers to a block device."""
              return S_ISBLK(cls._real_stat(target).st_mode)
  
@@ -3758,7 +3759,7 @@ index 129528a5..dfe28735 100755
  
              st = self._real_stat(target)
              if not S_ISBLK(st.st_mode):
-@@ -1260,7 +1283,8 @@ class VDI(object):
+@@ -1267,7 +1290,8 @@ class VDI(object):
              os.mknod(self.path(), st.st_mode | stat.S_IRGRP, st.st_rdev)
              os.chown(self.path(), st.st_uid, grp.getgrnam("disk").gr_gid)
  
@@ -3768,7 +3769,7 @@ index 129528a5..dfe28735 100755
              target_rdev = self._real_stat(target).st_rdev
              return self.stat().st_rdev == target_rdev
  
-@@ -1275,7 +1299,8 @@ class VDI(object):
+@@ -1282,7 +1306,8 @@ class VDI(object):
                  self.path = path
                  self.st = st
  
@@ -3778,7 +3779,7 @@ index 129528a5..dfe28735 100755
                  return "%s is not a block device: %s" % (self.path, self.st)
  
      class Hybrid(Link):
-@@ -1291,14 +1316,16 @@ class VDI(object):
+@@ -1298,14 +1323,16 @@ class VDI(object):
                  return self._devnode.rdev()
              raise self._devnode.NotABlockDevice(self.path(), st)
  
@@ -3797,7 +3798,7 @@ index 129528a5..dfe28735 100755
              return self._obj._equals(target)
  
      class PhyLink(SymLink):
-@@ -2096,7 +2123,8 @@ class UEventHandler(object):
+@@ -2103,7 +2130,8 @@ class UEventHandler(object):
              super().__init__(args)
              self.key = args[0]
  
@@ -3807,7 +3808,7 @@ index 129528a5..dfe28735 100755
              return \
                  "Key '%s' missing in environment. " % self.key + \
                  "Not called in udev context?"
-@@ -2119,7 +2147,8 @@ class UEventHandler(object):
+@@ -2126,7 +2154,8 @@ class UEventHandler(object):
              self.event = event
              self.handler = handler
  
@@ -3817,7 +3818,7 @@ index 129528a5..dfe28735 100755
              return "Uevent '%s' not handled by %s" % \
                  (self.event, self.handler.__class__.__name__)
  
-@@ -2135,7 +2164,8 @@ class UEventHandler(object):
+@@ -2142,7 +2171,8 @@ class UEventHandler(object):
  
          return fn(self)
  
@@ -3827,7 +3828,7 @@ index 129528a5..dfe28735 100755
          try:
              action = self.get_action()
          except:
-@@ -2150,7 +2180,8 @@ class __BlktapControl(ClassDevice):
+@@ -2157,7 +2187,8 @@ class __BlktapControl(ClassDevice):
          ClassDevice.__init__(self)
          self._default_pool = None
  
@@ -3837,7 +3838,7 @@ index 129528a5..dfe28735 100755
          return "blktap!control"
  
      class DefaultPool(Attribute):
-@@ -2177,7 +2208,8 @@ class __BlktapControl(ClassDevice):
+@@ -2184,7 +2215,8 @@ class __BlktapControl(ClassDevice):
          def __init__(self, name):
              self.name = name
  
@@ -3847,7 +3848,7 @@ index 129528a5..dfe28735 100755
              return "No such pool: {}".format(self.name)
  
      def get_pool(self, name):
-@@ -2197,6 +2229,10 @@ class PagePool(KObject):
+@@ -2204,6 +2236,10 @@ class PagePool(KObject):
          self.path = path
          self._size = None
  
@@ -3858,7 +3859,7 @@ index 129528a5..dfe28735 100755
      def sysfs_path(self):
          return self.path
  
-@@ -2337,11 +2373,13 @@ class XenbusDevice(BusDevice):
+@@ -2344,11 +2380,13 @@ class XenbusDevice(BusDevice):
              self._xs_rm_path(xapi_path)
              self._xs_rm_path(upstream_path)
  
@@ -3874,7 +3875,7 @@ index 129528a5..dfe28735 100755
          return self.sysfs_devname()
  
      @classmethod
-@@ -2392,7 +2430,8 @@ class Blkback(XenBackendDevice):
+@@ -2399,7 +2437,8 @@ class Blkback(XenBackendDevice):
              self.vbd = vbd
              self.str = _str
  
@@ -3884,7 +3885,7 @@ index 129528a5..dfe28735 100755
              return "Backend %s " % self.vbd + \
                  "has %s = %s" % (self.KEY, self.str)
  
-@@ -2425,10 +2464,12 @@ class Blkback(XenBackendDevice):
+@@ -2432,10 +2471,12 @@ class Blkback(XenBackendDevice):
          def is_tap(self):
              return self.major == Tapdisk.major()
  
@@ -3899,7 +3900,7 @@ index 129528a5..dfe28735 100755
              return \
                  self.major == other.major and \
                  self.minor == other.minor
-@@ -2544,14 +2585,16 @@ class BlkbackEventHandler(UEventHandler):
+@@ -2551,14 +2592,16 @@ class BlkbackEventHandler(UEventHandler):
  
          UEventHandler.__init__(self)
  
@@ -3919,7 +3920,7 @@ index 129528a5..dfe28735 100755
          try:
              path = self.xs_path
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index cc229ae2..bdc7b597 100755
+index 5b325773..ead69fd8 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -18,6 +18,8 @@
@@ -4062,9 +4063,13 @@ index cc229ae2..bdc7b597 100755
          vhdutil.setParent(self.path, parent.path, False)
          self.parent = parent
          self.parentUuid = parent.uuid
-@@ -1052,15 +1055,15 @@ class VDI(object):
+@@ -1052,18 +1055,18 @@ class VDI(object):
              Util.log("Failed to update %s with vhd-parent field %s" % \
                       (self.uuid, self.parentUuid))
+ 
+-    def _ensureParentActiveForRelink(self):
++    def _ensureParentActiveForRelink(self) -> None:
+         pass
  
 -    def _loadInfoHidden(self):
 +    def _loadInfoHidden(self) -> None:
@@ -4081,7 +4086,7 @@ index cc229ae2..bdc7b597 100755
          """ensure the virtual size of 'self' is at least 'size'. Note that
          resizing a VHD must always be offline and atomically: the file must
          not be open by anyone and no concurrent operations may take place.
-@@ -1092,14 +1095,14 @@ class VDI(object):
+@@ -1095,14 +1098,14 @@ class VDI(object):
  
          self.sizeVirt = vhdutil.getSizeVirt(self.path)
  
@@ -4098,7 +4103,7 @@ index cc229ae2..bdc7b597 100755
          return vhdutil.getBlockBitmap(self.path)
  
      def _getCoalescedSizeData(self):
-@@ -1118,20 +1121,20 @@ class VDI(object):
+@@ -1121,20 +1124,20 @@ class VDI(object):
          assert(sizeData <= self.sizeVirt)
          return sizeData
  
@@ -4122,7 +4127,7 @@ index cc229ae2..bdc7b597 100755
          """How much extra space in the SR will be required to
          snapshot-coalesce this VDI"""
          return self._calcExtraSpaceForCoalescing() + \
-@@ -1166,7 +1169,8 @@ class FileVDI(VDI):
+@@ -1169,7 +1172,8 @@ class FileVDI(VDI):
          else:
              self.fileName = "%s%s" % (self.uuid, vhdutil.FILE_EXTN_VHD)
  
@@ -4132,7 +4137,7 @@ index cc229ae2..bdc7b597 100755
          if not info:
              if not util.pathexists(self.path):
                  raise util.SMException("%s not found" % self.path)
-@@ -1186,7 +1190,8 @@ class FileVDI(VDI):
+@@ -1189,7 +1193,8 @@ class FileVDI(VDI):
          self.path = os.path.join(self.sr.path, "%s%s" % \
                  (self.uuid, vhdutil.FILE_EXTN_VHD))
  
@@ -4142,7 +4147,7 @@ index cc229ae2..bdc7b597 100755
          oldPath = self.path
          VDI.rename(self, uuid)
          self.fileName = "%s%s" % (self.uuid, vhdutil.FILE_EXTN_VHD)
-@@ -1195,7 +1200,8 @@ class FileVDI(VDI):
+@@ -1198,7 +1203,8 @@ class FileVDI(VDI):
          Util.log("Renaming %s -> %s" % (oldPath, self.path))
          os.rename(oldPath, self.path)
  
@@ -4152,7 +4157,7 @@ index cc229ae2..bdc7b597 100755
          if len(self.children) > 0:
              raise util.SMException("VDI %s has children, can't delete" % \
                      self.uuid)
-@@ -1210,7 +1216,8 @@ class FileVDI(VDI):
+@@ -1213,7 +1219,8 @@ class FileVDI(VDI):
              raise util.SMException("os.unlink(%s) failed" % self.path)
          VDI.delete(self)
  
@@ -4162,7 +4167,7 @@ index cc229ae2..bdc7b597 100755
          if self._sizeAllocated == -1:
              self._sizeAllocated = vhdutil.getAllocatedSize(self.path)
          return self._sizeAllocated
-@@ -1222,7 +1229,8 @@ class LVHDVDI(VDI):
+@@ -1225,7 +1232,8 @@ class LVHDVDI(VDI):
      JRN_ZERO = "zero"  # journal entry type for zeroing out end of parent
      DRIVER_NAME_RAW = "aio"
  
@@ -4172,7 +4177,7 @@ index cc229ae2..bdc7b597 100755
          # `info` is always set. `None` default value is only here to match parent method.
          assert info, "No info given to LVHDVDI.load"
          self.parent = None
-@@ -1244,7 +1252,8 @@ class LVHDVDI(VDI):
+@@ -1247,7 +1255,8 @@ class LVHDVDI(VDI):
      def extractUuid(path):
          return lvhdutil.extractUuid(path)
  
@@ -4182,7 +4187,7 @@ index cc229ae2..bdc7b597 100755
          if self.raw:
              return self.DRIVER_NAME_RAW
          return self.DRIVER_NAME_VHD
-@@ -1291,11 +1300,14 @@ class LVHDVDI(VDI):
+@@ -1294,11 +1303,14 @@ class LVHDVDI(VDI):
              util.fistpoint.activate("LVHDRT_coalescing_before_inflate_grandparent", self.sr.uuid)
              self.parent.inflate(self.parent.sizeLV + inc)
  
@@ -4199,7 +4204,7 @@ index cc229ae2..bdc7b597 100755
          oldUuid = self.uuid
          oldLVName = self.fileName
          VDI.rename(self, uuid)
-@@ -1314,7 +1326,8 @@ class LVHDVDI(VDI):
+@@ -1317,7 +1329,8 @@ class LVHDVDI(VDI):
          RefCounter.set(self.uuid, cnt, bcnt, ns)
          RefCounter.reset(oldUuid, ns)
  
@@ -4209,7 +4214,7 @@ index cc229ae2..bdc7b597 100755
          if len(self.children) > 0:
              raise util.SMException("VDI %s has children, can't delete" % \
                      self.uuid)
-@@ -1327,7 +1340,8 @@ class LVHDVDI(VDI):
+@@ -1330,7 +1343,8 @@ class LVHDVDI(VDI):
          RefCounter.reset(self.uuid, lvhdutil.NS_PREFIX_LVM + self.sr.uuid)
          VDI.delete(self)
  
@@ -4219,7 +4224,7 @@ index cc229ae2..bdc7b597 100755
          if self._sizeVHD == -1:
              self._loadInfoSizeVHD()
          return self._sizeVHD
-@@ -1345,7 +1359,8 @@ class LVHDVDI(VDI):
+@@ -1348,7 +1362,8 @@ class LVHDVDI(VDI):
              raise util.SMException("phys size of %s = %d" % \
                      (self, self._sizeVHD))
  
@@ -4229,7 +4234,7 @@ index cc229ae2..bdc7b597 100755
          if self._sizeAllocated == -1:
              self._loadInfoSizeAllocated()
          return self._sizeAllocated
-@@ -1359,20 +1374,23 @@ class LVHDVDI(VDI):
+@@ -1362,20 +1377,23 @@ class LVHDVDI(VDI):
          self._activate()
          self._sizeAllocated = vhdutil.getAllocatedSize(self.path)
  
@@ -4256,7 +4261,7 @@ index cc229ae2..bdc7b597 100755
          strType = "VHD"
          if self.raw:
              strType = "RAW"
-@@ -1394,11 +1412,13 @@ class LVHDVDI(VDI):
+@@ -1397,11 +1415,13 @@ class LVHDVDI(VDI):
                  Util.num2str(self.sizeVirt), strSizeVHD, strSizeAllocated,
                  Util.num2str(self.sizeLV), strActive)
  
@@ -4272,7 +4277,7 @@ index cc229ae2..bdc7b597 100755
          """LVHD parents must first be activated, inflated, and made writable"""
          try:
              self._activateChain()
-@@ -1411,7 +1431,8 @@ class LVHDVDI(VDI):
+@@ -1414,7 +1434,8 @@ class LVHDVDI(VDI):
              self.parent.deflate()
              self.sr.lvmCache.setReadonly(self.parent.fileName, True)
  
@@ -4282,9 +4287,14 @@ index cc229ae2..bdc7b597 100755
          self._activate()
          if self.lvReadonly:
              self.sr.lvmCache.setReadonly(self.fileName, False)
-@@ -1445,7 +1466,8 @@ class LVHDVDI(VDI):
+@@ -1448,10 +1469,12 @@ class LVHDVDI(VDI):
      def _deactivate(self):
          self.sr.lvActivator.deactivate(self.uuid, False)
+ 
+-    def _ensureParentActiveForRelink(self):
++    @override
++    def _ensureParentActiveForRelink(self) -> None:
+         self.parent._activate()
  
 -    def _increaseSizeVirt(self, size, atomic=True):
 +    @override
@@ -4292,7 +4302,7 @@ index cc229ae2..bdc7b597 100755
          "ensure the virtual size of 'self' is at least 'size'"
          self._activate()
          if not self.raw:
-@@ -1481,7 +1503,8 @@ class LVHDVDI(VDI):
+@@ -1487,7 +1510,8 @@ class LVHDVDI(VDI):
                  VDI.POLL_INTERVAL, 0)
          self.sr.journaler.remove(self.JRN_ZERO, self.uuid)
  
@@ -4302,7 +4312,7 @@ index cc229ae2..bdc7b597 100755
          """WARNING: do not call this method directly unless all VDIs in the
          subtree are guaranteed to be unplugged (and remain so for the duration
          of the operation): this operation is only safe for offline VHDs"""
-@@ -1494,25 +1517,29 @@ class LVHDVDI(VDI):
+@@ -1500,25 +1524,29 @@ class LVHDVDI(VDI):
          finally:
              lvhdutil.deleteVHDJournalLV(self.sr.lvmCache, self.uuid)
  
@@ -4336,7 +4346,7 @@ index cc229ae2..bdc7b597 100755
          return self._calcExtraSpaceForCoalescing() + \
                  lvhdutil.calcSizeLV(self.getSizeVHD())
  
-@@ -1522,7 +1549,8 @@ class LinstorVDI(VDI):
+@@ -1528,7 +1556,8 @@ class LinstorVDI(VDI):
  
      VOLUME_LOCK_TIMEOUT = 30
  
@@ -4346,7 +4356,7 @@ index cc229ae2..bdc7b597 100755
          self.parentUuid = info.parentUuid
          self.scanError = True
          self.parent = None
-@@ -1549,7 +1577,8 @@ class LinstorVDI(VDI):
+@@ -1555,7 +1584,8 @@ class LinstorVDI(VDI):
          self.scanError = False
          self.vdi_type = vhdutil.VDI_TYPE_VHD
  
@@ -4356,7 +4366,7 @@ index cc229ae2..bdc7b597 100755
          if self._sizeVHD < 0 or fetch:
              self._sizeVHD = self.sr._vhdutil.get_size_phys(self.uuid)
          return self._sizeVHD
-@@ -1559,7 +1588,8 @@ class LinstorVDI(VDI):
+@@ -1565,7 +1595,8 @@ class LinstorVDI(VDI):
              self.drbd_size = self.sr._vhdutil.get_drbd_size(self.uuid)
          return self.drbd_size
  
@@ -4366,7 +4376,7 @@ index cc229ae2..bdc7b597 100755
          if self._sizeAllocated == -1:
              if not self.raw:
                  self._sizeAllocated = self.sr._vhdutil.get_allocated_size(self.uuid)
-@@ -1599,14 +1629,16 @@ class LinstorVDI(VDI):
+@@ -1605,14 +1636,16 @@ class LinstorVDI(VDI):
          if not self.raw:
              self.inflate(LinstorVhdUtil.compute_volume_size(self.sizeVirt, self.vdi_type))
  
@@ -4385,7 +4395,7 @@ index cc229ae2..bdc7b597 100755
          if len(self.children) > 0:
              raise util.SMException(
                  'VDI {} has children, can\'t delete'.format(self.uuid)
-@@ -1619,32 +1651,38 @@ class LinstorVDI(VDI):
+@@ -1625,32 +1658,38 @@ class LinstorVDI(VDI):
              self.sr.unlock()
          VDI.delete(self)
  
@@ -4430,7 +4440,7 @@ index cc229ae2..bdc7b597 100755
          abortFlag = IPCFlag(self.sr.uuid)
          for child in self.children:
              if abortFlag.test(FLAG_TYPE_ABORT):
-@@ -1668,7 +1706,8 @@ class LinstorVDI(VDI):
+@@ -1674,7 +1713,8 @@ class LinstorVDI(VDI):
                  blktap2.VDI.tap_unpause(session, sr_uuid, vdi_uuid)
          self.children = []
  
@@ -4440,7 +4450,7 @@ index cc229ae2..bdc7b597 100755
          self.sr._linstor.get_device_path(self.uuid)
          self.sr._vhdutil.force_parent(self.path, parent.path)
          self.parent = parent
-@@ -1682,7 +1721,8 @@ class LinstorVDI(VDI):
+@@ -1688,7 +1728,8 @@ class LinstorVDI(VDI):
              Util.log("Failed to update %s with vhd-parent field %s" % \
                       (self.uuid, self.parentUuid))
  
@@ -4450,7 +4460,7 @@ index cc229ae2..bdc7b597 100755
          try:
              self._activateChain()
              self.parent.validate()
-@@ -1702,7 +1742,8 @@ class LinstorVDI(VDI):
+@@ -1708,7 +1749,8 @@ class LinstorVDI(VDI):
                  raise util.SMException(str(e))
              vdi = vdi.parent
  
@@ -4460,7 +4470,7 @@ index cc229ae2..bdc7b597 100755
          HIDDEN_TAG = 'hidden'
  
          if self.raw:
-@@ -1713,7 +1754,8 @@ class LinstorVDI(VDI):
+@@ -1719,7 +1761,8 @@ class LinstorVDI(VDI):
          else:
              VDI._setHidden(self, hidden)
  
@@ -4470,7 +4480,7 @@ index cc229ae2..bdc7b597 100755
          jfile = self.uuid + '-jvhd'
          self.sr._linstor.create_volume(
              jfile, vhdutil.MAX_VHD_JOURNAL_SIZE, persistent=False, volume_name=jfile
-@@ -1728,7 +1770,8 @@ class LinstorVDI(VDI):
+@@ -1734,7 +1777,8 @@ class LinstorVDI(VDI):
                  # We can ignore it, in any case this volume is not persistent.
                  pass
  
@@ -4480,7 +4490,7 @@ index cc229ae2..bdc7b597 100755
          return self.sr._vhdutil.get_block_bitmap(self.uuid)
  
      def _inflateParentForCoalesce(self):
-@@ -1738,7 +1781,8 @@ class LinstorVDI(VDI):
+@@ -1744,7 +1788,8 @@ class LinstorVDI(VDI):
          if inc > 0:
              self.parent.inflate(self.parent.getDrbdSize() + inc)
  
@@ -4490,7 +4500,7 @@ index cc229ae2..bdc7b597 100755
          if self.parent.raw:
              return 0
          size_coalesced = LinstorVhdUtil.compute_volume_size(
-@@ -1747,14 +1791,16 @@ class LinstorVDI(VDI):
+@@ -1753,14 +1798,16 @@ class LinstorVDI(VDI):
          Util.log("Coalesced size = %s" % Util.num2str(size_coalesced))
          return size_coalesced - self.parent.getDrbdSize()
  
@@ -4509,7 +4519,7 @@ index cc229ae2..bdc7b597 100755
          assert self.getSizeVHD() > 0
          return self._calcExtraSpaceForCoalescing() + \
              LinstorVolumeManager.round_up_volume_size(self.getSizeVHD())
-@@ -1936,10 +1982,10 @@ class SR(object):
+@@ -1942,10 +1989,10 @@ class SR(object):
              return False
          return True
  
@@ -4522,7 +4532,7 @@ index cc229ae2..bdc7b597 100755
  
      def scanLocked(self, force=False):
          self.lock()
-@@ -2149,14 +2195,14 @@ class SR(object):
+@@ -2155,14 +2202,14 @@ class SR(object):
              vdiList.extend(vdi.getAllPrunable())
          return vdiList
  
@@ -4539,7 +4549,7 @@ index cc229ae2..bdc7b597 100755
          assert(len(vdi.children) == 0)
          del self.vdis[vdi.uuid]
          if vdi.parent:
-@@ -2165,10 +2211,10 @@ class SR(object):
+@@ -2171,10 +2218,10 @@ class SR(object):
              self.vdiTrees.remove(vdi)
          vdi.delete()
  
@@ -4552,7 +4562,7 @@ index cc229ae2..bdc7b597 100755
          paused = []
          failed = False
          for vdi in vdiList:
-@@ -2195,14 +2241,15 @@ class SR(object):
+@@ -2201,14 +2248,15 @@ class SR(object):
          if failed:
              raise util.SMException("Failed to unpause VDIs")
  
@@ -4570,7 +4580,7 @@ index cc229ae2..bdc7b597 100755
          if self.name:
              ret = "%s ('%s')" % (self.uuid[0:4], self.name)
          else:
-@@ -2237,7 +2284,7 @@ class SR(object):
+@@ -2243,7 +2291,7 @@ class SR(object):
          if self._locked == 0:
              self._srLock.release()
  
@@ -4579,7 +4589,7 @@ index cc229ae2..bdc7b597 100755
          for vdi in self.vdis.values():
              if vdi.scanError or len(vdi.children) == 0:
                  continue
-@@ -2245,7 +2292,7 @@ class SR(object):
+@@ -2251,7 +2299,7 @@ class SR(object):
                  return True
          return False
  
@@ -4588,7 +4598,7 @@ index cc229ae2..bdc7b597 100755
          for vdi in self.vdis.values():
              if vdi.scanError or len(vdi.children) == 0:
                  continue
-@@ -2274,7 +2321,7 @@ class SR(object):
+@@ -2280,7 +2328,7 @@ class SR(object):
                  if not dryRun:
                      self.journaler.remove(t, uuid)
  
@@ -4597,7 +4607,7 @@ index cc229ae2..bdc7b597 100755
          return 0
  
      def _coalesce(self, vdi):
-@@ -2551,7 +2598,7 @@ class SR(object):
+@@ -2561,7 +2609,7 @@ class SR(object):
              return False
          return True
  
@@ -4606,7 +4616,7 @@ index cc229ae2..bdc7b597 100755
          util.fistpoint.activate("LVHDRT_coaleaf_delay_3", self.uuid)
          self.lock()
          try:
-@@ -2654,44 +2701,43 @@ class SR(object):
+@@ -2664,44 +2712,43 @@ class SR(object):
          self._finishCoalesceLeaf(parent)
          self._updateSlavesOnResize(parent)
  
@@ -4660,7 +4670,7 @@ index cc229ae2..bdc7b597 100755
          pass
  
      def _buildTree(self, force):
-@@ -2730,7 +2776,8 @@ class FileSR(SR):
+@@ -2740,7 +2787,8 @@ class FileSR(SR):
          self.path = "/var/run/sr-mount/%s" % self.uuid
          self.journaler = fjournaler.Journaler(self.path)
  
@@ -4670,7 +4680,7 @@ index cc229ae2..bdc7b597 100755
          if not util.pathexists(self.path):
              raise util.SMException("directory %s not found!" % self.uuid)
          vhds = self._scan(force)
-@@ -2756,10 +2803,12 @@ class FileSR(SR):
+@@ -2766,10 +2814,12 @@ class FileSR(SR):
          self.logFilter.logState()
          self._handleInterruptedCoalesceLeaf()
  
@@ -4685,7 +4695,7 @@ index cc229ae2..bdc7b597 100755
          rootDeleted = False
          for vdi in vdiList:
              if not vdi.parent:
-@@ -2769,7 +2818,8 @@ class FileSR(SR):
+@@ -2779,7 +2829,8 @@ class FileSR(SR):
          if self.xapi.srRecord["type"] == "nfs" and rootDeleted:
              self.xapi.markCacheSRsDirty()
  
@@ -4695,7 +4705,7 @@ index cc229ae2..bdc7b597 100755
          """Clean up IntelliCache cache files. Caches for leaf nodes are
          removed when the leaf node no longer exists or its allow-caching
          attribute is not set. Caches for parent nodes are removed when the
-@@ -2858,7 +2908,8 @@ class FileSR(SR):
+@@ -2868,7 +2919,8 @@ class FileSR(SR):
              return vhds
          raise util.SMException("Scan error")
  
@@ -4705,7 +4715,7 @@ index cc229ae2..bdc7b597 100755
          self._checkSlaves(vdi)
          SR.deleteVDI(self, vdi)
  
-@@ -2883,7 +2934,8 @@ class FileSR(SR):
+@@ -2893,7 +2945,8 @@ class FileSR(SR):
          _host = self.xapi.session.xenapi.host
          text = _host.call_plugin( * call)
  
@@ -4715,7 +4725,7 @@ index cc229ae2..bdc7b597 100755
          entries = self.journaler.getAll(VDI.JRN_LEAF)
          for uuid, parentUuid in entries.items():
              fileList = os.listdir(self.path)
-@@ -2969,26 +3021,31 @@ class LVHDSR(SR):
+@@ -2979,26 +3032,31 @@ class LVHDSR(SR):
          self.lvActivator = LVActivator(self.uuid, self.lvmCache)
          self.journaler = journaler.Journaler(self.lvmCache)
  
@@ -4751,7 +4761,7 @@ index cc229ae2..bdc7b597 100755
          for vdi in self.vdis.values():
              if vdi.scanError or vdi.raw or len(vdi.children) == 0:
                  continue
-@@ -2996,7 +3053,8 @@ class LVHDSR(SR):
+@@ -3006,7 +3064,8 @@ class LVHDSR(SR):
                  return True
          return False
  
@@ -4761,7 +4771,7 @@ index cc229ae2..bdc7b597 100755
          numUpdated = 0
          for vdi in self.vdis.values():
              if vdi.scanError or vdi.raw or len(vdi.children) == 0:
-@@ -3011,7 +3069,8 @@ class LVHDSR(SR):
+@@ -3021,7 +3080,8 @@ class LVHDSR(SR):
              # inherit the refcount value and preventing the correct decrement
              self.cleanup()
  
@@ -4771,7 +4781,7 @@ index cc229ae2..bdc7b597 100755
          vdis = self._scan(force)
          for uuid, vdiInfo in vdis.items():
              vdi = self.getVDI(uuid)
-@@ -3042,7 +3101,8 @@ class LVHDSR(SR):
+@@ -3052,7 +3112,8 @@ class LVHDSR(SR):
              return vdis
          raise util.SMException("Scan error")
  
@@ -4781,7 +4791,7 @@ index cc229ae2..bdc7b597 100755
          for uuid in list(self.vdis.keys()):
              if not uuid in uuidsPresent:
                  Util.log("VDI %s disappeared since last scan" % \
-@@ -3051,7 +3111,8 @@ class LVHDSR(SR):
+@@ -3061,7 +3122,8 @@ class LVHDSR(SR):
                  if self.lvActivator.get(uuid, False):
                      self.lvActivator.remove(uuid, False)
  
@@ -4791,7 +4801,7 @@ index cc229ae2..bdc7b597 100755
          """If the parent is raw and the child was resized (virt. size), then
          we'll need to resize the parent, which can take a while due to zeroing
          out of the extended portion of the LV. Do it before pausing the child
-@@ -3062,13 +3123,15 @@ class LVHDSR(SR):
+@@ -3072,13 +3134,15 @@ class LVHDSR(SR):
  
          return SR._liveLeafCoalesce(self, vdi)
  
@@ -4809,7 +4819,7 @@ index cc229ae2..bdc7b597 100755
          # fix the refcounts: the remaining node should inherit the binary
          # refcount from the leaf (because if it was online, it should remain
          # refcounted as such), but the normal refcount from the parent (because
-@@ -3082,16 +3145,19 @@ class LVHDSR(SR):
+@@ -3092,16 +3156,19 @@ class LVHDSR(SR):
          assert(pCnt >= 0)
          RefCounter.set(vdi.parent.uuid, pCnt, cBcnt, ns)
  
@@ -4832,7 +4842,7 @@ index cc229ae2..bdc7b597 100755
          entries = self.journaler.getAll(VDI.JRN_LEAF)
          for uuid, parentUuid in entries.items():
              childLV = lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_VHD] + uuid
-@@ -3202,7 +3268,8 @@ class LVHDSR(SR):
+@@ -3212,7 +3279,8 @@ class LVHDSR(SR):
                  if hostRef in onlineHosts:
                      raise
  
@@ -4842,7 +4852,7 @@ index cc229ae2..bdc7b597 100755
          slaves = util.get_slaves_attached_on(self.xapi.session, [child.uuid])
          if not slaves:
              Util.log("Update-on-leaf-undo: VDI %s not attached on any slave" % \
-@@ -3228,7 +3295,8 @@ class LVHDSR(SR):
+@@ -3238,7 +3306,8 @@ class LVHDSR(SR):
                      slave, self.xapi.PLUGIN_ON_SLAVE, "multi", args)
              Util.log("call-plugin returned: '%s'" % text)
  
@@ -4852,7 +4862,7 @@ index cc229ae2..bdc7b597 100755
          slaves = util.get_slaves_attached_on(self.xapi.session, [vdi.uuid])
          if not slaves:
              Util.log("Update-on-rename: VDI %s not attached on any slave" % vdi)
-@@ -3250,7 +3318,8 @@ class LVHDSR(SR):
+@@ -3260,7 +3329,8 @@ class LVHDSR(SR):
                      slave, self.xapi.PLUGIN_ON_SLAVE, "multi", args)
              Util.log("call-plugin returned: '%s'" % text)
  
@@ -4862,7 +4872,7 @@ index cc229ae2..bdc7b597 100755
          uuids = [x.uuid for x in vdi.getAllLeaves()]
          slaves = util.get_slaves_attached_on(self.xapi.session, uuids)
          if not slaves:
-@@ -3273,14 +3342,17 @@ class LinstorSR(SR):
+@@ -3283,14 +3353,17 @@ class LinstorSR(SR):
          self.path = LinstorVolumeManager.DEV_ROOT_PATH
          self._reloadLinstor()
  
@@ -4883,7 +4893,7 @@ index cc229ae2..bdc7b597 100755
          all_vdi_info = self._scan(force)
          for uuid, vdiInfo in all_vdi_info.items():
              # When vdiInfo is None, the VDI is RAW.
-@@ -3296,7 +3368,8 @@ class LinstorSR(SR):
+@@ -3306,7 +3379,8 @@ class LinstorSR(SR):
          self.logFilter.logState()
          self._handleInterruptedCoalesceLeaf()
  
@@ -4893,7 +4903,7 @@ index cc229ae2..bdc7b597 100755
          self._linstor.ensure_volume_list_is_not_locked(
              vdiList, timeout=LinstorVDI.VOLUME_LOCK_TIMEOUT
          )
-@@ -3413,18 +3486,21 @@ class LinstorSR(SR):
+@@ -3423,18 +3497,21 @@ class LinstorSR(SR):
  
          return all_vdi_info
  
@@ -4918,7 +4928,7 @@ index cc229ae2..bdc7b597 100755
          return LinstorVhdUtil.compute_volume_size(parent.sizeVirt, parent.vdi_type) - parent.getDrbdSize()
  
      def _hasValidDevicePath(self, uuid):
-@@ -3435,7 +3511,8 @@ class LinstorSR(SR):
+@@ -3445,7 +3522,8 @@ class LinstorSR(SR):
              return False
          return True
  
@@ -4928,7 +4938,7 @@ index cc229ae2..bdc7b597 100755
          self.lock()
          try:
              self._linstor.ensure_volume_is_not_locked(
-@@ -3445,7 +3522,8 @@ class LinstorSR(SR):
+@@ -3455,7 +3533,8 @@ class LinstorSR(SR):
          finally:
              self.unlock()
  
@@ -5617,7 +5627,7 @@ index e71ac268..9af3d4bc 100644
              'ip': '127.0.0.1',
              'port': 3260,
 diff --git a/tests/test_LVHDSR.py b/tests/test_LVHDSR.py
-index 57a1ee8c..8d287221 100644
+index 25225020..4ec6143a 100644
 --- a/tests/test_LVHDSR.py
 +++ b/tests/test_LVHDSR.py
 @@ -1,3 +1,5 @@
@@ -5642,7 +5652,7 @@ index 57a1ee8c..8d287221 100644
          self.remove_stubs()
  
      def create_LVHDSR(self, master=False, command='foo', sr_uuid=None):
-@@ -304,8 +307,8 @@ class TestLVHDSR(unittest.TestCase, Stubs):
+@@ -449,8 +452,8 @@ class TestLVHDSR(unittest.TestCase, Stubs):
  
  
  class TestLVHDVDI(unittest.TestCase, Stubs):
@@ -5653,7 +5663,7 @@ index 57a1ee8c..8d287221 100644
          self.init_stubs()
  
          lvhdutil_patcher = mock.patch('LVHDSR.lvhdutil', autospec=True)
-@@ -342,7 +345,8 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
+@@ -487,7 +490,8 @@ class TestLVHDVDI(unittest.TestCase, Stubs):
  
          self.addCleanup(mock.patch.stopall)
  
@@ -5776,7 +5786,7 @@ index b139f4c5..4e0de361 100644
  
      def create_SR(self, cmd, dconf, cmd_params=None):
 diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
-index b5d5257b..c38a5805 100644
+index d585496c..6dc783de 100644
 --- a/tests/test_blktap2.py
 +++ b/tests/test_blktap2.py
 @@ -1,3 +1,5 @@
@@ -5795,7 +5805,7 @@ index b5d5257b..c38a5805 100644
          subprocess_patcher = mock.patch("blktap2.subprocess")
          self.mock_subprocess = subprocess_patcher.start()
  
-@@ -112,7 +115,8 @@ class TestTapdisk(unittest.TestCase):
+@@ -146,7 +149,8 @@ class TestTapdisk(unittest.TestCase):
  
  
  class TestVDI(unittest.TestCase):
@@ -5805,7 +5815,7 @@ index b5d5257b..c38a5805 100644
          self.addCleanup(mock.patch.stopall)
  
          lock_patcher = mock.patch('blktap2.Lock', autospec=True)
-@@ -142,7 +146,7 @@ class TestVDI(unittest.TestCase):
+@@ -176,7 +180,7 @@ class TestVDI(unittest.TestCase):
          self.mock_target.vdi.sr.handles.side_effect = mock_handles
          self.mock_target.session = self.mock_session
          mock_target.session = self.mock_session
@@ -5814,7 +5824,7 @@ index b5d5257b..c38a5805 100644
          self.mock_target.has_cap.side_effect = self.get_caps
  
          self.vdi_uuid = str(uuid.uuid4())
-@@ -159,7 +163,7 @@ class TestVDI(unittest.TestCase):
+@@ -193,7 +197,7 @@ class TestVDI(unittest.TestCase):
          log_patcher = mock.patch('blktap2.util.SMlog', autospec=True)
          self.mock_log = log_patcher.start()
  
@@ -5823,7 +5833,7 @@ index b5d5257b..c38a5805 100644
          def log_stderr(message, ident="SM", priority=syslog.LOG_INFO):
              self.log_lines.append(message)
              print(message, file=sys.stderr)
-@@ -625,8 +629,8 @@ class TestVDI(unittest.TestCase):
+@@ -659,8 +663,8 @@ class TestVDI(unittest.TestCase):
  
  
  class TestTapCtl(unittest.TestCase):
@@ -6236,6 +6246,27 @@ index 4b59f632..b55e24aa 100644
          self.session = mock.MagicMock()
  
          lvmcache_patcher = mock.patch('on_slave.LVMCache', autospec=True)
+diff --git a/tests/test_scsiutil.py b/tests/test_scsiutil.py
+index a7d60dca..3bb952aa 100644
+--- a/tests/test_scsiutil.py
++++ b/tests/test_scsiutil.py
+@@ -1,3 +1,5 @@
++from sm_typing import override
++
+ import unittest
+ import unittest.mock as mock
+ 
+@@ -43,8 +45,8 @@ class Test_sg_readcap(unittest.TestCase):
+ 
+ 
+ class TestGetDevicesByScsciId(unittest.TestCase):
+-
+-    def setUp(self):
++    @override
++    def setUp(self) -> None:
+         self.addCleanup(mock.patch.stopall)
+ 
+         listdir_patcher = mock.patch('os.listdir')
 diff --git a/tests/test_sr_health_check.py b/tests/test_sr_health_check.py
 index 47c59212..bc879f96 100644
 --- a/tests/test_sr_health_check.py

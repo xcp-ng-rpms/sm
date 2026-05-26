@@ -1,4 +1,4 @@
-From 5a21a2588136c78cb38b5bf334bf9578a4093e82 Mon Sep 17 00:00:00 2001
+From d89e43f365be771f93e4e2d490144afaa13b6c80 Mon Sep 17 00:00:00 2001
 From: Millefeuille <mathieu.labourier@vates.tech>
 Date: Mon, 6 Oct 2025 10:12:31 +0200
 Subject: [PATCH] Stop SMGC service on SR detach to prevent orphaned systemd
@@ -16,10 +16,10 @@ Signed-off-by: Mathieu Labourier <mathieu.labourier@vates.tech>
  2 files changed, 25 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 933bb044..c09c77f1 100755
+index a12b252c..7e6f1e77 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3968,6 +3968,7 @@ def abort(srUuid, soft=False):
+@@ -3979,6 +3979,7 @@ def abort(srUuid, soft=False):
      """Abort GC/coalesce if we are currently GC'ing or coalescing a VDI pair.
      """
      if _abort(srUuid, soft):
@@ -27,7 +27,7 @@ index 933bb044..c09c77f1 100755
          Util.log("abort: releasing the process lock")
          lockGCActive.release()
          return True
-@@ -4048,6 +4049,18 @@ def start_gc(session, sr_uuid):
+@@ -4059,6 +4060,18 @@ def start_gc(session, sr_uuid):
      subprocess.run([__file__, '-b', '-u', sr_uuid, '-g'],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
  
@@ -46,7 +46,7 @@ index 933bb044..c09c77f1 100755
  def start_gc_service(sr_uuid, wait=False):
      """
      This starts the templated systemd service which runs GC on the given SR UUID.
-@@ -4058,13 +4071,18 @@ def start_gc_service(sr_uuid, wait=False):
+@@ -4069,13 +4082,18 @@ def start_gc_service(sr_uuid, wait=False):
      run has finished. This is used to force a run of the GC instead of just kicking it
      in the background.
      """

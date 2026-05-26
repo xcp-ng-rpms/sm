@@ -1,4 +1,4 @@
-From b414e7b597b8b3f07c867c835044ed6777a96280 Mon Sep 17 00:00:00 2001
+From 7b7fdf158ba20e61fa3b35709e3e498f7cdb2f1c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:10:55 +0200
 Subject: [PATCH] Replace `Dict` variable with `info` in `LVHDSR`
@@ -11,10 +11,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 19 insertions(+), 19 deletions(-)
 
 diff --git a/drivers/LVHDSR.py b/drivers/LVHDSR.py
-index 0e0d2045..31169f15 100755
+index 11c300ff..e1564933 100755
 --- a/drivers/LVHDSR.py
 +++ b/drivers/LVHDSR.py
-@@ -694,21 +694,21 @@ class LVHDSR(SR.SR):
+@@ -694,19 +694,19 @@ class LVHDSR(SR.SR):
                  for vdi in vdis:
                      vdi_uuids.add(self.session.xenapi.VDI.get_uuid(vdi))
  
@@ -36,15 +36,13 @@ index 0e0d2045..31169f15 100755
 +                            vdiToSnaps[info[vdi][SNAPSHOT_OF_TAG]] = [vdi_uuid]
  
                      if vdi_uuid not in vdi_uuids:
-                         util.SMlog("Introduce VDI %s as it is present in " \
-                                    "metadata and not in XAPI." % vdi_uuid)
                          sm_config = {}
 -                        sm_config['vdi_type'] = Dict[vdi][VDI_TYPE_TAG]
 +                        sm_config['vdi_type'] = info[vdi][VDI_TYPE_TAG]
                          lvname = "%s%s" % \
                              (lvhdutil.LV_PREFIX[sm_config['vdi_type']], vdi_uuid)
-                         self.lvActivator.activate(
-@@ -716,7 +716,7 @@ class LVHDSR(SR.SR):
+                         if not self.lvmCache.checkLV(lvname):
+@@ -724,7 +724,7 @@ class LVHDSR(SR.SR):
                          activated_lvs.add(vdi_uuid)
                          lvPath = os.path.join(self.path, lvname)
  
@@ -53,7 +51,7 @@ index 0e0d2045..31169f15 100755
                              size = self.lvmCache.getSize( \
                                  lvhdutil.LV_PREFIX[vhdutil.VDI_TYPE_RAW] + \
                                      vdi_uuid)
-@@ -740,31 +740,31 @@ class LVHDSR(SR.SR):
+@@ -748,31 +748,31 @@ class LVHDSR(SR.SR):
  
                          vdi_ref = self.session.xenapi.VDI.db_introduce(
                                          vdi_uuid,

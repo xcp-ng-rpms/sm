@@ -1,15 +1,15 @@
-%global package_speccommit 961596c641e84de8fa5ed2f98768b4c7cbeb4b30
-%global package_srccommit v4.1.12
+%global package_speccommit 741655006ce8a63e4af7f6f5d1e9135275b8efae
+%global package_srccommit v4.1.14
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 4.1.12
+Version: 4.1.14
 Release: 1%{?xsrel}%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-4.1.12.tar.gz
+Source0: sm-4.1.14.tar.gz
 
 %define __python python3
 
@@ -187,7 +187,7 @@ Manager and some other packages
 ## so this is safe.
 if [ $1 -gt 1 ];
 then
-    /usr/bin/systemctl list-units fairlock@* --all --no-legend | /usr/bin/cut -d' ' -f1 | while read service;
+    /usr/bin/systemctl list-units fairlock@* --all --no-legend --plain | /usr/bin/cut -d' ' -f1 | while read service;
     do
         /usr/bin/systemctl stop "$service"
     done
@@ -258,6 +258,13 @@ in /opt/xensource
 /opt/xensource/libexec/dcopy
 
 %changelog
+* Mon Mar 23 2026 Lin Liu <lin.liu01@citrix.com> - 4.1.14-1
+- CA-425281: _clear_dir used python3.13 features
+
+* Mon Mar 16 2026 Lin Liu <lin.liu01@citrix.com> - 4.1.13-1
+- CA-424060: Fix sm-fairlock post-install script
+- CA-424403: Root disk iscsi node.startup does not survive restart_daemon
+
 * Mon Jan 26 2026 Mark Syms <mark.syms@citrix.com> - 4.1.12-1
 - Revert: use VHD header to fetch block size
 

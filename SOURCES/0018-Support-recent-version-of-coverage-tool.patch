@@ -1,8 +1,7 @@
-From 09aa72c4d2655ba1027dc831b1580bde87643447 Mon Sep 17 00:00:00 2001
+From 0918908a19367acbd2cd17650ae77f014a72fdf5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 4 May 2023 10:24:22 +0200
-Subject: [PATCH 18/28] Support recent version of coverage tool (coverage
- 7.2.5)
+Subject: [PATCH] Support recent version of coverage tool (coverage 7.2.5)
 
 Without these changes many warns/errors are emitted:
 - "assertEquals" is deprecated, "assertEqual" must be used instead
@@ -16,7 +15,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/tests/test_ISOSR.py b/tests/test_ISOSR.py
-index 760c566..9dec459 100644
+index 760c566a..9dec459c 100644
 --- a/tests/test_ISOSR.py
 +++ b/tests/test_ISOSR.py
 @@ -80,7 +80,7 @@ class TestISOSR_overLocal(unittest.TestCase):
@@ -28,6 +27,3 @@ index 760c566..9dec459 100644
          self.assertFalse(pread.called)
  
  
--- 
-2.46.0
-

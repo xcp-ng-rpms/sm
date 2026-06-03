@@ -1,27 +1,25 @@
-%global package_speccommit eb20118552753e3d609cbdbd8102ecfc2a31f4fa
-%global package_srccommit v3.2.3
+%global package_speccommit 961596c641e84de8fa5ed2f98768b4c7cbeb4b30
+%global package_srccommit v4.1.12
 
 # -*- rpm-spec -*-
 
 Summary: sm - XCP storage managers
 Name:    sm
-Version: 3.2.3
-Release: 1.1%{?xsrel}%{?dist}
+Version: 4.1.12
+Release: 1%{?xsrel}.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
-Source0: sm-3.2.3.tar.gz
+Source0: sm-4.1.12.tar.gz
 
 %define __python python3
 
 BuildRequires: python3
 BuildRequires: python3-devel
-BuildRequires: python36-pylint
+BuildRequires: python3-pylint
 BuildRequires: python3-coverage
-BuildRequires: python36-bitarray
-BuildRequires: python3-future
-
-# XCP-ng: python36-mock for %%check
-BuildRequires: python36-mock
+BuildRequires: python3-bitarray
+# XCP-ng: used by dubious unit tests
+BuildRequires: /usr/bin/systemctl
 
 # XCP-ng: gcc must be explicitly required in our build system
 BuildRequires: gcc
@@ -30,49 +28,39 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: sm-fairlock = %{version}-%{release}
-Requires: xenserver-multipath
-Requires(post): xenserver-multipath
-Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+
+# XCP-ng BEGIN: see later if it useful to follow XS forks
+Requires: device-mapper-multipath
+Requires(post): device-mapper-multipath
+Requires: lvm2
+#Requires: xenserver-multipath
+#Requires(post): xenserver-multipath
+#Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+# XCP-ng END
+
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
-Requires: python36-bitarray
+Requires: python3-bitarray
+Requires: sm-debugtools = %{version}-%{release}
+Requires: python%{python3_pkgversion}-sm-libs = %{version}-%{release}
+Requires: sm-compat = %{version}-%{release}
+Requires: python%{python3_pkgversion}-sm-compat = %{version}-%{release}
+# For cgclassify command
+Requires: libcgroup-tools
 Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
+Conflicts: blktap < 4.0.0
+Requires: sg3_utils
 
 Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.3..3.2.3-8.3
-Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
-Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
-Patch1003: 0003-feat-drivers-add-XFS-driver.patch
-Patch1004: 0004-feat-drivers-add-ZFS-driver-to-avoid-losing-VDI-meta.patch
-Patch1005: 0005-feat-drivers-add-LinstorSR-driver.patch
-Patch1006: 0006-feat-tests-add-unit-tests-concerning-ZFS-close-xcp-n.patch
-Patch1007: 0007-Added-SM-Driver-for-MooseFS.patch
-Patch1008: 0008-Avoid-usage-of-umount-in-ISOSR-when-legacy_mode-is-u.patch
-Patch1009: 0009-MooseFS-SR-uses-now-UUID-subdirs-for-each-SR.patch
-Patch1010: 0010-Fix-is_open-call-for-many-drivers-25.patch
-Patch1011: 0011-Remove-SR_CACHING-capability-for-many-SR-types-24.patch
-Patch1012: 0012-Fix-code-coverage-regarding-MooseFSSR-and-ZFSSR-29.patch
-Patch1013: 0013-py3-simple-changes-from-futurize-on-XCP-ng-drivers.patch
-Patch1014: 0014-py3-futurize-fix-of-xmlrpc-calls-for-CephFS-GlusterF.patch
-Patch1015: 0015-py3-use-of-integer-division-operator.patch
-Patch1016: 0016-test_on_slave-allow-to-work-with-SR-using-absolute-P.patch
-Patch1017: 0017-py3-switch-interpreter-to-python3.patch
-Patch1018: 0018-Support-recent-version-of-coverage-tool.patch
-Patch1019: 0019-feat-LinstorSR-import-all-8.2-changes.patch
-Patch1020: 0020-feat-LinstorSR-is-now-compatible-with-python-3.patch
-Patch1021: 0021-Remove-SR_PROBE-from-ZFS-capabilities-36.patch
-Patch1022: 0022-Repair-coverage-to-be-compatible-with-8.3-test-env.patch
-Patch1023: 0023-Support-IPv6-in-Ceph-Driver.patch
-Patch1024: 0024-lvutil-use-wipefs-not-dd-to-clear-existing-signature.patch
-Patch1025: 0025-feat-LargeBlock-introduce-largeblocksr-51.patch
-Patch1026: 0026-feat-LVHDSR-add-a-way-to-modify-config-of-LVMs-60.patch
-Patch1027: 0027-Revert-CA-379329-check-for-missing-iSCSI-sessions-an.patch
-Patch1028: 0028-reflect-upstream-changes-in-our-tests.patch
+# git format-patch v3.2.12-xcpng..3.2.12-8.3 --no-signature --no-numbered
+#TODO
+
+Patch2000: install-relative-symlinks.patch
 
 %description
 This package contains storage backends used in XCP
@@ -87,24 +75,7 @@ make -C misc/fairlock
 %install
 make -C misc/fairlock install DESTDIR=%{buildroot}
 make install DESTDIR=%{buildroot}
-
-# Mark processes that should be moved to the data path
-%triggerin -- libcgroup-tools
-( patch -tsN -r - -d / -p0 )>/dev/null << 'EOF'
---- /etc/cgrules.conf	2018-04-11 02:33:52.000000000 +0000
-+++ /tmp/cgrules.conf	2024-01-26 17:30:29.204242549 +0000
-@@ -7,4 +7,6 @@
- #@student	cpu,memory	usergroup/student/
- #peter		cpu		test1/
- #%		memory		test2/
-+*:tapdisk	cpu,cpuacct	vm.slice/
-+%		blkio		vm.slice/
- # End of file
-EOF
-
-%pre
-# Remove sm-multipath on install or upgrade, to ensure it goes
-[ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
+mkdir -p %{buildroot}%{_datadir}/%{name}/
 
 %post
 %systemd_post make-dummy-sr.service
@@ -114,34 +85,32 @@ EOF
 %systemd_post storage-init.service
 %systemd_post usb-scan.socket
 %systemd_post mpathcount.socket
+%systemd_post sr_health_check.timer
+%systemd_post sr_health_check.service
 
 # On upgrade, migrate from the old statefile to the new statefile so that
 # storage is not reinitialized.
 if [ $1 -gt 1 ] ; then
-    grep -q ^success /etc/firstboot.d/state/10-prepare-storage 2>/dev/null && touch /var/lib/misc/ran-storage-init || :
+    grep -q ^success "%{_sysconfdir}/firstboot.d/state/10-prepare-storage" 2>/dev/null && touch /var/lib/misc/ran-storage-init || :
 fi
 
-rm -f /etc/lvm/cache/.cache
-touch /etc/lvm/cache/.cache
+rm -f "%{_sysconfdir}/lvm/cache/.cache"
+touch "%{_sysconfdir}/lvm/cache/.cache"
 
-# We try to be "update-alternatives" ready.
-# If a file exists and it is not a symlink we back it up
-if [ -e /etc/multipath.conf -a ! -h /etc/multipath.conf ]; then
-   mv -f /etc/multipath.conf /etc/multipath.conf.$(date +%F_%T)
-fi
-update-alternatives --install /etc/multipath.conf multipath.conf /etc/multipath.xenserver/multipath.conf 90
+systemctl enable sr_health_check.timer
+systemctl start sr_health_check.timer
 
-# XCP-ng: enable linstor-monitor by default.
-# However it won't start without linstor-controller.service
-systemctl enable linstor-monitor.service
+# # XCP-ng: enable linstor-monitor by default.
+# # However it won't start without linstor-controller.service
+# systemctl enable linstor-monitor.service
 
-# XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
-# the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
-# it blocks its access to other hosts.
-# This command is also important if our multipath conf is modified for other drivers.
-if [ $1 -gt 1 ]; then
-    multipathd reconfigure
-fi
+# # XCP-ng: We must reload the multipathd configuration without restarting the service to prevent
+# # the opening of /dev/drbdXXXX volumes. Otherwise if multipathd opens a DRBD volume,
+# # it blocks its access to other hosts.
+# # This command is also important if our multipath conf is modified for other drivers.
+# if [ $1 -gt 1 ]; then
+#     multipathd reconfigure
+# fi
 
 %preun
 %systemd_preun make-dummy-sr.service
@@ -151,16 +120,13 @@ fi
 %systemd_preun storage-init.service
 %systemd_preun usb-scan.socket
 %systemd_preun mpathcount.socket
-# Remove sm-multipath on upgrade or uninstall, to ensure it goes
-[ ! -x /sbin/chkconfig ] || chkconfig --del sm-multipath || :
-# only remove in case of erase (but not at upgrade)
-if [ $1 -eq 0 ] ; then
-    update-alternatives --remove multipath.conf /etc/multipath.xenserver/multipath.conf
-fi
-exit 0
+%systemd_preun sr_health_check.timer
+%systemd_preun sr_health_check.service
 
-# XCP-ng
-%systemd_preun linstor-monitor.service
+# # XCP-ng
+# %systemd_preun linstor-monitor.service
+
+exit 0
 
 %postun
 %systemd_postun make-dummy-sr.service
@@ -168,9 +134,11 @@ exit 0
 %systemd_postun sm-mpath-root.service
 %systemd_postun xs-sm.service
 %systemd_postun storage-init.service
+%systemd_postun sr_health_check.timer
+%systemd_postun sr_health_check.service
 
-# XCP-ng
-%systemd_postun linstor-monitor.service
+# # XCP-ng
+# %systemd_postun linstor-monitor.service
 
 %check
 tests/run_python_unittests.sh
@@ -180,104 +148,21 @@ cp -r htmlcov %{buildroot}/htmlcov
 
 %files
 %defattr(-,root,root,-)
-/etc/udev/scripts/xs-mpath-scsidev.sh
-/etc/xapi.d/plugins/coalesce-leaf
-/etc/xapi.d/plugins/lvhd-thin
-/etc/xapi.d/plugins/nfs-on-slave
-/etc/xapi.d/plugins/on-slave
-/etc/xapi.d/plugins/tapdisk-pause
-/etc/xapi.d/plugins/testing-hooks
-/etc/xapi.d/plugins/intellicache-clean
-/etc/xapi.d/plugins/trim
-/etc/xensource/master.d/02-vhdcleanup
-/opt/xensource/bin/blktap2
-/opt/xensource/bin/tapdisk-cache-stats
-/opt/xensource/debug/tp
-/opt/xensource/libexec/check-device-sharing
-/opt/xensource/libexec/dcopy
-/opt/xensource/libexec/local-device-change
-/opt/xensource/libexec/make-dummy-sr
-/opt/xensource/libexec/usb_change
-/opt/xensource/libexec/kickpipe
-/opt/xensource/libexec/set-iscsi-initiator
-/opt/xensource/libexec/storage-init
-/opt/xensource/sm/DummySR
-/opt/xensource/sm/DummySR.py
-/opt/xensource/sm/EXTSR
-/opt/xensource/sm/EXTSR.py
-/opt/xensource/sm/FileSR
-/opt/xensource/sm/FileSR.py
-/opt/xensource/sm/HBASR
-/opt/xensource/sm/HBASR.py
-/opt/xensource/sm/ISCSISR
-/opt/xensource/sm/RawISCSISR.py
-/opt/xensource/sm/BaseISCSI.py
-/opt/xensource/sm/ISOSR
-/opt/xensource/sm/ISOSR.py
-/opt/xensource/sm/LUNperVDI.py
-/opt/xensource/sm/LVHDSR.py
-/opt/xensource/sm/LVHDoHBASR.py
-/opt/xensource/sm/LVHDoISCSISR.py
-/opt/xensource/sm/LVHDoFCoESR.py
-/opt/xensource/sm/LVMSR
-/opt/xensource/sm/LVMoHBASR
-/opt/xensource/sm/LVMoISCSISR
-/opt/xensource/sm/LVMoFCoESR
-/opt/xensource/sm/NFSSR
-/opt/xensource/sm/NFSSR.py
-/opt/xensource/sm/SMBSR
-/opt/xensource/sm/SMBSR.py
-/opt/xensource/sm/SHMSR.py
-/opt/xensource/sm/SR.py
-/opt/xensource/sm/SRCommand.py
-/opt/xensource/sm/VDI.py
-/opt/xensource/sm/XE_SR_ERRORCODES.xml
-/opt/xensource/sm/blktap2.py
-/opt/xensource/sm/cleanup.py
-/opt/xensource/sm/devscan.py
-/opt/xensource/sm/fjournaler.py
-/opt/xensource/sm/flock.py
-/opt/xensource/sm/ipc.py
-/opt/xensource/sm/iscsilib.py
-/opt/xensource/sm/fcoelib.py
-/opt/xensource/sm/journaler.py
-/opt/xensource/sm/lcache.py
-/opt/xensource/sm/lock.py
-/opt/xensource/sm/lock_queue.py
-/opt/xensource/sm/lvhdutil.py
-/opt/xensource/sm/lvmanager.py
-/opt/xensource/sm/lvmcache.py
-/opt/xensource/sm/lvutil.py
-/opt/xensource/sm/metadata.py
-/opt/xensource/sm/srmetadata.py
-/opt/xensource/sm/mpath_cli.py
-/opt/xensource/sm/mpath_dmp.py
-/opt/xensource/sm/mpath_null.py
-/opt/xensource/sm/mpathcount.py
-/opt/xensource/sm/mpathutil.py
-/opt/xensource/sm/nfs.py
-/opt/xensource/sm/refcounter.py
-/opt/xensource/sm/resetvdis.py
-/opt/xensource/sm/scsiutil.py
-/opt/xensource/sm/scsi_host_rescan.py
-/opt/xensource/sm/sysdevice.py
-/opt/xensource/sm/udevSR
-/opt/xensource/sm/udevSR.py
-/opt/xensource/sm/util.py
-/opt/xensource/sm/cifutils.py
-/opt/xensource/sm/verifyVHDsOnSR.py
-/opt/xensource/sm/vhdutil.py
-/opt/xensource/sm/trim_util.py
-/opt/xensource/sm/xs_errors.py
-/opt/xensource/sm/wwid_conf.py
-/opt/xensource/sm/pluginutil.py
-/opt/xensource/sm/constants.py
-/opt/xensource/sm/cbtutil.py
-/opt/xensource/sm/multipath-root-setup
-%dir /opt/xensource/sm/plugins
-/opt/xensource/sm/plugins/__init__.py*
-/sbin/mpathutil
-/etc/rc.d/init.d/sm-multipath
+%{_libexecdir}/sm
+%exclude %{_libexecdir}/sm/debug
+%{_sysconfdir}/udev/scripts/xs-mpath-scsidev.sh
+%{_sysconfdir}/xapi.d/plugins/coalesce-leaf
+%{_sysconfdir}/xapi.d/plugins/lvhd-thin
+%{_sysconfdir}/xapi.d/plugins/nfs-on-slave
+%{_sysconfdir}/xapi.d/plugins/on-slave
+%{_sysconfdir}/xapi.d/plugins/tapdisk-pause
+%{_sysconfdir}/xapi.d/plugins/testing-hooks
+%{_sysconfdir}/xapi.d/plugins/intellicache-clean
+%{_sysconfdir}/xapi.d/plugins/trim
+%{_sysconfdir}/xapi.d/xapi-pre-shutdown/*
+%{_sysconfdir}/xensource/master.d/02-vhdcleanup
+%{_bindir}/blktap2
+%{_bindir}/tapdisk-cache-stats
 %{_unitdir}/make-dummy-sr.service
 %{_unitdir}/xs-sm.service
 %{_unitdir}/sm-mpath-root.service
@@ -286,47 +171,51 @@ cp -r htmlcov %{buildroot}/htmlcov
 %{_unitdir}/mpathcount.service
 %{_unitdir}/mpathcount.socket
 %{_unitdir}/storage-init.service
+%{_unitdir}/sr_health_check.timer
+%{_unitdir}/sr_health_check.service
 %{_unitdir}/SMGC@.service
-%config /etc/udev/rules.d/65-multipath.rules
-%config /etc/udev/rules.d/55-xs-mpath-scsidev.rules
-%config /etc/udev/rules.d/58-xapi.rules
-%config /etc/multipath.xenserver/multipath.conf
-%dir /etc/multipath/conf.d
-%config(noreplace) /etc/multipath/conf.d/custom.conf
-%config /etc/udev/rules.d/69-dm-lvm-metad.rules
-%config /etc/logrotate.d/SMlog
-%config /etc/udev/rules.d/57-usb.rules
+%config %{_sysconfdir}/udev/rules.d/65-multipath.rules
+%config %{_sysconfdir}/udev/rules.d/55-xs-mpath-scsidev.rules
+%config %{_sysconfdir}/udev/rules.d/58-xapi.rules
+%dir %{_sysconfdir}/multipath/conf.d
+%config(noreplace) %{_sysconfdir}/multipath/conf.d/custom.conf
+%config %{_sysconfdir}/logrotate.d/SMlog
+%config %{_sysconfdir}/udev/rules.d/57-usb.rules
+%config %{_sysconfdir}/udev/rules.d/99-purestorage.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
-# XCP-ng
-/etc/systemd/system/drbd-reactor.service.d/override.conf
-/etc/systemd/system/linstor-satellite.service.d/override.conf
-/etc/systemd/system/var-lib-linstor.service
-/etc/xapi.d/plugins/linstor-manager
-/opt/xensource/bin/linstor-kv-tool
-/opt/xensource/libexec/fork-log-daemon
-/opt/xensource/libexec/linstor-monitord
-/opt/xensource/libexec/safe-umount
-/opt/xensource/sm/CephFSSR
-/opt/xensource/sm/CephFSSR.py
-/opt/xensource/sm/GlusterFSSR
-/opt/xensource/sm/GlusterFSSR.py
-/opt/xensource/sm/linstorjournaler.py
-/opt/xensource/sm/LinstorSR
-/opt/xensource/sm/LinstorSR.py
-/opt/xensource/sm/linstorvhdutil.py
-/opt/xensource/sm/linstorvolumemanager.py
-/opt/xensource/sm/MooseFSSR
-/opt/xensource/sm/MooseFSSR.py
-/opt/xensource/sm/XFSSR
-/opt/xensource/sm/XFSSR.py
-/opt/xensource/sm/ZFSSR
-/opt/xensource/sm/ZFSSR.py
-/opt/xensource/sm/LargeBlockSR
-/opt/xensource/sm/LargeBlockSR.py
-%{_unitdir}/linstor-monitor.service
+# # XCP-ng
+# /etc/systemd/system/drbd-reactor.service.d/override.conf
+# /etc/systemd/system/linstor-satellite.service.d/override.conf
+# /etc/systemd/system/var-lib-linstor.service
+# /etc/xapi.d/plugins/linstor-manager
+# /opt/xensource/bin/linstor-kv-tool
+# /opt/xensource/libexec/fork-log-daemon
+# /opt/xensource/libexec/linstor-monitord
+# /opt/xensource/libexec/safe-umount
+# /opt/xensource/sm/CephFSSR
+# /opt/xensource/sm/CephFSSR.py
+# /opt/xensource/sm/GlusterFSSR
+# /opt/xensource/sm/GlusterFSSR.py
+# /opt/xensource/sm/linstorjournaler.py
+# /opt/xensource/sm/LinstorSR
+# /opt/xensource/sm/LinstorSR.py
+# /opt/xensource/sm/linstorvhdutil.py
+# /opt/xensource/sm/linstorvolumemanager.py
+# /opt/xensource/sm/MooseFSSR
+# /opt/xensource/sm/MooseFSSR.py
+# /opt/xensource/sm/XFSSR
+# /opt/xensource/sm/XFSSR.py
+# /opt/xensource/sm/ZFSSR
+# /opt/xensource/sm/ZFSSR.py
+# /opt/xensource/sm/LargeBlockSR
+# /opt/xensource/sm/LargeBlockSR.py
+# %{_unitdir}/linstor-monitor.service
+# %{python3_sitelib}/__pycache__/sm_typing*pyc
+# %{python3_sitelib}/sm_typing.py
 
 %package testresults
 Summary:  test results for SM package
+BuildArch: noarch
 
 %description testresults
 The package contains the build time test results for the SM package
@@ -336,14 +225,19 @@ The package contains the build time test results for the SM package
 /coverage.xml
 /htmlcov
 
-%package test-plugins
+%package -n python%{python3_pkgversion}-sm-test-plugins
+Provides: sm-test-plugins = %{version}-%{release}
 Summary:  System test fake key lookup plugin
+BuildArch: noarch
 
-%description test-plugins
+%description -n python%{python3_pkgversion}-sm-test-plugins
 The package contains a fake key lookup plugin for system tests
 
-%files test-plugins
-/opt/xensource/sm/plugins/keymanagerutil.py*
+%files -n python%{python3_pkgversion}-sm-test-plugins
+/opt/xensource/sm/plugins
+%{_libexecdir}/sm/keymanagerutil
+%{python3_sitelib}/sm/plugins/keymanagerutil.py
+%{python3_sitelib}/sm/plugins/__pycache__/keymanagerutil.*
 
 %package fairlock
 Summary: Fair locking subsystem
@@ -358,8 +252,274 @@ Manager and some other packages
 %{_unitdir}/fairlock@.service
 %{_libexecdir}/fairlock
 
+%post fairlock
+## On upgrade, shut down existing lock services so new ones will
+## be started. There should be no locks held during upgrade operations
+## so this is safe.
+if [ $1 -gt 1 ];
+then
+    /usr/bin/systemctl list-units fairlock@* --all --no-legend | /usr/bin/cut -d' ' -f1 | while read service;
+    do
+        /usr/bin/systemctl stop "$service"
+    done
+fi
+
+%package debugtools
+Summary: SM utilities for debug and testing
+
+%description debugtools
+Utilities for debug and testing purposes
+
+%files debugtools
+%{_libexecdir}/sm/debug
+
+
+%package -n python%{python3_pkgversion}-sm-libs
+Summary: SM core libraries
+BuildArch: noarch
+# sm-core-libs is currently at v1.1.3-1. These need updating if we end up
+# putting out another release of it before this gets merged.
+Provides: python%{python3_pkgversion}-sm-core-libs = 1.1.3-1
+Obsoletes: python%{python3_pkgversion}-sm-core-libs < 1.1.3-2
+
+%description -n python%{python3_pkgversion}-sm-libs
+This package contains common core libraries for SM.
+
+It obsoletes and replaces the old sm-core-libs package.
+
+%files -n python%{python3_pkgversion}-sm-libs
+%exclude %{python3_sitelib}/sm/plugins/keymanagerutil.py
+%exclude %{python3_sitelib}/sm/plugins/__pycache__/keymanagerutil.*
+%{python3_sitelib}/sm
+%{_datadir}/sm
+
+%package -n python%{python3_pkgversion}-sm-compat
+Summary: SM compatibility files for older callers
+BuildArch: noarch
+Requires: sm = %{version}-%{release}
+
+%description -n python%{python3_pkgversion}-sm-compat
+This package contains compatibility wrappers left behind for older
+callers which expect to find python files in /opt/xensource
+
+
+%files -n python%{python3_pkgversion}-sm-compat
+/opt/xensource/sm
+/opt/xensource/bin/blktap2
+/opt/xensource/bin/tapdisk-cache-stats
+/opt/xensource/libexec/check-device-sharing
+/opt/xensource/libexec/local-device-change
+/opt/xensource/libexec/make-dummy-sr
+/opt/xensource/libexec/usb_change
+/opt/xensource/libexec/kickpipe
+/opt/xensource/libexec/set-iscsi-initiator
+/opt/xensource/libexec/storage-init
+%exclude /opt/xensource/sm/plugins
+
+%package compat
+Summary: SM compatibility files for older callers
+
+%description compat
+This package contains arch-specific compatibility wrappers left
+behind for older callers which expect to find libraries and binaries
+in /opt/xensource
+
+%files compat
+/opt/xensource/debug/tp
+/opt/xensource/libexec/dcopy
 
 %changelog
+* Tue May 05 2026 Yann Dirson <yann.dirson@vates.tech> - 4.1.12-1.1
+- Rebase on 4.1.12-1
+- Adjust deps for Almalinux 9
+- Skipped all XCP-ng patches for now, drop BuildRequires: python-mock
+- Dropped obsolete dependency on python3-future
+- New patch: install relative symlinks
+- HACK include systemctl in BuildRequires, some unit tests to strange things
+- TEMP HACK remove dependency on device-mapper-multipath, which needs work
+- TEMP HACK depend on lvm2 not xenserver-lvm2, which needs work
+- TODO: XCP-ng patches were not ported yet to 4.x, XCP-ng-specific files commented out
+- *** Upstream changelog ***
+  * Mon Jan 26 2026 Mark Syms <mark.syms@citrix.com> - 4.1.12-1
+  - Revert: use VHD header to fetch block size
+
+  * Thu Jan 22 2026 Mark Syms  <mark.syms@citrix.com> - 4.1.11-1
+  - Fix tests
+
+  * Thu Jan 22 2026 Mark Syms <mark.syms@citrix.com> - 4.1.10-1
+  - CA-420307: Construct synthetic page data as byte arrays
+  - fix(cleanup): ensure VDI is active before relink
+  - CA-411988 Fix TypeError in LVHDoHBASR.load() with dynamic module loading
+  - CA-418775: ensure getsize and sg_readcap agree on resize
+  - CA-420515: log errors when in foreground
+  - CA-419706: update print calls
+  - CA-416486: leaf coalesce wait for GC
+  - LVHDSR: convert refvdi retured by get_snapshot_of to vdi_uuid
+  - check that the snapshot_of field is not 'OpaqueRef:' format
+  - use VHD header to fetch block size
+
+  * Mon Dec 15 2025 Mark Syms <mark.syms@citrix.com> - 4.1.9-1
+  - CA-421013: ensure cbt log removed on supporter after disable
+
+  * Mon Dec 08 2025 Mark Syms <mark.syms@citrix.com> - 4.1.8-1
+  - CP-310443: Drop legacy mpathutil tool
+  - CA-413899: Rescan LVs whilst activating
+  - remove flag gc_no_space from SR sm-config
+  - improve error messages when vdi_type is missing
+  - CP-309718: calculate a moving average of leaf size in GC
+
+  * Thu Oct 02 2025 Mark Syms <mark.syms@citrix.com> - 4.1.7-1
+  - Rebuild
+
+  * Wed Oct 01 2025 Mark Syms <mark.syms@citrix.com> - 4.1.6-1
+  - stop SMGC service on SR detach
+  - CP-308803: enable SR multipathing by default for new installs
+  - CA-417862: tolerate device not found on multipath flush
+
+  * Tue Sep 16 2025 Tim Smith <tim.smith@cloud.com> - 4.1.5-1
+  - CA-407343: do not remove the VHD parent property after leaf coalesce
+  - CA-408452: remove vhd parent if it does not have one
+  - Revert "CA-397084 Log any user of LV at deactivate"
+  - CA-408105: add logging to _finishInterruptedCoalesceLeaf
+  - CA-411163: verify SCSI ids for SR PVs
+  - CA-405851: stop_all_gc failed to stop SMGC services
+
+  * Mon Aug 18 2025 Mark Syms <mark.syms@cloud.com> - 4.1.4-1
+  - CA-412080 Add lcache to SM_LIBS
+  - CA-413209: remove dangling reference to deprecated rawhba
+  - CP-51843: advertise SR_CACHING on LVHDoISCSI and HBA
+
+  * Wed Jun 25 2025 Mark Syms <mark.syms@cloud.com> - 4.1.3-1
+  - CA-411927: guard check with presence of ScsiId key
+  - CA-395221: use systemd target for gc enable
+  - CA-412336: treat inaccessible device as a soft failure
+
+  * Tue Jun 03 2025 Tim Smith <tim.smith@cloud.com> - 4.1.2-1
+  - CP-308219 Separate resetvdis script
+
+  * Tue May 27 2025 Tim Smith <tim.smith@cloud.com> - 4.1.1-1
+  - CP-54096 Path cleanup
+  - CA-409231 report intellicache stats with nbd
+  - CP-54434 Correction of python locations
+  - CP-54351 Further correction of python locations
+  - CP-54766 Use of /opt is now only for compatibility reasons
+
+  * Tue Apr 01 2025 Tim Smith <tim.smith@cloud.com> - 4.1.0-1
+  - Add udev rules for PureStorage
+  - Remove 69-dm-lvm-metad.rules
+  - CP-53808 Obsolete sm-core-libs with sm-libs
+  - Move SM_ERRORCODES.xml to datadir
+  - Remove excludes which are no longer required
+  - CP-53810 Move all /opt/xensource file into compat package
+
+  * Mon Jan 27 2025 Mark Syms <mark.syms@cloud.com> - 4.0.0-3
+  - CA-392489: drop cgrules patch, moved to libcgroup
+  - CA-392489: Requires libcgroup-tools
+  - CP-53410: remove use of alternatives
+
+  * Wed Jan 22 2025 Mark Syms <mark.syms@cloud.com> - 4.0.0-2
+  - Drop patching cgrules as this is moved to libcgroup
+
+  * Tue Jan 21 2025 Mark Syms <mark.syms@cloud.com> - 4.0.0-1
+  - Remove sm-multipath, now moved to host-installer
+  - Remove support for FCoE Storage Repositories
+  - CP-35551: Support tapdisk >= 4 with no kernel blktap2 device
+
+* Tue May 05 2026 Yann Dirson <yann.dirson@vates.tech> - 3.2.12-1.1
+- Rebase on 3.2.12-1, based on 3.2.12-3.1 by Ronan
+- Sync patches matching 3.2.12-3.1
+- Remove patches merged upstream:
+  - 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
+  - 0030-fix-getAllocatedSize-is-incorrect-75.patch
+  - 0047-Define-and-details-attr-on-Failure-mock.patch
+  - 0064-feat-add-HPE-Nimble-multipath-configuration.patch
+- *** Upstream changelog ***
+  * Mon Jan 06 2025 Mark Syms <mark.syms@cloud.com> - 3.2.12-1
+  - CA-400789: Do not exclude parentless VDIs from cacheing
+  - CP-52844: allow for open session to be passed to sr_get_capability
+  - CP-52852: add handler for xmlrpc ProtocolError
+  - fix(cleanup.py): bad live coalesce check regarding FileSR
+  * Tue Nov 19 2024 Mark Syms <mark.syms@cloud.com> - 3.2.11-1
+  - CP-42675: send messages to Xapi if GC has insufficient space
+  - CP-52620: enable read-through cache on persistent leaf
+  * Tue Nov 05 2024 Mark Syms <mark.syms@cloud.com> - 3.2.10-1
+  - CA-397084: SR scan tries to deactivate LV in use by tapdisk
+  - CA-399644: if we make progress do not abort the GC or evaluate criteria
+  - CA-400743: perform post snapshot rename in ioretry
+  - CA-401068: if iSCSI device path is not found scan the bus
+  * Wed Oct 09 2024 Mark Syms <mark.syms@cloud.com> - 3.2.9-3
+  - CP-51658: install stop gc helper script
+  - CA-399643 Use full paths when stopping fairlock on upgrade
+  - CA-396655: check xapi is enabled before starting multipath reporting
+  - CA-396658: check xapi is enabled before checking SR health
+  - CA-400106: disable leaf coalesce with VDI snapshot secondary
+  * Tue Sep 24 2024 Tim Smith <tim.smith@cloud.com> - 3.2.8-2
+  - CA-399643 Use full paths when stopping fairlock on upgrade
+  * Fri Sep 06 2024 Robin Newton <robin.newton@cloud.com> - 3.2.8-1
+  - CA-398958 Cope with concurrent read-only activations
+  * Wed Sep 04 2024 Mark Syms <mark.syms@cloud.com> - 3.2.7-1
+  - CA-398425: correctly check for multiple targets in iSCSI
+  * Wed Aug 21 2024 Mark Syms <mark.syms@cloud.com> - 3.2.6-1
+  - CA-395560: Log exception details when LUN refresh fails
+  - CA-396124: amend criteria under which the garbage collector aborts
+  - CA-397084: Log any user of LV at deactivate
+  - CP-51214: stop cgrules triggering errors on update
+  * Tue Jul 23 2024 Tim Smith <tim.smith@cloud.com> - 3.2.5-1
+  - CA-395554 Stop fairlock services on package upgrade
+  * Mon Jul 22 2024 Mark Syms <mark.syms@cloud.com> - 3.2.4-1
+  - Add missing sg3_utils dependency
+  - Update multipath config for Dell, IBM and Nimble arrays
+
+* Tue Feb 18 2025 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.17
+- Add 0065-fix-cleanup.py-resize-on-a-primary-host-82.patch
+
+* Mon Jan 20 2025 Yann LE BRIS <yann.lebris@vates.tech> - 3.2.3-1.16
+- Add 0061-Fix-LVHDSR.load-set-other_conf-in-cond-branch-to-pre.patch
+- Add 0062-fix-cleanup.py-protect-LinstorSR-init-against-race-c.patch
+- Add 0063-Fix-filter-to-reject-other-device-types-77.patch
+- Add 0064-feat-add-HPE-Nimble-multipath-configuration.patch
+
+* Thu Dec 19 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.15
+- Fix missing mypy "@override" import in nfs-on-slave script
+
+* Wed Dec 11 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.14
+- Sync fork-load-daemon script with http-nbd-transfer (v1.5.0)
+- Fix coalesce process for LINSTOR SRs
+- Many code improvements for issues detected by mypy
+
+* Wed Nov 27 2024 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.13
+- Replace 0030-fix-cleanup.py-bad-live-coalesce-check-regarding-Fil.patch with 0030-fix-getAllocatedSize-is-incorrect-75.patch
+- Ensure correct allocatedSize for FileVDI in cleanup.py
+
+* Tue Nov 26 2024 Damien Thenot <damien.thenot@vates.tech> - 3.2.3-1.12
+- Add 0030-fix-cleanup.py-bad-live-coalesce-check-regarding-Fil.patch
+
+* Mon Sep 09 2024 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.3-1.7
+- Import 8.2 LINSTOR changes on 8.3:
+- Robustify HA: use a specific group with a replication count of 3
+- Export helpers in linstor-manager regarding network interfaces
+- Improve health-check helper: more details and simple API
+- Fix pause/unpause: always load a valid VHD chain
+- Robustify remote "vhdutil check" command
+- Robustify SR destruction
+- Prevent diskless destruction on master host
+- Prevent tiebreaker destruction
+- Reduce LINSTOR vhdutil queries
+
+* Tue Sep 03 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.4
+- Add 0028-CA-398425-correctly-check-for-multiple-targets-in-iS.patch
+- Restore the sr_health_check service and the code which goes with it.
+
+* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.3
+- %%preun: Move command above exit 0 so that it's executed
+- Properly disable the removed sr_health_check.timer
+- Also remove the dangling symlink if still present due to improper removal
+  of the timer in sm-3.2.0-1.5
+
+* Mon Aug 19 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 3.2.3-1.2
+- Don't try to patch /etc/cgrules.conf when the patch was already applied
+- Fixes update warning
+
 * Tue Aug 13 2024 Benjamin Reis <benjamin.reis@vates.tech> - 3.2.3-1.1
 - Rebase on 3.2.3-1
 - Add 0028-reflect-upstream-changes-in-our-tests.patch

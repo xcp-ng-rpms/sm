@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.9%{?dist}
+Release: %{?xsrel}.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -242,6 +242,11 @@ Patch1148: 0148-fix-cleanup-online-coalesce-would-crash.patch
 Patch1149: 0149-fix-linstor-add-backward-compatibility-for-getInfo.patch
 Patch1150: 0150-fix-linstor-add-backward-compatibility-for-manager-p.patch
 Patch1151: 0151-fix-LVMSR-scan-with-cbt_metadata.patch
+Patch1152: 0152-feat-qcow2-live-leaf-coalesce.patch
+Patch1153: 0153-fix-qcow2-online-coalesce-on-LVMSR.patch
+Patch1154: 0154-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
+Patch1155: 0155-fix-cleanup-fix-for-live-leaf-coalesce.patch
+Patch1156: 0156-fix-LVMSR-added-a-missing-call-to-_setType.patch
 
 
 %description
@@ -566,6 +571,13 @@ then
 fi
 
 %changelog
+* Fri Jun 05 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-21.2
+- Add 0152-feat-qcow2-live-leaf-coalesce.patch
+- Add 0153-fix-qcow2-online-coalesce-on-LVMSR.patch
+- Add 0154-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
+- Add 0155-fix-cleanup-fix-for-live-leaf-coalesce.patch
+- Add 0156-fix-LVMSR-added-a-missing-call-to-_setType.patch
+
 * Tue May 26 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-21.1
 - Rebase on 3.2.12-21
 - Remove patches merged upstream:

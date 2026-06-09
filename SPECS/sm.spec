@@ -248,7 +248,7 @@ Patch1154: 0154-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
 Patch1155: 0155-fix-cleanup-fix-for-live-leaf-coalesce.patch
 Patch1156: 0156-fix-LVMSR-added-a-missing-call-to-_setType.patch
 Patch1157: 0157-LVHDSR-convert-refvdi-retured-by-get_snapshot_of-to-.patch
-
+Patch1158: 0158-test_LVMSR.py-check-that-the-snapshot_of-field-is-no.patch
 
 %description
 This package contains storage backends used in XCP
@@ -579,7 +579,7 @@ fi
 - Add 0155-fix-cleanup-fix-for-live-leaf-coalesce.patch
 - Add 0156-fix-LVMSR-added-a-missing-call-to-_setType.patch
 - Add 0157-LVHDSR-convert-refvdi-retured-by-get_snapshot_of-to-.patch
-
+- Add 0158-test_LVMSR.py-check-that-the-snapshot_of-field-is-no.patch
 
 * Tue May 26 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-21.1
 - Rebase on 3.2.12-21

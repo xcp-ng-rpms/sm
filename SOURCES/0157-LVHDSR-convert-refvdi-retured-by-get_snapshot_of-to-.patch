@@ -1,0 +1,34 @@
+From bcbba772de3c0563a1746d8b4f19ffaaf8b5988a Mon Sep 17 00:00:00 2001
+From: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+Date: Thu, 13 Nov 2025 10:38:14 +0100
+Subject: [PATCH] LVHDSR: convert refvdi retured by get_snapshot_of to vdi_uuid
+
+Signed-off-by: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+---
+ drivers/LVMSR.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index d3d5008c..89976cb7 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -258,6 +258,7 @@ class LVMSR(SR.SR):
+             vdi_info = {}
+             for vdi in self.session.xenapi.SR.get_VDIs(self.sr_ref):
+                 vdi_uuid = self.session.xenapi.VDI.get_uuid(vdi)
++                is_a_snapshot = int(self.session.xenapi.VDI.get_is_a_snapshot(vdi))
+ 
+                 vdi_type = self.session.xenapi.VDI.get_sm_config(vdi).get('vdi_type')
+                 if not vdi_type:
+@@ -270,9 +271,9 @@ class LVMSR(SR.SR):
+                     NAME_LABEL_TAG: util.to_plain_string(self.session.xenapi.VDI.get_name_label(vdi)),
+                     NAME_DESCRIPTION_TAG: util.to_plain_string(self.session.xenapi.VDI.get_name_description(vdi)),
+                     IS_A_SNAPSHOT_TAG: \
+-                        int(self.session.xenapi.VDI.get_is_a_snapshot(vdi)),
++                        is_a_snapshot,
+                     SNAPSHOT_OF_TAG: \
+-                        self.session.xenapi.VDI.get_snapshot_of(vdi),
++                        self.session.xenapi.VDI.get_uuid(self.session.xenapi.VDI.get_snapshot_of(vdi)) if bool(is_a_snapshot) else '',
+                    SNAPSHOT_TIME_TAG: \
+                         self.session.xenapi.VDI.get_snapshot_time(vdi),
+                     TYPE_TAG: \

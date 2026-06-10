@@ -1,0 +1,56 @@
+From 8d2876ee9f486e9f8ea33ecc94af5a312c55c297 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 28 May 2026 16:15:22 +0200
+Subject: [PATCH] fix(cleanup): fix for live leaf coalesce
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+In case of two leaf coalesce following each other, tapdisk would crash.
+```
+*b43ce641[qcow2](1.000G///1.004G|ao)
+    *e735e552[qcow2](1.000G///1.004G|ao)
+        340334d1[qcow2](1.000G///1.004G|ao)
+```
+340334d1 would be merged in e735e552 following a commit.
+Then e735e552 would be renamed in 340334d1 to maintain the same UUID for the leaf.
+tapdisk would automatically be using e735e552 as leaf after the commit but
+would not know about the rename. The next leaf coalesce would refer to the leaf
+with the same name but tapdisk would not know to refer to e735e552 instead. We
+introduced a refresh of the VDI so tapdisk read updated information from the
+chain after each leaf coalesce.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index bc2ba837..dfc9a09c 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2854,6 +2854,7 @@ class SR(object):
+ 
+     def _liveLeafCoalesce(self, vdi: VDI, coalesce_on_remote: bool = False) -> bool:
+         util.fistpoint.activate("LVHDRT_coaleaf_delay_3", self.uuid)
++        need_refresh = False
+         self.lock()
+         try:
+             self.scan()
+@@ -2872,6 +2873,7 @@ class SR(object):
+                     self._create_running_file(vdi)
+                     # "vdi" object will no longer be valid after this call
+                     self._doCoalesceLeaf(vdi, coalesce_on_remote)
++                    need_refresh = True
+                 except:
+                     Util.logException("_doCoalesceLeaf")
+                     self._handleInterruptedCoalesceLeaf()
+@@ -2880,6 +2882,8 @@ class SR(object):
+                 vdi = self.getVDI(uuid)
+                 if vdi:
+                     vdi.ensureUnpaused()
++                    if need_refresh:
++                        vdi.refresh()
+                 self._delete_running_file(vdi)
+                 vdiOld = self.getVDI(self.TMP_RENAME_PREFIX + uuid)
+                 if vdiOld:

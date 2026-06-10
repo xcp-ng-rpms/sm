@@ -1,0 +1,33 @@
+From b67f4ab5b8de5ea056c7d6c854c14414e7fa8c9f Mon Sep 17 00:00:00 2001
+From: Erwan Croze <erwan.croze@vates.tech>
+Date: Wed, 10 Jun 2026 00:08:49 +0200
+Subject: [PATCH] fix(FileSR): preserve `image-format` during DB update (#140)
+
+This field can be removed during VDI actions like `resize`.
+Fixed using `_override_sm_config` to keep the value like for `vhd-parent`
+
+Signed-off-by: Erwan Croze <erwan.croze@vates.tech>
+---
+ drivers/FileSR.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 2259f914..47ae04bc 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -543,6 +543,7 @@ class FileVDI(VDI.VDI):
+                 self.sm_config_override = {'vhd-parent': self.parent}
+             else:
+                 self.sm_config_override = {'vhd-parent': None}
++            self.sm_config_override["image-format"] = getImageStringFromVdiType(self.vdi_type)
+             return
+ 
+         try:
+@@ -593,6 +594,7 @@ class FileVDI(VDI.VDI):
+                 else:
+                     self.parent = ""
+                     self.sm_config_override = {'vhd-parent': None}
++                self.sm_config_override["image-format"] = getImageStringFromVdiType(self.vdi_type)
+                 self.size = image_info.sizeVirt
+                 self.hidden = image_info.hidden
+                 if self.hidden:

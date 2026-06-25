@@ -1,6 +1,6 @@
-%global package_speccommit 3bdaf6892d4654ea875b92b28de24ce15da5957b
+%global package_speccommit e5c2655e71c028397204f46cf1e2ef452fe2c4d4
 %global usver 3.2.12
-%global xsver 21
+%global xsver 23
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -39,21 +39,25 @@ Patch21: improve_messages_vdi_type_missing
 Patch22: cp-309718_lc_moving_average
 Patch23: ensure_vdi_is_active_before_relink.patch
 Patch24: CP-311969-skip-introduce-and-clean-metadata-for-VDIs.patch
-Patch25: add_udev_rules_for_purestorage_-_best_practices.patch
-Patch26: update_pure_storage_udev_1.patch
-Patch27: update_pure_storage_udev_2.patch
-Patch28: CA-418775_ensure_size_consistent_for_resize
-Patch29: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
-Patch30: CA-420515_handle_errors_in_foreground
-Patch31: ca-419706_update_print_calls
-Patch32: ca-421013_ensure_cbt_refresh_on_supporter
-Patch33: CA-416486_leaf_coalesce_wait_for_GC
-Patch34: CA-423293_decode_error_string
-Patch35: CA-425972_log_sg_readcap_errors
-Patch36: CA-425974_resolve_device_names_correctly
-Patch37: CP-308587_update_netapp_multipath
-Patch38: CA-413325_log_what_lvs_shows_on_failure
-Patch39: CP-311724_optimise_tapdisk_from_minor
+Patch25: CP-312848__idempotent_tapdisk-pause_pause.patch
+Patch26: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch27: update_pure_storage_udev_1.patch
+Patch28: update_pure_storage_udev_2.patch
+Patch29: CA-418775_ensure_size_consistent_for_resize
+Patch30: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
+Patch31: CA-420515_handle_errors_in_foreground
+Patch32: ca-419706_update_print_calls
+Patch33: ca-421013_ensure_cbt_refresh_on_supporter
+Patch34: CA-416486_leaf_coalesce_wait_for_GC
+Patch35: CA-423293_decode_error_string
+Patch36: CA-425972_log_sg_readcap_errors
+Patch37: CA-425974_resolve_device_names_correctly
+Patch38: update_hbasr_unittests
+Patch39: fix_pfx_sr_probe
+Patch40: CP-308587_update_netapp_multipath
+Patch41: CA-413325_log_what_lvs_shows_on_failure
+Patch42: CP-311724_optimise_tapdisk_from_minor
+Patch43: CA-427749_Improve_SM_cleanup
 
 %define __python python3
 
@@ -345,6 +349,13 @@ then
 fi
 
 %changelog
+* Fri May 29 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-23
+- CA-427749 Improve SM cleanup to remove additional keys
+- CP-312848: allow tapdisk-pause.Pause to be idempotent when safe
+
+* Tue May 19 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-22
+- CP-312772: add SR probe support for scini devices
+
 * Tue Apr 07 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-21
 - CA-425972: log sg_readcap errors
 - CA-425974: resolve device names correctly

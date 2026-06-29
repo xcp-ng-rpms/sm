@@ -1,4 +1,4 @@
-From 80e7b2f615e2252ecb1a1258d19330a77550afa0 Mon Sep 17 00:00:00 2001
+From 12124b9227f8d9e8b2200b823067e927380ae1c3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 17 Mar 2025 16:27:21 +0100
 Subject: [PATCH] chore(pylintrc): get rid of E1120 errors for LINSTOR using

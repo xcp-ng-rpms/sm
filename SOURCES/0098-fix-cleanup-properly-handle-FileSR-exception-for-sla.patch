@@ -1,4 +1,4 @@
-From f520a64645c26fc9476be9477d0d81beafc9e020 Mon Sep 17 00:00:00 2001
+From 4bc54dbb55daccbc4cc4433cf71731930ecfd43a Mon Sep 17 00:00:00 2001
 From: Arnaud Garcia-Fernandez <arnaud.garcia-fernandez@vates.tech>
 Date: Fri, 13 Feb 2026 09:47:37 +0100
 Subject: [PATCH] fix(cleanup): properly handle FileSR exception for slave

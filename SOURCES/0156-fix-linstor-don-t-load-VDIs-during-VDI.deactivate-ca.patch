@@ -1,0 +1,27 @@
+From 4d3994efddcb1c9cac23029dbd7fced231eaecd6 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Fri, 5 Jun 2026 11:29:52 +0200
+Subject: [PATCH] fix(linstor): don't load VDIs during `VDI.deactivate` call
+ (#141)
+
+Deal with `SR.from_uuid` that emits a fake `nop` command and triggers a scan in LinstorSR.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/LinstorSR.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 9c8de764..29f197a0 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -506,7 +506,8 @@ class LinstorSR(SR.SR):
+                         'vdi_attach', 'vdi_detach',
+                         'vdi_activate', 'vdi_deactivate',
+                         'vdi_epoch_begin', 'vdi_epoch_end',
+-                        'vdi_update', 'vdi_destroy'
++                        'vdi_update', 'vdi_destroy',
++                        'nop' # Deal with `SR.from_uuid` that emits a fake `nop` command.
+                     ]:
+                         load_vdis = (
+                             self.cmd == 'sr_scan' or

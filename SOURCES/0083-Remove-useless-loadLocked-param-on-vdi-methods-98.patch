@@ -1,4 +1,4 @@
-From 645d80f02dfa32b5e8422c667cafe82013c04c8d Mon Sep 17 00:00:00 2001
+From 8acfd4ded1d941c861a47c53c3059812b45757dc Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 23 Sep 2025 15:39:44 +0200
 Subject: [PATCH] Remove useless `loadLocked` param on `vdi` methods (#98)

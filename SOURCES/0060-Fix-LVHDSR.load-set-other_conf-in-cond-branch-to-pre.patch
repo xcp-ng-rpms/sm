@@ -1,4 +1,4 @@
-From aa2ebd725dbecf485c4712d8182212481a1f4883 Mon Sep 17 00:00:00 2001
+From 00c87f3a0d1fb25e0fb0e738f99734a8711a4343 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 8 Jan 2025 11:12:13 +0100
 Subject: [PATCH] Fix LVHDSR.load: set other_conf in cond-branch to prevent

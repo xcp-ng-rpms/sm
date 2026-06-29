@@ -1,0 +1,210 @@
+From 9f2a9046aa8f65b7a944b2e6e18226d43c36a9d2 Mon Sep 17 00:00:00 2001
+From: Mathieu Labourier <mathieu.labourier@vates.tech>
+Date: Wed, 20 May 2026 18:10:29 +0200
+Subject: [PATCH] refactor: merge timeout and timeout_call functions (#137)
+
+Signed-off-by: Mathieu Labourier <mathieu.labourier@vates.tech>
+---
+ drivers/LinstorSR.py            |  8 ++--
+ drivers/linstorvolumemanager.py |  6 +--
+ drivers/scsiutil.py             |  2 +-
+ drivers/util.py                 | 74 +++++++++++++++++++++++----------
+ 4 files changed, 59 insertions(+), 31 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 4109f938..1f6b435a 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -2585,7 +2585,7 @@ class LinstorVDI(VDI.VDI):
+                 # Use a timeout call because XAPI may be unusable on startup
+                 # or if the host has been ejected. So in this case the call can
+                 # block indefinitely.
+-                session = util.timeout_call(5, util.get_localAPI_session)
++                session = util.timeout(5, util.get_localAPI_session)
+                 host_ip = util.get_this_host_address(session)
+             except:
+                 # Fallback using the XHA file if session not available.
+@@ -2628,7 +2628,7 @@ class LinstorVDI(VDI.VDI):
+                         return True
+                 return False
+             try:
+-                if not util.timeout_call(10, is_ready):
++                if not util.timeout(10, is_ready):
+                     raise Exception('Failed to wait HTTP server startup, bad output')
+             except util.TimeoutException:
+                 raise Exception('Failed to wait for HTTP server startup during given delay')
+@@ -2669,7 +2669,7 @@ class LinstorVDI(VDI.VDI):
+                 device_size = 256 * 1024 * 1024
+ 
+             try:
+-                session = util.timeout_call(5, util.get_localAPI_session)
++                session = util.timeout(5, util.get_localAPI_session)
+                 ips = util.get_host_addresses(session)
+             except Exception as e:
+                 _, ips = get_ips_from_xha_config_file()
+@@ -2715,7 +2715,7 @@ class LinstorVDI(VDI.VDI):
+                         return match.group(1)
+             # Use a timeout to never block the smapi if there is a problem.
+             try:
+-                nbd_path = util.timeout_call(10, get_nbd_path)
++                nbd_path = util.timeout(10, get_nbd_path)
+                 if nbd_path is None:
+                     raise Exception('Empty NBD path (NBD server is probably dead)')
+             except util.TimeoutException:
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index d10f4619..9373569a 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -191,7 +191,7 @@ def get_controller_node_name():
+         if res:
+             return res.groups()[0]
+ 
+-    session = util.timeout_call(5, util.get_localAPI_session)
++    session = util.timeout(5, util.get_localAPI_session)
+ 
+     for host_ref, host_record in session.xenapi.host.get_all_records().items():
+         node_name = host_record['hostname']
+@@ -214,7 +214,7 @@ def get_controller_node_name():
+ def demote_drbd_resource(node_name, resource_name):
+     PLUGIN_CMD = 'demoteDrbdResource'
+ 
+-    session = util.timeout_call(5, util.get_localAPI_session)
++    session = util.timeout(5, util.get_localAPI_session)
+ 
+     for host_ref, host_record in session.xenapi.host.get_all_records().items():
+         if host_record['hostname'] != node_name:
+@@ -1411,7 +1411,7 @@ class LinstorVolumeManager(object):
+             # It needs to be done locally by each host so we go through the linstor-manager plugin.
+             # If we don't do this sometimes, the destroy will fail when trying to destroy the resource groups with:
+             # "linstor-manager:destroy error: Failed to destroy SP `xcp-sr-linstor_group_thin_device` on node `r620-s2`: The specified storage pool 'xcp-sr-linstor_group_thin_device' on node 'r620-s2' can not be deleted as volumes / snapshot-volumes are still using it."
+-            session = util.timeout_call(5, util.get_localAPI_session)
++            session = util.timeout(5, util.get_localAPI_session)
+             for host_ref in session.xenapi.host.get_all():
+                 try:
+                     response = session.xenapi.host.call_plugin(
+diff --git a/drivers/scsiutil.py b/drivers/scsiutil.py
+index 86e35b13..5737ffce 100755
+--- a/drivers/scsiutil.py
++++ b/drivers/scsiutil.py
+@@ -585,7 +585,7 @@ def refresh_lun_size_by_SCSIid(SCSIid):
+         if devicesthatneedrefresh:
+             # timing out avoids waiting for min(dev_loss_tmo, fast_io_fail_tmo)
+             # if one or multiple devices don't answer
+-            util.timeout_call(10, refreshdev, devicesthatneedrefresh)
++            util.timeout(10, refreshdev, devicesthatneedrefresh)
+             if get_outdated_size_devices(currentcapacity,
+                                          devicesthatneedrefresh):
+                 # in this state we shouldn't force resizing the mapper dev
+diff --git a/drivers/util.py b/drivers/util.py
+index 8f70454e..e7bb4a80 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -16,7 +16,7 @@
+ # Miscellaneous utility functions
+ #
+ 
+-from sm_typing import List
++from sm_typing import Any, List, Optional, override
+ 
+ import contextlib
+ import os
+@@ -27,6 +27,7 @@ import shutil
+ import tempfile
+ import signal
+ import time
++import types
+ import datetime
+ import errno
+ import functools
+@@ -72,6 +73,55 @@ CMD_KICKPIPE = '/opt/xensource/libexec/kickpipe'
+ 
+ FIST_PAUSE_PERIOD = 30  # seconds
+ 
++class _TimeoutContextManager(contextlib.AbstractContextManager):
++    def __init__(self, delay: int) -> None:
++        self.delay = delay
++        self.old_handler: Any = None
++
++    @override
++    def __enter__(self) -> "_TimeoutContextManager":
++        def handle_timeout(_signum: int, _frame: Optional[types.FrameType]) -> None:
++            raise TimeoutError(f"Timed out after {self.delay} seconds")
++        self.old_handler = signal.signal(signal.SIGALRM, handle_timeout)
++        signal.alarm(self.delay)
++        return self
++
++    @override
++    def __exit__(
++        self,
++        exc_type: Optional[Any],
++        exc_val: Optional[BaseException],
++        exc_tb: Optional[types.TracebackType]
++    ):
++        signal.alarm(0)
++        if self.old_handler is not None:
++            signal.signal(signal.SIGALRM, self.old_handler)
++            self.old_handler = None
++        return False
++
++    def __call__(self, func):
++        def wrapper(*args, **kwargs):
++            with self:
++                return func(*args, **kwargs)
++        return wrapper
++
++def timeout(*args, **kwargs):
++    if len(args) >= 2 and callable(args[1]):
++        delay, func = args[0], args[1]
++        remaining_args = args[2:]
++        with _TimeoutContextManager(delay):
++            return func(*remaining_args, **kwargs)
++
++    if len(args) == 1 and callable(args[0]):
++        raise TypeError("timeout() missing 1 required argument: 'delay'")
++
++    if args:
++        delay = args[0]
++    elif "delay" in kwargs:
++        delay = kwargs["delay"]
++    else:
++        raise TypeError("timeout() missing 1 required argument: 'delay'")
++    return _TimeoutContextManager(delay)
+ 
+ class SMException(Exception):
+     """Base class for all SM exceptions for easier catching & wrapping in
+@@ -413,17 +463,6 @@ def ioretry_stat(path, maxretry=IORETRY_MAX):
+         retries += 1
+     raise CommandException(errno.EIO, "os.statvfs")
+ 
+-@contextlib.contextmanager
+-def timeout(seconds: int):
+-    def handle_timeout(_signum, _frame):
+-        raise TimeoutError("Timed out after %d seconds" % seconds)
+-
+-    signal.signal(signal.SIGALRM, handle_timeout)
+-    signal.alarm(seconds)
+-    try:
+-        yield
+-    finally:
+-        signal.alarm(0)
+ 
+ def sr_get_capability(sr_uuid, session=None):
+     result = []
+@@ -968,17 +1007,6 @@ class TimeoutException(SMException):
+     pass
+ 
+ 
+-def timeout_call(timeoutseconds, function, *arguments):
+-    def handler(signum, frame):
+-        raise TimeoutException()
+-    signal.signal(signal.SIGALRM, handler)
+-    signal.alarm(timeoutseconds)
+-    try:
+-        return function(*arguments)
+-    finally:
+-        signal.alarm(0)
+-
+-
+ def _incr_iscsiSR_refcount(targetIQN, uuid):
+     if not os.path.exists(ISCSI_REFDIR):
+         os.mkdir(ISCSI_REFDIR)

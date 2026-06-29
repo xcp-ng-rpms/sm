@@ -1,4 +1,4 @@
-From 19bbb482c94c6bc8c308a0c71b551ed8c7a5e7e9 Mon Sep 17 00:00:00 2001
+From dc8e6069c2d07c3d597031cc8cebfa0473bc4a46 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 22 Oct 2024 14:33:13 +0200
 Subject: [PATCH] Fix override of VDI.load in LVHDVDI cleanup.py

@@ -1,0 +1,176 @@
+From fe72e63ee63bfd276236c5f90524ac949c22bd12 Mon Sep 17 00:00:00 2001
+From: Alexandre Sollier <github@kuruyia.net>
+Date: Fri, 19 Jun 2026 15:59:47 +0200
+Subject: [PATCH] feat(linstor): use client when possible to construct
+ journaler (#143)
+
+This adds an argument to the constructor of `LinstorJournaler` so it can
+be constructed with a pre-configured LINSTOR client instead of letting
+`LinstorJournaler` construct its own client with the given URI. Either a
+URI or a client needs to be passed to the constructor. If both are
+passed, the client takes precedence.
+
+A `native_client` property has been added to the `LinstorVolumeManager`
+class so its LINSTOR client can be used outside of this class.
+
+The instantiation sites of the `LinstorJournaler` class were updated to
+use `LinstorVolumeManager`'s client where available.
+
+Signed-off-by: Alexandre Sollier <alexandre.sollier@vates.tech>
+---
+ drivers/LinstorSR.py            |  4 +++-
+ drivers/cleanup.py              | 19 +++++++++++--------
+ drivers/linstor-manager         |  8 +++++---
+ drivers/linstorjournaler.py     | 24 +++++++++++++++++++++---
+ drivers/linstorvolumemanager.py |  4 ++++
+ mocks/linstor/__init__.py       |  2 ++
+ 6 files changed, 46 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 39ac083d..9ac4de88 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1305,7 +1305,9 @@ class LinstorSR(SR.SR):
+     def _get_journaler(self):
+         if not self._journaler:
+             self._journaler = LinstorJournaler(
+-                self._linstor.uri, self._group_name, logger=util.SMlog
++                self._group_name,
++                native_client=self._linstor.native_client,
++                logger=util.SMlog
+             )
+         return self._journaler
+ 
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index dfc9a09c..5442309a 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3627,6 +3627,7 @@ class LinstorSR(SR):
+                 assert self.sr, "Cannot use `LinstorProxy` without valid `LinstorVolumeManager` instance"
+                 return getattr(self.sr._linstor, attr)
+ 
++        self._linstor = None
+         self._linstor_proxy = LinstorProxy(self)
+         self._reloadLinstor(journaler_only=True)
+ 
+@@ -3676,17 +3677,19 @@ class LinstorSR(SR):
+         group_name = dconf['group-name']
+ 
+         controller_uri = get_controller_uri()
+-        self.journaler = LinstorJournaler(
+-            controller_uri, group_name, logger=util.SMlog
+-        )
+ 
+-        if journaler_only:
+-            return
++        if not journaler_only:
++            self._linstor = LinstorVolumeManager(
++                controller_uri,
++                group_name,
++                repair=True,
++                logger=util.SMlog
++            )
+ 
+-        self._linstor = LinstorVolumeManager(
+-            controller_uri,
++        self.journaler = LinstorJournaler(
+             group_name,
+-            repair=True,
++            uri=None if self._linstor else controller_uri,
++            native_client=self._linstor.native_client if self._linstor else None,
+             logger=util.SMlog
+         )
+ 
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index 52711ff0..d455f932 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -352,14 +352,16 @@ def attach(session, args):
+         group_name = args['groupName']
+ 
+         controller_uri = get_controller_uri()
+-        journaler = LinstorJournaler(
+-            controller_uri, group_name, logger=util.SMlog
+-        )
+         linstor = LinstorVolumeManager(
+             controller_uri,
+             group_name,
+             logger=util.SMlog
+         )
++        journaler = LinstorJournaler(
++            group_name,
++            native_client=linstor.native_client,
++            logger=util.SMlog
++        )
+         LinstorSR.attach_thin(session, journaler, linstor, sr_uuid, vdi_uuid)
+         return str(True)
+     except Exception as e:
+diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
+index 2475ae1e..85092199 100755
+--- a/drivers/linstorjournaler.py
++++ b/drivers/linstorjournaler.py
+@@ -50,13 +50,19 @@ class LinstorJournaler:
+     def default_logger(*args):
+         print(args)
+ 
+-    def __init__(self, uri, group_name, logger=default_logger.__func__):
++    def __init__(
++        self,
++        group_name,
++        uri=None,
++        native_client=None,
++        logger=default_logger.__func__
++    ):
+         self._namespace = '{}journal/'.format(
+             LinstorVolumeManager._build_sr_namespace()
+         )
+         self._logger = logger
+         self._journal = self._create_journal_instance(
+-            uri, group_name, self._namespace
++            group_name, self._namespace, uri=uri, native_client=native_client
+         )
+ 
+     def create(self, type, identifier, value):
+@@ -144,7 +150,19 @@ class LinstorJournaler:
+         self._journal.namespace = self._namespace
+ 
+     @classmethod
+-    def _create_journal_instance(cls, uri, group_name, namespace):
++    def _create_journal_instance(cls, group_name, namespace, *, uri=None, native_client=None):
++        if not uri and not native_client:
++            raise LinstorVolumeManagerError(
++                'Either a URI to the LINSTOR controller or a LINSTOR client must be provided'
++            )
++
++        if native_client:
++            return linstor.KV(
++                LinstorVolumeManager._build_group_name(group_name),
++                existing_client=native_client,
++                namespace=namespace
++            )
++
+         def connect(uri):
+             if not uri:
+                 uri = get_controller_uri()
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index c8e89483..b965a229 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -405,6 +405,10 @@ class LinstorVolumeManager(object):
+     def uri(self) -> str:
+         return self._uri
+ 
++    @property
++    def native_client(self) -> linstor.Linstor:
++        return self._linstor
++
+     @property
+     def group_name(self):
+         """
+diff --git a/mocks/linstor/__init__.py b/mocks/linstor/__init__.py
+index e69de29b..0f0f7c9c 100644
+--- a/mocks/linstor/__init__.py
++++ b/mocks/linstor/__init__.py
+@@ -0,0 +1,2 @@
++class Linstor(object):
++    pass

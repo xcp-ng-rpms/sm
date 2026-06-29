@@ -1,4 +1,4 @@
-From 8b2d8ea0bef5ab1fcdf9bf70a12396668c6f3e05 Mon Sep 17 00:00:00 2001
+From 8f60e0e114660f348003d4325a7b129e1769e7ac Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 7 Nov 2024 15:50:22 +0100
 Subject: [PATCH] Makefile fix: don't execute precheck during installation

@@ -1,4 +1,4 @@
-From f445ec014df072fa3b91ed2db23f9e7c4ebafa8c Mon Sep 17 00:00:00 2001
+From 75bfc148a5abee5718123f7c71a13bd26daef9d4 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 22 Apr 2025 11:27:12 +0200
 Subject: [PATCH] Fix warns reported by new github workflow
@@ -120,7 +120,7 @@ index 1d35e7c9..a07d2a20 100755
  
  
 diff --git a/drivers/resetvdis.py b/drivers/resetvdis.py
-index 81938d4c..61454f84 100755
+index 5efbf2b3..1fdc213b 100755
 --- a/drivers/resetvdis.py
 +++ b/drivers/resetvdis.py
 @@ -21,6 +21,7 @@
@@ -131,7 +131,7 @@ index 81938d4c..61454f84 100755
  import XenAPI # pylint: disable=import-error
  
  
-@@ -141,7 +142,6 @@ def usage():
+@@ -140,7 +141,6 @@ def usage():
      sys.exit(1)
  
  if __name__ == '__main__':

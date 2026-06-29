@@ -1,4 +1,4 @@
-From 0329b8abd46d97a3fda11fb27ed8fdad4fe4c558 Mon Sep 17 00:00:00 2001
+From 54a4b109e3f130db4c3020661e0c15b6204a513f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Thu, 28 Aug 2025 17:45:07 +0200
 Subject: [PATCH] Fix tests of "CP-51843: add unit tests for setup_cache"

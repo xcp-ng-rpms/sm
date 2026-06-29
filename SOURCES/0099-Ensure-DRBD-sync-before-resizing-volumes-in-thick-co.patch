@@ -1,4 +1,4 @@
-From ed8fc554e63c96ae0019b3409a22bae58c79fc65 Mon Sep 17 00:00:00 2001
+From 7f873d2afd54df2e257e99a1d726e79443910e55 Mon Sep 17 00:00:00 2001
 From: Bartuccio Antoine <antoine.bartuccio@gmail.com>
 Date: Thu, 26 Feb 2026 00:03:57 +0100
 Subject: [PATCH] Ensure DRBD sync before resizing volumes in thick config

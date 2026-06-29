@@ -1,4 +1,4 @@
-From c35c8026185b234a779844ac974543a8e037268b Mon Sep 17 00:00:00 2001
+From 0a52ec3302fb6c160289a92d9ba0b5b502f0ecea Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 12 Aug 2020 11:14:33 +0200
 Subject: [PATCH] feat(drivers): add ZFS driver to avoid losing VDI metadata

@@ -1,4 +1,4 @@
-From 5860a1b8f958acdf1725fc82f5a6570df69cfcd1 Mon Sep 17 00:00:00 2001
+From 69e136197c415d3e60e8ff2ccbdb441ec8f8b3bb Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 19 Aug 2025 23:11:01 +0200
 Subject: [PATCH] fix(LinstorSR): Correctly reference a variable exception

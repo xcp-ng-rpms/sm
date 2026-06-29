@@ -1,4 +1,4 @@
-From aedbee081d01a43b1d855b524875e9f1a8750631 Mon Sep 17 00:00:00 2001
+From f13a895426833145e36049e8f05eb22eeb497059 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 30 Jul 2024 15:31:23 +0200
 Subject: [PATCH] feat(LVHDSR): add a way to modify config of LVMs (#60)

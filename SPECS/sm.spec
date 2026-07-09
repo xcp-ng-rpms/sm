@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.1.0.cloudstack.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -77,6 +77,10 @@ Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
 Conflicts: kernel < 4.19.19-5.0.0
 Conflicts: blktap < 3.55.3
+
+# XCP-ng: required for Cloudstack version
+Conflicts: sm >= 3.2.12-17.2
+
 Requires: sg3_utils
 Requires: libcgroup-tools
 
@@ -501,6 +505,9 @@ then
 fi
 
 %changelog
+* Thu Jul 09 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-17.1.0.cloudstack.1
+- Provide a custom package to deal with sm cloudstack code changes
+
 * Mon Feb 02 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-17.1
 - Rebase on 3.2.12-17
 - Remove patches merged upstream:

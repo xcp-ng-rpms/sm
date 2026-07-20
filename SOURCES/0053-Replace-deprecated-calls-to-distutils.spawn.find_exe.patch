@@ -1,4 +1,4 @@
-From f49e57fae0deb189abeb6edaabb43c813ac9312c Mon Sep 17 00:00:00 2001
+From 37e44564e5db4a45d10cc95b0de7bebd07eece5f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 15:48:29 +0200
 Subject: [PATCH] Replace deprecated calls to distutils.spawn.find_executable

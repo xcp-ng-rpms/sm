@@ -1,4 +1,4 @@
-From f320f2bacfcb9a078a814558cbcbd1cdcfc58692 Mon Sep 17 00:00:00 2001
+From 6f33672ba8202435e18f46e7c96483d5b419d9c9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Nov 2024 13:44:57 +0100
 Subject: [PATCH] Use `override` everywhere!
@@ -45,11 +45,11 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/udevSR.py               |  53 ++++--
  misc/fairlock/fairlock.py       |   7 +-
  sm_typing/__init__.py           |  12 ++
- stubs/XenAPIPlugin.pyi          |   2 +-
  tests/lvmlib.py                 |   8 +-
  tests/shared_iscsi_test_base.py |  11 +-
  tests/test_BaseISCSI.py         |   5 +-
  tests/test_FileSR.py            |  28 ++-
+ tests/test_HBASR.py             |   3 +
  tests/test_ISCSISR.py           |  21 ++-
  tests/test_LVHDSR.py            |  16 +-
  tests/test_LVHDoHBASR.py        |   6 +-
@@ -71,9 +71,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_sr_health_check.py   |   6 +-
  tests/test_srmetadata.py        |  11 +-
  tests/test_storage_init.py      |  14 +-
+ tests/test_tapdisk_pause.py     |   4 +-
  tests/test_util.py              |  16 +-
  tests/testlib.py                |  13 +-
- 66 files changed, 1313 insertions(+), 692 deletions(-)
+ 67 files changed, 1318 insertions(+), 692 deletions(-)
  create mode 100644 .mypy.ini
 
 diff --git a/.mypy.ini b/.mypy.ini
@@ -1116,7 +1117,7 @@ index 041a9142..7b515dc8 100644
  if __name__ == '__main__':
      SRCommand.run(GlusterFSSR, DRIVER_INFO)
 diff --git a/drivers/HBASR.py b/drivers/HBASR.py
-index 66ca3ee9..1740f42e 100755
+index ed01495b..15c60fb3 100755
 --- a/drivers/HBASR.py
 +++ b/drivers/HBASR.py
 @@ -19,8 +19,11 @@
@@ -1213,9 +1214,9 @@ index 66ca3ee9..1740f42e 100755
 -        return super(HBASR, self).scan(sr_uuid)
 +        super(HBASR, self).scan(sr_uuid)
  
-     def print_devs(self):
-         self.attach("")
-@@ -273,7 +284,8 @@ class HBASR(SR.SR):
+     def load_powerflex(self):
+         devices = devscan.powerflex_devices()
+@@ -281,7 +292,8 @@ class HBASR(SR.SR):
      def _getLUNbySMconfig(self, sm_config):
          raise xs_errors.XenError('VDIUnavailable')
  
@@ -5390,17 +5391,6 @@ index c515056c..2042dea6 100644
 +
 +if not hasattr(typing, 'Never'):
 +    Never = None # type: ignore
-diff --git a/stubs/XenAPIPlugin.pyi b/stubs/XenAPIPlugin.pyi
-index ca5f52ca..72bad09f 100644
---- a/stubs/XenAPIPlugin.pyi
-+++ b/stubs/XenAPIPlugin.pyi
-@@ -1,5 +1,5 @@
- class Failure(Exception):
-     def __init__(self, code, params) -> None: ...
--    def __str__(self) -> str: ...
-+    def __str__(self) -> str: ... # type: ignore
- 
- def dispatch(fn_table) -> None: ...
 diff --git a/tests/lvmlib.py b/tests/lvmlib.py
 index 26986a1a..04e1053f 100644
 --- a/tests/lvmlib.py
@@ -5565,6 +5555,24 @@ index a82d0e5b..109f6d30 100644
 +    def setUp(self) -> None:
          pread_patcher = mock.patch('FileSR.util.pread')
          self.mock_pread = pread_patcher.start()
+ 
+diff --git a/tests/test_HBASR.py b/tests/test_HBASR.py
+index 77148959..d7239115 100644
+--- a/tests/test_HBASR.py
++++ b/tests/test_HBASR.py
+@@ -1,3 +1,5 @@
++from sm_typing import override
++
+ import unittest.mock as mock
+ import HBASR
+ import unittest
+@@ -65,6 +67,7 @@ def fake_probe(self):
+ 
+ 
+ class TestHBASR(unittest.TestCase):
++    @override
+     def setUp(self):
+         self.addCleanup(mock.patch.stopall)
  
 diff --git a/tests/test_ISCSISR.py b/tests/test_ISCSISR.py
 index e71ac268..9af3d4bc 100644
@@ -6356,6 +6364,25 @@ index d91d9089..38e46570 100644
          self.socket.close()
          self.test_dir.cleanup()
  
+diff --git a/tests/test_tapdisk_pause.py b/tests/test_tapdisk_pause.py
+index c3c334e3..2f4cdb3a 100644
+--- a/tests/test_tapdisk_pause.py
++++ b/tests/test_tapdisk_pause.py
+@@ -1,3 +1,5 @@
++from sm_typing import override
++
+ import unittest
+ import uuid
+ from unittest import mock
+@@ -7,7 +9,7 @@ import tapdisk_pause
+ 
+ 
+ class TestTapdiskPause(unittest.TestCase):
+-
++    @override
+     def setUp(self):
+         self.mock_session = mock.MagicMock()
+         log_patcher = mock.patch("tapdisk_pause.util.SMlog")
 diff --git a/tests/test_util.py b/tests/test_util.py
 index 965eec15..26912f1f 100644
 --- a/tests/test_util.py

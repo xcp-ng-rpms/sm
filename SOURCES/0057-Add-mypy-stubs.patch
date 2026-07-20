@@ -1,4 +1,4 @@
-From 16772113b685a363abd579a158f5ff20a9df497b Mon Sep 17 00:00:00 2001
+From c5bdeb5cb44e0eafef42e24b0085ecddbc651340 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Wed, 9 Oct 2024 15:44:05 +0200
 Subject: [PATCH] Add mypy stubs
@@ -7,23 +7,21 @@ Co-authored-by: Damien Thenot <damien.thenot@vates.tech>
 Co-authored-by: Ronan Abhamon <ronan.abhamon@vates.fr>
 Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
 ---
- stubs/XenAPIPlugin.pyi    | 5 +++++
- stubs/xen/__init__.pyi    | 0
- stubs/xen/lowlevel/xs.pyi | 0
+ mocks/XenAPIPlugin/__init__.py | 5 +++++
+ stubs/xen/__init__.pyi         | 0
+ stubs/xen/lowlevel/xs.pyi      | 0
  3 files changed, 5 insertions(+)
- create mode 100644 stubs/XenAPIPlugin.pyi
  create mode 100644 stubs/xen/__init__.pyi
  create mode 100644 stubs/xen/lowlevel/xs.pyi
 
-diff --git a/stubs/XenAPIPlugin.pyi b/stubs/XenAPIPlugin.pyi
-new file mode 100644
-index 00000000..ca5f52ca
---- /dev/null
-+++ b/stubs/XenAPIPlugin.pyi
+diff --git a/mocks/XenAPIPlugin/__init__.py b/mocks/XenAPIPlugin/__init__.py
+index e69de29b..72bad09f 100644
+--- a/mocks/XenAPIPlugin/__init__.py
++++ b/mocks/XenAPIPlugin/__init__.py
 @@ -0,0 +1,5 @@
 +class Failure(Exception):
 +    def __init__(self, code, params) -> None: ...
-+    def __str__(self) -> str: ...
++    def __str__(self) -> str: ... # type: ignore
 +
 +def dispatch(fn_table) -> None: ...
 diff --git a/stubs/xen/__init__.pyi b/stubs/xen/__init__.pyi

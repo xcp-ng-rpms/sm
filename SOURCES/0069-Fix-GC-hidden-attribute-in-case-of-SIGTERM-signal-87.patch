@@ -1,4 +1,4 @@
-From 9cc028246ee6ac8c226cf9b9dfa1d46ade06e364 Mon Sep 17 00:00:00 2001
+From 6f0890fca36a21f66c8804cc497f53c5795b9174 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 19 Aug 2025 23:25:04 +0200
 Subject: [PATCH] Fix GC hidden attribute in case of SIGTERM signal (#87)

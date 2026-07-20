@@ -1,0 +1,37 @@
+From bd75a44e387a24a099ecef44bbbd8ef67a90e264 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 9 Jul 2026 18:52:02 +0200
+Subject: [PATCH] fix(qcow2): read FileSR allocated size only when needed
+ (#146)
+
+Reading the allocated size systematically for FileVDI is costly and is only
+used by the GC for specific VDIs, this align the reading of the allocated size
+with the behavior of LVMVDI where it's only obtained when needed.
+
+For a SR of 20k (empty) QCOW2 VDIs, we get the scan to go from:
+```
+real    3m34.294s
+```
+to:
+```
+real    0m21.022s
+```
+For VDIs with data, this could be even bigger.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 684bb554..d3c0f835 100755
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -486,7 +486,6 @@ class QCowUtil(CowUtil):
+         cowinfo.sizeVirt = self.header["virtual_disk_size"]
+         cowinfo.sizePhys = self.getSizePhys(path)
+         cowinfo.hidden = self.getHidden(path)
+-        cowinfo.sizeAllocated = self.getAllocatedSize(path)
+         if includeParent:
+             parent_path = self.header["parent"]
+             if parent_path != "":

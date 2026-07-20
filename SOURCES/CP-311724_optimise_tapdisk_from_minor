@@ -23,10 +23,10 @@ index fed8be8..cf38849 100755
      @classmethod
      def __from_blktap(cls, blktap):
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 6b7fc09..e8e48b2 100755
+index 9b2e23f..a84fb14 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
-@@ -141,9 +141,8 @@ class Tapdisk:
+@@ -148,9 +148,8 @@ class Tapdisk:
          if self.major != blktap2.Tapdisk.major():
              util.SMlog("Non-tap major number: %d" % self.major)
              return str(False)
@@ -34,7 +34,18 @@ index 6b7fc09..e8e48b2 100755
          util.SMlog("Calling tap pause with minor %d" % self.minor)
 -        tapdisk = blktap2.Tapdisk.get(**tapargs)
 +        tapdisk = blktap2.Tapdisk.from_minor(self.minor)
-         tapdisk.pause()
+         if tapdisk.is_paused() and not self._is_snap_paused():
+             # If we're already paused and not in a snapshot, return
+             return str(True)
+@@ -193,9 +192,8 @@ class Tapdisk:
+         else:
+             self.cbtlog = None
+ 
+-        tapargs = {"minor":self.minor}
+         util.SMlog("Calling tap unpause with minor %d" % self.minor)
+-        tapdisk = blktap2.Tapdisk.get(**tapargs)
++        tapdisk = blktap2.Tapdisk.from_minor(self.minor)
+         tapdisk.unpause(self.vdi_type, self.realpath, self.secondary, self.cbtlog)
          return str(True)
  
 diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
@@ -81,3 +92,16 @@ index 48ef342..d585496 100644
  
  class TestVDI(unittest.TestCase):
      def setUp(self):
+diff --git a/tests/test_tapdisk_pause.py b/tests/test_tapdisk_pause.py
+index a003657..c3c334e 100644
+--- a/tests/test_tapdisk_pause.py
++++ b/tests/test_tapdisk_pause.py
+@@ -22,7 +22,7 @@ class TestTapdiskPause(unittest.TestCase):
+         self.mock_blktap2.Tapdisk.major.return_value = 254
+         vdi_patcher = mock.patch('tapdisk_pause.VDI')
+         self.mock_vdi = vdi_patcher.start()
+-        self.mock_blktap2.Tapdisk.get.return_value = self.mock_tapdisk
++        self.mock_blktap2.Tapdisk.from_minor.side_effect = lambda x: self.mock_tapdisk
+         readlink_patcher = mock.patch('tapdisk_pause.os.readlink')
+         self.mock_readlink = readlink_patcher.start()
+         self.mock_readlink.side_effect = lambda x: x

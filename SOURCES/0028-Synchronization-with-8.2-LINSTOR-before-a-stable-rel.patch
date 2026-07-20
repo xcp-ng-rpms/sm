@@ -1,4 +1,4 @@
-From b895dc7e5010df6c99b4fc1cf412749c049011ec Mon Sep 17 00:00:00 2001
+From 1e6efd3c93d61aece2e753cb66cf1592349035d7 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 26 Sep 2024 18:53:04 +0200
 Subject: [PATCH] Synchronization with 8.2 LINSTOR before a stable release
@@ -1384,18 +1384,18 @@ index dbca3b41..a470dfec 100755
              raise LinstorVolumeManagerError(
                  'Failed to create volume `{}` from SR `{}`: {}'.format(
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 933afddd..057f8a87 100755
+index 621e7e16..9c7092f5 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
-@@ -30,6 +30,7 @@ import vhdutil
- import lvmcache
+@@ -31,6 +31,7 @@ import lvmcache
+ import VDI
  
  try:
 +    from linstorvhdutil import LinstorVhdUtil
      from linstorvolumemanager import get_controller_uri, LinstorVolumeManager
      LINSTOR_AVAILABLE = True
  except ImportError:
-@@ -162,11 +163,12 @@ class Tapdisk:
+@@ -164,11 +165,12 @@ class Tapdisk:
              dconf = session.xenapi.PBD.get_device_config(pbd)
              group_name = dconf['group-name']
  

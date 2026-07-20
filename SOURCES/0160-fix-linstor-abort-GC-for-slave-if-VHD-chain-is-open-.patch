@@ -1,0 +1,801 @@
+From 6d1130d761eff0c9b801f00f18319e05ee04e195 Mon Sep 17 00:00:00 2001
+From: Mathieu Labourier <mathieu.labourier@vates.tech>
+Date: Mon, 18 May 2026 12:24:33 +0200
+Subject: [PATCH] fix(linstor): abort GC for slave if VHD chain is open on
+ master (#137)
+
+Aborts GC when failing to activate the whole chain or
+open/unpause a VDI because one in the chain is held open in linstor
+because of the GC coalescing.
+
+Parses tap-ctl error messages during the unpause to identify which
+disk in the chain is held open.
+
+Also adds a timeout on the GC abort to prevent being locked.
+
+Co-authored-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+Signed-off-by: Mathieu Labourier <mathieu.labourier@vates.tech>
+---
+ drivers/LinstorSR.py            |  44 ++++++++------
+ drivers/VDI.py                  |  10 +---
+ drivers/blktap2.py              |  83 +++++++++++++++++++++-----
+ drivers/cleanup.py              |  54 ++++++++++++++---
+ drivers/linstor-manager         |  14 +++++
+ drivers/linstorcowutil.py       | 100 ++++++++++++++++++++------------
+ drivers/linstorjournaler.py     |   4 +-
+ drivers/linstorvolumemanager.py |  58 +++++++++++++-----
+ drivers/tapdisk-pause           |  11 +++-
+ drivers/util.py                 |  56 ++++++++++++++++++
+ 10 files changed, 334 insertions(+), 100 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 9ac4de88..4109f938 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -571,23 +571,21 @@ class LinstorSR(SR.SR):
+                 opterr='Redundancy greater than host count'
+             )
+ 
+-        xenapi = self.session.xenapi
+-        srs = xenapi.SR.get_all_records_where(
+-            'field "type" = "{}"'.format(self.DRIVER_TYPE)
+-        )
+-        srs = dict([e for e in srs.items() if e[1]['uuid'] != self.uuid])
++        srs = util.get_linstor_srs_uuid(self.session)
++        try:
++            srs.pop(self.uuid)
++        except KeyError:
++            # We cannot guarantee that the new SR key will be there even it should be the case.
++            pass
+ 
+-        for sr in srs.values():
+-            for pbd in sr['PBDs']:
+-                device_config = xenapi.PBD.get_device_config(pbd)
+-                group_name = device_config.get('group-name')
+-                if group_name and group_name == self._group_name:
+-                    raise xs_errors.XenError(
+-                        'LinstorSRCreate',
+-                        opterr='group name must be unique, already used by PBD {}'.format(
+-                            xenapi.PBD.get_uuid(pbd)
+-                        )
+-                    )
++        pbd_ref = util.find_pbd_ref_from_dconf_value(
++            self.session, srs, "group-name", self._group_name, LinstorVolumeManager.build_group_name
++        )
++        if pbd_ref:
++            raise xs_errors.XenError(
++                'LinstorSRCreate',
++                opterr=f"group name must be unique, already used by PBD {self.session.xenapi.PBD.get_uuid(pbd_ref)}"
++            )
+ 
+         if srs:
+             raise xs_errors.XenError(
+@@ -1855,7 +1853,12 @@ class LinstorVDI(VDI.VDI):
+             return self._attach_using_http_nbd()
+ 
+         # Ensure we have a path...
+-        self.linstorcowutil.create_chain_paths(self.uuid, readonly=not writable)
++        chain = self.linstorcowutil.create_chain_paths(
++            self.uuid,
++            readonly=not writable,
++            cb_openers=cleanup.LinstorSR.abort_gc_from_openers_vdi
++        )
++        chain.close()
+ 
+         self.attached = True
+         return VDI.VDI.attach(self, self.sr.uuid, self.uuid)
+@@ -2402,7 +2405,12 @@ class LinstorVDI(VDI.VDI):
+             raise xs_errors.XenError('SnapshotChainTooLong')
+ 
+         # Ensure we have a valid path if we don't have a local diskful.
+-        self.linstorcowutil.create_chain_paths(self.uuid, readonly=True)
++        chain = self.linstorcowutil.create_chain_paths(
++            self.uuid,
++            readonly=True,
++            cb_openers=cleanup.LinstorSR.abort_gc_from_openers_vdi
++        )
++        chain.close()
+ 
+         volume_path = self.path
+         if not util.pathexists(volume_path):
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index 4c2ef3c3..79521805 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -101,14 +101,8 @@ class VDI(object):
+ 
+     @staticmethod
+     def from_uuid(session, vdi_uuid):
+-
+-        _VDI = session.xenapi.VDI
+-        vdi_ref = _VDI.get_by_uuid(vdi_uuid)
+-        sr_ref = _VDI.get_SR(vdi_ref)
+-
+-        _SR = session.xenapi.SR
+-        sr_uuid = _SR.get_uuid(sr_ref)
+-
++        vdi_ref = session.xenapi.VDI.get_by_uuid(vdi_uuid)
++        sr_uuid = util.get_sr_uuid_from_vdi_ref(session, vdi_ref)
+         sr = SR.SR.from_uuid(session, sr_uuid)
+ 
+         sr.srcmd.params['vdi_ref'] = vdi_ref
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 7c983db6..681bdd5b 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -17,7 +17,6 @@
+ #
+ # blktap2: blktap/tapdisk management layer
+ #
+-
+ from sm_typing import Any, Callable, ClassVar, Dict, override, List, Union
+ 
+ from abc import abstractmethod
+@@ -58,7 +57,7 @@ from socket import socket, AF_UNIX, SOCK_STREAM
+ 
+ 
+ try:
+-    from linstorvolumemanager import log_drbd_openers
++    from linstorvolumemanager import get_controller_uri, get_all_volume_openers, LinstorVolumeManager
+     LINSTOR_AVAILABLE = True
+ except ImportError:
+     LINSTOR_AVAILABLE = False
+@@ -76,6 +75,13 @@ POOL_SIZE_KEY = "mem-pool-size-rings"
+ ENABLE_MULTIPLE_ATTACH = "/etc/xensource/allow_multiple_vdi_attach"
+ NO_MULTIPLE_ATTACH = not (os.path.exists(ENABLE_MULTIPLE_ATTACH))
+ 
++# Including DRBD in the pattern to prevent matching with other SRs than LinstorSR
++TAP_CTL_ERROR_PATTERN = re.compile(
++    r"(?P<status>ERROR|SUCCESS)\s"
++    r"\[(?P<code>-?[0-9]+)\s-\s(?P<category>.+?)]:\s"
++    r"(?P<message>.*)\sReason:\s(?P<reason>.+drbd.+)"
++)
++
+ 
+ def locking(excType, override=True):
+     def locking2(op):
+@@ -426,7 +432,21 @@ class TapCtl(object):
+             args += ["-a", str(params)]
+         if cbtlog:
+             args.extend(["-c", cbtlog])
+-        cls._pread(args)
++
++        @retried(backoff=.5, limit=3)
++        def unpause_impl():
++            drbd_path = _file
++            try:
++                cls._pread(args)
++            except TapCtl.CommandFailure as e:
++                match = TAP_CTL_ERROR_PATTERN.search(e.info.get("errmsg", ""))
++                if match and match.group("reason"):
++                    drbd_path = match.group("reason")
++                if e.get_error_code() in (errno.EROFS, errno.EMEDIUMTYPE) and Tapdisk.abort_linstor_gc(drbd_path):
++                    raise RetryLoop.TransientFailure(e)
++                raise
++
++        unpause_impl()
+ 
+     @classmethod
+     def shutdown(cls, pid):
+@@ -852,9 +872,43 @@ class Tapdisk(object):
+         except util.CommandException as e:
+             util.logException(e)
+ 
++    @staticmethod
++    def abort_linstor_gc(drbd_path: str) -> bool:
++        if not LINSTOR_AVAILABLE or not drbd_path.startswith("/dev/drbd/by-res/xcp-volume-"):
++            return False
++
++        _, volume_name, _ = drbd_path.rsplit("/", 2)
++        group_name = LinstorVolumeManager.get_volume_group_name(volume_name)
++
++        openers = get_all_volume_openers(volume_name, "0")
++
++        session = util.timeout(5, util.get_localAPI_session)
++        try:
++            srs = util.get_linstor_srs_uuid(session)
++            pbd_ref = util.find_pbd_ref_from_dconf_value(
++                session, srs, "group-name", group_name, LinstorVolumeManager.build_group_name
++            )
++            if pbd_ref:
++                pbd_rec = session.xenapi.PBD.get_record(pbd_ref)
++
++                sr_ref = pbd_rec["SR"]
++                sr_uuid = session.xenapi.SR.get_uuid(sr_ref)
++
++                import cleanup # pylint: disable=C0415
++                if cleanup.LinstorSR.abort_gc_from_openers_sr(sr_uuid, openers):
++                    return True
++            else:
++                util.SMlog(f"Unable to find PBD of LINSTOR group `{group_name}`...")
++
++            util.SMlog(f"Unable to run tapdisk, openers of DRBD resource `{drbd_path}`: {openers}")
++        finally:
++            session.xenapi.session.logout()
++
++        return False
++
+     @classmethod
+     def launch_on_tap(cls, blktap, path, _type, options):
+-
++        drbd_path = path
+         tapdisk = cls.find_by_path(path)
+         if tapdisk:
+             raise TapdiskExists(tapdisk)
+@@ -873,16 +927,17 @@ class Tapdisk(object):
+                             TapCtl.open(pid, minor, _type, path, options)
+                             break
+                         except TapCtl.CommandFailure as e:
+-                            err = (
+-                                'status' in e.info and e.info['status']
+-                            ) or None
+-                            if err in (errno.EIO, errno.EROFS, errno.EAGAIN):
+-                                if retry_open < 5:
+-                                    retry_open += 1
+-                                    time.sleep(1)
+-                                    continue
+-                                if LINSTOR_AVAILABLE and err == errno.EROFS:
+-                                    log_drbd_openers(path)
++                            err = e.get_error_code()
++                            match = TAP_CTL_ERROR_PATTERN.search(e.info.get("errmsg", ""))
++                            if match and match.group("reason"):
++                                drbd_path = match.group("reason")
++                            if err in (errno.EROFS, errno.EMEDIUMTYPE) and cls.abort_linstor_gc(drbd_path):
++                                continue
++
++                            if err in (errno.EIO, errno.EAGAIN, errno.EROFS, errno.EMEDIUMTYPE) and retry_open < 1:
++                                retry_open += 1
++                                time.sleep(1)
++                                continue
+                             raise
+                     try:
+                         tapdisk = cls.__from_blktap(blktap)
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 74d06e68..ec8527c3 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -18,7 +18,7 @@
+ # Script to coalesce and garbage collect COW-based SR's in the background
+ #
+ 
+-from sm_typing import Any, Optional, List, override
++from sm_typing import Any, Dict, Optional, List, override
+ 
+ import os
+ import os.path
+@@ -59,8 +59,7 @@ try:
+     from linstorcowutil import LinstorCowUtil, MultiLinstorCowUtil
+     from linstorjournaler import LinstorJournaler
+     from linstorvolumemanager import get_controller_uri
+-    from linstorvolumemanager import LinstorVolumeManager
+-    from linstorvolumemanager import LinstorVolumeManagerError
++    from linstorvolumemanager import LinstorVolumeManager, LinstorVolumeManagerError, LinstorVolumeOpeners
+     from linstorvolumemanager import PERSISTENT_PREFIX as LINSTOR_PERSISTENT_PREFIX
+ 
+     LINSTOR_AVAILABLE = True
+@@ -3897,17 +3896,58 @@ class LinstorSR(SR):
+ 
+     def _checkSlaves(self, vdi):
+         try:
+-            all_openers = self._linstor.get_volume_openers(vdi.uuid)
+-            for openers in all_openers.values():
+-                for opener in openers.values():
++            openers = self._linstor.get_volume_openers(vdi.uuid)
++            for host_openers in openers.values():
++                for opener in host_openers.values():
+                     if opener['process-name'] != 'tapdisk':
+                         raise util.SMException(
+-                            'VDI {} is in use: {}'.format(vdi.uuid, all_openers)
++                            'VDI {} is in use: {}'.format(vdi.uuid, openers)
+                         )
+         except LinstorVolumeManagerError as e:
+             if e.code != LinstorVolumeManagerError.ERR_VOLUME_NOT_EXISTS:
+                 raise
+ 
++    @classmethod
++    def abort_gc_from_openers_vdi(cls, vdi_uuid: str, openers: "LinstorVolumeOpeners") -> bool:
++        return cls._abort_gc_from_openers(vdi_uuid, True, openers)
++
++    @classmethod
++    def abort_gc_from_openers_sr(cls, sr_uuid: str, openers: "LinstorVolumeOpeners") -> bool:
++        return cls._abort_gc_from_openers(sr_uuid, False, openers)
++
++    @staticmethod
++    def _abort_gc_from_openers(uuid: str, is_vdi_uuid: bool, openers: "LinstorVolumeOpeners") -> bool:
++        from linstorcowutil import MANAGER_PLUGIN
++
++        node_name = None
++
++        for host_openers in openers.values():
++            for hostname, opener in host_openers.items():
++                # Not the most accurate check but it works...
++                # `vhd-util` is probably prefixed with a "+" which is ignored here.
++                if not opener["process-name"].endswith("vhd-util") or "coalesce" not in opener["cmdline"]:
++                    continue
++
++                if not node_name:
++                    import socket
++                    node_name = socket.gethostname()
++
++                if node_name == hostname:
++                    continue
++
++                with util.timeout(5):
++                    session = XAPI.getSession()
++                    try:
++                        sr_uuid = util.get_sr_uuid_from_vdi_uuid(session, uuid) if is_vdi_uuid else uuid
++                        util.SMlog(f"LINSTOR volume is coalescing on `{sr_uuid}`. We're going to interrupt the GC...")
++                        return util.strtobool(session.xenapi.host.call_plugin(
++                            util.get_master_ref(session), MANAGER_PLUGIN, "abortGc", {"srUuid": sr_uuid}
++                        ))
++                    finally:
++                        session.xenapi.session.logout()
++        return False
++
++
+ 
+ ################################################################################
+ #
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index d455f932..c8d69d5f 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -21,6 +21,8 @@ import sys
+ sys.path[0] = '/opt/xensource/sm/'
+ 
+ import base64
++import cleanup
++import ipc
+ import os
+ import socket
+ import XenAPI
+@@ -410,6 +412,17 @@ def destroy(session, args):
+     return str(False)
+ 
+ 
++def abort_gc(session, args):
++    try:
++        sr_uuid = args['srUuid']
++        abort_flag = ipc.IPCFlag(sr_uuid)
++        abort_flag.set(cleanup.FLAG_TYPE_ABORT, soft=False)
++        return str(True)
++    except Exception as e:
++        util.SMlog('linstor-manager:abort_gc error: {}'.format(e))
++    return str(False)
++
++
+ def check(session, args):
+     try:
+         cowutil = get_cow_util_from_args(args)
+@@ -1260,6 +1273,7 @@ if __name__ == '__main__':
+         'attach': attach,
+         'detach': detach,
+         'destroy': destroy,
++        'abortGc': abort_gc,
+ 
+         # cowutil wrappers called by LinstorCowUtil.
+         # Note: When a COW image is open in RO mode (so for all cowutil getters),
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 941d6de5..51f6e1b6 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -14,13 +14,14 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ 
+-from sm_typing import List, override
++from sm_typing import Any, Callable, Dict, IO, List, Optional, override
+ 
+ from linstorjournaler import LinstorJournaler
+-from linstorvolumemanager import LinstorVolumeManager
++from linstorvolumemanager import LinstorVolumeManager, LinstorVolumeOpeners
+ 
+ from concurrent.futures import ThreadPoolExecutor
+ import base64
++import contextlib
+ import errno
+ import json
+ import socket
+@@ -162,7 +163,21 @@ def linstormodifier():
+     return decorated
+ 
+ 
+-class LinstorCowUtil(object):
++class LinstorCowUtil:
++    class Chain(object):
++        def __init__(self, files: List[IO], leaf_path: str):
++            self._files = files
++            self._leaf_path = leaf_path
++
++        @property
++        def leaf_path(self) -> str:
++            return self._leaf_path
++
++        def close(self) -> None:
++            for file in self._files:
++                with contextlib.suppress(Exception):
++                    file.close()
++
+     def __init__(self, session, linstor, vdi_type: str):
+         self._session = session
+         self._linstor = linstor
+@@ -173,43 +188,54 @@ class LinstorCowUtil(object):
+     def cowutil(self) -> CowUtil:
+         return self._cowutil
+ 
+-    def create_chain_paths(self, vdi_uuid, readonly=False):
++    def create_chain_paths(
++        self,
++        vdi_uuid: str,
++        readonly=False,
++        cb_openers: Optional[Callable[[str, LinstorVolumeOpeners], Any]] = None
++    ) -> Chain:
+         # OPTIMIZE: Add a limit_to_first_allocated_block param to limit cowutil calls.
+         # Useful for the snapshot code algorithm.
+ 
+-        leaf_vdi_path = self._linstor.get_device_path(vdi_uuid)
+-        path = leaf_vdi_path
+-        while True:
+-            if not util.pathexists(path):
+-                raise xs_errors.XenError(
+-                    'VDIUnavailable', opterr='Could not find: {}'.format(path)
+-                )
++        files: List[IO] = []
+ 
+-            # Diskless path can be created on the fly, ensure we can open it.
+-            def check_volume_usable():
+-                while True:
+-                    try:
+-                        with open(path, 'r' if readonly else 'r+'):
+-                            pass
+-                    except IOError as e:
+-                        if e.errno == errno.ENODATA:
+-                            time.sleep(2)
+-                            continue
+-                        if e.errno == errno.EROFS or e.errno == errno.EMEDIUMTYPE:
+-                            util.SMlog('Volume not attachable because used. Openers: {}'.format(
+-                                self._linstor.get_volume_openers(vdi_uuid)
+-                            ))
+-                        raise
++        leaf_path = self._linstor.get_device_path(vdi_uuid)
++        path = leaf_path
++        try:
++            while True:
++                if not util.pathexists(path):
++                    raise xs_errors.XenError(
++                        'VDIUnavailable', opterr='Could not find: {}'.format(path)
++                    )
++
++                # Diskless path can be created on the fly, ensure we can open it.
++                def check_volume_usable():
++                    while True:
++                        try:
++                            files.append(open(path, 'r' if readonly else 'r+'))
++                        except (IOError, OSError) as e:
++                            if e.errno == errno.ENODATA:
++                                time.sleep(2)
++                                continue
++                            if e.errno == errno.EROFS or e.errno == errno.EMEDIUMTYPE:
++                                openers = self._linstor.get_volume_openers(vdi_uuid)
++                                util.SMlog(f'Volume not attachable because used. Openers: {openers}')
++                                if cb_openers:
++                                    cb_openers(vdi_uuid, openers)
++                            raise
++                        break
++                util.retry(check_volume_usable, 15, 2)
++
++                vdi_uuid = self.get_info(vdi_uuid).parentUuid
++                if not vdi_uuid:
+                     break
+-            util.retry(check_volume_usable, 15, 2)
+-
+-            vdi_uuid = self.get_info(vdi_uuid).parentUuid
+-            if not vdi_uuid:
+-                break
+-            path = self._linstor.get_device_path(vdi_uuid)
+-            readonly = True  # Non-leaf is always readonly.
++                path = self._linstor.get_device_path(vdi_uuid)
++                readonly = True  # Non-leaf is always readonly.
++        except Exception as e:
++            self.Chain(files, leaf_path).close()
++            raise e
+ 
+-        return leaf_vdi_path
++        return self.Chain(files, leaf_path)
+ 
+     # --------------------------------------------------------------------------
+     # Getters: read locally and try on another host in case of failure.
+@@ -569,7 +595,7 @@ class LinstorCowUtil(object):
+         # B.3. Call!
+         def remote_call():
+             try:
+-                all_openers = self._linstor.get_volume_openers(openers_uuid)
++                openers = self._linstor.get_volume_openers(openers_uuid)
+             except Exception as e:
+                 raise xs_errors.XenError(
+                     'VDIUnavailable',
+@@ -578,8 +604,8 @@ class LinstorCowUtil(object):
+                 )
+ 
+             no_host_found = True
+-            for hostname, openers in all_openers.items():
+-                if not openers:
++            for hostname, host_openers in openers.items():
++                if not host_openers:
+                     continue
+ 
+                 host_ref = self._find_host_ref_from_hostname(hosts, hostname)
+diff --git a/drivers/linstorjournaler.py b/drivers/linstorjournaler.py
+index 85092199..49d56703 100755
+--- a/drivers/linstorjournaler.py
++++ b/drivers/linstorjournaler.py
+@@ -158,7 +158,7 @@ class LinstorJournaler:
+ 
+         if native_client:
+             return linstor.KV(
+-                LinstorVolumeManager._build_group_name(group_name),
++                LinstorVolumeManager.build_group_name(group_name),
+                 existing_client=native_client,
+                 namespace=namespace
+             )
+@@ -171,7 +171,7 @@ class LinstorJournaler:
+                         'Unable to find controller uri...'
+                     )
+             return linstor.KV(
+-                LinstorVolumeManager._build_group_name(group_name),
++                LinstorVolumeManager.build_group_name(group_name),
+                 uri=uri,
+                 namespace=namespace
+             )
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index b965a229..d10f4619 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -19,6 +19,7 @@ from sm_typing import (
+     Any,
+     Dict,
+     List,
++    cast,
+     override,
+ )
+ 
+@@ -51,10 +52,12 @@ DRBD_BY_RES_PATH = '/dev/drbd/by-res/'
+ 
+ PLUGIN = 'linstor-manager'
+ 
++LinstorLocalVolumeOpeners = Dict[str, Dict[str, Any]]
++LinstorVolumeOpeners = Dict[str, LinstorLocalVolumeOpeners]
+ 
+ # ==============================================================================
+ 
+-def get_local_volume_openers(resource_name, volume):
++def get_local_volume_openers(resource_name, volume) -> LinstorLocalVolumeOpeners:
+     if not resource_name or volume is None:
+         raise Exception('Cannot get DRBD openers without resource name and/or volume.')
+ 
+@@ -77,14 +80,22 @@ def get_local_volume_openers(resource_name, volume):
+         process_name = groups[0]
+         pid = groups[1]
+         open_duration_ms = groups[2]
++
++        try:
++            cmdline = util.get_process_cmdline(int(pid))
++        except Exception as e:
++            util.SMlog(f"Failed to get command line of `{pid}`: {e}")
++            cmdline = []
++
+         result[pid] = {
+             'process-name': process_name,
+-            'open-duration': open_duration_ms
++            'open-duration': open_duration_ms,
++            'cmdline': cmdline
+         }
+ 
+-    return json.dumps(result)
++    return cast(LinstorLocalVolumeOpeners, json.dumps(result))
+ 
+-def get_all_volume_openers(resource_name, volume):
++def get_all_volume_openers(resource_name, volume) -> LinstorVolumeOpeners:
+     PLUGIN_CMD = 'getDrbdOpeners'
+ 
+     volume = str(volume)
+@@ -376,7 +387,7 @@ class LinstorVolumeManager(object):
+         self._base_group_name = group_name
+ 
+         # Ensure group exists.
+-        group_name = self._build_group_name(group_name)
++        group_name = self.build_group_name(group_name)
+         groups = self._linstor.resource_group_list_raise([group_name]).resource_groups
+         if not groups:
+             raise LinstorVolumeManagerError(
+@@ -1167,7 +1178,7 @@ class LinstorVolumeManager(object):
+ 
+         return states
+ 
+-    def get_volume_openers(self, volume_uuid):
++    def get_volume_openers(self, volume_uuid) -> LinstorVolumeOpeners:
+         """
+         Get openers of a volume.
+         :param str volume_uuid: The volume uuid to monitor.
+@@ -1771,7 +1782,28 @@ class LinstorVolumeManager(object):
+         :return: List of group names.
+         :rtype: list
+         """
+-        return [cls._build_group_name(base_name), cls._build_ha_group_name(base_name)]
++        return [cls.build_group_name(base_name), cls._build_ha_group_name(base_name)]
++
++    @classmethod
++    def get_volume_group_name(cls, volume_name) -> str:
++        """
++        Get the group name associated with a volume.
++        :param str volume_name: The volume name to find.
++        :return: A group name.
++        :rtype: str
++        """
++
++        lin = cls._create_linstor_instance(uri=None)
++        try:
++            for dfn in lin.resource_dfn_list_raise(
++                query_volume_definitions=False,
++                filter_by_resource_definitions=[volume_name]
++            ).resource_definitions:
++                return dfn.resource_group_name
++        finally:
++            lin.disconnect()
++
++        return ''
+ 
+     @classmethod
+     def create_sr(cls, group_name, ips, redundancy, thin_provisioning, logger=default_logger.__func__):
+@@ -1841,7 +1873,7 @@ class LinstorVolumeManager(object):
+ 
+         driver_pool_name = group_name
+         base_group_name = group_name
+-        group_name = cls._build_group_name(group_name)
++        group_name = cls.build_group_name(group_name)
+         storage_pool_name = group_name
+         pools = lin.storage_pool_list_raise(filter_by_stor_pools=[storage_pool_name]).storage_pools
+         if pools:
+@@ -2437,13 +2469,13 @@ class LinstorVolumeManager(object):
+             )
+ 
+         # If force is used, ensure there is no opener.
+-        all_openers = get_all_volume_openers(resource_name, '0')
+-        for openers in all_openers.values():
+-            if openers:
++        openers = get_all_volume_openers(resource_name, '0')
++        for host_openers in openers.values():
++            if host_openers:
+                 self._mark_resource_cache_as_dirty()
+                 raise LinstorVolumeManagerError(
+                     'Could not force destroy resource `{}` from SR `{}`: {} (openers=`{}`)'
+-                    .format(resource_name, self._group_name, error_str, all_openers)
++                    .format(resource_name, self._group_name, error_str, openers)
+                 )
+ 
+         # Maybe the resource is blocked in primary mode. DRBD/LINSTOR issue?
+@@ -3011,7 +3043,7 @@ class LinstorVolumeManager(object):
+         return util.retry(destroy, maxretry=10)
+ 
+     @classmethod
+-    def _build_group_name(cls, base_name):
++    def build_group_name(cls, base_name):
+         # If thin provisioning is used we have a path like this:
+         # `VG/LV`. "/" is not accepted by LINSTOR.
+         return '{}{}'.format(cls.PREFIX_SR, base_name.replace('/', '_'))
+diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
+index 40652402..fd5b60a2 100755
+--- a/drivers/tapdisk-pause
++++ b/drivers/tapdisk-pause
+@@ -172,9 +172,18 @@ class Tapdisk:
+                 logger=util.SMlog
+             )
+ 
++            import cleanup
+             from srmetadata import VDI_TYPE_TAG
++
+             self.vdi_type = linstor.get_volume_metadata(self.vdi_uuid)[VDI_TYPE_TAG]
+-            device_path = LinstorCowUtil(session, linstor, self.vdi_type).create_chain_paths(self.vdi_uuid)
++            chain = LinstorCowUtil(session, linstor, self.vdi_type).create_chain_paths(
++                self.vdi_uuid,
++                readonly=False,
++                cb_openers=cleanup.LinstorSR.abort_gc_from_openers_vdi
++            )
++
++            device_path = chain.leaf_path
++            chain.close()
+ 
+             if realpath != device_path:
+                 util.SMlog(
+diff --git a/drivers/util.py b/drivers/util.py
+index 0bd832bb..8f70454e 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -16,6 +16,9 @@
+ # Miscellaneous utility functions
+ #
+ 
++from sm_typing import List
++
++import contextlib
+ import os
+ import re
+ import sys
+@@ -410,6 +413,17 @@ def ioretry_stat(path, maxretry=IORETRY_MAX):
+         retries += 1
+     raise CommandException(errno.EIO, "os.statvfs")
+ 
++@contextlib.contextmanager
++def timeout(seconds: int):
++    def handle_timeout(_signum, _frame):
++        raise TimeoutError("Timed out after %d seconds" % seconds)
++
++    signal.signal(signal.SIGALRM, handle_timeout)
++    signal.alarm(seconds)
++    try:
++        yield
++    finally:
++        signal.alarm(0)
+ 
+ def sr_get_capability(sr_uuid, session=None):
+     result = []
+@@ -1260,6 +1274,15 @@ def _getVDIs(srobj):
+     return VDIs
+ 
+ 
++def get_sr_uuid_from_vdi_ref(session, vdi_ref: str) -> str:
++    sr_ref = session.xenapi.VDI.get_SR(vdi_ref)
++    return session.xenapi.SR.get_uuid(sr_ref)
++
++
++def get_sr_uuid_from_vdi_uuid(session, vdi_uuid: str) -> str:
++    return get_sr_uuid_from_vdi_ref(session, session.xenapi.VDI.get_by_uuid(vdi_uuid))
++
++
+ def _getVDI(srobj, vdi_uuid):
+     vdi = srobj.session.xenapi.VDI.get_by_uuid(vdi_uuid)
+     ref = srobj.session.xenapi.VDI.get_record(vdi)
+@@ -1534,6 +1557,17 @@ def pid_is_alive(pid):
+         return False
+ 
+ 
++def get_process_cmdline(pid: int) -> List[str]:
++    try:
++        with open(os.path.join('/proc', str(pid), 'cmdline'), 'rb') as f:
++            line = f.read().split(b'\0')
++        return [arg.decode() for arg in line]
++    except OSError as e:
++        if e.errno != errno.ENOENT:
++            raise
++        return []
++
++
+ # Looks at /proc and figures either
+ #   If a process is still running (default), returns open file names
+ #   If any running process has open handles to the given file (process = False)
+@@ -2222,3 +2256,25 @@ def conditional_decorator(decorator, condition):
+             return func
+         return decorator(func)
+     return wrapper
++
++
++def get_srs_uuid_from_type(session, type):
++    srs = session.xenapi.SR.get_all_records_where(f"field \"type\" = \"{type}\"")
++    return {sr["uuid"]: sr for sr in srs.values()}
++
++
++def get_linstor_srs_uuid(session):
++    import LinstorSR # pylint: disable=C0415
++    return get_srs_uuid_from_type(session, LinstorSR.LinstorSR.DRIVER_TYPE)
++
++
++def find_pbd_ref_from_dconf_value(session, srs, key, value, value_modifier = None):
++    for sr in srs.values():
++        for pbd_ref in sr["PBDs"]:
++            device_config = session.xenapi.PBD.get_device_config(pbd_ref)
++            cur_value = device_config.get(key)
++            if value_modifier:
++                cur_value = value_modifier(cur_value)
++            if cur_value and cur_value == value:
++                return pbd_ref
++    return None

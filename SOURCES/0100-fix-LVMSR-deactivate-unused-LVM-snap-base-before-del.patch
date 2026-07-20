@@ -1,4 +1,4 @@
-From 24731860f4059593fd93d46c3278df898c59a648 Mon Sep 17 00:00:00 2001
+From 55477474fb3f6f7034c16308efbe01c27608ef57 Mon Sep 17 00:00:00 2001
 From: Bartuccio Antoine <antoine.bartuccio@gmail.com>
 Date: Mon, 20 Apr 2026 14:04:14 +0200
 Subject: [PATCH] fix(LVMSR): deactivate unused LVM snap base before deletion

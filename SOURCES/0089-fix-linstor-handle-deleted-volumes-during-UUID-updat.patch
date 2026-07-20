@@ -1,4 +1,4 @@
-From 2f6fe83aef9a6c5da18a2116bba8c32c7383d8bc Mon Sep 17 00:00:00 2001
+From 26dc08ede03f1305e05ef58f837c77d870de47e0 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Thu, 27 Nov 2025 20:44:54 +0100
 Subject: [PATCH] fix(linstor): handle deleted volumes during UUID update

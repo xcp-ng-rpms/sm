@@ -1,4 +1,4 @@
-From d89e43f365be771f93e4e2d490144afaa13b6c80 Mon Sep 17 00:00:00 2001
+From db5499325ed9ec462aae346d0a1a4188287eef49 Mon Sep 17 00:00:00 2001
 From: Millefeuille <mathieu.labourier@vates.tech>
 Date: Mon, 6 Oct 2025 10:12:31 +0200
 Subject: [PATCH] Stop SMGC service on SR detach to prevent orphaned systemd

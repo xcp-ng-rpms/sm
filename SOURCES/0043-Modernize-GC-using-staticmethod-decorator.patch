@@ -1,4 +1,4 @@
-From 40ec8c5113d2d7c5fe3e4a9e6a0b15750b6c4d73 Mon Sep 17 00:00:00 2001
+From 2c8ccbbb3e48008696e309dda59c65d18b8547be Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Tue, 15 Oct 2024 15:33:11 +0200
 Subject: [PATCH] Modernize GC using `staticmethod` decorator

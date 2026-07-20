@@ -1,4 +1,4 @@
-From 86098cab75b3d38c5f1e7adf06f728d04e1bcc29 Mon Sep 17 00:00:00 2001
+From 19a8407b04cd1d81d121555ada83c62986012d26 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
 Subject: [PATCH] feat(LinstorSR): import all 8.2 changes
@@ -7543,11 +7543,11 @@ index bb3f5db6..524424f6 100755
      tapdisk = blktap2.Tapdisk.find_by_path(vdi.path)
      util.SMlog("Tapdisk for %s: %s" % (vdi.path, tapdisk))
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index 169d410f..933afddd 100755
+index b225be0c..621e7e16 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
-@@ -30,7 +30,7 @@ import vhdutil
- import lvmcache
+@@ -31,7 +31,7 @@ import lvmcache
+ import VDI
  
  try:
 -    from linstorvolumemanager import LinstorVolumeManager
@@ -7555,7 +7555,7 @@ index 169d410f..933afddd 100755
      LINSTOR_AVAILABLE = True
  except ImportError:
      LINSTOR_AVAILABLE = False
-@@ -152,10 +152,6 @@ class Tapdisk:
+@@ -154,10 +154,6 @@ class Tapdisk:
              # "B" path. Note: "A", "B" and "OLD_A" are UUIDs.
              session = self.session
  
@@ -7566,7 +7566,7 @@ index 169d410f..933afddd 100755
              host_ref = util.get_this_host_ref(session)
              sr_ref = session.xenapi.SR.get_by_uuid(self.sr_uuid)
  
-@@ -167,7 +163,7 @@ class Tapdisk:
+@@ -169,7 +165,7 @@ class Tapdisk:
              group_name = dconf['group-name']
  
              device_path = LinstorVolumeManager(

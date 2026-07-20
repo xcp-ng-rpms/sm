@@ -1,4 +1,4 @@
-From e980fe51c89f58fb83be41147589144ffe11602c Mon Sep 17 00:00:00 2001
+From 991f17c4c2e916bc1cbf4b5344f2cce7659bd56f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 3 Feb 2026 14:20:29 +0100
 Subject: [PATCH] feat(linstor): simplify `get_controller_uri` using `ss`

@@ -1,4 +1,4 @@
-From b05ec4a2a57ef5cc47a717579ffa86df87471b35 Mon Sep 17 00:00:00 2001
+From 9c2da336cee2e3e2b4d0ab70360b73efb6af0de5 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 10 Feb 2025 17:35:26 +0100
 Subject: [PATCH] fix(linstorvhdutil.py): remove useless param on

@@ -1,4 +1,4 @@
-From 291ea8620b480558ff1465eb85b8a9c84638860f Mon Sep 17 00:00:00 2001
+From e82f6744ca0ad694f4e84c05feb45a6d50524f86 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH] feat(drivers): add LinstorSR driver
@@ -60,13 +60,13 @@ module imports are protected by try.. except... blocks.
  drivers/linstorjournaler.py     |  155 +++
  drivers/linstorvhdutil.py       |  186 +++
  drivers/linstorvolumemanager.py | 1713 +++++++++++++++++++++++++
- drivers/tapdisk-pause           |   52 +-
+ drivers/tapdisk-pause           |   50 +
  drivers/util.py                 |   43 +-
  linstor/Makefile                |   22 +
  linstor/linstor-monitord.c      |  402 ++++++
  systemd/linstor-monitor.service |   13 +
  tests/mocks/linstor/__init__.py |    0
- 14 files changed, 5360 insertions(+), 12 deletions(-)
+ 14 files changed, 5359 insertions(+), 11 deletions(-)
  create mode 100755 drivers/LinstorSR.py
  create mode 100755 drivers/linstor-manager
  create mode 100755 drivers/linstorjournaler.py
@@ -5063,12 +5063,12 @@ index 00000000..d4004217
 +                    return True
 +        return False
 diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
-index e8e48b27..169d410f 100755
+index a84fb149..b225be0c 100755
 --- a/drivers/tapdisk-pause
 +++ b/drivers/tapdisk-pause
-@@ -29,6 +29,12 @@ import lvhdutil
- import vhdutil
+@@ -30,6 +30,12 @@ import vhdutil
  import lvmcache
+ import VDI
  
 +try:
 +    from linstorvolumemanager import LinstorVolumeManager
@@ -5079,11 +5079,10 @@ index e8e48b27..169d410f 100755
  TAPDEV_BACKPATH_PFX = "/dev/sm/backend"
  TAPDEV_PHYPATH_PFX = "/dev/sm/phy"
  
-@@ -130,7 +136,51 @@ class Tapdisk:
+@@ -132,6 +138,50 @@ class Tapdisk:
                      self.realpath = p
                      if ty == "LV": self.vdi_type = "aio"
                      else: self.vdi_type = "vhd"
--        
 +        elif realpath.startswith('/dev/drbd/by-res/xcp-volume-'):
 +            if not LINSTOR_AVAILABLE:
 +                raise util.SMException(
@@ -5128,10 +5127,9 @@ index e8e48b27..169d410f 100755
 +                os.unlink(self.phypath)
 +                _mkphylink(self.sr_uuid, self.vdi_uuid, device_path)
 +            self.realpath = device_path
-+
-     @locking("VDIUnavailable")
-     def Pause(self):
-         util.SMlog("Pause for %s" % self.vdi_uuid)
+ 
+     def _is_snap_paused(self):
+         vdi_ref = self.session.xenapi.VDI.get_by_uuid(self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
 index 15d13e30..a9cf18e8 100755
 --- a/drivers/util.py

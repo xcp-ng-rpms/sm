@@ -1,4 +1,4 @@
-From 7b7fdf158ba20e61fa3b35709e3e498f7cdb2f1c Mon Sep 17 00:00:00 2001
+From f7ab3c44edb3874994ce14b12da9c17d9db0590f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 15:10:55 +0200
 Subject: [PATCH] Replace `Dict` variable with `info` in `LVHDSR`

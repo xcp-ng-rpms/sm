@@ -1,4 +1,4 @@
-From 002dd50546b9015438620724ad2560bc6129e511 Mon Sep 17 00:00:00 2001
+From c65d6d030cf7df3a82a882a67f4c2f034160864c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 3 Feb 2026 17:58:56 +0100
 Subject: [PATCH] fix(linstor): ignore unknown res to get volume info (#122)

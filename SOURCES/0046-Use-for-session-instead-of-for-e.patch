@@ -1,4 +1,4 @@
-From 67980e09670e5ce355abe7daa4544a088ff70910 Mon Sep 17 00:00:00 2001
+From e7ef423d71be68cc5c117d2c729252233bb09644 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 21 Oct 2024 17:49:20 +0200
 Subject: [PATCH] Use `for session` instead of `for e`

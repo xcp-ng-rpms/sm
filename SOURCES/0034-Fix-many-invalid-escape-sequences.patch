@@ -1,4 +1,4 @@
-From e2b808d7cf3e373648854bdc59bb82e32db3ff1d Mon Sep 17 00:00:00 2001
+From 860ddf538a5da71a527c182074c5bbd24d15455a Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 18:10:14 +0200
 Subject: [PATCH] Fix many invalid escape sequences

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -258,6 +258,7 @@ Patch1160: 0160-fix-linstor-abort-GC-for-slave-if-VHD-chain-is-open-.patch
 Patch1161: 0161-refactor-merge-timeout-and-timeout_call-functions-13.patch
 Patch1162: 0162-fix-qcow2-verify-and-limit-raw-snapshot-size-147.patch
 Patch1163: 0163-fix-qcow2-read-FileSR-allocated-size-only-when-neede.patch
+Patch1164: 0164-fix-linstor-use-quotes-on-linstor-type-annotations-1.patch
 
 %description
 This package contains storage backends used in XCP
@@ -581,6 +582,9 @@ then
 fi
 
 %changelog
+* Mon Aug 03 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-23.2
+- Add 0164-fix-linstor-use-quotes-on-linstor-type-annotations-1.patch
+
 * Mon Jul 13 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-23.1
 - Rebase on 3.2.12-23
 - Sync patches with our latest 3.2.12-8.3 branch

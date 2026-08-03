@@ -1,0 +1,32 @@
+From 82c3f5227a45521905c22dc60978dd3642345c28 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Thu, 30 Jul 2026 17:40:31 +0200
+Subject: [PATCH] fix(linstor): use quotes on linstor type annotations (#150)
+
+Without that and if LINSTOR python package is not installed we can have
+issues to register our drivers. `AttributeError` is raised and not catched by
+other modules during imports...
+
+Trace:
+```
+Jul 30 17:11:36 hpm1c20 xapi: [error||0 |Registering SMAPIv1 plugins D:6829eea78bbd|sm_exec] Rejecting SM plugin: LVM because of exception: Storage_error ([S(Backend_error);[S(SR_BACKEND_FAILURE);[S(non-zero exit);S();S(Traceback (most recent call last):\x0A  File "/opt/xensource/sm/LVMSR", line 23, in <module>\x0A    import SR\x0A  File "/opt/xensource/sm/SR.py", line 23, in <module>\x0A    import VDI\x0A  File "/opt/xensource/sm/VDI.py", line 21, in <module>\x0A    import cleanup\x0A  File "/opt/xensource/sm/cleanup.py", line 44, in <module>\x0A    import blktap2\x0A  File "/opt/xensource/sm/blktap2.py", line 60, in <module>\x0A    from linstorvolumemanager import get_controller_uri, get_all_volume_openers, LinstorVolumeManager\x0A  File "/opt/xensource/sm/linstorvolumemanager.py", line 262, in <module>\x0A    class LinstorVolumeManager(object):\x0A  File "/opt/xensource/sm/linstorvolumemanager.py", line 420, in LinstorVolumeManager\x0A    def native_client(self) -> linstor.Linstor:\x0AAttributeError: module 'linstor' has no attribute 'Linstor'\x0A)]]]) (executable)
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 9373569a..24cfbad1 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -417,7 +417,7 @@ class LinstorVolumeManager(object):
+         return self._uri
+ 
+     @property
+-    def native_client(self) -> linstor.Linstor:
++    def native_client(self) -> "linstor.Linstor":
+         return self._linstor
+ 
+     @property

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -582,6 +582,9 @@ then
 fi
 
 %changelog
+* Tue Aug 04 2026 Gaëtan Lehmann <gaetan.lehmann@vates.tech> - 3.2.12-23.3
+- Rebuild against OpenSSL 3.0
+
 * Mon Aug 03 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-23.2
 - Add 0164-fix-linstor-use-quotes-on-linstor-type-annotations-1.patch
 

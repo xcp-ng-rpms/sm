@@ -1,4 +1,4 @@
-From e1b94cb363612f50c1b8b0303e6243e3dffa4705 Mon Sep 17 00:00:00 2001
+From d858cf5c198e648d270f5e8a945a6974c05e3404 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 28 May 2026 16:15:22 +0200
 Subject: [PATCH] fix(cleanup): fix for live leaf coalesce
@@ -26,31 +26,17 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  1 file changed, 4 insertions(+)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index bc2ba837..dfc9a09c 100755
+index bc2ba837..d559efd1 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2854,6 +2854,7 @@ class SR(object):
- 
-     def _liveLeafCoalesce(self, vdi: VDI, coalesce_on_remote: bool = False) -> bool:
-         util.fistpoint.activate("LVHDRT_coaleaf_delay_3", self.uuid)
-+        need_refresh = False
-         self.lock()
-         try:
-             self.scan()
-@@ -2872,6 +2873,7 @@ class SR(object):
-                     self._create_running_file(vdi)
-                     # "vdi" object will no longer be valid after this call
-                     self._doCoalesceLeaf(vdi, coalesce_on_remote)
-+                    need_refresh = True
-                 except:
-                     Util.logException("_doCoalesceLeaf")
-                     self._handleInterruptedCoalesceLeaf()
-@@ -2880,6 +2882,8 @@ class SR(object):
-                 vdi = self.getVDI(uuid)
-                 if vdi:
-                     vdi.ensureUnpaused()
-+                    if need_refresh:
-+                        vdi.refresh()
-                 self._delete_running_file(vdi)
-                 vdiOld = self.getVDI(self.TMP_RENAME_PREFIX + uuid)
-                 if vdiOld:
+@@ -2905,6 +2905,10 @@ class SR(object):
+             _, host_ref = next(iter(host_refs.items()))
+             vdi._coalesceCowImageOnHost(host_ref, vdi) # vdi is the leaf for the online coalesce
+             util.fistpoint.activate("LVHDRT_coaleaf_after_coalesce", self.uuid)
++            vdi.pause(failfast=True)
++            # We make a pause here after the online coalesce but before the rename so we can refresh the chain for tapdisk. 
++            # It's also needed to be paused for the rename on slaves with LVMSR.
++            # We let the caller `_liveLeafCoalesce` do the unpause with the call to `vdi.ensureUnpaused()`
+         else:
+             vdi.validate(True)
+             vdi.parent.validate(True)

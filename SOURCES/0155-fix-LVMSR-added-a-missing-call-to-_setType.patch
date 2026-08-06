@@ -1,4 +1,4 @@
-From fb32d789b804c63e51dfc841c6d45bb86685194a Mon Sep 17 00:00:00 2001
+From abd3e9cc7a88de2d2ae72b4c6e277c6ebd1e7aeb Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Fri, 29 May 2026 16:02:29 +0200
 Subject: [PATCH] fix(LVMSR): added a missing call to _setType

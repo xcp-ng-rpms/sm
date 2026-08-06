@@ -1,4 +1,4 @@
-From 88c5c79f6e5eb2d8352a5ed7e7249dd7bb5a0819 Mon Sep 17 00:00:00 2001
+From 87165f0587acc71cd19b6d42ced93066179b8b41 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 9 Jul 2026 18:37:47 +0200
 Subject: [PATCH] fix(qcow2): verify and limit raw snapshot size (#147)

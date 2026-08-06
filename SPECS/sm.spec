@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.4%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -95,6 +95,8 @@ Obsoletes: sm-additional-drivers
 # XCP-ng patches
 # Generated from our sm repository
 # git format-patch v3.2.12-23-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
+# WARNING: Patch `0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch` is currently disabled due to a
+# regression, so we're delaying the release of that feature.
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -247,7 +249,7 @@ Patch1149: 0149-fix-linstor-add-backward-compatibility-for-manager-p.patch
 Patch1150: 0150-fix-LVMSR-scan-with-cbt_metadata.patch
 Patch1151: 0151-feat-qcow2-live-leaf-coalesce.patch
 Patch1152: 0152-fix-qcow2-online-coalesce-on-LVMSR.patch
-Patch1153: 0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
+# Patch1153: 0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
 Patch1154: 0154-fix-cleanup-fix-for-live-leaf-coalesce.patch
 Patch1155: 0155-fix-LVMSR-added-a-missing-call-to-_setType.patch
 Patch1156: 0156-fix-linstor-don-t-load-VDIs-during-VDI.deactivate-ca.patch
@@ -259,6 +261,8 @@ Patch1161: 0161-refactor-merge-timeout-and-timeout_call-functions-13.patch
 Patch1162: 0162-fix-qcow2-verify-and-limit-raw-snapshot-size-147.patch
 Patch1163: 0163-fix-qcow2-read-FileSR-allocated-size-only-when-neede.patch
 Patch1164: 0164-fix-linstor-use-quotes-on-linstor-type-annotations-1.patch
+Patch1165: 0165-fix-RAWVDI-define-vdi_type-for-RAWVDI-151.patch
+Patch1166: 0166-Add-IO-import-in-sm_typing-152.patch
 
 %description
 This package contains storage backends used in XCP
@@ -582,6 +586,15 @@ then
 fi
 
 %changelog
+* Thu Aug 13 2026 Alexandre Sollier <alexandre.sollier@vates.tech> - 3.2.12-23.4
+- Add new patches:
+  - 0165-fix-RAWVDI-define-vdi_type-for-RAWVDI-151.patch
+  - 0166-Add-IO-import-in-sm_typing-152.patch
+- Removed patches:
+  - 0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
+- Updated patches:
+  - 0154-fix-cleanup-fix-for-live-leaf-coalesce.patch
+
 * Tue Aug 04 2026 Gaëtan Lehmann <gaetan.lehmann@vates.tech> - 3.2.12-23.3
 - Rebuild against OpenSSL 3.0
 

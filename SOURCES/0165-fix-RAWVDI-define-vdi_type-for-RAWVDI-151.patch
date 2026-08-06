@@ -1,0 +1,63 @@
+From eaece9cae18ffb07c44b08064fcd431a8755905b Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 4 Aug 2026 18:27:14 +0200
+Subject: [PATCH] fix(RAWVDI): define vdi_type for RAWVDI (#151)
+
+Add `vdi_type` as `phy` for `drivers/LUNperVDI.py:RAWVDI.load()`.
+If we don't define a vdi_type, the VDI activation in blktap2.py will fail with error:
+```
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread] ***** generic exception: vdi_attach: EXCEPTION <class 'blktap2.VDI.UnexpectedVDIType'>, Target <class '__ma
+in__.ISCSIVDI'> has unexpected VDI type ''
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/SRCommand.py", line 113, in run
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     return self._run_locked(sr)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/SRCommand.py", line 163, in _run_locked
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     rv = self._run(sr, target)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/SRCommand.py", line 260, in _run
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     writable, caching_params=caching_params)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/blktap2.py", line 1616, in attach
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     {"rdonly": not writable})
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/blktap2.py", line 1854, in _activate
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     if self.tap_wanted():
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/blktap2.py", line 1154, in tap_wanted
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     vdi_type = self.target.get_vdi_type()
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/blktap2.py", line 1207, in get_vdi_type
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     raise VDI.UnexpectedVDIType(_type, self.vdi)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread] ***** iSCSI: EXCEPTION <class 'blktap2.VDI.UnexpectedVDIType'>, Target <class '__main__.ISCSIVDI'> has unex
+pected VDI type ''
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/SRCommand.py", line 392, in run
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     ret = cmd.run(sr)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/SRCommand.py", line 113, in run
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     return self._run_locked(sr)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/SRCommand.py", line 163, in _run_locked
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     rv = self._run(sr, target)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/SRCommand.py", line 260, in _run
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     writable, caching_params=caching_params)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/blktap2.py", line 1616, in attach
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     {"rdonly": not writable})
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/blktap2.py", line 1854, in _activate
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     if self.tap_wanted():
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/blktap2.py", line 1154, in tap_wanted
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     vdi_type = self.target.get_vdi_type()
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]   File "/opt/xensource/sm/blktap2.py", line 1207, in get_vdi_type
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]     raise VDI.UnexpectedVDIType(_type, self.vdi)
+Aug  4 17:21:28 r620-x1 SM: [202712][MainThread]
+```
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LUNperVDI.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/LUNperVDI.py b/drivers/LUNperVDI.py
+index 070c6711..fb59cb20 100755
+--- a/drivers/LUNperVDI.py
++++ b/drivers/LUNperVDI.py
+@@ -38,6 +38,7 @@ class RAWVDI(VDI.VDI):
+         self.uuid = vdi_uuid
+         self.location = vdi_uuid
+         self.managed = False
++        self.vdi_type = "phy"
+         try:
+             vdi_ref = self.sr.session.xenapi.VDI.get_by_uuid(vdi_uuid)
+             self.managed = self.sr.session.xenapi.VDI.get_managed(vdi_ref)

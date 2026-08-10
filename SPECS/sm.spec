@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.9%{?dist}
+Release: %{?xsrel}.9.0.srscan.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -235,6 +235,8 @@ Patch1147: 0147-fix-linstor-add-backward-compatibility-for-getInfo.patch
 Patch1148: 0148-fix-linstor-add-backward-compatibility-for-manager-p.patch
 Patch1149: 0149-fix-LVMSR-scan-with-cbt_metadata.patch
 
+#Added patch from: 22c6cabd3b0c5150d6d9b23cb13d0fc62a224578
+Patch2000: optimize_scan_lvmsr.patch
 
 %description
 This package contains storage backends used in XCP
@@ -558,6 +560,9 @@ then
 fi
 
 %changelog
+* Mon Aug 10 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-17.9.0.srscan.1
+- Add LVMSR scan optimization
+
 * Wed May 13 2026 Anthoine Bourgeois <anthoine.bourgeois@vates.tech> - 3.2.12-17.9
 - Fix VDIs scan with CBT that trigger 'list index out of range' exception on SMAPI code
 

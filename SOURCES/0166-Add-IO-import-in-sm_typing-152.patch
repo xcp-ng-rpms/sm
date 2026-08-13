@@ -1,0 +1,31 @@
+From 441d074e270b4a1046a3b50b6324a336ce88578c Mon Sep 17 00:00:00 2001
+From: Mathieu Labourier <mathieu.labourier@vates.tech>
+Date: Wed, 5 Aug 2026 17:19:01 +0200
+Subject: [PATCH] Add IO import in sm_typing (#152)
+
+Fixes an issue where IO was not imported with the
+global import statement, since IO is not in `typing.__all__`
+in python 3.6.
+
+This causes an issue when trying to import IO from sm_typing.
+
+Signed-off-by: Mathieu Labourier <mathieu.labourier@vates.tech>
+---
+ sm_typing/__init__.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/sm_typing/__init__.py b/sm_typing/__init__.py
+index 2b842871..4d58cd53 100644
+--- a/sm_typing/__init__.py
++++ b/sm_typing/__init__.py
+@@ -1,6 +1,10 @@
+ import typing
+ from typing import *
+ 
++# Manually importing `IO` for python 3.6 because it is not in `typing.__all__`
++# and so, not imported by the statement above.
++from typing import IO
++
+ if not hasattr(typing, 'override'):
+     def override(method): # type: ignore
+         try:

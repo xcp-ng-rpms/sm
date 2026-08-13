@@ -1,4 +1,4 @@
-From 6d1130d761eff0c9b801f00f18319e05ee04e195 Mon Sep 17 00:00:00 2001
+From eda3099a3b49a32b9b77073da3afecf05f8e42a0 Mon Sep 17 00:00:00 2001
 From: Mathieu Labourier <mathieu.labourier@vates.tech>
 Date: Mon, 18 May 2026 12:24:33 +0200
 Subject: [PATCH] fix(linstor): abort GC for slave if VHD chain is open on
@@ -251,7 +251,7 @@ index 7c983db6..681bdd5b 100755
                      try:
                          tapdisk = cls.__from_blktap(blktap)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 74d06e68..ec8527c3 100755
+index 7e21767b..4393cfd3 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -18,7 +18,7 @@

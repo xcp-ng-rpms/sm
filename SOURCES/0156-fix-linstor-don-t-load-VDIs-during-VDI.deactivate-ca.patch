@@ -1,4 +1,4 @@
-From 4d3994efddcb1c9cac23029dbd7fced231eaecd6 Mon Sep 17 00:00:00 2001
+From b666173fd0a6615210e071c8a0e40f0f2041ee1b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Fri, 5 Jun 2026 11:29:52 +0200
 Subject: [PATCH] fix(linstor): don't load VDIs during `VDI.deactivate` call

@@ -1,4 +1,4 @@
-From bd75a44e387a24a099ecef44bbbd8ef67a90e264 Mon Sep 17 00:00:00 2001
+From 4d068baaa646450ebc3774b5e81c23374a8a2c0e Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 9 Jul 2026 18:52:02 +0200
 Subject: [PATCH] fix(qcow2): read FileSR allocated size only when needed

@@ -1,4 +1,4 @@
-From fe72e63ee63bfd276236c5f90524ac949c22bd12 Mon Sep 17 00:00:00 2001
+From 00fcdf11fcc6e68ff7626fe6edd243ee63aaecd3 Mon Sep 17 00:00:00 2001
 From: Alexandre Sollier <github@kuruyia.net>
 Date: Fri, 19 Jun 2026 15:59:47 +0200
 Subject: [PATCH] feat(linstor): use client when possible to construct
@@ -42,7 +42,7 @@ index 39ac083d..9ac4de88 100755
          return self._journaler
  
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index dfc9a09c..5442309a 100755
+index d559efd1..fb0eb7e0 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -3627,6 +3627,7 @@ class LinstorSR(SR):

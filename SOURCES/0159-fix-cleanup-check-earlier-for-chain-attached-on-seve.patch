@@ -1,4 +1,4 @@
-From c4dce9ee7df6c4b95b489700eb39167f877d1420 Mon Sep 17 00:00:00 2001
+From b2005960fb2ddf00087b97d4cff37b0d34047475 Mon Sep 17 00:00:00 2001
 From: Anthoine <anthoine.bourgeois@vates.tech>
 Date: Wed, 1 Jul 2026 17:10:25 +0200
 Subject: [PATCH] fix(cleanup): check earlier for chain attached on several
@@ -13,7 +13,7 @@ Signed-off-by: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
  1 file changed, 22 insertions(+), 11 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 5442309a..74d06e68 100755
+index fb0eb7e0..7e21767b 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -666,11 +666,20 @@ class VDI(object):
@@ -69,7 +69,7 @@ index 5442309a..74d06e68 100755
  
              try:
                  if host_refs and vdi.cowutil.isCoalesceableOnRemote():
-@@ -2903,7 +2914,7 @@ class SR(object):
+@@ -2899,7 +2910,7 @@ class SR(object):
          self._prepareCoalesceLeaf(vdi)
          vdi.parent._setHidden(False)
          vdi.parent._increaseSizeVirt(vdi.sizeVirt, False)

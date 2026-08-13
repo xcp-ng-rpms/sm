@@ -1,4 +1,4 @@
-From 82c3f5227a45521905c22dc60978dd3642345c28 Mon Sep 17 00:00:00 2001
+From 4a0a1e5a66967bc5fdf7672888d0fd3eae86ad63 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Thu, 30 Jul 2026 17:40:31 +0200
 Subject: [PATCH] fix(linstor): use quotes on linstor type annotations (#150)

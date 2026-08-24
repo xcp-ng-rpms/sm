@@ -1,0 +1,34 @@
+From 602b7acf67ccb920204a3622a39f4b86859d7601 Mon Sep 17 00:00:00 2001
+From: Mathieu Labourier <mathieu.labourier@vates.tech>
+Date: Mon, 10 Aug 2026 11:24:44 +0200
+Subject: [PATCH] fix: display image format as its string value in error
+ message (#154)
+
+Signed-off-by: Mathieu Labourier <mathieu.labourier@vates.tech>
+---
+ drivers/SR.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/SR.py b/drivers/SR.py
+index e23edaad..6888c36d 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -36,7 +36,8 @@ from cowutil import (
+     getVdiTypeFromImageFormat,
+     ImageFormat,
+     parseImageFormats,
+-    STR_TO_IMAGE_FORMAT
++    STR_TO_IMAGE_FORMAT,
++    IMAGE_FORMAT_TO_STR,
+ )
+ 
+ from vditype import VdiType
+@@ -565,7 +566,7 @@ class SR(object):
+     def _resolve_vdi_type_from_image_format(self, image_format: ImageFormat) -> str:
+         if image_format in self.supported_image_formats:
+             return getVdiTypeFromImageFormat(image_format)
+-        raise xs_errors.XenError('VDIType', opterr=f'Unsupported image format `{image_format}`')
++        raise xs_errors.XenError('VDIType', opterr=f'Unsupported image format `{IMAGE_FORMAT_TO_STR[image_format]}`')
+ 
+     def _get_snap_vdi_type(self, vdi_type: str, size: int) -> str:
+         if VdiType.isCowImage(vdi_type):

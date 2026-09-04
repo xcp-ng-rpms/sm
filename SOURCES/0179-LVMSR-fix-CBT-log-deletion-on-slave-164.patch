@@ -1,0 +1,143 @@
+From 87d17e790c5efe02f75d812fab43b7487add7805 Mon Sep 17 00:00:00 2001
+From: Goulven Riou <goulven.riou@vates.tech>
+Date: Fri, 11 Sep 2026 14:20:12 +0200
+Subject: [PATCH] LVMSR : fix CBT log deletion on slave (#164)
+
+Delegate _delete_cbt_log to master when running on a slave to
+avoid LVM metadata corruption.
+
+Signed-off-by: Goulven Riou <goulven.riou@vates.tech>
+---
+ Makefile             |  1 +
+ drivers/LVMSR.py     | 24 +++++++++++++++++---
+ drivers/on_master.py | 54 ++++++++++++++++++++++++++++++++++++++++++++
+ mk/sm.spec.in        |  1 +
+ 4 files changed, 77 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/on_master.py
+
+diff --git a/Makefile b/Makefile
+index afa87a03..d0961ef3 100755
+--- a/Makefile
++++ b/Makefile
+@@ -216,6 +216,7 @@ install: build
+ 	install -m 755 drivers/linstor-manager $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
+ 	install -m 755 drivers/lvhd-thin $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
+ 	install -m 755 drivers/on_slave.py $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)/on-slave
++	install -m 755 drivers/on_master.py $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)/on-master
+ 	install -m 755 drivers/testing-hooks $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
+ 	install -m 755 drivers/coalesce-leaf $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
+ 	install -m 755 drivers/nfs-on-slave $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 1ceb6f75..da96dab1 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -95,6 +95,7 @@ class LVMSR(SR.SR):
+     THIN_PLUGIN = "lvhd-thin"
+ 
+     PLUGIN_ON_SLAVE = "on-slave"
++    PLUGIN_ON_MASTER = "on-master"
+ 
+     FLAG_USE_VHD = "use_vhd"
+     MDVOLUME_NAME = "MGT"
+@@ -2334,9 +2335,26 @@ class LVMVDI(VDI.VDI):
+     @override
+     def _delete_cbt_log(self) -> None:
+         logpath = self._get_cbt_logpath(self.uuid)
+-        if self._cbt_log_exists(logpath):
+-            logname = self._get_cbt_logname(self.uuid)
+-            self.sr.lvmCache.remove(logname)
++        if not self._cbt_log_exists(logpath):
++            return
++        logname = self._get_cbt_logname(self.uuid)
++        if not self.sr.isMaster and self.sr.is_shared():        
++            master = util.get_master_ref(self.session)
++            response = self.session.xenapi.host.call_plugin(
++                master,
++                self.sr.PLUGIN_ON_MASTER,
++                "delete_cbt_log",
++                {
++                    "vgName": self.sr.vgname,
++                    "lvName": logname,
++                }
++            )
++            util.SMlog(f"on-master.delete_cbt_log call-plugin returned: {response}")
++            if not response:
++                raise Exception(f"plugin {self.sr.PLUGIN_ON_MASTER} failed")    
++            lvutil._lvmBugCleanup(logpath)
++            return
++        self.sr.lvmCache.remove(logname)
+ 
+     @override
+     def _rename(self, oldpath, newpath) -> None:
+diff --git a/drivers/on_master.py b/drivers/on_master.py
+new file mode 100644
+index 00000000..011f781a
+--- /dev/null
++++ b/drivers/on_master.py
+@@ -0,0 +1,54 @@
++#!/usr/bin/python3
++#
++# Copyright (C) 2026  Vates SAS
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++#
++
++import sys
++import os
++sys.path.append("/opt/xensource/sm/")
++import lvutil
++import util
++from lvmcache import LVMCache
++
++
++def master_only(func):
++    def wrapper(session, args):
++        if not util.is_master(session):
++            raise util.SMException(f"{func.__name__} must be called on master")
++        return func(session, args)
++    return wrapper
++
++
++@master_only
++def delete_cbt_log(session, args):
++    util.SMlog(f"on_master.delete_cbt_log: {args}")
++    os.environ['LVM_SYSTEM_DIR'] = lvutil.MASTER_LVM_CONF
++    vgName = args["vgName"]
++    lvName = args["lvName"]
++    try:
++        lvmcache = LVMCache(vgName)
++        if lvmcache.checkLV(lvName):
++            lvmcache.remove(lvName)
++    except util.CommandException as e:
++        util.SMlog(f"on_master.delete_cbt_log: failed to remove {lvName}: {e}")
++        raise
++    return "True"
++
++
++if __name__ == "__main__":
++    import XenAPIPlugin
++    XenAPIPlugin.dispatch({
++        "delete_cbt_log": delete_cbt_log,
++    })
+diff --git a/mk/sm.spec.in b/mk/sm.spec.in
+index 1da3d7e3..a3983482 100755
+--- a/mk/sm.spec.in
++++ b/mk/sm.spec.in
+@@ -113,6 +113,7 @@ tests/run_python_unittests.sh
+ /etc/xapi.d/plugins/lvhd-thin
+ /etc/xapi.d/plugins/nfs-on-slave
+ /etc/xapi.d/plugins/on-slave
++/etc/xapi.d/plugins/on-master
+ /etc/xapi.d/plugins/tapdisk-pause
+ /etc/xapi.d/plugins/testing-hooks
+ /etc/xapi.d/plugins/intellicache-clean

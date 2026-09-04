@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.5%{?dist}
+Release: %{?xsrel}.6%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -66,6 +66,7 @@ BuildRequires: python3-devel
 BuildRequires: python36-pylint
 BuildRequires: python3-coverage
 BuildRequires: python36-bitarray
+BuildRequires: python3-typing-extensions
 
 # XCP-ng: python36-mock for %%check
 BuildRequires: python36-mock
@@ -89,14 +90,13 @@ Conflicts: kernel < 4.19.19-5.0.0
 Conflicts: blktap < 3.55.3
 Requires: sg3_utils
 Requires: libcgroup-tools
+Requires: python3-typing-extensions
 
 Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
 # git format-patch v3.2.12-23-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
-# WARNING: Patch `0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch` is currently disabled due to a
-# regression, so we're delaying the release of that feature.
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -249,7 +249,7 @@ Patch1149: 0149-fix-linstor-add-backward-compatibility-for-manager-p.patch
 Patch1150: 0150-fix-LVMSR-scan-with-cbt_metadata.patch
 Patch1151: 0151-feat-qcow2-live-leaf-coalesce.patch
 Patch1152: 0152-fix-qcow2-online-coalesce-on-LVMSR.patch
-# Patch1153: 0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
+Patch1153: 0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
 Patch1154: 0154-fix-cleanup-fix-for-live-leaf-coalesce.patch
 Patch1155: 0155-fix-LVMSR-added-a-missing-call-to-_setType.patch
 Patch1156: 0156-fix-linstor-don-t-load-VDIs-during-VDI.deactivate-ca.patch
@@ -265,6 +265,17 @@ Patch1165: 0165-fix-RAWVDI-define-vdi_type-for-RAWVDI-151.patch
 Patch1166: 0166-Add-IO-import-in-sm_typing-152.patch
 Patch1167: 0167-fix-display-image-format-as-its-string-value-in-erro.patch
 Patch1168: 0168-fix-LVMSR-set-QCOW2-chain-RW-from-the-master-on-vdi_.patch
+Patch1169: 0169-fix-blktap2-retry-host-key-tag-removal-on-XAPI-HTTP-.patch
+Patch1170: 0170-fix-ISCSi-fix-race-condition-on-ISCSI-operations-131.patch
+Patch1171: 0171-fix-linstor-explicitly-notifies-a-missing-res-def-15.patch
+Patch1172: 0172-fix-linstor-handle-RAW-type-in-compute_volume_size-1.patch
+Patch1173: 0173-fix-linstor-deal-with-missing-group-during-SR-creati.patch
+Patch1174: 0174-fix-qcow2util-removed-some-dead-code-153.patch
+Patch1175: 0175-fix-leaf-would-not-be-paused-for-undo-with-QCOW2-162.patch
+Patch1176: 0176-fix-do-not-make-base-copy-RO-for-QCOW2-162.patch
+Patch1177: 0177-feat-linstor-backup-DB-on-major-ops-and-regularly-on.patch
+Patch1178: 0178-fix-qcow2-reduce-QCowUtil-verbosity-165.patch
+Patch1179: 0179-LVMSR-fix-CBT-log-deletion-on-slave-164.patch
 
 %description
 This package contains storage backends used in XCP
@@ -391,6 +402,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /etc/xapi.d/plugins/testing-hooks
 /etc/xapi.d/plugins/intellicache-clean
 /etc/xapi.d/plugins/trim
+/etc/xapi.d/plugins/on-master
 /etc/xapi.d/xapi-pre-shutdown/*
 /etc/xensource/master.d/02-vhdcleanup
 /opt/xensource/bin/blktap2
@@ -588,6 +600,21 @@ then
 fi
 
 %changelog
+* Wed Aug 26 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-23.6
+- Add new patches:
+  - 0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
+  - 0169-fix-blktap2-retry-host-key-tag-removal-on-XAPI-HTTP-.patch
+  - 0170-fix-ISCSi-fix-race-condition-on-ISCSI-operations-131.patch
+  - 0171-fix-linstor-explicitly-notifies-a-missing-res-def-15.patch
+  - 0172-fix-linstor-handle-RAW-type-in-compute_volume_size-1.patch
+  - 0173-fix-linstor-deal-with-missing-group-during-SR-creati.patch
+  - 0174-fix-qcow2util-removed-some-dead-code-153.patch
+  - 0175-fix-leaf-would-not-be-paused-for-undo-with-QCOW2-162.patch
+  - 0176-fix-do-not-make-base-copy-RO-for-QCOW2-162.patch
+  - 0177-feat-linstor-backup-DB-on-major-ops-and-regularly-on.patch
+  - 0178-fix-qcow2-reduce-QCowUtil-verbosity-165.patch
+  - 0179-LVMSR-fix-CBT-log-deletion-on-slave-164.patch
+
 * Mon Aug 24 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-23.5
 - Add new patches:
   - 0167-fix-display-image-format-as-its-string-value-in-erro.patch

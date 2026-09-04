@@ -1,0 +1,32 @@
+From 2ae18d20362aa4e33b64aaae1c0f3e7e42ac345e Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 3 Sep 2026 17:24:31 +0200
+Subject: [PATCH] fix: do not make base copy RO for QCOW2 (#162)
+
+If we make the base copy RO, the next live coalesce could fail on the call to
+tapdisk commit since the chain is only made RW at the activation.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LVMSR.py | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index fc72defc..1ceb6f75 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -1864,8 +1864,12 @@ class LVMVDI(VDI.VDI):
+             util.fistpoint.activate("LVHDRT_clone_vdi_after_parent_hidden", self.sr.uuid)
+ 
+             # set the base copy to ReadOnly
+-            self.sr.lvmCache.setReadonly(self.lvname, True)
+-            util.fistpoint.activate("LVHDRT_clone_vdi_after_parent_ro", self.sr.uuid)
++            if not self.cowutil.isCoalesceableOnRemote():
++                # For QCOW2, the whole chain need to be
++                # writable for tapdisk to do the coalesce.
++                # In this case, we don't mark the base copy RO.
++                self.sr.lvmCache.setReadonly(self.lvname, True)
++                util.fistpoint.activate("LVHDRT_clone_vdi_after_parent_ro", self.sr.uuid)
+ 
+             if hostRefs:
+                 self.sr._updateSlavesOnClone(hostRefs, origOldLV,

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.5%{?dist}
+Release: %{?xsrel}.5.0.undo.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -265,6 +265,8 @@ Patch1165: 0165-fix-RAWVDI-define-vdi_type-for-RAWVDI-151.patch
 Patch1166: 0166-Add-IO-import-in-sm_typing-152.patch
 Patch1167: 0167-fix-display-image-format-as-its-string-value-in-erro.patch
 Patch1168: 0168-fix-LVMSR-set-QCOW2-chain-RW-from-the-master-on-vdi_.patch
+Patch1171: 0171-fix-leaf-would-not-be-paused-for-undo-with-QCOW2.patch
+Patch1172: 0172-fix-do-not-make-base-copy-RO-for-QCOW2.patch
 
 %description
 This package contains storage backends used in XCP
@@ -588,6 +590,11 @@ then
 fi
 
 %changelog
+* Mon Aug 24 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-23.5.0.undo.1
+- Add patches for fixing undo live leaf coalesce for QCOW2
+  - 0171-fix-leaf-would-not-be-paused-for-undo-with-QCOW2.patch
+  - 0172-fix-do-not-make-base-copy-RO-for-QCOW2.patch
+
 * Mon Aug 24 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-23.5
 - Add new patches:
   - 0167-fix-display-image-format-as-its-string-value-in-erro.patch

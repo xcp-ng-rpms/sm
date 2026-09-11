@@ -1,0 +1,32 @@
+From 7cb7eafd1064c0b8f5a16ea958ce4abb338d3c48 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Mon, 31 Aug 2026 14:29:34 +0200
+Subject: [PATCH] fix(linstor): explicitly notifies a missing res def (#157)
+
+Prior to this change, a `KeyError` was raised that didn't indicate
+why a volume info was not found in the event of a missing resource definition.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 24cfbad1..e10fd2a8 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -960,7 +960,13 @@ class LinstorVolumeManager(object):
+         """
+ 
+         volume_name = self.get_volume_name(volume_uuid)
+-        return self._get_volumes_info()[volume_name]
++        try:
++            return self._get_volumes_info()[volume_name]
++        except KeyError:
++            raise LinstorVolumeManagerError(
++                f"Could not find info about volume `{volume_uuid}`, the resource definition has likely been deleted",
++                LinstorVolumeManagerError.ERR_VOLUME_NOT_EXISTS
++            )
+ 
+     def get_device_path(self, volume_uuid):
+         """

@@ -1,0 +1,244 @@
+From 6afa0f4f4a899719a3cccfcc88d8e99f27208091 Mon Sep 17 00:00:00 2001
+From: Goulven Riou <94641077+Lankou66@users.noreply.github.com>
+Date: Tue, 25 Aug 2026 11:58:57 +0200
+Subject: [PATCH] fix(ISCSi): fix race condition on ISCSI operations (#131)
+
+When creating or updating VDIs on an LVMoISCSI SR, a race condition
+could occur between concurrent iscsiadm calls, causing the SM daemon
+to receive "No records found" from iscsiadm and raise an SR 202 error.
+
+The root cause is twofold:
+
+1. doexec_locked() did not use a try/finally block, meaning that if
+   an exception occurred during iscsiadm execution, the lock was never
+   released, blocking all subsequent iSCSI operations indefinitely.
+
+2. restart_daemon() was deleting iscsi/nodes without holding
+   the iscsiadm lock, creating a window where get_node_records() could
+   be called while the node database was being wiped, returning an
+   empty result and raising a fatal exception.
+
+This issue was particularly visible on environments with a high number
+of LUNs and multipath connections
+
+Signed-off-by: Goulven Riou <goulven.riou@vates.tech>
+---
+ drivers/LVMoISCSISR.py | 29 ++++++++++-------
+ drivers/iscsilib.py    | 70 ++++++++++++++++++++++++++++++------------
+ tests/test_iscsilib.py | 27 +++++++++++-----
+ 3 files changed, 89 insertions(+), 37 deletions(-)
+
+diff --git a/drivers/LVMoISCSISR.py b/drivers/LVMoISCSISR.py
+index f3818d03..9c7066e8 100755
+--- a/drivers/LVMoISCSISR.py
++++ b/drivers/LVMoISCSISR.py
+@@ -28,6 +28,7 @@ import SRCommand
+ import util
+ import scsiutil
+ import lvutil
++import lock
+ import time
+ import os
+ import sys
+@@ -37,8 +38,8 @@ import mpath_cli
+ import iscsilib
+ import glob
+ import copy
+-import scsiutil
+ import xml.dom.minidom
++from iscsilib import iscsi_lock, iscsi_try_lock
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_METADATA", "SR_TRIM", "SR_CACHING",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+@@ -547,16 +548,22 @@ class LVMoISCSISR(LVMSR.LVMSR):
+     @override
+     def check_sr(self, sr_uuid) -> None:
+         """Hook to check SR health"""
+-        pbdref = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
+-        if pbdref:
+-                other_config = self.session.xenapi.PBD.get_other_config(pbdref)
+-                if util.sessions_less_than_targets(other_config, self.dconf):
+-                    self.create_iscsi_sessions(sr_uuid)
+-                    for iscsi in self.iscsiSRs:
+-                        try:
+-                            iscsi.attach(sr_uuid)
+-                        except xs_errors.SROSError:
+-                            util.SMlog("Failed to attach iSCSI target")
++        with iscsi_try_lock() as acquired:
++            if not acquired:
++                util.SMlog("check_sr: iSCSI operation in progress, skipping")
++                return
++            pbd_ref = util.find_my_pbd(self.session, self.host_ref, self.sr_ref)
++            if not pbd_ref:
++                return
++            other_config = self.session.xenapi.PBD.get_other_config(pbd_ref)
++            if not util.sessions_less_than_targets(other_config, self.dconf):
++                return
++            self.create_iscsi_sessions(sr_uuid)
++            for iscsi in self.iscsiSRs:
++                try:
++                    iscsi.attach(sr_uuid)
++                except xs_errors.SROSError:
++                    util.SMlog("check_sr: Failed to attach iSCSI target")
+ 
+     @override
+     def vdi(self, uuid) -> VDI.VDI:
+diff --git a/drivers/iscsilib.py b/drivers/iscsilib.py
+index 27d34a54..9db990c9 100644
+--- a/drivers/iscsilib.py
++++ b/drivers/iscsilib.py
+@@ -26,8 +26,12 @@ import xs_errors
+ import lock
+ import glob
+ import tempfile
++import contextlib
+ from configparser import RawConfigParser
+ import io
++from functools import wraps
++from typing import Iterator
++
+ 
+ # The 3.x kernel brings with it some iSCSI path changes in sysfs
+ _KERNEL_VERSION = os.uname()[2]
+@@ -49,17 +53,47 @@ _REPLACEMENT_TMO_STANDARD = 120
+ _ISCSI_DB_PATH = '/var/lib/iscsi'
+ 
+ 
++@contextlib.contextmanager
++def iscsi_lock() -> Iterator[None]:
++    """Context manager to serialize iscsiadm calls. Blocks until lock is available."""
++    iscsiadm_lock = lock.Lock(lock.LOCK_TYPE_ISCSIADM_RUNNING, 'iscsiadm')
++    iscsiadm_lock.acquire()
++    try:
++        yield
++    finally:
++        iscsiadm_lock.release()
++
++
++@contextlib.contextmanager
++def iscsi_try_lock() -> Iterator[bool]:
++    """
++    Context manager to serialize iscsiadm calls.
++    Yields True if the lock was acquired, False immediately if unavailable.
++    """
++    iscsiadm_lock = lock.Lock(lock.LOCK_TYPE_ISCSIADM_RUNNING, 'iscsiadm')
++    acquired = iscsiadm_lock.acquireNoblock()
++    try:
++        yield acquired
++    finally:
++        if acquired:
++            iscsiadm_lock.release()
++
++
++def with_iscsi_lock(fn):
++    """Decorator to run a function whilst holding the iSCSI lock."""
++    @wraps(fn)
++    def wrapper(*args, **kwargs):
++        with iscsi_lock():
++            return fn(*args, **kwargs)
++    return wrapper
++
++
+ def doexec_locked(cmd):
+     """Executes via util.doexec the command specified whilst holding lock"""
+-    _lock = None
+     if os.path.basename(cmd[0]) == 'iscsiadm':
+-        _lock = lock.Lock(lock.LOCK_TYPE_ISCSIADM_RUNNING, 'iscsiadm')
+-        _lock.acquire()
+-    # util.SMlog("%s" % cmd)
+-    (rc, stdout, stderr) = util.doexec(cmd)
+-    if _lock is not None and _lock.held():
+-        _lock.release()
+-    return (rc, stdout, stderr)
++        with iscsi_lock():
++            return util.doexec(cmd)
++    return util.doexec(cmd)
+ 
+ 
+ def noexn_on_failure(cmd):
+@@ -182,8 +216,10 @@ def discovery(target, port, chapuser, chappass, targetIQN="any",
+ def get_node_records(targetIQN="any"):
+     """Return the node records that the iscsi daemon already knows about"""
+     cmd = ["iscsiadm", "-m", "node"]
+-    failuremessage = "Failed to obtain node records from iscsi daemon"
+-    (stdout, stderr) = exn_on_failure(cmd, failuremessage)
++    (rc, stdout, stderr) = doexec_locked(cmd)
++    if rc != 0:
++        util.SMlog(f"get_node_records: iscsiadm rc={rc} stderr={stderr}")
++        return []
+     return parse_node_output(stdout, targetIQN)
+ 
+ 
+@@ -389,17 +425,13 @@ def stop_daemon():
+         exn_on_failure(cmd, failuremessage)
+ 
+ 
++@with_iscsi_lock
+ def restart_daemon():
+     stop_daemon()
+-    if os.path.exists(os.path.join(_ISCSI_DB_PATH, 'nodes')):
+-        try:
+-            shutil.rmtree(os.path.join(_ISCSI_DB_PATH, 'nodes'))
+-        except:
+-            pass
+-        try:
+-            shutil.rmtree(os.path.join(_ISCSI_DB_PATH, 'send_targets'))
+-        except:
+-            pass
++    with contextlib.suppress(OSError):
++        shutil.rmtree(os.path.join(_ISCSI_DB_PATH, 'nodes'))
++    with contextlib.suppress(OSError):
++        shutil.rmtree(os.path.join(_ISCSI_DB_PATH, 'send_targets'))
+     cmd = ["/usr/bin/systemctl", "start", "iscsid.service"]
+     failuremessage = "Failed to start iscsi daemon"
+     exn_on_failure(cmd, failuremessage)
+diff --git a/tests/test_iscsilib.py b/tests/test_iscsilib.py
+index 1488ded4..89e37bc1 100644
+--- a/tests/test_iscsilib.py
++++ b/tests/test_iscsilib.py
+@@ -1,7 +1,7 @@
+ import iscsilib
+ import unittest.mock as mock
+ import unittest
+-
++import lock
+ 
+ TEST_IQN = 'iqn.2003-01.com.bla:00.ecd28.mo121'
+ 
+@@ -34,17 +34,30 @@ class Test_iscsilib(unittest.TestCase):
+     @mock.patch('iscsilib.stop_daemon', mock.Mock())
+     @mock.patch('iscsilib.exn_on_failure', mock.Mock())
+     @mock.patch('util.doexec', mock.Mock())
++    @mock.patch('lock.flock.WriteLock')
++    @mock.patch('lock.Lock._mkdirs', mock.Mock())
+     @mock.patch('os.path.exists')
+     @mock.patch('shutil.rmtree')
+-    def test_restart_daemon(self, rmtree, exists):
++    def test_restart_daemon(self, rmtree, exists, mock_write_lock):
+         exists.return_value = True
+-
+-        iscsilib.restart_daemon()
+-
++        saved_instances = lock.Lock.INSTANCES.copy()
++        saved_base_instances = lock.Lock.BASE_INSTANCES.copy()
++
++        def restore_lock_state():
++            lock.Lock.INSTANCES.clear()
++            lock.Lock.INSTANCES.update(saved_instances)
++            lock.Lock.BASE_INSTANCES.clear()
++            lock.Lock.BASE_INSTANCES.update(saved_base_instances)
++
++        self.addCleanup(restore_lock_state)
++        lock.Lock.INSTANCES.clear()
++        lock.Lock.BASE_INSTANCES.clear()
++        with mock.patch('builtins.open', mock.mock_open(), create=True) as mock_open:
++            mock_open.return_value.fileno.return_value = 0
++            iscsilib.restart_daemon()
+         rmtree.assert_has_calls([mock.call('/var/lib/iscsi/nodes'),
+                                  mock.call('/var/lib/iscsi/send_targets')])
+-
+-
++        
+     @mock.patch('util.doexec', mock.Mock())
+     @mock.patch('iscsilib.exn_on_failure')
+     @mock.patch('iscsilib.tempfile', autospec=True)

@@ -1,0 +1,187 @@
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 6ac841c..68390db 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -419,16 +419,16 @@ class FileVDI(VDI.VDI):
+         tries = 0
+         while tries < maxretry and not found:
+             tries += 1
+-            if util.ioretry(lambda: util.pathexists(vhd_path)):
++            if util.pathexists(vhd_path):
+                 self.vdi_type = vhdutil.VDI_TYPE_VHD
+                 self.path = vhd_path
+                 found = True
+-            elif util.ioretry(lambda: util.pathexists(raw_path)):
++            elif util.pathexists(raw_path):
+                 self.vdi_type = vhdutil.VDI_TYPE_RAW
+                 self.path = raw_path
+                 self.hidden = False
+                 found = True
+-            elif util.ioretry(lambda: util.pathexists(cbt_path)):
++            elif util.pathexists(cbt_path):
+                 self.vdi_type = CBTLOG_TAG
+                 self.path = cbt_path
+                 self.hidden = False
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index cf38849..00fda59 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -34,6 +34,7 @@ import syslog as _syslog
+ import glob
+ import json
+ import xs_errors
++from typing import Optional
+ import XenAPI # pylint: disable=import-error
+ import scsiutil
+ from syslog import openlog, syslog
+@@ -720,8 +721,42 @@ class Tapdisk(object):
+         return cls.get(path=path)
+ 
+     @classmethod
+-    def get_pid_for_path(cls, path: str) -> str:
+-        return util.pread2(['/usr/sbin/lsof', '-t', path]).strip()
++    def path_opened(cls, pid: str, path: str) -> bool:
++        pid_fd_path = os.path.join('/proc', pid, 'fd')
++        fd_info = os.listdir(pid_fd_path)
++        for fd in fd_info:
++            try:
++                if os.readlink(os.path.join(pid_fd_path, fd)) == path:
++                    return True
++            except OSError as ose:
++                # fd might be closed between calls
++                if ose.errno != errno.ENOENT:
++                    raise
++        return False
++
++    @classmethod
++    def check_process_is_tapdisk(cls, pid: str) -> bool:
++        try:
++            return (os.path.exists(os.path.join('/proc/', pid, 'exe')) and os.readlink(
++                os.path.join('/proc/', pid, 'exe')) == '/usr/libexec/tapdisk')
++        except OSError as ose:
++            # process might exit between calls
++            if ose.errno != errno.ENOENT:
++                raise
++
++        return False
++
++    @classmethod
++    def get_pid_for_path(cls, path: str) -> Optional[str]:
++        PID_MATCHER = re.compile(r'^\d+$')
++        dir = os.listdir('/proc')
++
++        for pid in [x for x in dir if PID_MATCHER.match(x) and
++                                      cls.check_process_is_tapdisk(x)]:
++            if cls.path_opened(pid, path):
++                return pid
++
++        return None
+ 
+     @classmethod
+     def from_minor(cls, minor):
+diff --git a/drivers/util.py b/drivers/util.py
+index 15d13e3..f7aa435 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -472,7 +472,6 @@ def pathexists(path):
+         if inst.errno == errno.EIO:
+             time.sleep(1)
+             try:
+-                listdir(os.path.realpath(os.path.dirname(path)))
+                 os.lstat(path)
+                 return True
+             except:
+diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
+index d585496..cab56c8 100644
+--- a/tests/test_blktap2.py
++++ b/tests/test_blktap2.py
+@@ -111,19 +111,38 @@ class TestTapdisk(unittest.TestCase):
+ 
+         self.assertEqual(456, srose.exception.errno)
+ 
++    @mock.patch('blktap2.os.listdir', autospec=True)
++    @mock.patch('blktap2.os.readlink', autospec=True)
+     @mock.patch('blktap2.os.path.exists', autospec=True)
+-    @mock.patch("blktap2.util.pread2", autospec=True)
+-    def test_from_minor_success(self, mock_pread2, mock_exists):
++    def test_from_minor_success(self, mock_exists, mock_readlink, mock_listdir):
+         # Arrange
++        proc_paths = {
++            '/proc': ['14378', '20947', '21457'],
++            '/proc/21457/fd': ['4', '5']
++        }
+         mock_paths = {"/dev/xen/blktap-2/blktap3"}
+ 
++        link_paths = {
++            "/proc/14378/exe": OSError(errno.ENOENT, ""),
++            "/proc/20947/exe": "/bin/bash",
++            "/proc/21457/exe": "/usr/libexec/tapdisk",
++            "/proc/21457/fd/4": OSError(errno.ENOENT, ""),
++            "/proc/21457/fd/5": "/dev/xen/blktap-2/blktap3"}
++
+         def exists(path):
+-            print(f"Checking if {path} in {mock_paths}")
+-            return path in mock_paths
++            return path in mock_paths or path in link_paths.keys()
+ 
+-        mock_exists.side_effect = exists
++        def readlink(path):
++            result = link_paths.get(path)
+ 
+-        mock_pread2.side_effect = ['21457']
++            if isinstance(result, Exception):
++                raise result
++
++            return result
++
++        mock_listdir.side_effect = proc_paths.get
++        mock_exists.side_effect = exists
++        mock_readlink.side_effect = readlink
+ 
+         blktap2.TapCtl = self.real_tapctl
+         mock_process = mock.MagicMock(autospec='subprocess.Popen')
+@@ -144,6 +163,44 @@ class TestTapdisk(unittest.TestCase):
+             "/dev/VG_XenStorage-2eeb9fd5-6545-8f0b-cf72-0378e413a31c/VHD-a7c0f37e-b7fb-4a44-a6fe-05067fb84c09",
+             tapdisk.path)
+ 
++    @mock.patch('blktap2.os.listdir', autospec=True)
++    @mock.patch('blktap2.os.readlink', autospec=True)
++    @mock.patch('blktap2.os.path.exists', autospec=True)
++    def test_from_minor_not_found(self,mock_exists, mock_readlink, mock_listdir):
++        # Arrange
++        proc_paths = {
++            '/proc': ['14378', '20947', '21457'],
++            '/proc/21457/fd': ['4', '5']
++        }
++
++        mock_paths = {"/dev/xen/blktap-2/blktap3"}
++
++        link_paths = {
++            "/proc/14378/exe": OSError(errno.ENOENT, ""),
++            "/proc/20947/exe": "/bin/bash",
++            "/proc/21457/exe": "/usr/libexec/tapdisk",
++            "/proc/21457/fd/4": OSError(errno.ENOENT, ""),
++            "/proc/21457/fd/5": "/dev/xen/blktap-2/blktap4"}
++
++        def exists(path):
++            return path in mock_paths or path in link_paths.keys()
++
++        def readlink(path):
++            result = link_paths.get(path)
++
++            if isinstance(result, Exception):
++                raise result
++
++            return result
++
++        mock_listdir.side_effect = proc_paths.get
++        mock_exists.side_effect = exists
++        mock_readlink.side_effect = readlink
++
++        # Act
++        with self.assertRaises(blktap2.TapdiskNotRunning):
++            blktap2.Tapdisk.from_minor(3)
++
+ 
+ class TestVDI(unittest.TestCase):
+     def setUp(self):

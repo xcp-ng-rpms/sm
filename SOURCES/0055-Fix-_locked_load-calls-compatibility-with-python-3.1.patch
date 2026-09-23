@@ -1,4 +1,4 @@
-From 560eb3a06fb2a89b013ab5b3946e22f6640c334d Mon Sep 17 00:00:00 2001
+From dac1fe69392d3605c4fd1a35700b9c4f5b143083 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 15:55:02 +0200
 Subject: [PATCH] Fix _locked_load calls compatibility with python 3.10
@@ -41,10 +41,10 @@ index acc6a44e..c302ea33 100755
  
      # --------------------------------------------------------------------------
 diff --git a/drivers/util.py b/drivers/util.py
-index 28069b81..9e0abc59 100755
+index 7ce4f835..4114013d 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -2129,3 +2129,11 @@ def strtobool(str):
+@@ -2128,3 +2128,11 @@ def strtobool(str):
  
  def find_executable(name):
      return shutil.which(name)

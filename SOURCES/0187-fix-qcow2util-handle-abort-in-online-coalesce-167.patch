@@ -1,0 +1,43 @@
+From f11c758346cb7744789a43591073ad3f339554d7 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 21 Sep 2026 11:37:19 +0200
+Subject: [PATCH] fix(qcow2util): handle abort in online coalesce (#167)
+
+Newer blktap will give `aborting` to the query before `concluded`.
+In this case, we needed to check that the coalesce was over.
+This add a check for the size of data committed to ensure the coalesce was done before continuing with relink.
+We might not have the `aborting` before the `concluded` but the size coalesced will be lower than total so we only check for `concluded`.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 95f245be..4e90f8e1 100755
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -587,15 +587,20 @@ class QCowUtil(CowUtil):
+             raise
+ 
+         try:
+-            status, nb, _ = TapCtl.query(pid, minor)
++            status, nb, total = TapCtl.query(pid, minor)
+             if status == "undefined":
+                 util.SMlog("Tapdisk {} (m: {}) coalesce status undefined for {}".format(pid, minor, path))
+                 return 0
+ 
+-            while status !=  "concluded":
++            while status != "concluded":
+                 time.sleep(1)
+-                status, nb, _ = TapCtl.query(pid, minor, quiet=True)
++                status, nb, total = TapCtl.query(pid, minor, quiet=True)
+                 logger.log("Got status {} for tapdisk {} (m: {})".format(status, pid, minor))
++
++            if nb < total:
++                # The coalesce didn't finish because we might have been aborted.
++                raise xs_errors.XenError("TapdiskFailed",
++                    f"Online coalesce incomplete on tapdisk {pid} (m: {minor}) for {path}: {nb}/{total} bytes")
+             return nb
+         except TapCtl.CommandFailure:
+             util.SMlog(f"Query command failed on tapdisk instance {pid} (m: {minor}). Raising...")

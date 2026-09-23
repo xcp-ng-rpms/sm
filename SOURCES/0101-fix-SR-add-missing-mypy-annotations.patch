@@ -1,4 +1,4 @@
-From 975f8981e41a14d01cb25df718473d94d8998fe3 Mon Sep 17 00:00:00 2001
+From f5d4ca42ca55e93a2440e3bcff06113630e485f7 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 19 May 2026 18:17:10 +0200
 Subject: [PATCH] fix(SR): add missing mypy annotations

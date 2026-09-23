@@ -1,4 +1,4 @@
-From dc960613dd33bd4c875059d8202a91cd18ebe8c7 Mon Sep 17 00:00:00 2001
+From f81ae74662782489d6333dac06f563ca4ded0878 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Mon, 2 Jun 2025 09:09:54 +0200
 Subject: [PATCH] fix(on_slave.py): `is_open` must use lvm SR type due to

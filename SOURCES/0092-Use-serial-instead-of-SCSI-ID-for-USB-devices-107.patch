@@ -1,4 +1,4 @@
-From 32e8660c0219db720e5a01a875b0f5ef80fca2c2 Mon Sep 17 00:00:00 2001
+From 95d0a91993634478e4ffacfa4abe4cd3f1374179 Mon Sep 17 00:00:00 2001
 From: Frederic Bor <42858062+f-bor@users.noreply.github.com>
 Date: Tue, 9 Dec 2025 18:12:03 +0100
 Subject: [PATCH] Use serial instead of SCSI ID for USB devices (#107)
@@ -13,10 +13,10 @@ Signed-off-by: Frederic Bor <frederic.bor@wanadoo.fr>
  1 file changed, 15 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/util.py b/drivers/util.py
-index 55d1d937..b7a932c5 100755
+index 65b95ce3..961a7a9a 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -1039,6 +1039,12 @@ def _isSCSIid(s):
+@@ -1038,6 +1038,12 @@ def _isSCSIid(s):
      return regex.search(s, 0)
  
  
@@ -29,7 +29,7 @@ index 55d1d937..b7a932c5 100755
  def test_scsiserial(session, device):
      device = os.path.realpath(device)
      if not scsiutil._isSCSIdev(device):
-@@ -1062,6 +1068,14 @@ def test_scsiserial(session, device):
+@@ -1061,6 +1067,14 @@ def test_scsiserial(session, device):
                     % device)
          return False
  
@@ -44,7 +44,7 @@ index 55d1d937..b7a932c5 100755
      try:
          SRs = session.xenapi.SR.get_all_records()
      except:
-@@ -1071,7 +1085,7 @@ def test_scsiserial(session, device):
+@@ -1070,7 +1084,7 @@ def test_scsiserial(session, device):
          conf = record["sm_config"]
          if 'devserial' in conf:
              for dev in conf['devserial'].split(','):

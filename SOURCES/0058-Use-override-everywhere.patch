@@ -1,4 +1,4 @@
-From 6f33672ba8202435e18f46e7c96483d5b419d9c9 Mon Sep 17 00:00:00 2001
+From d97d988100a81b6a770dd3c822cc728a20d13cf2 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 8 Nov 2024 13:44:57 +0100
 Subject: [PATCH] Use `override` everywhere!
@@ -646,7 +646,7 @@ index 16481620..30aa3832 100755
              self.xenstore_data = {}
  
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 155983fc..f1d983a8 100755
+index 163e3797..3afcbfe4 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -17,7 +17,7 @@
@@ -3529,7 +3529,7 @@ index cf5eb12d..13a895a2 100644
              self.xenstore_data = {}
  
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index fcc940f0..60275e6a 100755
+index e4cd3962..76ba6b33 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
 @@ -18,7 +18,9 @@
@@ -3543,7 +3543,7 @@ index fcc940f0..60275e6a 100755
  
  import grp
  import os
-@@ -151,7 +153,8 @@ class TapCtl(object):
+@@ -152,7 +154,8 @@ class TapCtl(object):
              self.cmd = cmd
              self.info = info
  
@@ -3553,7 +3553,7 @@ index fcc940f0..60275e6a 100755
              items = self.info.items()
              info = ", ".join("%s=%s" % item
                               for item in items)
-@@ -445,7 +448,8 @@ class TapdiskExists(Exception):
+@@ -446,7 +449,8 @@ class TapdiskExists(Exception):
      def __init__(self, tapdisk):
          self.tapdisk = tapdisk
  
@@ -3563,7 +3563,7 @@ index fcc940f0..60275e6a 100755
          return "%s already running" % self.tapdisk
  
  
-@@ -455,7 +459,8 @@ class TapdiskNotRunning(Exception):
+@@ -456,7 +460,8 @@ class TapdiskNotRunning(Exception):
      def __init__(self, **attrs):
          self.attrs = attrs
  
@@ -3573,7 +3573,7 @@ index fcc940f0..60275e6a 100755
          items = iter(self.attrs.items())
          attrs = ", ".join("%s=%s" % attr
                            for attr in items)
-@@ -468,7 +473,8 @@ class TapdiskNotUnique(Exception):
+@@ -469,7 +474,8 @@ class TapdiskNotUnique(Exception):
      def __init__(self, tapdisks):
          self.tapdisks = tapdisks
  
@@ -3583,7 +3583,7 @@ index fcc940f0..60275e6a 100755
          tapdisks = map(str, self.tapdisks)
          return "Found multiple tapdisks: %s" % tapdisks
  
-@@ -480,7 +486,8 @@ class TapdiskFailed(Exception):
+@@ -481,7 +487,8 @@ class TapdiskFailed(Exception):
          self.arg = arg
          self.err = err
  
@@ -3593,7 +3593,7 @@ index fcc940f0..60275e6a 100755
          return "Tapdisk(%s): %s" % (self.arg, self.err)
  
      def get_error(self):
-@@ -493,7 +500,8 @@ class TapdiskInvalidState(Exception):
+@@ -494,7 +501,8 @@ class TapdiskInvalidState(Exception):
      def __init__(self, tapdisk):
          self.tapdisk = tapdisk
  
@@ -3603,7 +3603,7 @@ index fcc940f0..60275e6a 100755
          return str(self.tapdisk)
  
  
-@@ -515,8 +523,9 @@ class KObject(object):
+@@ -516,8 +524,9 @@ class KObject(object):
  
      SYSFS_CLASSTYPE: ClassVar[str] = ""
  
@@ -3615,7 +3615,7 @@ index fcc940f0..60275e6a 100755
  
  
  class Attribute(object):
-@@ -535,7 +544,8 @@ class Attribute(object):
+@@ -536,7 +545,8 @@ class Attribute(object):
          def __init__(self, name):
              self.name = name
  
@@ -3625,7 +3625,7 @@ index fcc940f0..60275e6a 100755
              return "No such attribute: %s" % self.name
  
      def _open(self, mode='r'):
-@@ -592,10 +602,12 @@ class Blktap(ClassDevice):
+@@ -593,10 +603,12 @@ class Blktap(ClassDevice):
      def free(self):
          TapCtl.free(self.minor)
  
@@ -3640,7 +3640,7 @@ index fcc940f0..60275e6a 100755
          return "blktap!blktap%d" % self.minor
  
      class Pool(Attribute):
-@@ -663,7 +675,8 @@ class Tapdisk(object):
+@@ -664,7 +676,8 @@ class Tapdisk(object):
          self._dirty = False
          self._blktap = None
  
@@ -3650,7 +3650,7 @@ index fcc940f0..60275e6a 100755
          state = self.pause_state()
          return "Tapdisk(%s, pid=%d, minor=%s, state=%s)" % \
              (self.get_arg(), self.pid, self.minor, state)
-@@ -758,7 +771,8 @@ class Tapdisk(object):
+@@ -796,7 +809,8 @@ class Tapdisk(object):
              self.type = _type
              self.path = path
  
@@ -3660,7 +3660,7 @@ index fcc940f0..60275e6a 100755
              return "%s:%s" % (self.type, self.path)
  
          @classmethod
-@@ -778,14 +792,16 @@ class Tapdisk(object):
+@@ -816,14 +830,16 @@ class Tapdisk(object):
              def __init__(self, _type):
                  self.type = _type
  
@@ -3679,7 +3679,7 @@ index fcc940f0..60275e6a 100755
                  return "Not a Tapdisk image: %s" % self.arg
  
      def get_arg(self):
-@@ -927,7 +943,8 @@ class Tapdisk(object):
+@@ -965,7 +981,8 @@ class Tapdisk(object):
          t = self.from_minor(__get('minor'))
          self.__init__(t.pid, t.minor, t.type, t.path, t.state)
  
@@ -3689,7 +3689,7 @@ index fcc940f0..60275e6a 100755
          def __get(name):
              # NB. avoid(rec(ursion)
              return object.__getattribute__(self, name)
-@@ -1091,7 +1108,8 @@ class VDI(object):
+@@ -1129,7 +1146,8 @@ class VDI(object):
              self.vdi_type = vdi_type
              self.target = target
  
@@ -3699,7 +3699,7 @@ index fcc940f0..60275e6a 100755
              return \
                  "Target %s has unexpected VDI type '%s'" % \
                  (type(self.target), self.vdi_type)
-@@ -1176,11 +1194,12 @@ class VDI(object):
+@@ -1214,11 +1232,12 @@ class VDI(object):
  
          BASEDIR: ClassVar[str] = ""
  
@@ -3716,7 +3716,7 @@ index fcc940f0..60275e6a 100755
  
          def __init__(self, path):
              self._path = path
-@@ -1201,7 +1220,7 @@ class VDI(object):
+@@ -1239,7 +1258,7 @@ class VDI(object):
          def stat(self):
              return os.stat(self.path())
  
@@ -3725,7 +3725,7 @@ index fcc940f0..60275e6a 100755
  
              path = self.path()
              util.SMlog("%s -> %s" % (self, target))
-@@ -1224,7 +1243,8 @@ class VDI(object):
+@@ -1262,7 +1281,8 @@ class VDI(object):
                  if e.errno != errno.ENOENT:
                      raise
  
@@ -3735,7 +3735,7 @@ index fcc940f0..60275e6a 100755
              path = self.path()
              return "%s(%s)" % (self.__class__.__name__, path)
  
-@@ -1237,10 +1257,12 @@ class VDI(object):
+@@ -1275,10 +1295,12 @@ class VDI(object):
          def symlink(self):
              return self.path()
  
@@ -3750,7 +3750,7 @@ index fcc940f0..60275e6a 100755
              return self.readlink() == target
  
      class DeviceNode(Link):
-@@ -1257,7 +1279,8 @@ class VDI(object):
+@@ -1295,7 +1317,8 @@ class VDI(object):
              """Whether @target refers to a block device."""
              return S_ISBLK(cls._real_stat(target).st_mode)
  
@@ -3760,7 +3760,7 @@ index fcc940f0..60275e6a 100755
  
              st = self._real_stat(target)
              if not S_ISBLK(st.st_mode):
-@@ -1267,7 +1290,8 @@ class VDI(object):
+@@ -1305,7 +1328,8 @@ class VDI(object):
              os.mknod(self.path(), st.st_mode | stat.S_IRGRP, st.st_rdev)
              os.chown(self.path(), st.st_uid, grp.getgrnam("disk").gr_gid)
  
@@ -3770,7 +3770,7 @@ index fcc940f0..60275e6a 100755
              target_rdev = self._real_stat(target).st_rdev
              return self.stat().st_rdev == target_rdev
  
-@@ -1282,7 +1306,8 @@ class VDI(object):
+@@ -1320,7 +1344,8 @@ class VDI(object):
                  self.path = path
                  self.st = st
  
@@ -3780,7 +3780,7 @@ index fcc940f0..60275e6a 100755
                  return "%s is not a block device: %s" % (self.path, self.st)
  
      class Hybrid(Link):
-@@ -1298,14 +1323,16 @@ class VDI(object):
+@@ -1336,14 +1361,16 @@ class VDI(object):
                  return self._devnode.rdev()
              raise self._devnode.NotABlockDevice(self.path(), st)
  
@@ -3799,7 +3799,7 @@ index fcc940f0..60275e6a 100755
              return self._obj._equals(target)
  
      class PhyLink(SymLink):
-@@ -2103,7 +2130,8 @@ class UEventHandler(object):
+@@ -2141,7 +2168,8 @@ class UEventHandler(object):
              super().__init__(args)
              self.key = args[0]
  
@@ -3809,7 +3809,7 @@ index fcc940f0..60275e6a 100755
              return \
                  "Key '%s' missing in environment. " % self.key + \
                  "Not called in udev context?"
-@@ -2126,7 +2154,8 @@ class UEventHandler(object):
+@@ -2164,7 +2192,8 @@ class UEventHandler(object):
              self.event = event
              self.handler = handler
  
@@ -3819,7 +3819,7 @@ index fcc940f0..60275e6a 100755
              return "Uevent '%s' not handled by %s" % \
                  (self.event, self.handler.__class__.__name__)
  
-@@ -2142,7 +2171,8 @@ class UEventHandler(object):
+@@ -2180,7 +2209,8 @@ class UEventHandler(object):
  
          return fn(self)
  
@@ -3829,7 +3829,7 @@ index fcc940f0..60275e6a 100755
          try:
              action = self.get_action()
          except:
-@@ -2157,7 +2187,8 @@ class __BlktapControl(ClassDevice):
+@@ -2195,7 +2225,8 @@ class __BlktapControl(ClassDevice):
          ClassDevice.__init__(self)
          self._default_pool = None
  
@@ -3839,7 +3839,7 @@ index fcc940f0..60275e6a 100755
          return "blktap!control"
  
      class DefaultPool(Attribute):
-@@ -2184,7 +2215,8 @@ class __BlktapControl(ClassDevice):
+@@ -2222,7 +2253,8 @@ class __BlktapControl(ClassDevice):
          def __init__(self, name):
              self.name = name
  
@@ -3849,7 +3849,7 @@ index fcc940f0..60275e6a 100755
              return "No such pool: {}".format(self.name)
  
      def get_pool(self, name):
-@@ -2204,6 +2236,10 @@ class PagePool(KObject):
+@@ -2242,6 +2274,10 @@ class PagePool(KObject):
          self.path = path
          self._size = None
  
@@ -3860,7 +3860,7 @@ index fcc940f0..60275e6a 100755
      def sysfs_path(self):
          return self.path
  
-@@ -2344,11 +2380,13 @@ class XenbusDevice(BusDevice):
+@@ -2382,11 +2418,13 @@ class XenbusDevice(BusDevice):
              self._xs_rm_path(xapi_path)
              self._xs_rm_path(upstream_path)
  
@@ -3876,7 +3876,7 @@ index fcc940f0..60275e6a 100755
          return self.sysfs_devname()
  
      @classmethod
-@@ -2399,7 +2437,8 @@ class Blkback(XenBackendDevice):
+@@ -2437,7 +2475,8 @@ class Blkback(XenBackendDevice):
              self.vbd = vbd
              self.str = _str
  
@@ -3886,7 +3886,7 @@ index fcc940f0..60275e6a 100755
              return "Backend %s " % self.vbd + \
                  "has %s = %s" % (self.KEY, self.str)
  
-@@ -2432,10 +2471,12 @@ class Blkback(XenBackendDevice):
+@@ -2470,10 +2509,12 @@ class Blkback(XenBackendDevice):
          def is_tap(self):
              return self.major == Tapdisk.major()
  
@@ -3901,7 +3901,7 @@ index fcc940f0..60275e6a 100755
              return \
                  self.major == other.major and \
                  self.minor == other.minor
-@@ -2551,14 +2592,16 @@ class BlkbackEventHandler(UEventHandler):
+@@ -2589,14 +2630,16 @@ class BlkbackEventHandler(UEventHandler):
  
          UEventHandler.__init__(self)
  
@@ -5794,7 +5794,7 @@ index b139f4c5..4e0de361 100644
  
      def create_SR(self, cmd, dconf, cmd_params=None):
 diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
-index d585496c..6dc783de 100644
+index d69c02e0..0700dcd8 100644
 --- a/tests/test_blktap2.py
 +++ b/tests/test_blktap2.py
 @@ -1,3 +1,5 @@
@@ -5813,7 +5813,7 @@ index d585496c..6dc783de 100644
          subprocess_patcher = mock.patch("blktap2.subprocess")
          self.mock_subprocess = subprocess_patcher.start()
  
-@@ -146,7 +149,8 @@ class TestTapdisk(unittest.TestCase):
+@@ -213,7 +216,8 @@ class TestTapdisk(unittest.TestCase):
  
  
  class TestVDI(unittest.TestCase):
@@ -5823,7 +5823,7 @@ index d585496c..6dc783de 100644
          self.addCleanup(mock.patch.stopall)
  
          lock_patcher = mock.patch('blktap2.Lock', autospec=True)
-@@ -176,7 +180,7 @@ class TestVDI(unittest.TestCase):
+@@ -243,7 +247,7 @@ class TestVDI(unittest.TestCase):
          self.mock_target.vdi.sr.handles.side_effect = mock_handles
          self.mock_target.session = self.mock_session
          mock_target.session = self.mock_session
@@ -5832,7 +5832,7 @@ index d585496c..6dc783de 100644
          self.mock_target.has_cap.side_effect = self.get_caps
  
          self.vdi_uuid = str(uuid.uuid4())
-@@ -193,7 +197,7 @@ class TestVDI(unittest.TestCase):
+@@ -260,7 +264,7 @@ class TestVDI(unittest.TestCase):
          log_patcher = mock.patch('blktap2.util.SMlog', autospec=True)
          self.mock_log = log_patcher.start()
  
@@ -5841,7 +5841,7 @@ index d585496c..6dc783de 100644
          def log_stderr(message, ident="SM", priority=syslog.LOG_INFO):
              self.log_lines.append(message)
              print(message, file=sys.stderr)
-@@ -659,8 +663,8 @@ class TestVDI(unittest.TestCase):
+@@ -726,8 +730,8 @@ class TestVDI(unittest.TestCase):
  
  
  class TestTapCtl(unittest.TestCase):

@@ -1,4 +1,4 @@
-From b360a7ab54f516381b71b2da9bb419328abde684 Mon Sep 17 00:00:00 2001
+From ea1b3316b00b1ea440c43d9732a44a75f3199d63 Mon Sep 17 00:00:00 2001
 From: BenjiReis <benjamin.reis@vates.fr>
 Date: Fri, 4 Aug 2023 12:10:37 +0200
 Subject: [PATCH] Remove `SR_PROBE` from ZFS capabilities (#36)

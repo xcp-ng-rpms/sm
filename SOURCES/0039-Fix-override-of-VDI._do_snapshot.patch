@@ -1,4 +1,4 @@
-From 78452c7496b575eba81d5457f9231f7ca5c6f38d Mon Sep 17 00:00:00 2001
+From ca64b4172b09f2d2dabe834aadb4247937190018 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Wed, 16 Oct 2024 14:52:40 +0200
 Subject: [PATCH] Fix override of `VDI._do_snapshot`
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  2 files changed, 6 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 4de359bf..04a6543e 100755
+index 5bb0f73b..d289e8ff 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -709,8 +709,8 @@ class FileVDI(VDI.VDI):

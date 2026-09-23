@@ -1,4 +1,4 @@
-From db0952c31214c067bf94df03821a611af24a58b0 Mon Sep 17 00:00:00 2001
+From 8f9295982bf5c9bfa976dabfcd7fa1d02fccb520 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 12 Dec 2024 13:39:23 +0100
 Subject: [PATCH] refactor(sm): move all VDI types in a new module `vditype.py`
@@ -40,7 +40,7 @@ index 608ac4d3..4cce5b30 100755
  SM_LIBS += cleanup
  SM_LIBS += lvutil
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index c2307571..2f9da575 100755
+index be119d74..b5eb71a2 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -34,6 +34,7 @@ import blktap2
@@ -74,18 +74,18 @@ index c2307571..2f9da575 100755
 @@ -436,16 +437,16 @@ class FileVDI(VDI.VDI):
          while tries < maxretry and not found:
              tries += 1
-             if util.ioretry(lambda: util.pathexists(vhd_path)):
+             if util.pathexists(vhd_path):
 -                self.vdi_type = vhdutil.VDI_TYPE_VHD
 +                self.vdi_type = VdiType.VHD
                  self.path = vhd_path
                  found = True
-             elif util.ioretry(lambda: util.pathexists(raw_path)):
+             elif util.pathexists(raw_path):
 -                self.vdi_type = vhdutil.VDI_TYPE_RAW
 +                self.vdi_type = VdiType.RAW
                  self.path = raw_path
                  self.hidden = False
                  found = True
-             elif util.ioretry(lambda: util.pathexists(cbt_path)):
+             elif util.pathexists(cbt_path):
 -                self.vdi_type = CBTLOG_TAG
 +                self.vdi_type = VdiType.CBTLOG
                  self.path = cbt_path
@@ -877,10 +877,10 @@ index 6d211742..484d68f3 100755
          elif 'VDI_CONFIG_CBT' not in util.sr_get_capability(
                  self.sr.uuid, session=self.sr.session):
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 60275e6a..6766e1bf 100755
+index 76ba6b33..1df961ef 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
-@@ -43,6 +43,7 @@ import XenAPI # pylint: disable=import-error
+@@ -44,6 +44,7 @@ import XenAPI # pylint: disable=import-error
  import scsiutil
  from syslog import openlog, syslog
  from stat import *  # S_ISBLK(), ...
@@ -888,7 +888,7 @@ index 60275e6a..6766e1bf 100755
  
  import resetvdis
  import vhdutil
-@@ -1677,13 +1678,13 @@ class VDI(object):
+@@ -1715,13 +1716,13 @@ class VDI(object):
              # This is a fix for CA-155766
              if hasattr(self.target.vdi.sr, 'DRIVER_TYPE') and \
                 self.target.vdi.sr.DRIVER_TYPE == 'lvhd' and \
@@ -904,7 +904,7 @@ index 60275e6a..6766e1bf 100755
                  session = self.target.vdi.session
                  vdi_ref = session.xenapi.VDI.get_by_uuid(vdi_uuid)
                  # pylint: disable=used-before-assignment
-@@ -1698,7 +1699,7 @@ class VDI(object):
+@@ -1736,7 +1737,7 @@ class VDI(object):
  
              if hasattr(self.target.vdi.sr, 'DRIVER_TYPE') and \
                 self.target.vdi.sr.DRIVER_TYPE == 'lvhd' and \

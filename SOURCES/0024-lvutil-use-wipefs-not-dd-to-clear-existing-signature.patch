@@ -1,4 +1,4 @@
-From 864dd2dd9bedd53ed46d8f70fef15c59c4cb1e59 Mon Sep 17 00:00:00 2001
+From 45cb22abb5ce4c3f471c41aed8a2191d6ad40468 Mon Sep 17 00:00:00 2001
 From: Yann Dirson <yann.dirson@vates.fr>
 Date: Wed, 5 Jul 2023 16:57:26 +0200
 Subject: [PATCH] lvutil: use wipefs not dd to clear existing signatures
@@ -62,10 +62,10 @@ index 3e7d716c..4ce3d0a4 100755
          if not (dev == rootdev):
              try:
 diff --git a/drivers/util.py b/drivers/util.py
-index 395f40cd..32246c87 100755
+index 4fa27a1c..c2749690 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -645,6 +645,11 @@ def zeroOut(path, fromByte, bytes):
+@@ -644,6 +644,11 @@ def zeroOut(path, fromByte, bytes):
      return True
  
  

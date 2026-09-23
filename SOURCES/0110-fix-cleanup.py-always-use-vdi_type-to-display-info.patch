@@ -1,4 +1,4 @@
-From ce01bdd0696cdc6bea51152350e9d63276663d0b Mon Sep 17 00:00:00 2001
+From 5136f89eb084987cf4151773be56b4d9da8d7bd9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Dec 2024 15:33:17 +0100
 Subject: [PATCH] fix(cleanup.py): always use "vdi_type" to display info

@@ -1,4 +1,4 @@
-From 788c164ef4a79b026274996e0f7585851c4985c4 Mon Sep 17 00:00:00 2001
+From a4e5545d61ffe906120c702e1a2a0577cf3f8c52 Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Thu, 16 Jan 2025 16:29:51 +0100
 Subject: [PATCH] feat(cleanup.py): always print type in VDI.__str__
@@ -9,7 +9,7 @@ Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
  1 file changed, 1 insertion(+), 4 deletions(-)
 
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 971cb1eb..4c75fd1a 100755
+index 3b2b44f2..ca647a85 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -808,10 +808,7 @@ class VDI(object):

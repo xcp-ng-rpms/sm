@@ -1,4 +1,4 @@
-From 0ae1f92f7fb951f55cbded8cacaefd9f8e16eef3 Mon Sep 17 00:00:00 2001
+From b0b179ee1f21d6c10bf863b265e3aa3e45e77043 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Dec 2024 15:37:14 +0100
 Subject: [PATCH] refactor(cleanup.py): rename vhdSize to coalescedSize

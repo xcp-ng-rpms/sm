@@ -1,0 +1,27 @@
+From 7a34b7692f12fb6cfff6de8b489df778ef66fb6c Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 9 Jul 2026 18:37:47 +0200
+Subject: [PATCH] fix(qcow2): verify and limit raw snapshot size (#147)
+
+The function `canSnapshotRaw` give the size of the raw VDI as parameter, `vhdutil`
+use this size to compare to VHD max size while `qcow2util` always answered True.
+This add the check for max QCOW2 size
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index ee4c9131..50ea7046 100755
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -862,7 +862,7 @@ class QCowUtil(CowUtil):
+ 
+     @override
+     def canSnapshotRaw(self, size: int) -> bool:
+-        return True
++        return size <= MAX_QCOW_SIZE
+ 
+     @override
+     def check(

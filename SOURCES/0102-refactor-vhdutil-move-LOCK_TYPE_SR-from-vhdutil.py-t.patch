@@ -1,4 +1,4 @@
-From 1e3f0d381a731c26f3e6b1d55086387567169aa1 Mon Sep 17 00:00:00 2001
+From 1626de58e3c38d807d3865f04b6cef3b860079a3 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 5 Dec 2024 15:23:59 +0100
 Subject: [PATCH] refactor(vhdutil): move LOCK_TYPE_SR from vhdutil.py to
@@ -85,7 +85,7 @@ index 30aa3832..32ea15b7 100755
  
          self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index f1d983a8..c2307571 100755
+index 3afcbfe4..be119d74 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -25,6 +25,7 @@ import SRCommand

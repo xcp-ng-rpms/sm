@@ -1,4 +1,4 @@
-From 19a8407b04cd1d81d121555ada83c62986012d26 Mon Sep 17 00:00:00 2001
+From 0e4f6fbcb515916443915c624e2989133d88402f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Nov 2020 16:42:52 +0100
 Subject: [PATCH] feat(LinstorSR): import all 8.2 changes
@@ -2200,10 +2200,10 @@ index e7022ca9..52d5c26e 100755
  else:
      SR.registerSR(LinstorSR)
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index cf38849a..9f4088f1 100755
+index b5e74f44..a2665aa5 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
-@@ -49,6 +49,12 @@ import VDI as sm
+@@ -50,6 +50,12 @@ import VDI as sm
  from xmlrpc.client import ServerProxy, Transport
  from socket import socket, AF_UNIX, SOCK_STREAM
  
@@ -2216,7 +2216,7 @@ index cf38849a..9f4088f1 100755
  PLUGIN_TAP_PAUSE = "tapdisk-pause"
  
  SOCKPATH = "/var/xapi/xcp-rrdd"
-@@ -817,7 +823,23 @@ class Tapdisk(object):
+@@ -855,7 +861,23 @@ class Tapdisk(object):
                  TapCtl.attach(pid, minor)
  
                  try:
@@ -7576,10 +7576,10 @@ index b225be0c..621e7e16 100755
                  logger=util.SMlog
              ).get_device_path(self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index a9cf18e8..dd421927 100755
+index 3c388a4b..011f849d 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -706,32 +706,10 @@ def get_master_ref(session):
+@@ -705,32 +705,10 @@ def get_master_ref(session):
      return session.xenapi.pool.get_master(pools[0])
  
  
@@ -7612,7 +7612,7 @@ index a9cf18e8..dd421927 100755
  def get_localhost_ref(session):
      filename = '/etc/xensource-inventory'
      try:
-@@ -772,6 +750,17 @@ def get_hosts_attached_on(session, vdi_uuids):
+@@ -771,6 +749,17 @@ def get_hosts_attached_on(session, vdi_uuids):
              host_refs[key[len('host_'):]] = True
      return host_refs.keys()
  
@@ -7630,7 +7630,7 @@ index a9cf18e8..dd421927 100755
  
  def get_this_host_ref(session):
      host_uuid = get_this_host()
-@@ -2022,3 +2011,95 @@ def sessions_less_than_targets(other_config, device_config):
+@@ -2021,3 +2010,95 @@ def sessions_less_than_targets(other_config, device_config):
          return (sessions < targets)
      else:
          return False

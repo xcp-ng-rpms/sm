@@ -1,4 +1,4 @@
-From eb562eb14c867fef12a3e5c584f0a9a3d3c84aa6 Mon Sep 17 00:00:00 2001
+From afc471628601c00d9b13092acd31f2645319db3f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Wed, 16 Apr 2025 11:21:01 +0200
 Subject: [PATCH] Support image-format param during VDI creation
@@ -11,7 +11,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  3 files changed, 26 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 2f99f667..de6a35a8 100755
+index 3984933e..a53e42f6 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -489,16 +489,18 @@ class FileVDI(VDI.VDI):

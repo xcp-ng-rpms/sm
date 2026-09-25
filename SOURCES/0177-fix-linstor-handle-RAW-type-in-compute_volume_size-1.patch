@@ -1,0 +1,31 @@
+From 0a4cc88d3b64777772ba8290dcd219f7e0abc1e2 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Tue, 1 Sep 2026 13:43:14 +0200
+Subject: [PATCH] fix(linstor): handle RAW type in compute_volume_size (#158)
+
+Regression caused by this commit:
+```
+refactor(sm): move all VDI types in a new module `vditype.py`
+```
+
+The RAW type is no longer checked by this function;
+this prevents the creation of RAW volumes and consequently blocks HA activation.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorcowutil.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index acc66b9e..f35c7e27 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -475,7 +475,7 @@ class LinstorCowUtil:
+             )
+             bitmap_overhead = self._cowutil.calcOverheadBitmap(virtual_size)
+             volume_size += meta_overhead + bitmap_overhead
+-        else:
++        elif self._vdi_type != VdiType.RAW:
+             raise Exception('Invalid image type: {}'.format(self._vdi_type))
+ 
+         return LinstorVolumeManager.round_up_volume_size(volume_size)

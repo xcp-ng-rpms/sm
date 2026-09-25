@@ -1,0 +1,94 @@
+From f60e4c5781579b57b5d91b7c29b46e6968ff2bd1 Mon Sep 17 00:00:00 2001
+From: Millefeuille <mathieu.labourier@vates.tech>
+Date: Mon, 21 Sep 2026 12:00:09 +0200
+Subject: [PATCH] feat(linstor): handle ENODATA errors with linstor VDIs (#148)
+
+* feat(linstor): handle ENODATA errors with LINSTOR VDIs
+
+- Do not retry locally in linstorhostcall if ENODATA
+- Handle ENODATA as a retriable error in blktap2.py
+- Rewrite error code checks for improved readability
+
+ENODATA in the context of DRBD means that the current volume is
+either diskless or deemed Inconsistent but has no connection to
+another UpToDate volume. In the case of linstorcowutil calls,
+try on another host. In the case of blktap calls, handle the error
+as a retriable error to cover cases where the ENODATA is only
+a short, transient issue.
+
+Signed-off-by: Mathieu Labourier <mathieu.labourier@vates.tech>
+---
+ drivers/blktap2.py        |  9 +++++++--
+ drivers/linstorcowutil.py | 11 +++++++++--
+ 2 files changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 8bd262bf..949d6dc1 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -439,10 +439,15 @@ class TapCtl(object):
+             try:
+                 cls._pread(args)
+             except TapCtl.CommandFailure as e:
++                error_code = e.get_error_code()
++                if error_code == errno.ENODATA:
++                    raise RetryLoop.TransientFailure(e)
++                if error_code not in (errno.EROFS, errno.EMEDIUMTYPE):
++                    raise
+                 match = TAP_CTL_ERROR_PATTERN.search(e.info.get("errmsg", ""))
+                 if match and match.group("reason"):
+                     drbd_path = match.group("reason")
+-                if e.get_error_code() in (errno.EROFS, errno.EMEDIUMTYPE) and Tapdisk.abort_linstor_gc(drbd_path):
++                if Tapdisk.abort_linstor_gc(drbd_path):
+                     raise RetryLoop.TransientFailure(e)
+                 raise
+ 
+@@ -972,7 +977,7 @@ class Tapdisk(object):
+                             if err in (errno.EROFS, errno.EMEDIUMTYPE) and cls.abort_linstor_gc(drbd_path):
+                                 continue
+ 
+-                            if err in (errno.EIO, errno.EAGAIN, errno.EROFS, errno.EMEDIUMTYPE) and retry_open < 1:
++                            if err in (errno.EIO, errno.EAGAIN, errno.EROFS, errno.EMEDIUMTYPE, errno.ENODATA) and retry_open < 1:
+                                 retry_open += 1
+                                 time.sleep(1)
+                                 continue
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 74620187..fbaeda1a 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -68,9 +68,14 @@ class ErofsLinstorCallException(LinstorCallException):
+     pass
+ 
+ 
++class NoDataLinstorCallException(LinstorCallException):
++    pass
++
++
+ class NoPathLinstorCallException(LinstorCallException):
+     pass
+ 
++
+ def log_successful_call(target_host, device_path, vdi_uuid, remote_method, response):
+     util.SMlog('Successful access on {} for device {} ({}): `{}` => {}'.format(
+         target_host, device_path, vdi_uuid, remote_method, str(response)
+@@ -217,7 +222,7 @@ class LinstorCowUtil:
+                             if e.errno == errno.ENODATA:
+                                 time.sleep(2)
+                                 continue
+-                            if e.errno == errno.EROFS or e.errno == errno.EMEDIUMTYPE:
++                            if e.errno in (errno.EROFS, errno.EMEDIUMTYPE):
+                                 openers = self._linstor.get_volume_openers(vdi_uuid)
+                                 util.SMlog(f'Volume not attachable because used. Openers: {openers}')
+                                 if cb_openers:
+@@ -537,8 +542,10 @@ class LinstorCowUtil:
+                 try:
+                     return local_method(device_path, *args, **kwargs)
+                 except util.CommandException as e:
+-                    if e.code == errno.EROFS or e.code == errno.EMEDIUMTYPE:
++                    if e.code in (errno.EROFS, errno.EMEDIUMTYPE):
+                         raise ErofsLinstorCallException(e)  # Break retry calls.
++                    if e.code == errno.ENODATA:
++                        raise NoDataLinstorCallException(e)
+                     if e.code == errno.ENOENT:
+                         raise NoPathLinstorCallException(e)
+                     raise e

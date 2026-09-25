@@ -1,0 +1,75 @@
+From f1fbdfb040688fa664f7ac04e54867b3617ef30e Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Sun, 19 Jul 2026 22:38:51 +0200
+Subject: [PATCH] refactor(FileSR): rename `_find_path_with_retries`
+
+Renamed to `_resolve_vdi_context_from_path` to be more explicit.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/FileSR.py    | 4 ++--
+ tests/test_FileSR.py | 8 ++++----
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index 6a108f9c..f55592ed 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -500,7 +500,7 @@ class FileVDI(VDI.VDI):
+             self.path = os.path.join(self.sr.path, "%s%s" %
+                 (vdi_uuid, VDI_TYPE_TO_EXTENSION[self.vdi_type]))
+         else:
+-            found = self._find_path_with_retries(vdi_uuid)
++            found = self._resolve_vdi_context_from_path(vdi_uuid)
+             if not found:
+                 if self.sr.srcmd.cmd == "vdi_delete":
+                     # Could be delete for CBT log file
+@@ -647,7 +647,7 @@ class FileVDI(VDI.VDI):
+     @override
+     def attach(self, sr_uuid, vdi_uuid) -> str:
+         if self.path is None:
+-            self._find_path_with_retries(vdi_uuid)
++            self._resolve_vdi_context_from_path(vdi_uuid)
+         if not self._checkpath(self.path):
+             raise xs_errors.XenError('VDIUnavailable', \
+                   opterr='VDI %s unavailable %s' % (vdi_uuid, self.path))
+diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
+index d0c08ae6..a9df0665 100644
+--- a/tests/test_FileSR.py
++++ b/tests/test_FileSR.py
+@@ -85,7 +85,7 @@ class TestFileVDI(unittest.TestCase):
+         vdi.sr = sr
+         mock_os_stat.side_effect = [os.stat_result((stat.S_IFREG, 0, 0, 0, 0, 0, 1024, 0, 0, 0))]
+ 
+-        found = vdi._find_path_with_retries(vdi_uuid)
++        found = vdi._resolve_vdi_context_from_path(vdi_uuid)
+ 
+         self.assertTrue(found)
+         expected_path = 'sr_path/%s.vhd' % vdi_uuid
+@@ -105,7 +105,7 @@ class TestFileVDI(unittest.TestCase):
+             os.stat_result((stat.S_IFREG, 0, 0, 0, 0, 0, 1024, 0, 0, 0))
+         ]
+ 
+-        found = vdi._find_path_with_retries(vdi_uuid)
++        found = vdi._resolve_vdi_context_from_path(vdi_uuid)
+ 
+         self.assertTrue(found)
+         expected_path = 'sr_path/%s.raw' % vdi_uuid
+@@ -128,7 +128,7 @@ class TestFileVDI(unittest.TestCase):
+             os.stat_result((stat.S_IFREG, 0, 0, 0, 0, 0, 1024, 0, 0, 0))
+         ]
+ 
+-        found = vdi._find_path_with_retries(vdi_uuid)
++        found = vdi._resolve_vdi_context_from_path(vdi_uuid)
+ 
+         self.assertTrue(found)
+         expected_path = 'sr_path/%s.vhd' % vdi_uuid
+@@ -144,7 +144,7 @@ class TestFileVDI(unittest.TestCase):
+         vdi.sr = sr
+         self.mock_os_stat.side_effect = OSError(errno.ENOENT)
+ 
+-        found = vdi._find_path_with_retries(vdi_uuid)
++        found = vdi._resolve_vdi_context_from_path(vdi_uuid)
+ 
+         self.assertFalse(found)
+ 

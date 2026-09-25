@@ -1,4 +1,4 @@
-From 5ffe35f6ce7c40a18af97f651b91b1ef85f95230 Mon Sep 17 00:00:00 2001
+From 7ee0b90f9bcaab58b82f50c2c5772ae64eb22d02 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Wed, 8 Oct 2025 22:14:30 +0200
 Subject: [PATCH] feat(LinstorSR): prohibit QCOW2

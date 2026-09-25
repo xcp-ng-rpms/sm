@@ -1,4 +1,4 @@
-From b211b83f9886be76da32e940aeebdec1b5553c69 Mon Sep 17 00:00:00 2001
+From 6ead64658ad41fc7976022b198acf8e4c7eb10db Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 20 Dec 2024 15:44:14 +0100
 Subject: [PATCH] refactor(cleanup.py): rename "*coalesceVHD" helpers to

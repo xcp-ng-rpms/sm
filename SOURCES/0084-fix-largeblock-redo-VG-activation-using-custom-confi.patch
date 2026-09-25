@@ -1,4 +1,4 @@
-From 74f3fc6ab79f973f38be517ab7b47cd4560a0b5a Mon Sep 17 00:00:00 2001
+From 560cfacc742ff6767164fddfd256717ee0506f4d Mon Sep 17 00:00:00 2001
 From: Damien Thenot <damien.thenot@vates.tech>
 Date: Tue, 23 Sep 2025 17:29:54 +0200
 Subject: [PATCH] fix(largeblock): redo VG activation using custom config (#99)

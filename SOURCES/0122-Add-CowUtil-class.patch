@@ -1,4 +1,4 @@
-From dce2c71cd850ad79f39aa81b56763a686be5d1bb Mon Sep 17 00:00:00 2001
+From c3305446ee080008d369d68c7f04c5e36e1ed835 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Sat, 14 Dec 2024 00:20:02 +0100
 Subject: [PATCH] Add `CowUtil` class
@@ -121,7 +121,7 @@ index bdbdb01d..c342d5a1 100755
  
  CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING",
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 95832ecd..2f99f667 100755
+index d7d8571d..3984933e 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -24,7 +24,6 @@ import VDI
@@ -2292,10 +2292,10 @@ index ac413268..0a0d02f6 100755
  
  CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING", \
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index eb69f59d..c29b380e 100755
+index b02ee85a..9e6fe94d 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
-@@ -47,11 +47,11 @@ from stat import *  # S_ISBLK(), ...
+@@ -48,11 +48,11 @@ from stat import *  # S_ISBLK(), ...
  from vditype import VdiType
  
  import resetvdis
@@ -2309,7 +2309,7 @@ index eb69f59d..c29b380e 100755
  # For RRDD Plugin Registration
  from xmlrpc.client import ServerProxy, Transport
  from socket import socket, AF_UNIX, SOCK_STREAM
-@@ -1118,7 +1118,7 @@ class VDI(object):
+@@ -1156,7 +1156,7 @@ class VDI(object):
  
      VDI_PLUG_TYPE = {'phy': 'phy',  # for NETAPP
                        'raw': 'phy',
@@ -2318,7 +2318,7 @@ index eb69f59d..c29b380e 100755
                        'iso': 'tap',  # for ISOSR
                        'file': 'tap',
                        'vhd': 'tap'}
-@@ -1949,6 +1949,10 @@ class VDI(object):
+@@ -1987,6 +1987,10 @@ class VDI(object):
          SR.registerSR(EXTSR.EXTSR)
          local_sr = SR.SR.from_uuid(session, local_sr_uuid)
  
@@ -2329,7 +2329,7 @@ index eb69f59d..c29b380e 100755
          lock = Lock(self.LOCK_CACHE_SETUP, shared_target.uuid)
          lock.acquire()
  
-@@ -1959,14 +1963,14 @@ class VDI(object):
+@@ -1997,14 +2001,14 @@ class VDI(object):
                         read_cache_path)
          else:
              try:
@@ -2346,7 +2346,7 @@ index eb69f59d..c29b380e 100755
          local_leaf_path = "%s/%s.vhdcache" % \
                  (local_sr.path, self.target.vdi.uuid)
          if util.pathexists(local_leaf_path):
-@@ -1974,18 +1978,18 @@ class VDI(object):
+@@ -2012,18 +2016,18 @@ class VDI(object):
                         local_leaf_path)
              os.unlink(local_leaf_path)
          try:
@@ -2369,7 +2369,7 @@ index eb69f59d..c29b380e 100755
  
          prt_tapdisk = Tapdisk.find_by_path(read_cache_path)
          if not prt_tapdisk:
-@@ -1998,15 +2002,12 @@ class VDI(object):
+@@ -2036,15 +2040,12 @@ class VDI(object):
                  blktap.set_pool_name("lcache-parent-pool-%s" % blktap.minor)
                  # no need to change pool_size since each parent tapdisk is in
                  # its own pool
@@ -2387,7 +2387,7 @@ index eb69f59d..c29b380e 100755
  
          util.SMlog("Parent tapdisk: %s" % prt_tapdisk)
          leaf_tapdisk = Tapdisk.find_by_path(local_leaf_path)
-@@ -2021,9 +2022,7 @@ class VDI(object):
+@@ -2059,9 +2060,7 @@ class VDI(object):
              # Disable memory read caching
              child_options.pop("o_direct", None)
              try:
@@ -2412,7 +2412,7 @@ index 545f702e..87f6dba5 100644
  
  import util
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 4c75fd1a..bca71d8d 100755
+index ca647a85..2aa996ea 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -15,10 +15,10 @@
@@ -3247,7 +3247,7 @@ index 4c75fd1a..bca71d8d 100755
  
 -        tmpName = lvhdutil.LV_PREFIX[VdiType.VHD] + \
 -                self.TMP_RENAME_PREFIX + child.uuid
-+        tmpName = child.vdi_type + self.TMP_RENAME_PREFIX + child.uuid
++        tmpName = LV_PREFIX[child.vdi_type] + self.TMP_RENAME_PREFIX + child.uuid
          args = {"vgName": self.vgName,
                  "action1": "deactivateNoRefcount",
                  "lvName1": tmpName,
@@ -7217,10 +7217,10 @@ index 6b0d0946..04883b7d 100644
          # Act
          with mock.patch('lock.Lock'):
 diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
-index db8b2932..3d19bf8d 100644
+index e3eb09b0..e22fad50 100644
 --- a/tests/test_blktap2.py
 +++ b/tests/test_blktap2.py
-@@ -216,7 +216,7 @@ class TestVDI(unittest.TestCase):
+@@ -283,7 +283,7 @@ class TestVDI(unittest.TestCase):
              return sr
          self.mock_sr.from_uuid.side_effect = from_uuid
  
@@ -7229,7 +7229,7 @@ index db8b2932..3d19bf8d 100644
          self.mock_vhdutil = vhdutil_patcher.start()
  
          mkdir_patcher = mock.patch('blktap2.os.mkdir', autospec=True)
-@@ -529,7 +529,7 @@ class TestVDI(unittest.TestCase):
+@@ -596,7 +596,7 @@ class TestVDI(unittest.TestCase):
          mock_vdi.path = "prt_path"
  
          # Return some sizes (all the same here)
@@ -7238,7 +7238,7 @@ index db8b2932..3d19bf8d 100644
  
          prt_tapdisk = blktap2.Tapdisk(
              1457, 3, 'vhd', 'dummy', 1)
-@@ -563,7 +563,7 @@ class TestVDI(unittest.TestCase):
+@@ -630,7 +630,7 @@ class TestVDI(unittest.TestCase):
          mock_vdi.path = "prt_path"
  
          # Return some sizes (all the same here)

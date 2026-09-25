@@ -1,6 +1,6 @@
-%global package_speccommit e5c2655e71c028397204f46cf1e2ef452fe2c4d4
+%global package_speccommit 8afb29c13696d0517ac2ff1064e5d5b040bc9aa9
 %global usver 3.2.12
-%global xsver 23
+%global xsver 25
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.5%{?dist}
+Release: %{?xsrel}.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -40,24 +40,26 @@ Patch22: cp-309718_lc_moving_average
 Patch23: ensure_vdi_is_active_before_relink.patch
 Patch24: CP-311969-skip-introduce-and-clean-metadata-for-VDIs.patch
 Patch25: CP-312848__idempotent_tapdisk-pause_pause.patch
-Patch26: add_udev_rules_for_purestorage_-_best_practices.patch
-Patch27: update_pure_storage_udev_1.patch
-Patch28: update_pure_storage_udev_2.patch
-Patch29: CA-418775_ensure_size_consistent_for_resize
-Patch30: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
-Patch31: CA-420515_handle_errors_in_foreground
-Patch32: ca-419706_update_print_calls
-Patch33: ca-421013_ensure_cbt_refresh_on_supporter
-Patch34: CA-416486_leaf_coalesce_wait_for_GC
+Patch26: CA-416486_leaf_coalesce_wait_for_GC
+Patch27: 0001-CA-420307-Construct-synthetic-page-data-as-byte-arra.patch
+Patch28: CA-418775_ensure_size_consistent_for_resize
+Patch29: ca-421013_ensure_cbt_refresh_on_supporter
+Patch30: CA-420515_handle_errors_in_foreground
+Patch31: ca-419706_update_print_calls
+Patch32: CA-425974_resolve_device_names_correctly
+Patch33: update_hbasr_unittests
+Patch34: fix_pfx_sr_probe
 Patch35: CA-423293_decode_error_string
-Patch36: CA-425972_log_sg_readcap_errors
-Patch37: CA-425974_resolve_device_names_correctly
-Patch38: update_hbasr_unittests
-Patch39: fix_pfx_sr_probe
-Patch40: CP-308587_update_netapp_multipath
-Patch41: CA-413325_log_what_lvs_shows_on_failure
-Patch42: CP-311724_optimise_tapdisk_from_minor
-Patch43: CA-427749_Improve_SM_cleanup
+Patch36: CP-311724_optimise_tapdisk_from_minor
+Patch37: CP-313057_improve_failure_path_speed
+Patch38: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch39: update_pure_storage_udev_1.patch
+Patch40: update_pure_storage_udev_2.patch
+Patch41: CA-425972_log_sg_readcap_errors
+Patch42: CA-428978_handle_missing_fd_dir
+Patch43: CP-308587_update_netapp_multipath
+Patch44: CA-413325_log_what_lvs_shows_on_failure
+Patch45: CA-427749_Improve_SM_cleanup
 
 %define __python python3
 
@@ -66,6 +68,7 @@ BuildRequires: python3-devel
 BuildRequires: python36-pylint
 BuildRequires: python3-coverage
 BuildRequires: python36-bitarray
+BuildRequires: python3-typing-extensions
 
 # XCP-ng: python36-mock for %%check
 BuildRequires: python36-mock
@@ -89,14 +92,13 @@ Conflicts: kernel < 4.19.19-5.0.0
 Conflicts: blktap < 3.55.3
 Requires: sg3_utils
 Requires: libcgroup-tools
+Requires: python3-typing-extensions
 
 Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.12-23-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
-# WARNING: Patch `0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch` is currently disabled due to a
-# regression, so we're delaying the release of that feature.
+# git format-patch v3.2.12-25-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -226,45 +228,66 @@ Patch1126: 0126-fix-linstorvolumemanager-report-unexpected-DRBD-devi.patch
 Patch1127: 0127-feat-SR-add-QCOW2-image-format-backend-not-implement.patch
 Patch1128: 0128-feat-LinstorSR-prohibit-QCOW2.patch
 Patch1129: 0129-feat-SR-add-a-supported-image-format-list-defined-by.patch
-Patch1130: 0130-feat-qcow2-Add-QCOW2-support.patch
-Patch1131: 0131-feat-qcow2-Add-coalesce-with-call-to-tapdisk.patch
-Patch1132: 0132-feat-qcow2-Add-qcow2helper.patch
-Patch1133: 0133-fix-MooseFSSR-type-hint-fix.patch
-Patch1134: 0134-feat-qcow2-Remove-limitation-on-blocksize.patch
-Patch1135: 0135-fix-coalesce-Big-vhd-blocks-cause-exception.patch
-Patch1136: 0136-feat-qcow2_helper-support-extended_l2-feature.patch
-Patch1137: 0137-fix-qcow2-fix-mirror-for-migration.patch
-Patch1138: 0138-fix-qcow2-Use-measure-to-compute-overhead-in-qcow2.patch
-Patch1139: 0139-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
-Patch1140: 0140-Add-missing-image-format-attr-on-snap-VDIs-113.patch
-Patch1141: 0141-Fix-vdi_type-and-image_format-for-udevSR.patch
-Patch1142: 0142-Fix-cbtlog-on-FileSR.patch
-Patch1143: 0143-fix-qcow2-Set-the-max-size-to-be-under-16TiB.patch
-Patch1144: 0144-fix-LVMSR-activate-chain-for-QCOW2-resize.patch
-Patch1145: 0145-Fix-qcow2util-fix-exception-handling-in-coalesceOnli.patch
-Patch1146: 0146-feat-use-preferred-image-formats-as-a-list.patch
-Patch1147: 0147-fix-cleanup-online-coalesce-would-crash.patch
-Patch1148: 0148-fix-linstor-add-backward-compatibility-for-getInfo.patch
-Patch1149: 0149-fix-linstor-add-backward-compatibility-for-manager-p.patch
-Patch1150: 0150-fix-LVMSR-scan-with-cbt_metadata.patch
-Patch1151: 0151-feat-qcow2-live-leaf-coalesce.patch
-Patch1152: 0152-fix-qcow2-online-coalesce-on-LVMSR.patch
-# Patch1153: 0153-feat-qcow2_helper-Added-a-scan-command-to-qcow2_help.patch
-Patch1154: 0154-fix-cleanup-fix-for-live-leaf-coalesce.patch
-Patch1155: 0155-fix-LVMSR-added-a-missing-call-to-_setType.patch
-Patch1156: 0156-fix-linstor-don-t-load-VDIs-during-VDI.deactivate-ca.patch
-Patch1157: 0157-fix-linstor-ensure-journaler-is-created-in-a-lock-co.patch
-Patch1158: 0158-feat-linstor-use-client-when-possible-to-construct-j.patch
-Patch1159: 0159-fix-cleanup-check-earlier-for-chain-attached-on-seve.patch
-Patch1160: 0160-fix-linstor-abort-GC-for-slave-if-VHD-chain-is-open-.patch
-Patch1161: 0161-refactor-merge-timeout-and-timeout_call-functions-13.patch
-Patch1162: 0162-fix-qcow2-verify-and-limit-raw-snapshot-size-147.patch
-Patch1163: 0163-fix-qcow2-read-FileSR-allocated-size-only-when-neede.patch
-Patch1164: 0164-fix-linstor-use-quotes-on-linstor-type-annotations-1.patch
-Patch1165: 0165-fix-RAWVDI-define-vdi_type-for-RAWVDI-151.patch
-Patch1166: 0166-Add-IO-import-in-sm_typing-152.patch
-Patch1167: 0167-fix-display-image-format-as-its-string-value-in-erro.patch
-Patch1168: 0168-fix-LVMSR-set-QCOW2-chain-RW-from-the-master-on-vdi_.patch
+Patch1130: 0130-refactor-FileSR-remove-PARAM_XXX-constants.patch
+Patch1131: 0131-refactor-vhdutil-rename-_convertAllocatedSizeToBytes.patch
+Patch1132: 0132-refactor-FileSR-rename-_find_path_with_retries.patch
+Patch1133: 0133-refactor-lvmcowutil-use-a-func-to-get-resize-journal.patch
+Patch1134: 0134-refactor-linstor-use-a-volume-size-var-in-compute_vo.patch
+Patch1135: 0135-refactor-FileSR-simplify-VDI.load-code-from-path.patch
+Patch1136: 0136-feat-qcow2-Add-QCOW2-support.patch
+Patch1137: 0137-feat-qcow2-Add-coalesce-with-call-to-tapdisk.patch
+Patch1138: 0138-feat-qcow2-Add-qcow2helper.patch
+Patch1139: 0139-fix-MooseFSSR-type-hint-fix.patch
+Patch1140: 0140-feat-qcow2-Remove-limitation-on-blocksize.patch
+Patch1141: 0141-fix-coalesce-Big-vhd-blocks-cause-exception.patch
+Patch1142: 0142-feat-qcow2_helper-support-extended_l2-feature.patch
+Patch1143: 0143-fix-qcow2-fix-mirror-for-migration.patch
+Patch1144: 0144-fix-qcow2-Use-measure-to-compute-overhead-in-qcow2.patch
+Patch1145: 0145-fix-qcow2-Make-getDefaultPreallocationSizeVirt-retur.patch
+Patch1146: 0146-Add-missing-image-format-attr-on-snap-VDIs-113.patch
+Patch1147: 0147-Fix-vdi_type-and-image_format-for-udevSR.patch
+Patch1148: 0148-Fix-cbtlog-on-FileSR.patch
+Patch1149: 0149-fix-qcow2-Set-the-max-size-to-be-under-16TiB.patch
+Patch1150: 0150-fix-LVMSR-activate-chain-for-QCOW2-resize.patch
+Patch1151: 0151-Fix-qcow2util-fix-exception-handling-in-coalesceOnli.patch
+Patch1152: 0152-feat-use-preferred-image-formats-as-a-list.patch
+Patch1153: 0153-fix-cleanup-online-coalesce-would-crash.patch
+Patch1154: 0154-fix-linstor-add-backward-compatibility-for-getInfo.patch
+Patch1155: 0155-fix-linstor-add-backward-compatibility-for-manager-p.patch
+Patch1156: 0156-fix-LVMSR-scan-with-cbt_metadata.patch
+Patch1157: 0157-feat-qcow2-live-leaf-coalesce.patch
+Patch1158: 0158-fix-qcow2-online-coalesce-on-LVMSR.patch
+Patch1159: 0159-fix-cleanup-fix-for-live-leaf-coalesce.patch
+Patch1160: 0160-fix-LVMSR-added-a-missing-call-to-_setType.patch
+Patch1161: 0161-fix-linstor-don-t-load-VDIs-during-VDI.deactivate-ca.patch
+Patch1162: 0162-fix-linstor-ensure-journaler-is-created-in-a-lock-co.patch
+Patch1163: 0163-feat-linstor-use-client-when-possible-to-construct-j.patch
+Patch1164: 0164-fix-cleanup-check-earlier-for-chain-attached-on-seve.patch
+Patch1165: 0165-fix-linstor-abort-GC-for-slave-if-VHD-chain-is-open-.patch
+Patch1166: 0166-refactor-merge-timeout-and-timeout_call-functions-13.patch
+Patch1167: 0167-fix-qcow2-verify-and-limit-raw-snapshot-size-147.patch
+Patch1168: 0168-fix-qcow2-read-FileSR-allocated-size-only-when-neede.patch
+Patch1169: 0169-fix-linstor-use-quotes-on-linstor-type-annotations-1.patch
+Patch1170: 0170-fix-RAWVDI-define-vdi_type-for-RAWVDI-151.patch
+Patch1171: 0171-Add-IO-import-in-sm_typing-152.patch
+Patch1172: 0172-fix-display-image-format-as-its-string-value-in-erro.patch
+Patch1173: 0173-fix-LVMSR-set-QCOW2-chain-RW-from-the-master-on-vdi_.patch
+Patch1174: 0174-fix-blktap2-retry-host-key-tag-removal-on-XAPI-HTTP-.patch
+Patch1175: 0175-fix-ISCSi-fix-race-condition-on-ISCSI-operations-131.patch
+Patch1176: 0176-fix-linstor-explicitly-notifies-a-missing-res-def-15.patch
+Patch1177: 0177-fix-linstor-handle-RAW-type-in-compute_volume_size-1.patch
+Patch1178: 0178-fix-linstor-deal-with-missing-group-during-SR-creati.patch
+Patch1179: 0179-fix-qcow2util-removed-some-dead-code-153.patch
+Patch1180: 0180-fix-leaf-would-not-be-paused-for-undo-with-QCOW2-162.patch
+Patch1181: 0181-fix-do-not-make-base-copy-RO-for-QCOW2-162.patch
+Patch1182: 0182-feat-linstor-backup-DB-on-major-ops-and-regularly-on.patch
+Patch1183: 0183-fix-qcow2-reduce-QCowUtil-verbosity-165.patch
+Patch1184: 0184-fix-LVMSR-correct-CBT-log-deletion-on-slave-164.patch
+Patch1185: 0185-fix-sm-robustify-XAPI-session-usage-129.patch
+Patch1186: 0186-fix-cleanup-handle-interrupted-QCOW2-leaf-coalesce-1.patch
+Patch1187: 0187-fix-qcow2util-handle-abort-in-online-coalesce-167.patch
+Patch1188: 0188-feat-linstor-handle-ENODATA-errors-with-linstor-VDIs.patch
+Patch1189: 0189-LVMSR-convert-refvdi-returned-by-get_snapshot_of-to-.patch
 
 %description
 This package contains storage backends used in XCP
@@ -387,6 +410,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /etc/xapi.d/plugins/lvhd-thin
 /etc/xapi.d/plugins/nfs-on-slave
 /etc/xapi.d/plugins/on-slave
+/etc/xapi.d/plugins/on-master
 /etc/xapi.d/plugins/tapdisk-pause
 /etc/xapi.d/plugins/testing-hooks
 /etc/xapi.d/plugins/intellicache-clean
@@ -588,6 +612,32 @@ then
 fi
 
 %changelog
+* Fri Sep 25 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.1
+- Rebase on 3.2.12-23
+- Sync patches with our latest 3.2.12-8.3 branch
+- Add new patches:
+  - 0174-fix-blktap2-retry-host-key-tag-removal-on-XAPI-HTTP-.patch
+  - 0175-fix-ISCSi-fix-race-condition-on-ISCSI-operations-131.patch
+  - 0176-fix-linstor-explicitly-notifies-a-missing-res-def-15.patch
+  - 0177-fix-linstor-handle-RAW-type-in-compute_volume_size-1.patch
+  - 0178-fix-linstor-deal-with-missing-group-during-SR-creati.patch
+  - 0179-fix-qcow2util-removed-some-dead-code-153.patch
+  - 0180-fix-leaf-would-not-be-paused-for-undo-with-QCOW2-162.patch
+  - 0181-fix-do-not-make-base-copy-RO-for-QCOW2-162.patch
+  - 0182-feat-linstor-backup-DB-on-major-ops-and-regularly-on.patch
+  - 0183-fix-qcow2-reduce-QCowUtil-verbosity-165.patch
+  - 0184-fix-LVMSR-correct-CBT-log-deletion-on-slave-164.patch
+  - 0185-fix-sm-robustify-XAPI-session-usage-129.patch
+  - 0186-fix-cleanup-handle-interrupted-QCOW2-leaf-coalesce-1.patch
+  - 0187-fix-qcow2util-handle-abort-in-online-coalesce-167.patch
+  - 0188-feat-linstor-handle-ENODATA-errors-with-linstor-VDIs.patch
+  - 0189-LVMSR-convert-refvdi-returned-by-get_snapshot_of-to-.patch
+- *** Upstream changelog ***
+  * Wed Jun 24 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-25
+  - CA-428978: handle missing fd dir in proc
+  * Wed Jun 10 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-24
+  - CP-313057: try to fail faster if an SR filesystem is unavailable
+
 * Mon Aug 24 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-23.5
 - Add new patches:
   - 0167-fix-display-image-format-as-its-string-value-in-erro.patch

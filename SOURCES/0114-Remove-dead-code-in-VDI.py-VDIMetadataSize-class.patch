@@ -1,4 +1,4 @@
-From cf7e95229be263631792f3533e3a27a144afb8e3 Mon Sep 17 00:00:00 2001
+From 2722a954466578030fbe539c22da04ac661c425c Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 13 Jan 2025 18:18:50 +0100
 Subject: [PATCH] Remove dead code in VDI.py (VDIMetadataSize class)

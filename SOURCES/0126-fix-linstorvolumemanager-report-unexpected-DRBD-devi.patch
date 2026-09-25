@@ -1,4 +1,4 @@
-From 4bd957aa015ac14d8ebb31b71e8f63216a02fc2c Mon Sep 17 00:00:00 2001
+From 5dc9ba959ba5d2e187bae3190fd3e3c5b69524dc Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Fri, 26 Sep 2025 18:40:25 +0200
 Subject: [PATCH] fix(linstorvolumemanager): report unexpected DRBD device path

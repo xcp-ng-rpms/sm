@@ -1,4 +1,4 @@
-From 539074664473586dafa6453188507896a1d863e3 Mon Sep 17 00:00:00 2001
+From b2d18b7a6e2dbb0fafd936e892cbeb175c78586d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 19 Dec 2024 15:35:01 +0100
 Subject: [PATCH] refactor(cleanup.py): rename _sizeVHD (and getter) to

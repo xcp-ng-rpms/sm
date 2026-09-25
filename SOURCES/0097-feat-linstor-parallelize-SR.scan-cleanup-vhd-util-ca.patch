@@ -1,4 +1,4 @@
-From 7f000a14a818ec3644139f9d649c49cf3bf21b36 Mon Sep 17 00:00:00 2001
+From 61f470cfdc0637761ce544c0eb56d42aa796900e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Mon, 9 Feb 2026 15:44:11 +0100
 Subject: [PATCH] feat(linstor): parallelize SR.scan/cleanup (vhd-util calls)
@@ -429,7 +429,7 @@ index 7874f405..c2652068 100755
      def group_name(self):
          """
 diff --git a/drivers/util.py b/drivers/util.py
-index b7a932c5..4b4ba675 100755
+index 961a7a9a..399747a1 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
 @@ -26,7 +26,9 @@ import signal

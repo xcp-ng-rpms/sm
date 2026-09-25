@@ -1,4 +1,4 @@
-From 86a6b542b4109e6b19e6c5a3c15b594735c537ce Mon Sep 17 00:00:00 2001
+From 02a1301bb59b01b87746444ab4a222db879d256f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 14 Oct 2024 17:33:49 +0200
 Subject: [PATCH] Fix override of FileSR.attach
@@ -30,7 +30,7 @@ index 61e88dcd..16481620 100755
          self.attached = True
  
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 6ac841c9..4de359bf 100755
+index 68390db7..5bb0f73b 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -156,7 +156,10 @@ class FileSR(SR.SR):

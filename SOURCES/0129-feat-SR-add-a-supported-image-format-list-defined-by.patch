@@ -1,4 +1,4 @@
-From ed8f3081bd2852a30c555c388b1646c01ae065ae Mon Sep 17 00:00:00 2001
+From bd8299f2a876f2cead9ef1de6ca9a9051a49c76e Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Thu, 21 May 2026 18:04:04 +0200
 Subject: [PATCH] feat(SR): add a supported image format list defined by
@@ -16,7 +16,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  5 files changed, 77 insertions(+), 66 deletions(-)
 
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index fb9c232e..b846cf5d 100755
+index 2e57fa7b..184c2a17 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -33,7 +33,7 @@ import blktap2

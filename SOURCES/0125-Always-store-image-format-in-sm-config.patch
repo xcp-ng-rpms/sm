@@ -1,4 +1,4 @@
-From 66f12388334cc5363ac80346856168f4f16d54ee Mon Sep 17 00:00:00 2001
+From 9ada241ca266a70a503ad36d6c7299daaa9d0a24 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 22 Apr 2025 10:43:24 +0200
 Subject: [PATCH] Always store image-format in sm-config
@@ -13,7 +13,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  5 files changed, 20 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index de6a35a8..2d83a5e7 100755
+index a53e42f6..0313bd0d 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -33,7 +33,7 @@ import blktap2
@@ -33,7 +33,7 @@ index de6a35a8..2d83a5e7 100755
              self.sm_config = {"type": self.PARAM_RAW}
 +        if not hasattr(self, 'sm_config'):
 +            self.sm_config = {}
-+        self.sm_config = {"image-format": getImageStringFromVdiType(self.vdi_type)}
++        self.sm_config["image-format"] = getImageStringFromVdiType(self.vdi_type)
  
          self._db_introduce()
          self.sr._update(self.sr.uuid, self.size)

@@ -1,4 +1,4 @@
-From fa67bdf17b67622fbf3280e0ea13bcda0d1139cd Mon Sep 17 00:00:00 2001
+From 0c0033c0c1112032a8457b58a8d53ad9ce1220a9 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 13 Dec 2024 12:16:43 +0100
 Subject: [PATCH] feat(VdiType): add an helper to test cow images
@@ -21,7 +21,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  10 files changed, 126 insertions(+), 138 deletions(-)
 
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 15837ef2..95832ecd 100755
+index 06b85157..d7d8571d 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -492,7 +492,7 @@ class FileVDI(VDI.VDI):
@@ -516,10 +516,10 @@ index 484d68f3..e53d1ea3 100755
          elif 'VDI_CONFIG_CBT' not in util.sr_get_capability(
                  self.sr.uuid, session=self.sr.session):
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 6766e1bf..6b78e57e 100755
+index 1df961ef..b13d83b7 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
-@@ -1678,13 +1678,13 @@ class VDI(object):
+@@ -1716,13 +1716,13 @@ class VDI(object):
              # This is a fix for CA-155766
              if hasattr(self.target.vdi.sr, 'DRIVER_TYPE') and \
                 self.target.vdi.sr.DRIVER_TYPE == 'lvhd' and \
@@ -535,7 +535,7 @@ index 6766e1bf..6b78e57e 100755
                  session = self.target.vdi.session
                  vdi_ref = session.xenapi.VDI.get_by_uuid(vdi_uuid)
                  # pylint: disable=used-before-assignment
-@@ -1699,7 +1699,7 @@ class VDI(object):
+@@ -1737,7 +1737,7 @@ class VDI(object):
  
              if hasattr(self.target.vdi.sr, 'DRIVER_TYPE') and \
                 self.target.vdi.sr.DRIVER_TYPE == 'lvhd' and \

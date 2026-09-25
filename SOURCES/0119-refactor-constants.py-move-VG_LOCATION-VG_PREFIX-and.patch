@@ -1,4 +1,4 @@
-From 82aeec2613ecb7be911b8c7a944a9bb1de5c9caa Mon Sep 17 00:00:00 2001
+From 0f81ef72f722e70432e5e709524dd05c5df31a75 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 23 Jan 2025 16:26:39 +0100
 Subject: [PATCH] refactor(constants.py): move VG_LOCATION, VG_PREFIX and
@@ -160,18 +160,18 @@ index fbc596f9..51063e18 100755
                  return  # this is a redundant activation/deactivation call
  
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index 6b78e57e..eb69f59d 100755
+index b13d83b7..b02ee85a 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
-@@ -41,6 +41,7 @@ import json
- import xs_errors
+@@ -42,6 +42,7 @@ import xs_errors
+ from typing import Optional
  import XenAPI # pylint: disable=import-error
  import scsiutil
 +from constants import NS_PREFIX_LVM
  from syslog import openlog, syslog
  from stat import *  # S_ISBLK(), ...
  from vditype import VdiType
-@@ -1679,7 +1680,7 @@ class VDI(object):
+@@ -1717,7 +1718,7 @@ class VDI(object):
              if hasattr(self.target.vdi.sr, 'DRIVER_TYPE') and \
                 self.target.vdi.sr.DRIVER_TYPE == 'lvhd' and \
                 VdiType.isCowImage(vdi_type):
@@ -181,7 +181,7 @@ index 6b78e57e..eb69f59d 100755
  
              # When we attach a static VDI for HA, we cannot communicate with
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 2556b473..971cb1eb 100755
+index 1a804d53..3b2b44f2 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -53,6 +53,8 @@ from functools import reduce

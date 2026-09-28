@@ -1,0 +1,45 @@
+From 8b3dd7e3c87bd23b38758b091b6f1862f6325f48 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Sun, 19 Jul 2026 22:44:31 +0200
+Subject: [PATCH] refactor(lvmcowutil): use a func to get resize journal vol
+ name
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/lvmcowutil.py | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/lvmcowutil.py b/drivers/lvmcowutil.py
+index d38c719f..2dd40d4d 100755
+--- a/drivers/lvmcowutil.py
++++ b/drivers/lvmcowutil.py
+@@ -93,7 +93,7 @@ class LvmCowUtil(object):
+         size = self.cowutil.getResizeJournalSize()
+         if size <= 0:
+             return ''
+-        lvName = "%s_%s" % (self.JOURNAL_RESIZE_TAG, jName)
++        lvName = self._getResizeJournalVolumeName(jName)
+         lvmCache.create(lvName, size, self.JOURNAL_RESIZE_TAG)
+         return os.path.join(lvmCache.vgPath, lvName)
+ 
+@@ -102,8 +102,7 @@ class LvmCowUtil(object):
+         Destroy a VDI resize journal.
+         """
+         if jName:
+-            lvName = "%s_%s" % (self.JOURNAL_RESIZE_TAG, jName)
+-            lvmCache.remove(lvName)
++            lvmCache.remove(self._getResizeJournalVolumeName(jName))
+ 
+     @classmethod
+     def getAllResizeJournals(cls, lvmCache: LVMCache) -> List[Tuple[str, str]]:
+@@ -347,6 +346,10 @@ class LvmCowUtil(object):
+     ) -> None:
+         cls.refreshVolumeOnSlaves(session, srUuid, vgName, lvName, vdiUuid, util.get_all_slaves(session))
+ 
++    @classmethod
++    def _getResizeJournalVolumeName(cls, jName: str) -> str:
++        return f"{cls.JOURNAL_RESIZE_TAG}_{jName}"
++
+     @staticmethod
+     def _tryAcquire(lock):
+         """

@@ -1,4 +1,4 @@
-From df915a924336b09c5c47a73ed27c2f9f2202e57e Mon Sep 17 00:00:00 2001
+From 8e1836fc7ab43235b974adb9dec0df6545eede4d Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Tue, 8 Jul 2025 18:12:40 +0200
 Subject: [PATCH] fix(LinstorSR): robustify DB umount call

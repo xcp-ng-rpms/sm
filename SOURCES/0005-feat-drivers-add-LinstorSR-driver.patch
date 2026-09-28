@@ -1,4 +1,4 @@
-From e82f6744ca0ad694f4e84c05feb45a6d50524f86 Mon Sep 17 00:00:00 2001
+From 1104deb5a3e14b8a97b951d2e7575200e799b7fb Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 16 Mar 2020 15:39:44 +0100
 Subject: [PATCH] feat(drivers): add LinstorSR driver
@@ -5131,10 +5131,10 @@ index a84fb149..b225be0c 100755
      def _is_snap_paused(self):
          vdi_ref = self.session.xenapi.VDI.get_by_uuid(self.vdi_uuid)
 diff --git a/drivers/util.py b/drivers/util.py
-index 15d13e30..a9cf18e8 100755
+index f7aa4357..3c388a4b 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -701,10 +701,35 @@ def get_this_host():
+@@ -700,10 +700,35 @@ def get_this_host():
      return uuid
  
  
@@ -5173,7 +5173,7 @@ index 15d13e30..a9cf18e8 100755
  
  
  def get_localhost_ref(session):
-@@ -1560,13 +1585,21 @@ def get_connected_sockets(pid):
+@@ -1559,13 +1584,21 @@ def get_connected_sockets(pid):
      return sockets
  
  

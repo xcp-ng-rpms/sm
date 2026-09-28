@@ -1,4 +1,4 @@
-From 884be2687db5e0f415dc95368129e2c4b1529a03 Mon Sep 17 00:00:00 2001
+From 9f44676af2840e9bca89c3fbd012818577e1439f Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 15:52:18 +0200
 Subject: [PATCH] Replace deprecated calls to distutils.util.strtobool
@@ -197,10 +197,10 @@ index a470dfec..55327254 100755
              )):
                  return node_name
 diff --git a/drivers/util.py b/drivers/util.py
-index e1bec44b..28069b81 100755
+index a8e479ad..7ce4f835 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -2110,5 +2110,22 @@ def make_profile(name, function):
+@@ -2109,5 +2109,22 @@ def make_profile(name, function):
          SMlog('* End profiling of {} ({}) *'.format(name, filename))
  
  

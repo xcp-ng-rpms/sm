@@ -1,4 +1,4 @@
-From c91cddc059ffc1aa7af30d7ff9763990a9ea5bc4 Mon Sep 17 00:00:00 2001
+From 1450d8ef45a51734f5838cd211d1187dd1507f82 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Thu, 19 Dec 2024 15:19:15 +0100
 Subject: [PATCH] refactor(cleanup.py): rename DB_VHD_PARENT to DB_VDI_PARENT

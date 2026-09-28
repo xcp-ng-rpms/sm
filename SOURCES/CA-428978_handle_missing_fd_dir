@@ -1,0 +1,85 @@
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 00fda59..b5e74f4 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -723,15 +723,19 @@ class Tapdisk(object):
+     @classmethod
+     def path_opened(cls, pid: str, path: str) -> bool:
+         pid_fd_path = os.path.join('/proc', pid, 'fd')
+-        fd_info = os.listdir(pid_fd_path)
+-        for fd in fd_info:
+-            try:
+-                if os.readlink(os.path.join(pid_fd_path, fd)) == path:
+-                    return True
+-            except OSError as ose:
+-                # fd might be closed between calls
+-                if ose.errno != errno.ENOENT:
+-                    raise
++        try:
++            fd_info = os.listdir(pid_fd_path)
++            for fd in fd_info:
++                try:
++                    if os.readlink(os.path.join(pid_fd_path, fd)) == path:
++                        return True
++                except FileNotFoundError:
++                    # fd might be closed between calls
++                    pass
++        except FileNotFoundError:
++            # Process might exit before we get here
++            pass
++
+         return False
+ 
+     @classmethod
+@@ -739,10 +743,9 @@ class Tapdisk(object):
+         try:
+             return (os.path.exists(os.path.join('/proc/', pid, 'exe')) and os.readlink(
+                 os.path.join('/proc/', pid, 'exe')) == '/usr/libexec/tapdisk')
+-        except OSError as ose:
++        except FileNotFoundError:
+             # process might exit between calls
+-            if ose.errno != errno.ENOENT:
+-                raise
++            pass
+ 
+         return False
+ 
+diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
+index cab56c8..d69c02e 100644
+--- a/tests/test_blktap2.py
++++ b/tests/test_blktap2.py
+@@ -117,7 +117,8 @@ class TestTapdisk(unittest.TestCase):
+     def test_from_minor_success(self, mock_exists, mock_readlink, mock_listdir):
+         # Arrange
+         proc_paths = {
+-            '/proc': ['14378', '20947', '21457'],
++            '/proc': ['14378', '20947', '21245', '21457'],
++            '/proc/21245/fd': OSError(errno.ENOENT, ""),
+             '/proc/21457/fd': ['4', '5']
+         }
+         mock_paths = {"/dev/xen/blktap-2/blktap3"}
+@@ -125,6 +126,7 @@ class TestTapdisk(unittest.TestCase):
+         link_paths = {
+             "/proc/14378/exe": OSError(errno.ENOENT, ""),
+             "/proc/20947/exe": "/bin/bash",
++            "/proc/21245/exe": "/usr/libexec/tapdisk",
+             "/proc/21457/exe": "/usr/libexec/tapdisk",
+             "/proc/21457/fd/4": OSError(errno.ENOENT, ""),
+             "/proc/21457/fd/5": "/dev/xen/blktap-2/blktap3"}
+@@ -140,7 +142,15 @@ class TestTapdisk(unittest.TestCase):
+ 
+             return result
+ 
+-        mock_listdir.side_effect = proc_paths.get
++        def listdir(path):
++            result = proc_paths.get(path)
++            print(f"Result for path {path} is {result}")
++            if isinstance(result, Exception):
++                raise result
++
++            return result
++
++        mock_listdir.side_effect = listdir
+         mock_exists.side_effect = exists
+         mock_readlink.side_effect = readlink
+ 

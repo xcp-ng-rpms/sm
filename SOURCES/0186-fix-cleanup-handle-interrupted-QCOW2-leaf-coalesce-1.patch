@@ -1,0 +1,67 @@
+From 663498a79606550712302aa2f0fdd3a3cdf52bcd Mon Sep 17 00:00:00 2001
+From: Alexandre Sollier <github@kuruyia.net>
+Date: Fri, 18 Sep 2026 10:00:07 +0200
+Subject: [PATCH] fix(cleanup): handle interrupted QCOW2 leaf-coalesce (#163)
+
+While handling interrupted leaf-coalesce operations, the GC was only
+checking VHD files in file-based SRs. This lead to such interruptions on
+QCOW2 VDIs always being handled by finishing the leaf-coalesce, instead
+of undoing it if there actually was leftover child or parent QCOW2
+files.
+
+This fixes the issue by adding the QCOW2 file extension to the files
+that are being checked. Any future CoW file will also be handled.
+
+Signed-off-by: Alexandre Sollier <alexandre.sollier@vates.tech>
+---
+ drivers/cleanup.py | 25 ++++++++++++++++++-------
+ 1 file changed, 18 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 0860e0ef..e0d376d4 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -33,6 +33,7 @@ import base64
+ import zlib
+ import errno
+ import stat
++from pathlib import Path
+ 
+ import XenAPI # pylint: disable=import-error
+ import util
+@@ -3217,18 +3218,28 @@ class FileSR(SR):
+     @override
+     def _handleInterruptedCoalesceLeaf(self) -> None:
+         entries = self.journaler.getAll(VDI.JRN_LEAF)
++        extensions = tuple(VDI_TYPE_TO_EXTENSION[vdi_type] for vdi_type in VDI_COW_TYPES)
++        srRoot = Path(self.path)
++
+         for uuid, parentUuid in entries.items():
+-            fileList = os.listdir(self.path)
+-            childName = uuid + VdiTypeExtension.VHD
+-            tmpChildName = self.TMP_RENAME_PREFIX + uuid + VdiTypeExtension.VHD
+-            parentName1 = parentUuid + VdiTypeExtension.VHD
+-            parentName2 = parentUuid + VdiTypeExtension.RAW
+-            parentPresent = (parentName1 in fileList or parentName2 in fileList)
+-            if parentPresent or tmpChildName in fileList:
++            hasCowPath = False
++
++            for extension in extensions:
++                hasCowPath = (
++                    (srRoot / (self.TMP_RENAME_PREFIX + uuid + extension)).exists() or
++                    (srRoot / (parentUuid + extension)).exists()
++                )
++
++                if hasCowPath:
++                    break
++
++            if hasCowPath or (srRoot / (parentUuid + VdiTypeExtension.RAW)).exists():
+                 self._undoInterruptedCoalesceLeaf(uuid, parentUuid)
+             else:
+                 self._finishInterruptedCoalesceLeaf(uuid, parentUuid)
++
+             self.journaler.remove(VDI.JRN_LEAF, uuid)
++
+             vdi = self.getVDI(uuid)
+             if vdi:
+                 vdi.ensureUnpaused()

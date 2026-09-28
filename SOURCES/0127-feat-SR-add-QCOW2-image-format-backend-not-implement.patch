@@ -1,4 +1,4 @@
-From 982515135718ca9a6ece7baaf771a5524e4d90f9 Mon Sep 17 00:00:00 2001
+From e994f974ac1de8c90d38bd9df6a4e0d167f356dd Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Sat, 14 Dec 2024 00:28:06 +0100
 Subject: [PATCH] feat(SR): add QCOW2 image format (backend not implemented)
@@ -61,7 +61,7 @@ index c342d5a1..15957455 100755
      'copyright': '(C) 2008 Citrix Systems Inc',
      'driver_version': '1.0',
 diff --git a/drivers/FileSR.py b/drivers/FileSR.py
-index 2d83a5e7..fb9c232e 100755
+index 0313bd0d..2e57fa7b 100755
 --- a/drivers/FileSR.py
 +++ b/drivers/FileSR.py
 @@ -48,12 +48,12 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", \
@@ -115,11 +115,11 @@ index 2d83a5e7..fb9c232e 100755
                  self.vdi_type = VdiType.VHD
                  self.path = vhd_path
                  found = True
-+            elif util.ioretry(lambda: util.pathexists(qcow2_path)):
++            elif util.pathexists(qcow2_path):
 +                self.vdi_type = VdiType.QCOW2
 +                self.path = qcow2_path
 +                found = True
-             elif util.ioretry(lambda: util.pathexists(raw_path)):
+             elif util.pathexists(raw_path):
                  self.vdi_type = VdiType.RAW
                  self.path = raw_path
 diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
@@ -308,10 +308,10 @@ index 14aa0cd7..0dff2767 100644
      'copyright': '(C) 2020 Vates SAS',
      'driver_version': '1.0',
 diff --git a/drivers/blktap2.py b/drivers/blktap2.py
-index c29b380e..f71976bd 100755
+index 9e6fe94d..d3216a50 100755
 --- a/drivers/blktap2.py
 +++ b/drivers/blktap2.py
-@@ -666,7 +666,7 @@ class Blktap(ClassDevice):
+@@ -667,7 +667,7 @@ class Blktap(ClassDevice):
  
  class Tapdisk(object):
  
@@ -320,7 +320,7 @@ index c29b380e..f71976bd 100755
  
      def __init__(self, pid, minor, _type, path, state):
          self.pid = pid
-@@ -1091,6 +1091,7 @@ class VDI(object):
+@@ -1129,6 +1129,7 @@ class VDI(object):
          return {
              'raw': 'aio',
              'vhd': 'vhd',
@@ -328,7 +328,7 @@ index c29b380e..f71976bd 100755
              'iso': 'aio',  # for ISO SR
              'aio': 'aio',  # for LVHD
              'file': 'aio',
-@@ -1121,7 +1122,8 @@ class VDI(object):
+@@ -1159,7 +1160,8 @@ class VDI(object):
                        'aio': 'tap',  # for LVM raw nodes
                        'iso': 'tap',  # for ISOSR
                        'file': 'tap',
@@ -338,7 +338,7 @@ index c29b380e..f71976bd 100755
  
      def tap_wanted(self):
          # 1. Let the target vdi_type decide
-@@ -1178,8 +1180,6 @@ class VDI(object):
+@@ -1216,8 +1218,6 @@ class VDI(object):
  
          def get_vdi_type(self):
              _type = self.vdi.vdi_type

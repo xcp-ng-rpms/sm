@@ -1,4 +1,4 @@
-From d1757727c50dc3d723b49ebd1311f4d882121459 Mon Sep 17 00:00:00 2001
+From 67cfe85cdfc248f705436ece3add174e996df869 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 21 Oct 2024 17:10:39 +0200
 Subject: [PATCH] Simplify FakeSMBSR implementation (remove member vars in

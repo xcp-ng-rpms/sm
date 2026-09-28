@@ -1,4 +1,4 @@
-From 2510db2b86a1d05dbb5b0d1711af98dd2992a49f Mon Sep 17 00:00:00 2001
+From afb796568ff58be96634fc2fe8e318bf52850d7b Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Mon, 20 Jan 2025 22:39:43 +0100
 Subject: [PATCH] refactor(LVHDSR): rename to "LVMSR"
@@ -10,7 +10,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  drivers/LVHDoHBASR.py                   |  18 ++--
  drivers/LVHDoISCSISR.py                 |  22 ++--
  drivers/{LVHDSR.py => LVMSR.py}         |  82 +++++++-------
- drivers/cleanup.py                      |  16 +--
+ drivers/cleanup.py                      |  18 ++--
  drivers/on_slave.py                     |   2 +-
  drivers/trim_util.py                    |   2 +-
  tests/test_LVHDoFCoESR.py               |  12 +--
@@ -18,7 +18,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  tests/test_LVHDoISCSISR.py              |   8 +-
  tests/{test_LVHDSR.py => test_LVMSR.py} | 136 ++++++++++++------------
  tests/test_on_slave.py                  |   2 +-
- 13 files changed, 158 insertions(+), 158 deletions(-)
+ 13 files changed, 159 insertions(+), 159 deletions(-)
  rename drivers/{LVHDSR.py => LVMSR.py} (97%)
  rename tests/{test_LVHDSR.py => test_LVMSR.py} (86%)
 
@@ -606,7 +606,7 @@ index 2da20be2..5200a919 100755
 -    SR.registerSR(LVHDSR)
 +    SR.registerSR(LVMSR)
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index dd2eb696..2556b473 100755
+index dd2eb696..1a804d53 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -1230,7 +1230,7 @@ class FileVDI(VDI):
@@ -672,15 +672,17 @@ index dd2eb696..2556b473 100755
          type = SR.TYPE_LVHD
      if type in ["lvm", "lvmoiscsi", "lvmohba", "lvmofcoe"]:
          # temporary while LVHD is symlinked as LVM
-@@ -4168,7 +4168,7 @@ def cache_cleanup(session, srUuid, maxAge):
+@@ -4168,8 +4168,8 @@ def cache_cleanup(session, srUuid, maxAge):
  def debug(sr_uuid, cmd, vdi_uuid):
      Util.log("Debug command: %s" % cmd)
      sr = SR.getInstance(sr_uuid, None)
 -    if not isinstance(sr, LVHDSR):
+-        print("Error: not an LVHD SR")
 +    if not isinstance(sr, LVMSR):
-         print("Error: not an LVHD SR")
++        print("Error: not an LVM SR")
          return
      sr.scanLocked()
+     vdi = sr.getVDI(vdi_uuid)
 diff --git a/drivers/on_slave.py b/drivers/on_slave.py
 index 2f58281a..5291dfcf 100755
 --- a/drivers/on_slave.py

@@ -1,4 +1,4 @@
-From 119bf14f19e15b1e2620f1b38835743f6db45c38 Mon Sep 17 00:00:00 2001
+From ba8a848ebc5db0b35e1ce84fc97efc4f356eeb32 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.tech>
 Date: Fri, 29 Aug 2025 00:58:18 +0200
 Subject: [PATCH] fix(test_blktap2.py): replace phy VDI with raw VDI
@@ -9,7 +9,7 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/tests/test_blktap2.py b/tests/test_blktap2.py
-index 0954ba18..db8b2932 100644
+index 3d92355f..e3eb09b0 100644
 --- a/tests/test_blktap2.py
 +++ b/tests/test_blktap2.py
 @@ -16,6 +16,7 @@ import util
@@ -20,7 +20,7 @@ index 0954ba18..db8b2932 100644
  
  class BogusException(Exception):
      pass
-@@ -172,7 +173,7 @@ class TestVDI(unittest.TestCase):
+@@ -239,7 +240,7 @@ class TestVDI(unittest.TestCase):
              autospec='blktap2.VDI.TargetDriver')
          mock_target.return_value = self.mock_target
  

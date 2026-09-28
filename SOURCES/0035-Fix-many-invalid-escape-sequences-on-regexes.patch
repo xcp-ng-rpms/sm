@@ -1,4 +1,4 @@
-From aefdeeee6ab73e86c171259b6b4ef02497686527 Mon Sep 17 00:00:00 2001
+From 06c367110fde504f75a6bf643b0b266829ffa4e1 Mon Sep 17 00:00:00 2001
 From: Ronan Abhamon <ronan.abhamon@vates.fr>
 Date: Fri, 11 Oct 2024 18:21:07 +0200
 Subject: [PATCH] Fix many invalid escape sequences on regexes
@@ -11,10 +11,10 @@ Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.fr>
  3 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/util.py b/drivers/util.py
-index 32246c87..e5dde7a0 100755
+index c2749690..6addf9de 100755
 --- a/drivers/util.py
 +++ b/drivers/util.py
-@@ -1097,7 +1097,7 @@ def diskFromPartition(partition):
+@@ -1096,7 +1096,7 @@ def diskFromPartition(partition):
          return m.group(2)
  
      numlen = 0  # number of digit characters
@@ -23,7 +23,7 @@ index 32246c87..e5dde7a0 100755
      if m is not None:
          numlen = len(m.group(1))
  
-@@ -1108,7 +1108,7 @@ def diskFromPartition(partition):
+@@ -1107,7 +1107,7 @@ def diskFromPartition(partition):
      # is it a mapper path?
      if partition.startswith("mapper"):
          if re.search("p[0-9]*$", partition):

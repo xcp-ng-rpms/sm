@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.1%{?dist}
+Release: %{?xsrel}.2%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -288,6 +288,7 @@ Patch1186: 0186-fix-cleanup-handle-interrupted-QCOW2-leaf-coalesce-1.patch
 Patch1187: 0187-fix-qcow2util-handle-abort-in-online-coalesce-167.patch
 Patch1188: 0188-feat-linstor-handle-ENODATA-errors-with-linstor-VDIs.patch
 Patch1189: 0189-LVMSR-convert-refvdi-returned-by-get_snapshot_of-to-.patch
+Patch1190: 0001-feat-qcow2util-Support-Qcow2-subclusters.patch
 
 %description
 This package contains storage backends used in XCP
@@ -612,6 +613,9 @@ then
 fi
 
 %changelog
+* Thu Oct 13 2026 Anthoine Bourgeois <anthoine.bourgeois@vates.tech> - 3.2.12-25.2
+- Support Qcow2 subclusters
+
 * Fri Sep 25 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.1
 - Rebase on 3.2.12-25
 - Sync patches with our latest 3.2.12-8.3 branch

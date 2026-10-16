@@ -1,0 +1,34 @@
+From 934c3c9a14c909f92ba731995e54ff9c47a465b6 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Thu, 15 Oct 2026 23:26:45 +0200
+Subject: [PATCH] fix(linstor): health check helper broken due to API changes
+ (#176)
+
+Without this fix, we have this error field in output:
+```
+"errors": [{"code": 33619968, "message": "'volumes'"}]
+```
+
+In fact parsing was broken due to `get_resources_info` changes in a previous commit.
+So disk-state analysis was never executed since this refactoring.
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstor-manager | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index c8d69d5f..ab738a4e 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -1110,8 +1110,8 @@ def health_check(session, args):
+         all_resources = linstor.get_resources_info()
+         result['resources'] = all_resources
+ 
+-        for resource_name, resource_by_node in all_resources.items():
+-            for node_name, resource in resource_by_node.items():
++        for resource_name, resource_info in all_resources.items():
++            for node_name, resource in resource_info['nodes'].items():
+                 for volume_index, volume in enumerate(resource['volumes']):
+                     disk_state = volume['disk-state']
+                     if disk_state in ['UpToDate', 'Created', 'Attached']:

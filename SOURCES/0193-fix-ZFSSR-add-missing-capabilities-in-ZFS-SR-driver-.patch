@@ -1,0 +1,36 @@
+From 832168d577699678bea2b033fb3880471eed9db5 Mon Sep 17 00:00:00 2001
+From: fred <frederic.zind@vates.tech>
+Date: Fri, 16 Oct 2026 00:15:41 +0200
+Subject: [PATCH] fix(ZFSSR): add missing capabilities in ZFS SR driver (#181)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+`ZFSSR.py` driver `CAPABILITIES` are missing 2 features:
+`VDI_RESET_ON_BOOT/2`, `VDI_UPDATE`
+https://github.com/xcp-ng/sm/blob/1680f1/drivers/ZFSSR.py#L28
+
+This is just a miss: https://github.com/xcp-ng/sm/commit/eebb6f
+
+This was found working on: https://github.com/xcp-ng/xcp-ng-tests/pull/699
+
+Signed-off-by: Frédéric Zind <frederic.zind@vates.tech>
+---
+ drivers/ZFSSR.py | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
+index 0dff2767..9f211671 100644
+--- a/drivers/ZFSSR.py
++++ b/drivers/ZFSSR.py
+@@ -40,7 +40,9 @@ CAPABILITIES = [
+     'VDI_CONFIG_CBT',
+     'VDI_ACTIVATE',
+     'VDI_DEACTIVATE',
+-    'THIN_PROVISIONING'
++    'THIN_PROVISIONING',
++    'VDI_RESET_ON_BOOT/2',
++    'VDI_UPDATE'
+ ]
+ 
+ CONFIGURATION = [

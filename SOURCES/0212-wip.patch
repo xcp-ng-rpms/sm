@@ -1,0 +1,26 @@
+From 31fa57bf1727ac4586ea4ee9495df641070dd196 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 22 Oct 2026 14:49:11 +0200
+Subject: [PATCH] wip
+
+---
+ drivers/linstorvolumemanager.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index e5635d93..a47a20ac 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -2267,8 +2267,12 @@ class LinstorVolumeManager(object):
+     def _get_kv_cache(self):
+         if self._kv_cache_dirty:
+             self._kv_cache = self._create_kv_cache()
++            self._kv_cache_dirty = False
+         return self._kv_cache
+ 
++    def _mark_kv_cache_as_dirty(self):
++        self._kv_cache_dirty = True
++
+     def _create_resource_cache(self):
+         self._resource_cache = self._linstor.resource_list_raise()
+         self._resource_cache_dirty = False

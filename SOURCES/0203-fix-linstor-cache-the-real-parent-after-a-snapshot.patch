@@ -1,0 +1,171 @@
+From 7a01ee9ecc5f9119472a955c4c5417f8d36a14af Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 19 Oct 2026 14:29:13 +0200
+Subject: [PATCH] fix(linstor): cache the real parent after a snapshot
+
+`snapshot` cached the given parent as the parent of the new image. But
+without `-e` (`checkEmpty`), `vhd-util snapshot` skips an empty parent
+and links the new image to the grandparent. `LinstorVDI._snapshot` then
+destroys the unused base. On snapshots taken with no write in between,
+the new active VDI and the new snapshot kept a cached parent that no
+longer exists: every SM call ignored their entries and read the images
+until the next scan rewrote them.
+
+With `checkEmpty`, read the parent of the new image after the snapshot
+(local `getParent`) and cache it. If the read fails, the parent stays
+missing and the next scan reads it, the snapshot doesn't fail.
+
+`_updating_image_info` yields its `values` so the caller can change
+them once the modification is done.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorcowutil.py    | 27 ++++++++++++++-----
+ tests/test_linstorcowutil.py | 51 ++++++++++++++++++++++++++++++++++--
+ 2 files changed, 69 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index d3af7f25..c3701784 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -436,9 +436,9 @@ class LinstorCowUtil:
+ 
+     @linstormodifier()
+     def snapshot(self, path, parent, parentRaw, msize=0, checkEmpty=True):
+-        # A new image is not hidden and its parent is known. Its virtual size
+-        # is the parent's one, only known if the parent is a COW image with a
+-        # valid cached info. Otherwise it stays missing, the next scan reads it.
++        # A new image is not hidden. Its virtual size is the parent's one, only
++        # known if the parent is a COW image with a valid cached info.
++        # Otherwise it stays missing, the next scan reads it.
+         # Nothing to invalidate: like in `create`, the volume is new.
+         parent_uuid = self._extract_uuid(parent)
+         values = {'hidden': False, 'parent_uuid': parent_uuid}
+@@ -447,10 +447,22 @@ class LinstorCowUtil:
+             if parent_info:
+                 values['size_virt'] = parent_info['size_virt']
+ 
+-        with self._updating_image_info(path, (), **values):
+-            return self._call_local_method_or_fail(
++        with self._updating_image_info(path, (), **values) as values:
++            ret = self._call_local_method_or_fail(
+                 self._cowutil.snapshot, path, parent, parentRaw, msize, checkEmpty
+             )
++            if checkEmpty:
++                # An empty parent can be skipped, the image is then linked to
++                # the grandparent: read the real parent. If it fails, the
++                # parent stays missing, the next scan reads it.
++                try:
++                    values['parent_uuid'] = self._call_local_method(
++                        self._cowutil.getParent, path, self._extract_uuid
++                    ) or ''
++                except Exception as e:
++                    del values['parent_uuid']
++                    util.SMlog(f'Failed to read the parent of {path} after snapshot: {e}')
++            return ret
+ 
+     def inflate(self, journaler, vdi_uuid, vdi_path, new_size, old_size):
+         # Only inflate if the LINSTOR volume capacity is not enough.
+@@ -575,7 +587,8 @@ class LinstorCowUtil:
+         """
+         Keep the image info cached in the KV store in sync with an image
+         modification: `props` are invalidated before, `values` are written
+-        after, only if the modification succeeded.
++        after, only if the modification succeeded. `values` is yielded, the
++        caller can change it once the modification is done.
+         A crash in between leaves invalid entries, so the next `get_info`
+         reads the image.
+         """
+@@ -589,7 +602,7 @@ class LinstorCowUtil:
+                 parent_uuid='parent_uuid' in props
+             )
+ 
+-        yield
++        yield values
+ 
+         if not values:
+             return
+diff --git a/tests/test_linstorcowutil.py b/tests/test_linstorcowutil.py
+index 85c9ec77..257d9302 100644
+--- a/tests/test_linstorcowutil.py
++++ b/tests/test_linstorcowutil.py
+@@ -10,6 +10,7 @@ from vditype import VdiType
+ 
+ VDI_UUID = '11111111-1111-1111-1111-111111111111'
+ PARENT_UUID = '22222222-2222-2222-2222-222222222222'
++GRANDPARENT_UUID = '33333333-3333-3333-3333-333333333333'
+ NEW_UUID = '33333333-3333-3333-3333-333333333333'
+ 
+ HIDDEN = LinstorVolumeManager.PROP_HIDDEN
+@@ -427,14 +428,59 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+         self.store_parent()
+ 
+         with mock.patch.object(self.cowutil, 'snapshot'), \
++                mock.patch.object(self.cowutil, 'getParent', return_value=PARENT_UUID), \
+                 mock.patch.object(LinstorVolumeManager, 'invalidate_volume_image_info') as invalidate:
+             self.linstorcowutil.snapshot(self.path, self.parent_path, False)
+ 
+         invalidate.assert_not_called()
+         self.assert_image_info(False, 8192, PARENT_UUID)
+ 
++    def test_snapshot_empty_parent_skipped(self):
++        # The parent is empty: the image is linked to the grandparent.
++        self.store_parent()
++
++        with mock.patch.object(self.cowutil, 'snapshot'), \
++                mock.patch.object(self.cowutil, 'getParent', return_value=GRANDPARENT_UUID) as get_parent:
++            self.linstorcowutil.snapshot(self.path, self.parent_path, False)
++
++        get_parent.assert_called_once_with(self.path, self.linstorcowutil._extract_uuid)
++        self.assert_image_info(False, 8192, GRANDPARENT_UUID)
++
++    def test_snapshot_empty_parent_without_parent(self):
++        self.store_parent()
++
++        with mock.patch.object(self.cowutil, 'snapshot'), \
++                mock.patch.object(self.cowutil, 'getParent', return_value=None):
++            self.linstorcowutil.snapshot(self.path, self.parent_path, False)
++
++        self.assert_image_info(False, 8192, '')
++
++    def test_snapshot_without_check_empty(self):
++        self.store_parent()
++
++        with mock.patch.object(self.cowutil, 'snapshot'), \
++                mock.patch.object(self.cowutil, 'getParent') as get_parent:
++            self.linstorcowutil.snapshot(self.path, self.parent_path, False, checkEmpty=False)
++
++        get_parent.assert_not_called()
++        self.assert_image_info(False, 8192, PARENT_UUID)
++
++    def test_snapshot_get_parent_failure_is_not_fatal(self):
++        self.store_parent()
++
++        with mock.patch.object(self.cowutil, 'snapshot'), \
++                mock.patch.object(self.cowutil, 'getParent', side_effect=Exception('read error')):
++            self.linstorcowutil.snapshot(self.path, self.parent_path, False)
++
++        self.assertEqual(get_prop(self.manager, VDI_UUID, HIDDEN), '0')
++        self.assertEqual(get_prop(self.manager, VDI_UUID, SIZE_VIRT), '8192')
++        self.assertIsNone(get_prop(self.manager, VDI_UUID, PARENT))
++        self.assertIsNone(self.manager.get_volume_image_info(VDI_UUID))
++        self.assertIn('Failed to read the parent', self.mock_log.call_args[0][0])
++
+     def test_snapshot_parent_not_cached(self):
+-        with mock.patch.object(self.cowutil, 'snapshot'):
++        with mock.patch.object(self.cowutil, 'snapshot'), \
++                mock.patch.object(self.cowutil, 'getParent', return_value=PARENT_UUID):
+             self.linstorcowutil.snapshot(self.path, self.parent_path, False)
+ 
+         self.assertEqual(get_prop(self.manager, VDI_UUID, HIDDEN), '0')
+@@ -445,7 +491,8 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+     def test_snapshot_raw_parent(self):
+         self.store_parent()
+ 
+-        with mock.patch.object(self.cowutil, 'snapshot'):
++        with mock.patch.object(self.cowutil, 'snapshot'), \
++                mock.patch.object(self.cowutil, 'getParent', return_value=PARENT_UUID):
+             self.linstorcowutil.snapshot(self.path, self.parent_path, True)
+ 
+         self.assertEqual(get_prop(self.manager, VDI_UUID, PARENT), PARENT_UUID)

@@ -1,0 +1,37 @@
+From 4f63794efd5de559c08c941e3eb7b8716b37c760 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 28 Oct 2026 14:31:09 +0100
+Subject: [PATCH] refactor(linstor): drop a bool cast and a comment in
+ LinstorCowUtil
+
+`set_hidden` cast `hidden` to bool for the cache: every caller passes a
+bool, and the cache only uses its truthiness. The comment in `kill_data`
+doesn't add anything to the code.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorcowutil.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 5279daf4..19d143f4 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -446,7 +446,7 @@ class LinstorCowUtil:
+ 
+     @linstormodifier()
+     def set_hidden(self, path, hidden=True):
+-        with self._updating_image_info(path, ('hidden',), hidden=bool(hidden)):
++        with self._updating_image_info(path, ('hidden',), hidden=hidden):
+             return self._call_local_method_or_fail(self._cowutil.setHidden, path, hidden)
+ 
+     @linstormodifier()
+@@ -455,7 +455,6 @@ class LinstorCowUtil:
+ 
+     @linstormodifier()
+     def kill_data(self, path):
+-        # Only zeroes the data: the cached image info doesn't change.
+         return self._call_local_method_or_fail(self._cowutil.killData, path)
+ 
+     @linstormodifier()

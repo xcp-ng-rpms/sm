@@ -1,0 +1,39 @@
+From 3933b30736472dc0d14aeef6c2c8b032b83e8be6 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 13 Oct 2026 18:47:24 +0200
+Subject: [PATCH] perf(linstor): limit the scan thread pool to 4 workers
+
+`MultiLinstorCowUtil.run` used the default `ThreadPoolExecutor` size,
+`os.cpu_count() * 5` with Python 3.6. Each worker opens its own XAPI
+session and builds its own `LinstorVolumeManager`, and with that many
+workers the scan is slower than with a small pool.
+
+`xe sr-scan` on a 3-host pool with 987 VDIs, mean of 3 runs:
+
+  pool size       without KV cache   with KV cache (warm)
+  default         67.9 s             12.6 s
+  1 worker        98.7 s             6.6 s
+  4 workers       43.3 s             7.6 s
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorcowutil.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 80414bd3..5f8f49a7 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -772,7 +772,10 @@ class MultiLinstorCowUtil:
+                 self._init_executor_thread()
+             return func(user_data, self)
+ 
+-        with ThreadPoolExecutor(thread_name_prefix="CowUtil") as executor:
++        # Note: The default pool size (`os.cpu_count() * 5` with Python 3.6)
++        # makes the scan slower than a small pool. Each worker opens its own
++        # XAPI session and builds its own `LinstorVolumeManager`.
++        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="CowUtil") as executor:
+             return executor.map(lambda user_data: wrapper(func, user_data), user_data_list)
+ 
+     def get_local_cowutil(self, vdi_type):

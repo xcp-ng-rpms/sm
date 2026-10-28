@@ -1,0 +1,40 @@
+From d3b95138c1c4741fcc90c1e8399269cf3733b3b2 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 28 Oct 2026 14:08:35 +0100
+Subject: [PATCH] refactor(linstor): drop two comments in LinstorCowUtil
+
+The note above the remote setters about the virtual size written in the
+cache and the comment in `force_coalesce` don't add anything to the
+code.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorcowutil.py | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 19c68206..5279daf4 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -536,10 +536,6 @@ class LinstorCowUtil:
+     # Remote setters: write locally and try on another host in case of failure.
+     # --------------------------------------------------------------------------
+ 
+-    # Note: The requested virtual size is written in the cache as is: callers
+-    # pass a size already valid for the image (rounded by
+-    # `validateAndRoundImageSize` or the virtual size of another image).
+-
+     @linstormodifier()
+     def set_size_virt(self, path, size, jFile):
+         kwargs = {
+@@ -570,9 +566,6 @@ class LinstorCowUtil:
+ 
+     @linstormodifier()
+     def force_coalesce(self, path):
+-        # Writes the data of `path` in its parent: the cached image info of
+-        # both doesn't change. The parent size is updated before with
+-        # `set_size_virt*`.
+         return int(self._call_method(self._cowutil.coalesce, 'coalesce', path, use_parent=True))
+ 
+     @linstormodifier()

@@ -1,0 +1,183 @@
+From bbaafaff76e3c252d43f4e5ef6976cd8a932ed40 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 21 Oct 2026 14:38:09 +0200
+Subject: [PATCH] fix(linstor): check the parent in the image before a GC
+ coalesce
+
+The GC builds its tree from `get_info`, which returns the image info
+cached in the KV store. A stale cached parent there would make it merge
+an image into the wrong parent, which corrupts data.
+
+Add a `_checkCachedParentMatchesVDI` hook, called before the first write
+of a coalesce: in `_coalesce` before the running file and the coalesce
+journal (not when resuming an interrupted one, the merge is done), and
+in `_doCoalesceLeaf` before the leaf journal. It does nothing by
+default. The LINSTOR GC reads the parent from the image itself
+(`get_parent`, never cached) and raises an `SMException` if it isn't the
+parent of the tree: the GC skips that coalesce, as for any failed
+coalesce.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py            | 26 ++++++++++
+ tests/test_cleanup_linstor.py | 92 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 118 insertions(+)
+ create mode 100644 tests/test_cleanup_linstor.py
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 26500609..c5d2ddfe 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2555,6 +2555,8 @@ class SR(object):
+             # The parent volume may become inactive if the host is rebooted.
+             vdi._ensureParentActiveForRelink()
+         else:
++            self._checkCachedParentMatchesVDI(vdi)
++
+             # JRN_COALESCE is used to check which VDI is being coalesced in
+             # order to decide whether to abort the coalesce. We remove the
+             # journal as soon as the COW coalesce step is done, because we
+@@ -2904,6 +2906,7 @@ class SR(object):
+     def _doCoalesceLeaf(self, vdi: VDI, coalesce_on_remote: bool):
+         """Actual coalescing of a leaf VDI onto parent. Must be called in an
+         offline/atomic context"""
++        self._checkCachedParentMatchesVDI(vdi)
+         self.journaler.create(VDI.JRN_LEAF, vdi.uuid, vdi.parent.uuid)
+         self._prepareCoalesceLeaf(vdi)
+         vdi.parent._setHidden(False)
+@@ -2985,6 +2988,13 @@ class SR(object):
+             extra = 0
+         return extra
+ 
++    def _checkCachedParentMatchesVDI(self, vdi) -> None:
++        """Called before the first write of a coalesce of `vdi` onto its
++        parent: check that the parent of `vdi` in the tree, which can come
++        from cached image info, is the parent in its image. Raise an
++        SMException to cancel the coalesce. Nothing to check by default."""
++        pass
++
+     def _prepareCoalesceLeaf(self, vdi) -> None:
+         pass
+ 
+@@ -3825,6 +3835,22 @@ class LinstorSR(SR):
+ 
+         return all_vdi_info
+ 
++    @override
++    def _checkCachedParentMatchesVDI(self, vdi) -> None:
++        # The tree can be built from the image info cached in the KV store:
++        # read the parent in the image itself before merging, a wrong parent
++        # would corrupt data. A remote call can return the string 'None' for
++        # no parent.
++        parent_uuid = vdi.linstorcowutil.get_parent(vdi.uuid)
++        if not parent_uuid or parent_uuid == 'None':
++            parent_uuid = None
++        expected_uuid = vdi.parent.uuid if vdi.parent else None
++        if parent_uuid != expected_uuid:
++            raise util.SMException(
++                'Parent of {} in its image is {}, expected {}: coalesce cancelled'
++                .format(vdi.uuid, parent_uuid, expected_uuid)
++            )
++
+     @override
+     def _prepareCoalesceLeaf(self, vdi) -> None:
+         vdi._activateChain()
+diff --git a/tests/test_cleanup_linstor.py b/tests/test_cleanup_linstor.py
+new file mode 100644
+index 00000000..a4d7fbd9
+--- /dev/null
++++ b/tests/test_cleanup_linstor.py
+@@ -0,0 +1,92 @@
++import unittest
++from unittest import mock
++
++import cleanup
++import util
++
++VDI_UUID = '11111111-1111-1111-1111-111111111111'
++PARENT_UUID = '22222222-2222-2222-2222-222222222222'
++OTHER_UUID = '33333333-3333-3333-3333-333333333333'
++
++
++def new_linstor_sr():
++    # The constructor needs XAPI and LINSTOR: only set what the tested
++    # methods use.
++    sr = object.__new__(cleanup.LinstorSR)
++    sr.uuid = 'sr-uuid'
++    sr.xapi = mock.Mock()
++    sr._linstor = mock.Mock()
++    sr.journaler = mock.Mock()
++    return sr
++
++
++class TestCheckCachedParentMatchesVDI(unittest.TestCase):
++    def setUp(self):
++        self.sr = new_linstor_sr()
++
++    def vdi(self, image_parent, tree_parent):
++        vdi = mock.Mock()
++        vdi.uuid = VDI_UUID
++        vdi.linstorcowutil.get_parent.return_value = image_parent
++        if tree_parent:
++            vdi.parent.uuid = tree_parent
++        else:
++            vdi.parent = None
++        return vdi
++
++    def test_same_parent(self):
++        vdi = self.vdi(PARENT_UUID, PARENT_UUID)
++        self.sr._checkCachedParentMatchesVDI(vdi)
++        vdi.linstorcowutil.get_parent.assert_called_once_with(VDI_UUID)
++
++    def test_other_parent_cancels(self):
++        for image_parent in (OTHER_UUID, None, '', 'None'):
++            with self.assertRaises(util.SMException):
++                self.sr._checkCachedParentMatchesVDI(self.vdi(image_parent, PARENT_UUID))
++
++    def test_no_parent_in_both(self):
++        for image_parent in (None, '', 'None'):
++            self.sr._checkCachedParentMatchesVDI(self.vdi(image_parent, None))
++
++    def test_parent_in_image_only_cancels(self):
++        with self.assertRaises(util.SMException):
++            self.sr._checkCachedParentMatchesVDI(self.vdi(PARENT_UUID, None))
++
++
++class TestParentCheckedBeforeAnyWrite(unittest.TestCase):
++    def setUp(self):
++        self.sr = new_linstor_sr()
++        self.sr.journaler.get.return_value = None
++        self.vdi = mock.Mock()
++        self.vdi.uuid = VDI_UUID
++        self.vdi.parent.uuid = PARENT_UUID
++        patcher = mock.patch.object(
++            cleanup.LinstorSR, '_checkCachedParentMatchesVDI', side_effect=util.SMException('stale')
++        )
++        self.check = patcher.start()
++        self.addCleanup(patcher.stop)
++
++    def test_coalesce(self):
++        with mock.patch.object(cleanup.SR, '_create_running_file') as create_running_file:
++            with self.assertRaises(util.SMException):
++                self.sr._coalesce(self.vdi)
++        self.check.assert_called_once_with(self.vdi)
++        create_running_file.assert_not_called()
++        self.sr.journaler.create.assert_not_called()
++
++    def test_coalesce_already_done_is_not_checked(self):
++        # The merge was done before an interruption: only the relink is left.
++        self.sr.journaler.get.return_value = '1'
++        for name in ('lock', 'unlock', 'scan', 'deleteVDI'):
++            setattr(self.sr, name, mock.Mock())
++        self.sr._coalesce(self.vdi)
++        self.check.assert_not_called()
++        self.vdi._relinkSkip.assert_called_once_with()
++
++    def test_leaf_coalesce(self):
++        with self.assertRaises(util.SMException):
++            self.sr._doCoalesceLeaf(self.vdi, False)
++        self.check.assert_called_once_with(self.vdi)
++        self.sr.journaler.create.assert_not_called()
++        self.vdi.parent._setHidden.assert_not_called()
++

@@ -1,0 +1,78 @@
+From 7049f29848657ab8c7e0ac2a39509fd9b1f80814 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 27 Oct 2026 09:58:18 +0100
+Subject: [PATCH] refactor(linstor): don't rewrite the children cached parent
+ on a uuid update
+
+`update_volume_uuid` searched every volume of the KV store for a cached
+`parent-uuid` equal to the old uuid and rewrote it. No rename needs it:
+- a snapshot renames a leaf (XAPI only snapshots leaves), the new
+  children are created afterwards with their parent read from the image;
+- a leaf coalesce renames the parent to the leaf uuid, its only child is
+  the old leaf, which is garbage.
+A child left with a cached parent that no longer exists is a miss, so
+its info is read from the image.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 17 -----------------
+ tests/test_linstorcowutil.py    | 10 ----------
+ 2 files changed, 27 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 51aa4e00..f95fe2fb 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1179,17 +1179,6 @@ class LinstorVolumeManager(object):
+             )
+         )
+ 
+-        # The children images still reference the same device path, so their
+-        # parent is now the new uuid.
+-        try:
+-            self._update_children_parent_uuid(volume_uuid, new_volume_uuid)
+-        except Exception as e:
+-            # Not fatal: a cached parent uuid that doesn't exist is ignored.
+-            self._logger(
+-                'Failed to update cached parent uuid of {} children: {}'
+-                .format(volume_uuid, e)
+-            )
+-
+     def update_volume_name(self, volume_uuid, volume_name):
+         """
+         Change the volume name of a volume.
+@@ -1436,12 +1425,6 @@ class LinstorVolumeManager(object):
+             if invalidate:
+                 volume_properties[prop] = self.IMAGE_INFO_INVALID
+ 
+-    def _update_children_parent_uuid(self, parent_uuid, new_parent_uuid):
+-        for volume_uuid in list(self._volumes):
+-            volume_properties = self._get_volume_properties(volume_uuid)
+-            if volume_properties.get(self.PROP_PARENT_UUID) == parent_uuid:
+-                volume_properties[self.PROP_PARENT_UUID] = new_parent_uuid
+-
+     def shallow_clone_volume(self, volume_uuid, clone_uuid, persistent=True):
+         """
+         Clone a volume. Do not copy the data, this method creates a new volume
+diff --git a/tests/test_linstorcowutil.py b/tests/test_linstorcowutil.py
+index 4d91396f..15e9228f 100644
+--- a/tests/test_linstorcowutil.py
++++ b/tests/test_linstorcowutil.py
+@@ -172,16 +172,6 @@ class TestLinstorVolumeManagerImageInfo(unittest.TestCase):
+             {'hidden': True, 'size_virt': 1024, 'parent_uuid': PARENT_UUID}
+         )
+ 
+-    def test_update_volume_uuid_updates_children(self):
+-        self.manager.set_volume_image_info(VDI_UUID, hidden=False, size_virt=1024, parent_uuid=PARENT_UUID)
+-
+-        self.manager.update_volume_uuid(PARENT_UUID, NEW_UUID)
+-
+-        self.assertEqual(
+-            self.manager.get_volume_image_info(VDI_UUID),
+-            {'hidden': False, 'size_virt': 1024, 'parent_uuid': NEW_UUID}
+-        )
+-
+     def test_update_volume_uuid_without_image_info(self):
+         self.manager.update_volume_uuid(VDI_UUID, NEW_UUID)
+ 

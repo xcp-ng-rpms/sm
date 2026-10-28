@@ -1,0 +1,46 @@
+From 6a78b1c2c3ec87c5236d73783c46f9002a893ca4 Mon Sep 17 00:00:00 2001
+From: Ronan Abhamon <ronan.abhamon@vates.tech>
+Date: Wed, 21 Oct 2026 01:04:52 +0200
+Subject: [PATCH] fix(linstor): improve `ss` command speed (#184)
+
+Remove useless `p` param on `ss` command. It's used to fetch process,
+useless here.
+
+Before:
+```
+[18:03 sr650-s1 ~]# time ss -tnpH state established "( sport = :3366 or sport = :3367 )"
+0                                    0                                                                      10.30.0.72:3366                                                                 10.30.0.74:58958                                 users:(("java",pid=1973,fd=175))
+
+real    0m0.231s
+user    0m0.093s
+sys     0m0.137s
+```
+
+After:
+```
+[18:07 sr650-s1 ~]# time ss -tnH state established "( sport = :3366 or sport = :3367 )"
+0                                    0                                                                      10.30.0.72:3366                                                                 10.30.0.74:58958
+
+real    0m0.016s
+user    0m0.002s
+sys     0m0.015s
+```
+
+Signed-off-by: Ronan Abhamon <ronan.abhamon@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 9ab3b0af..0ddef9b2 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -153,7 +153,7 @@ def round_down(value, divisor):
+ def _get_controller_addresses() -> List[str]:
+     try:
+         (ret, stdout, stderr) = util.doexec([
+-            "/usr/sbin/ss", "-tnpH", "state", "established", f"( sport = :{LINSTOR_SATELLITE_PORT} )"
++            "/usr/sbin/ss", "-tnH", "state", "established", f"( sport = :{LINSTOR_SATELLITE_PORT} )"
+         ])
+         if ret == 0:
+             return [

@@ -1,0 +1,263 @@
+From c9d4de6534caa67bdfeb36f29bcfe6ce74f3ac32 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 13 Oct 2026 20:12:36 +0200
+Subject: [PATCH] fix(linstor): update the KV image info from every writer
+
+Several `LinstorCowUtil` modifiers only invalidated the cached image
+info, so it stayed invalid until the next scan on the master read the
+images. Every writer now keeps it up to date:
+
+- `set_size_virt` / `set_size_virt_fast` write the requested size: the
+  callers pass a size already valid for the image (rounded by
+  `validateAndRoundImageSize` or the virtual size of another image).
+- `snapshot` writes the info of the new image: not hidden, the parent
+  uuid, and the parent virtual size taken from its cached info (a
+  snapshot inherits it until a resize). Without a valid parent info
+  (e.g. RAW parent), the size stays missing until the next scan.
+  Nothing is invalidated before: like `create`, the volume is new.
+- `kill_data` and `force_coalesce` no longer touch the info: they only
+  modify the data, of the image or of its parent. The parent size is
+  updated before the coalesce with `set_size_virt*`.
+- `force_repair` still invalidates the info (the repair can rewrite the
+  footer), then reads the image to store it again.
+
+`kill_data` is reached through `reset_leaf` (`vdi_epoch_begin`), which
+can run on a slave: it no longer writes in the KV store, the master
+stays the only writer.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorcowutil.py    |  50 ++++++++++++-----
+ tests/test_linstorcowutil.py | 103 +++++++++++++++++++++++++++++------
+ 2 files changed, 123 insertions(+), 30 deletions(-)
+
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index d7e8445e..8185f1ba 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -260,8 +260,9 @@ class LinstorCowUtil:
+     def get_info(self, vdi_uuid, include_parent=True, store_info=False):
+         # Note: sizePhys and sizeAllocated are not cached, they change on each
+         # guest write. They are -1 when the info comes from the KV store.
+-        # Note: `store_info` must only be used by the scans on the master:
+-        # it's the only writer of the image info in the KV store.
++        # Note: `store_info` must only be used by callers on the master (the
++        # SR and GC scans, the GC repair). The image modifiers write the image
++        # info themselves, through `_updating_image_info`.
+         image_info = self._get_cached_info(vdi_uuid, include_parent)
+         if image_info:
+             return image_info
+@@ -430,12 +431,23 @@ class LinstorCowUtil:
+ 
+     @linstormodifier()
+     def kill_data(self, path):
+-        with self._updating_image_info(path):
+-            return self._call_local_method_or_fail(self._cowutil.killData, path)
++        # Only zeroes the data: the cached image info doesn't change.
++        return self._call_local_method_or_fail(self._cowutil.killData, path)
+ 
+     @linstormodifier()
+     def snapshot(self, path, parent, parentRaw, msize=0, checkEmpty=True):
+-        with self._updating_image_info(path):
++        # A new image is not hidden and its parent is known. Its virtual size
++        # is the parent's one, only known if the parent is a COW image with a
++        # valid cached info. Otherwise it stays missing, the next scan reads it.
++        # Nothing to invalidate: like in `create`, the volume is new.
++        parent_uuid = self._extract_uuid(parent)
++        values = {'hidden': False, 'parent_uuid': parent_uuid}
++        if not parentRaw:
++            parent_info = self._linstor.get_volume_image_info(parent_uuid)
++            if parent_info:
++                values['size_virt'] = parent_info['size_virt']
++
++        with self._updating_image_info(path, (), **values):
+             return self._call_local_method_or_fail(
+                 self._cowutil.snapshot, path, parent, parentRaw, msize, checkEmpty
+             )
+@@ -488,9 +500,9 @@ class LinstorCowUtil:
+     # Remote setters: write locally and try on another host in case of failure.
+     # --------------------------------------------------------------------------
+ 
+-    # Note: The resulting virtual size is not always the requested one (e.g.
+-    # VHD rounds it down to MiB), so it's only invalidated, the next
+-    # `get_info` reads it from the image.
++    # Note: The requested virtual size is written in the cache as is: callers
++    # pass a size already valid for the image (rounded by
++    # `validateAndRoundImageSize` or the virtual size of another image).
+ 
+     @linstormodifier()
+     def set_size_virt(self, path, size, jFile):
+@@ -498,7 +510,7 @@ class LinstorCowUtil:
+             'size': size,
+             'jFile': jFile
+         }
+-        with self._updating_image_info(path, ('size_virt',)):
++        with self._updating_image_info(path, ('size_virt',), size_virt=size):
+             return self._call_method(self._cowutil.setSizeVirt, 'setSizeVirt', path, use_parent=False, **kwargs)
+ 
+     @linstormodifier()
+@@ -506,7 +518,7 @@ class LinstorCowUtil:
+         kwargs = {
+             'size': size
+         }
+-        with self._updating_image_info(path, ('size_virt',)):
++        with self._updating_image_info(path, ('size_virt',), size_virt=size):
+             return self._call_method(
+                 self._cowutil.setSizeVirtFast, 'setSizeVirtFast', path, use_parent=False, **kwargs
+             )
+@@ -522,13 +534,25 @@ class LinstorCowUtil:
+ 
+     @linstormodifier()
+     def force_coalesce(self, path):
+-        with self._updating_image_info(path):
+-            return int(self._call_method(self._cowutil.coalesce, 'coalesce', path, use_parent=True))
++        # Writes the data of `path` in its parent: the cached image info of
++        # both doesn't change. The parent size is updated before with
++        # `set_size_virt*`.
++        return int(self._call_method(self._cowutil.coalesce, 'coalesce', path, use_parent=True))
+ 
+     @linstormodifier()
+     def force_repair(self, path):
+         with self._updating_image_info(path):
+-            return self._call_method(self._cowutil.repair, 'repair', path, use_parent=False)
++            ret = self._call_method(self._cowutil.repair, 'repair', path, use_parent=False)
++
++        # The repair can rewrite the footer, the values are unknown: read the
++        # image to update the cache. Only called by the GC, on the master.
++        vdi_uuid = self._extract_uuid(path)
++        try:
++            self.get_info(vdi_uuid, store_info=True)
++        except Exception as e:
++            # Not fatal: entries are still invalid.
++            util.SMlog(f'Failed to update image info of {vdi_uuid} after repair: {e}')
++        return ret
+ 
+     @linstormodifier()
+     def force_deflate(self, path, newSize, oldSize, zeroize):
+diff --git a/tests/test_linstorcowutil.py b/tests/test_linstorcowutil.py
+index ce85b325..85c9ec77 100644
+--- a/tests/test_linstorcowutil.py
++++ b/tests/test_linstorcowutil.py
+@@ -384,9 +384,17 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+         with mock.patch.object(self.cowutil, 'setSizeVirt', side_effect=self.check_invalid_during_call([SIZE_VIRT])):
+             self.linstorcowutil.set_size_virt(self.path, 4096, 'journal')
+ 
++        self.assert_image_info(False, 4096, PARENT_UUID)
++
++    def test_set_size_virt_failure_stays_invalid(self):
++        self.store()
++
++        with mock.patch.object(self.cowutil, 'setSizeVirt', side_effect=Exception('resize error')), \
++                mock.patch.object(self.linstorcowutil, '_get_hosts', side_effect=Exception('no remote')):
++            with self.assertRaises(Exception):
++                self.linstorcowutil.set_size_virt(self.path, 4096, 'journal')
++
+         self.assertEqual(get_prop(self.manager, VDI_UUID, SIZE_VIRT), INVALID)
+-        self.assertEqual(get_prop(self.manager, VDI_UUID, HIDDEN), '0')
+-        self.assertEqual(get_prop(self.manager, VDI_UUID, PARENT), PARENT_UUID)
+ 
+     def test_set_size_virt_fast(self):
+         self.store()
+@@ -394,25 +402,86 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+         with mock.patch.object(self.cowutil, 'setSizeVirtFast', side_effect=self.check_invalid_during_call([SIZE_VIRT])):
+             self.linstorcowutil.set_size_virt_fast(self.path, 4096)
+ 
+-        self.assertEqual(get_prop(self.manager, VDI_UUID, SIZE_VIRT), INVALID)
+-        self.assertEqual(get_prop(self.manager, VDI_UUID, HIDDEN), '0')
++        self.assert_image_info(False, 4096, PARENT_UUID)
+ 
+-    def test_invalidate_all_modifiers(self):
+-        all_props = LinstorVolumeManager.IMAGE_INFO_PROPS
++    def test_unchanged_by_modifiers(self):
+         cases = (
+-            ('kill_data', 'killData', (self.path,)),
+-            ('snapshot', 'snapshot', (self.path, self.parent_path, False)),
+-            ('force_coalesce', 'coalesce', (self.path,)),
+-            ('force_repair', 'repair', (self.path,))
++            ('kill_data', 'killData'),
++            ('force_coalesce', 'coalesce')
+         )
+-        for method, cowutil_method, args in cases:
++        for method, cowutil_method in cases:
+             self.store()
+-            with mock.patch.object(
+-                self.cowutil, cowutil_method,
+-                side_effect=self.check_invalid_during_call(all_props)
+-            ):
+-                getattr(self.linstorcowutil, method)(*args)
+-            self.assert_all_invalid()
++            with mock.patch.object(self.cowutil, cowutil_method, return_value=0), \
++                    mock.patch.object(LinstorVolumeManager, 'invalidate_volume_image_info') as invalidate, \
++                    mock.patch.object(LinstorVolumeManager, 'set_volume_image_info') as set_info:
++                getattr(self.linstorcowutil, method)(self.path)
++
++            invalidate.assert_not_called()
++            set_info.assert_not_called()
++            self.assert_image_info(False, 1024, PARENT_UUID)
++
++    def store_parent(self, size_virt=8192):
++        self.manager.set_volume_image_info(PARENT_UUID, hidden=True, size_virt=size_virt, parent_uuid='')
++
++    def test_snapshot(self):
++        self.store_parent()
++
++        with mock.patch.object(self.cowutil, 'snapshot'), \
++                mock.patch.object(LinstorVolumeManager, 'invalidate_volume_image_info') as invalidate:
++            self.linstorcowutil.snapshot(self.path, self.parent_path, False)
++
++        invalidate.assert_not_called()
++        self.assert_image_info(False, 8192, PARENT_UUID)
++
++    def test_snapshot_parent_not_cached(self):
++        with mock.patch.object(self.cowutil, 'snapshot'):
++            self.linstorcowutil.snapshot(self.path, self.parent_path, False)
++
++        self.assertEqual(get_prop(self.manager, VDI_UUID, HIDDEN), '0')
++        self.assertEqual(get_prop(self.manager, VDI_UUID, PARENT), PARENT_UUID)
++        self.assertIsNone(get_prop(self.manager, VDI_UUID, SIZE_VIRT))
++        self.assertIsNone(self.manager.get_volume_image_info(VDI_UUID))
++
++    def test_snapshot_raw_parent(self):
++        self.store_parent()
++
++        with mock.patch.object(self.cowutil, 'snapshot'):
++            self.linstorcowutil.snapshot(self.path, self.parent_path, True)
++
++        self.assertEqual(get_prop(self.manager, VDI_UUID, PARENT), PARENT_UUID)
++        self.assertIsNone(get_prop(self.manager, VDI_UUID, SIZE_VIRT))
++
++    def test_snapshot_failure_not_stored(self):
++        self.store_parent()
++
++        with mock.patch.object(self.cowutil, 'snapshot', side_effect=Exception('snapshot error')):
++            with self.assertRaises(Exception):
++                self.linstorcowutil.snapshot(self.path, self.parent_path, False)
++
++        for prop in LinstorVolumeManager.IMAGE_INFO_PROPS:
++            self.assertIsNone(get_prop(self.manager, VDI_UUID, prop))
++
++    def test_force_repair(self):
++        self.store()
++
++        with mock.patch.object(self.cowutil, 'repair', side_effect=self.check_invalid_during_call(
++            LinstorVolumeManager.IMAGE_INFO_PROPS
++        )), mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()) as get_info:
++            self.linstorcowutil.force_repair(self.path)
++
++        get_info.assert_called_once()
++        self.assert_image_info(True, 4096, PARENT_UUID)
++
++    def test_force_repair_read_failure_is_not_fatal(self):
++        self.store()
++
++        with mock.patch.object(self.cowutil, 'repair'), \
++                mock.patch.object(self.cowutil, 'getInfo', side_effect=Exception('read error')), \
++                mock.patch('linstorcowutil.util.retry', side_effect=lambda f, *a, **k: f()):
++            self.linstorcowutil.force_repair(self.path)
++
++        self.assert_all_invalid()
++        self.mock_log.assert_called_once()
+ 
+     def test_create(self):
+         with mock.patch.object(self.cowutil, 'create'), \

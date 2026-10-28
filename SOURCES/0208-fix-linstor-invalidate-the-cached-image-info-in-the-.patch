@@ -1,0 +1,98 @@
+From cf755b381077ea58a62d937f0e3ba5e29a7f82ed Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 27 Oct 2026 13:52:46 +0100
+Subject: [PATCH] fix(linstor): invalidate the cached image info in the GC
+ leaf-coalesce undo
+
+The leaf coalesce renames the leaf L to OLD_L, then its parent P to L.
+If it is interrupted after both renames, the next GC scan reads OLD_L in
+its image (its cached parent P no longer exists) and stores L as its
+parent. The undo then renames L back to P and OLD_L back to L: the
+renames carry the cached info, so L gets itself as cached parent, which
+exists, so it's a hit.
+
+Invalidate the cached info of the volumes found among P, L and OLD_L
+before the renames. The undo writes the hidden flags back, the next scan
+reads the rest in the images.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/cleanup.py            |  8 ++++++
+ tests/test_cleanup_linstor.py | 47 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 55 insertions(+)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index c5d2ddfe..ea640108 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3905,6 +3905,14 @@ class LinstorSR(SR):
+ 
+     def _undoInterruptedCoalesceLeaf(self, childUuid, parentUuid):
+         Util.log('*** UNDO LEAF-COALESCE')
++        # The renames below carry the cached image info. Since the
++        # interruption, a scan can have stored the parent of the old leaf
++        # under the uuid the leaf gets back here: the leaf would be its own
++        # parent. Invalidate both volumes, the next scan reads the images.
++        for uuid in (parentUuid, childUuid, self.TMP_RENAME_PREFIX + childUuid):
++            if self.getVDI(uuid):
++                self._linstor.invalidate_volume_image_info(uuid)
++
+         parent = self.getVDI(parentUuid)
+         if not parent:
+             parent = self.getVDI(childUuid)
+diff --git a/tests/test_cleanup_linstor.py b/tests/test_cleanup_linstor.py
+index a4d7fbd9..1e8ea697 100644
+--- a/tests/test_cleanup_linstor.py
++++ b/tests/test_cleanup_linstor.py
+@@ -90,3 +90,50 @@ class TestParentCheckedBeforeAnyWrite(unittest.TestCase):
+         self.sr.journaler.create.assert_not_called()
+         self.vdi.parent._setHidden.assert_not_called()
+ 
++
++
++class TestUndoInterruptedCoalesceLeaf(unittest.TestCase):
++    def setUp(self):
++        self.sr = new_linstor_sr()
++        self.sr.vdis = {}
++        self.sr._updateSlavesOnUndoLeafCoalesce = mock.Mock()
++
++    def add_vdi(self, uuid):
++        vdi = mock.Mock()
++
++        def rename(new_uuid):
++            # Everything the undo renames must be invalidated before.
++            self.sr._linstor.invalidate_volume_image_info.assert_any_call(vdi.uuid)
++            del self.sr.vdis[vdi.uuid]
++            vdi.uuid = new_uuid
++            self.sr.vdis[new_uuid] = vdi
++
++        vdi.uuid = uuid
++        vdi.rename.side_effect = rename
++        self.sr.vdis[uuid] = vdi
++        return vdi
++
++    def invalidated(self):
++        return sorted(c[0][0] for c in self.sr._linstor.invalidate_volume_image_info.call_args_list)
++
++    def test_both_renamed(self):
++        tmp_uuid = cleanup.SR.TMP_RENAME_PREFIX + VDI_UUID
++        parent = self.add_vdi(VDI_UUID)
++        child = self.add_vdi(tmp_uuid)
++
++        self.sr._undoInterruptedCoalesceLeaf(VDI_UUID, PARENT_UUID)
++
++        self.assertEqual(self.invalidated(), sorted([VDI_UUID, tmp_uuid]))
++        parent.rename.assert_called_once_with(PARENT_UUID)
++        child.rename.assert_called_once_with(VDI_UUID)
++
++    def test_leaf_renamed_only(self):
++        tmp_uuid = cleanup.SR.TMP_RENAME_PREFIX + VDI_UUID
++        parent = self.add_vdi(PARENT_UUID)
++        child = self.add_vdi(tmp_uuid)
++
++        self.sr._undoInterruptedCoalesceLeaf(VDI_UUID, PARENT_UUID)
++
++        self.assertEqual(self.invalidated(), sorted([PARENT_UUID, tmp_uuid]))
++        parent.rename.assert_not_called()
++        child.rename.assert_called_once_with(VDI_UUID)

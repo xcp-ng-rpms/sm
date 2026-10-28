@@ -1,0 +1,255 @@
+From f44b2698d83935f9508f20da5c8cc2e1b3355251 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 13 Oct 2026 11:38:25 +0200
+Subject: [PATCH] fix(linstor): restrict KV image info writes to the master
+ scans
+
+- `get_info` only populates the KV keys when called with
+  `store_info=True`, used by the master scans (SR scan and GC scan).
+  Other callers, like `create_chain_paths` on slaves, only read them:
+  the master is the only writer.
+- A cached parent uuid that doesn't resolve to a volume is ignored, the
+  image is read instead of failing.
+- `update_volume_uuid` updates the cached parent uuid of the children
+  of the renamed volume.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LinstorSR.py            |  8 +++++--
+ drivers/cleanup.py              |  2 +-
+ drivers/linstorcowutil.py       | 28 ++++++++++++++---------
+ drivers/linstorvolumemanager.py | 17 ++++++++++++++
+ tests/test_linstorcowutil.py    | 40 ++++++++++++++++++++++++++++-----
+ 5 files changed, 76 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 2e4d3f06..d7837322 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1176,7 +1176,9 @@ class LinstorSR(SR.SR):
+                 if not VdiType.isCowImage(vdi_type):
+                     managed = not volume_metadata.get(HIDDEN_TAG)
+                 else:
+-                    image_info = LinstorCowUtil(self.session, self._linstor, vdi_type).get_info(vdi_uuid)
++                    image_info = LinstorCowUtil(self.session, self._linstor, vdi_type).get_info(
++                        vdi_uuid, store_info=self.cmd == 'sr_scan' and self.is_master()
++                    )
+                     managed = not image_info.hidden
+                     if image_info.parentUuid:
+                         sm_config['vhd-parent'] = image_info.parentUuid
+@@ -2186,7 +2188,9 @@ class LinstorVDI(VDI.VDI):
+             else:
+                 cowutil_instance = self.linstorcowutil
+ 
+-            image_info = cowutil_instance.get_info(self.uuid)
++            image_info = cowutil_instance.get_info(
++                self.uuid, store_info=self.sr.cmd == 'sr_scan' and self.sr.is_master()
++            )
+             self.hidden = image_info.hidden
+             self.size = image_info.sizeVirt
+             self.parent = image_info.parentUuid
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index a3c36d75..d0c526c2 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -3787,7 +3787,7 @@ class LinstorSR(SR):
+         def load_info(vdi, multi_cowutil):
+             vdi_uuid, vdi_type = vdi
+             try:
+-                vdiInfo = multi_cowutil.get_local_cowutil(vdi_type).get_info(vdi_uuid)
++                vdiInfo = multi_cowutil.get_local_cowutil(vdi_type).get_info(vdi_uuid, store_info=True)
+             except Exception as e:
+                 vdiInfo = handle_fail(vdi_uuid, e)
+             vdiInfo.vdiType = vdi_type
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 9957ba7c..80414bd3 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -17,7 +17,7 @@
+ from sm_typing import Any, Callable, Dict, IO, List, Optional, override
+ 
+ from linstorjournaler import LinstorJournaler
+-from linstorvolumemanager import LinstorVolumeManager, LinstorVolumeOpeners
++from linstorvolumemanager import LinstorVolumeManager, LinstorVolumeManagerError, LinstorVolumeOpeners
+ 
+ from concurrent.futures import ThreadPoolExecutor
+ import base64
+@@ -257,9 +257,11 @@ class LinstorCowUtil:
+     def _check(self, vdi_uuid, response):
+         return CowUtil.CheckResult(response)
+ 
+-    def get_info(self, vdi_uuid, include_parent=True):
++    def get_info(self, vdi_uuid, include_parent=True, store_info=False):
+         # Note: sizePhys and sizeAllocated are not cached, they change on each
+         # guest write. They are -1 when the info comes from the KV store.
++        # Note: `store_info` must only be used by the scans on the master:
++        # it's the only writer of the image info in the KV store.
+         image_info = self._get_cached_info(vdi_uuid, include_parent)
+         if image_info:
+             return image_info
+@@ -278,7 +280,7 @@ class LinstorCowUtil:
+             image_info = self._get_vhd_info(vdi_uuid, self._extract_uuid, **kwargs)
+ 
+         # Without parent we can't store a complete info.
+-        if include_parent:
++        if store_info and include_parent:
+             self._store_info(vdi_uuid, image_info)
+         return image_info
+ 
+@@ -288,18 +290,24 @@ class LinstorCowUtil:
+             return None
+ 
+         image_info = CowImageInfo(vdi_uuid)
+-        image_info.path = self._linstor.build_device_path(
+-            self._linstor.get_volume_name(vdi_uuid)
+-        )
+         image_info.sizeVirt = cached_info['size_virt']
+         image_info.hidden = cached_info['hidden']
+ 
++        # A cached parent uuid can be stale (e.g. parent renamed or destroyed),
++        # in this case the image must be read.
+         parent_uuid = cached_info['parent_uuid']
+-        if include_parent and parent_uuid:
+-            image_info.parentUuid = parent_uuid
+-            image_info.parentPath = self._linstor.build_device_path(
+-                self._linstor.get_volume_name(parent_uuid)
++        try:
++            image_info.path = self._linstor.build_device_path(
++                self._linstor.get_volume_name(vdi_uuid)
+             )
++            if include_parent and parent_uuid:
++                image_info.parentPath = self._linstor.build_device_path(
++                    self._linstor.get_volume_name(parent_uuid)
++                )
++                image_info.parentUuid = parent_uuid
++        except LinstorVolumeManagerError as e:
++            util.SMlog(f'Ignoring cached image info of {vdi_uuid}: {e}')
++            return None
+ 
+         return image_info
+ 
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 92915389..eefe3b5c 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1179,6 +1179,17 @@ class LinstorVolumeManager(object):
+             )
+         )
+ 
++        # The children images still reference the same device path, so their
++        # parent is now the new uuid.
++        try:
++            self._update_children_parent_uuid(volume_uuid, new_volume_uuid)
++        except Exception as e:
++            # Not fatal: a cached parent uuid that doesn't exist is ignored.
++            self._logger(
++                'Failed to update cached parent uuid of {} children: {}'
++                .format(volume_uuid, e)
++            )
++
+     def update_volume_name(self, volume_uuid, volume_name):
+         """
+         Change the volume name of a volume.
+@@ -1412,6 +1423,12 @@ class LinstorVolumeManager(object):
+             if invalidate:
+                 volume_properties[prop] = self.IMAGE_INFO_INVALID
+ 
++    def _update_children_parent_uuid(self, parent_uuid, new_parent_uuid):
++        for volume_uuid in list(self._volumes):
++            volume_properties = self._get_volume_properties(volume_uuid)
++            if volume_properties.get(self.PROP_PARENT_UUID) == parent_uuid:
++                volume_properties[self.PROP_PARENT_UUID] = new_parent_uuid
++
+     def shallow_clone_volume(self, volume_uuid, clone_uuid, persistent=True):
+         """
+         Clone a volume. Do not copy the data, this method creates a new volume
+diff --git a/tests/test_linstorcowutil.py b/tests/test_linstorcowutil.py
+index 6708ca47..bcb79223 100644
+--- a/tests/test_linstorcowutil.py
++++ b/tests/test_linstorcowutil.py
+@@ -156,6 +156,16 @@ class TestLinstorVolumeManagerImageInfo(unittest.TestCase):
+             {'hidden': True, 'size_virt': 1024, 'parent_uuid': PARENT_UUID}
+         )
+ 
++    def test_update_volume_uuid_updates_children(self):
++        self.manager.set_volume_image_info(VDI_UUID, hidden=False, size_virt=1024, parent_uuid=PARENT_UUID)
++
++        self.manager.update_volume_uuid(PARENT_UUID, NEW_UUID)
++
++        self.assertEqual(
++            self.manager.get_volume_image_info(VDI_UUID),
++            {'hidden': False, 'size_virt': 1024, 'parent_uuid': NEW_UUID}
++        )
++
+     def test_update_volume_uuid_without_image_info(self):
+         self.manager.update_volume_uuid(VDI_UUID, NEW_UUID)
+ 
+@@ -244,7 +254,7 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+ 
+     def test_get_info_miss_stores_info(self):
+         with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()) as get_info:
+-            info = self.linstorcowutil.get_info(VDI_UUID)
++            info = self.linstorcowutil.get_info(VDI_UUID, store_info=True)
+ 
+         get_info.assert_called_once()
+         self.assertEqual(info.sizePhys, 8192)
+@@ -252,7 +262,7 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+ 
+     def test_get_info_miss_no_parent(self):
+         with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info(parent=False)):
+-            self.linstorcowutil.get_info(VDI_UUID)
++            self.linstorcowutil.get_info(VDI_UUID, store_info=True)
+ 
+         self.assert_image_info(True, 4096, '')
+ 
+@@ -261,27 +271,45 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+         self.manager.invalidate_volume_image_info(VDI_UUID, hidden=False, parent_uuid=False)
+ 
+         with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()) as get_info:
+-            self.linstorcowutil.get_info(VDI_UUID)
++            self.linstorcowutil.get_info(VDI_UUID, store_info=True)
+ 
+         get_info.assert_called_once()
+         self.assert_image_info(True, 4096, PARENT_UUID)
+ 
++    def test_get_info_miss_without_store_info_not_stored(self):
++        with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()) as get_info:
++            info = self.linstorcowutil.get_info(VDI_UUID)
++
++        get_info.assert_called_once()
++        self.assertEqual(info.sizeVirt, 4096)
++        self.assertIsNone(self.manager.get_volume_image_info(VDI_UUID))
++
++    def test_get_info_hit_stale_parent_reads_image(self):
++        self.store(parent_uuid=NEW_UUID)
++
++        with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()) as get_info:
++            info = self.linstorcowutil.get_info(VDI_UUID)
++
++        get_info.assert_called_once()
++        self.assertEqual(info.parentUuid, PARENT_UUID)
++        self.mock_log.assert_called_once()
++
+     def test_get_info_miss_without_include_parent_not_stored(self):
+         with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info(parent=False)):
+-            self.linstorcowutil.get_info(VDI_UUID, include_parent=False)
++            self.linstorcowutil.get_info(VDI_UUID, include_parent=False, store_info=True)
+ 
+         self.assertIsNone(self.manager.get_volume_image_info(VDI_UUID))
+ 
+     def test_get_info_miss_bad_size_not_stored(self):
+         with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info(size_virt=-1)):
+-            self.linstorcowutil.get_info(VDI_UUID)
++            self.linstorcowutil.get_info(VDI_UUID, store_info=True)
+ 
+         self.assertIsNone(self.manager.get_volume_image_info(VDI_UUID))
+ 
+     def test_get_info_store_failure_is_not_fatal(self):
+         with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()), \
+                 mock.patch.object(LinstorVolumeManager, 'set_volume_image_info', side_effect=Exception('KV down')):
+-            info = self.linstorcowutil.get_info(VDI_UUID)
++            info = self.linstorcowutil.get_info(VDI_UUID, store_info=True)
+ 
+         self.assertEqual(info.sizeVirt, 4096)
+         self.mock_log.assert_called_once()

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -288,10 +288,30 @@ Patch1186: 0186-fix-cleanup-handle-interrupted-QCOW2-leaf-coalesce-1.patch
 Patch1187: 0187-fix-qcow2util-handle-abort-in-online-coalesce-167.patch
 Patch1188: 0188-feat-linstor-handle-ENODATA-errors-with-linstor-VDIs.patch
 Patch1189: 0189-LVMSR-convert-refvdi-returned-by-get_snapshot_of-to-.patch
-Patch0190: 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch
-Patch0191: 0191-fix-linstor-wrong-handling-of-timeout-on-LINSTOR-HA-.patch
-Patch0192: 0192-fix-linstor-health-check-helper-broken-due-to-API-ch.patch
-Patch0193: 0193-fix-ZFSSR-add-missing-capabilities-in-ZFS-SR-driver-.patch
+Patch1190: 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch
+Patch1191: 0191-fix-linstor-wrong-handling-of-timeout-on-LINSTOR-HA-.patch
+Patch1192: 0192-fix-linstor-health-check-helper-broken-due-to-API-ch.patch
+Patch1193: 0193-fix-ZFSSR-add-missing-capabilities-in-ZFS-SR-driver-.patch
+Patch1194: 0194-fix-linstor-improve-ss-command-speed-184.patch
+Patch1195: 0195-feat-linstor-cache-COW-image-info-in-the-LINSTOR-KV-.patch
+Patch1196: 0196-fix-linstor-restrict-KV-image-info-writes-to-the-mas.patch
+Patch1197: 0197-perf-linstor-limit-the-scan-thread-pool-to-4-workers.patch
+Patch1198: 0198-fix-linstor-store-image-info-in-the-KV-store-on-crea.patch
+Patch1199: 0199-fix-linstor-update-the-KV-image-info-from-every-writ.patch
+Patch1200: 0200-perf-linstor-get-the-SR-s-VDI-uuids-in-one-XAPI-call.patch
+Patch1201: 0201-perf-linstor-load-the-VDIs-in-the-main-thread-with-a.patch
+Patch1202: 0202-perf-linstor-load-the-image-info-in-the-GC-thread-wi.patch
+Patch1203: 0203-fix-linstor-cache-the-real-parent-after-a-snapshot.patch
+Patch1204: 0204-perf-linstor-don-t-query-the-disconnected-hosts-on-V.patch
+Patch1205: 0205-fix-linstor-check-the-parent-in-the-image-before-a-G.patch
+Patch1206: 0206-fix-linstor-check-the-cached-image-info-against-the-.patch
+Patch1207: 0207-refactor-linstor-don-t-rewrite-the-children-cached-p.patch
+Patch1208: 0208-fix-linstor-invalidate-the-cached-image-info-in-the-.patch
+Patch1209: 0209-fix-linstor-invalidate-the-cached-image-info-on-clon.patch
+Patch1210: 0210-refactor-linstor-drop-two-comments-in-LinstorCowUtil.patch
+Patch1211: 0211-refactor-linstor-drop-a-bool-cast-and-a-comment-in-L.patch
+Patch1212: 0212-wip.patch
+Patch1213: 0213-DEBUG-DROP-BEFORE-MERGE-log-scan-and-live-migration-.patch
 
 %description
 This package contains storage backends used in XCP
@@ -616,6 +636,33 @@ then
 fi
 
 %changelog
+* Wed Oct 28 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.3
+- Add new patches:
+  - 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch
+  - 0191-fix-linstor-wrong-handling-of-timeout-on-LINSTOR-HA-.patch
+  - 0192-fix-linstor-health-check-helper-broken-due-to-API-ch.patch
+  - 0193-fix-ZFSSR-add-missing-capabilities-in-ZFS-SR-driver-.patch
+  - 0194-fix-linstor-improve-ss-command-speed-184.patch
+  - 0195-feat-linstor-cache-COW-image-info-in-the-LINSTOR-KV-.patch
+  - 0196-fix-linstor-restrict-KV-image-info-writes-to-the-mas.patch
+  - 0197-perf-linstor-limit-the-scan-thread-pool-to-4-workers.patch
+  - 0198-fix-linstor-store-image-info-in-the-KV-store-on-crea.patch
+  - 0199-fix-linstor-update-the-KV-image-info-from-every-writ.patch
+  - 0200-perf-linstor-get-the-SR-s-VDI-uuids-in-one-XAPI-call.patch
+  - 0201-perf-linstor-load-the-VDIs-in-the-main-thread-with-a.patch
+  - 0202-perf-linstor-load-the-image-info-in-the-GC-thread-wi.patch
+  - 0203-fix-linstor-cache-the-real-parent-after-a-snapshot.patch
+  - 0204-perf-linstor-don-t-query-the-disconnected-hosts-on-V.patch
+  - 0205-fix-linstor-check-the-parent-in-the-image-before-a-G.patch
+  - 0206-fix-linstor-check-the-cached-image-info-against-the-.patch
+  - 0207-refactor-linstor-don-t-rewrite-the-children-cached-p.patch
+  - 0208-fix-linstor-invalidate-the-cached-image-info-in-the-.patch
+  - 0209-fix-linstor-invalidate-the-cached-image-info-on-clon.patch
+  - 0210-refactor-linstor-drop-two-comments-in-LinstorCowUtil.patch
+  - 0211-refactor-linstor-drop-a-bool-cast-and-a-comment-in-L.patch
+  - 0212-wip.patch
+  - 0213-DEBUG-DROP-BEFORE-MERGE-log-scan-and-live-migration-.patch
+
 * Fri Oct 16 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.2
 - Add new patches:
   - 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch

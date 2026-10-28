@@ -1,0 +1,641 @@
+From dbd83d05da240d82a4ad3472a9472614f6822d9c Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 19 Oct 2026 15:06:11 +0200
+Subject: [PATCH] DEBUG, DROP BEFORE MERGE: log scan and live migration timings
+
+Temporary measurement patch, not meant to be merged: drop this commit
+once the scan and live migration investigations are done.
+
+Adds log lines with millisecond durations:
+- `SCAN-TIMING`: steps of `LinstorSR.load`, `sr_scan` / `_load_vdis` and
+  the `LinstorVolumeManager` init.
+- `MIG-TIMING`: steps of `blktap2` activate / deactivate (including the
+  VDI refresh through `VDI.from_uuid` / `SR.from_uuid`), the total of each
+  `LinstorSR.load`, `lockVdi` round trips, the VDI load and
+  `LinstorVDI.attach` / `detach`.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LinstorSR.py            | 72 +++++++++++++++++++++++++++++++++
+ drivers/SR.py                   | 12 +++++-
+ drivers/VDI.py                  | 10 ++++-
+ drivers/blktap2.py              | 42 ++++++++++++++++++-
+ drivers/linstorcowutil.py       |  4 ++
+ drivers/linstorvolumemanager.py | 11 ++++-
+ 6 files changed, 146 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index a665f48e..89fbe2af 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -403,6 +403,13 @@ class LinstorSR(SR.SR):
+             return method(self, *args, **kwargs)
+ 
+         def load(self, *args, **kwargs):
++            _t_load = time.monotonic()
++            try:
++                return load_impl(self, *args, **kwargs)
++            finally:
++                util.SMlog(f'MIG-TIMING load: total ({self.srcmd.cmd}) {time.monotonic() - _t_load:.3f}s')
++
++        def load_impl(self, *args, **kwargs):
+             # Activate all LVMs to make drbd-reactor happy.
+             if self.srcmd.cmd in ('sr_attach', 'vdi_attach_from_config'):
+                 activate_lvm_group(self._group_name)
+@@ -463,12 +470,17 @@ class LinstorSR(SR.SR):
+                 # bad read. The lock is also necessary to avoid strange
+                 # behaviors if the GC is executed during an action on a slave.
+                 if self.cmd.startswith('vdi_'):
++                    _t = time.monotonic()
+                     self._shared_lock_vdi(self.srcmd.params['vdi_uuid'])
+                     self._vdi_shared_time = time.time()
++                    util.SMlog(f'MIG-TIMING load: lockVdi (lock) {time.monotonic() - _t:.3f}s')
+ 
++            util.SMlog(f'SCAN-TIMING load: start ({self.cmd})')
+             if self.srcmd.cmd != 'sr_create' and self.srcmd.cmd != 'sr_detach':
+                 try:
++                    _t = time.monotonic()
+                     self._reconnect()
++                    util.SMlog(f'SCAN-TIMING load: _reconnect {time.monotonic() - _t:.3f}s')
+                 except Exception as e:
+                     raise xs_errors.XenError('SRUnavailable', opterr=str(e))
+ 
+@@ -479,7 +491,9 @@ class LinstorSR(SR.SR):
+                 # commands are on the critical path of a live migration.
+                 if not self.cmd.startswith('vdi_') and self.cmd != 'nop':
+                     try:
++                        _t = time.monotonic()
+                         hosts = self._linstor.disconnected_hosts
++                        util.SMlog(f'SCAN-TIMING load: disconnected_hosts {time.monotonic() - _t:.3f}s')
+                     except Exception as e:
+                         raise xs_errors.XenError('SRUnavailable', opterr=str(e))
+ 
+@@ -487,6 +501,7 @@ class LinstorSR(SR.SR):
+                         util.SMlog('Failed to join node(s): {}'.format(hosts))
+ 
+                 # Ensure we use a non-locked volume when cowutil is called.
++                _t = time.monotonic()
+                 if (
+                     self.is_master() and self.cmd.startswith('vdi_') and
+                     self.cmd != 'vdi_create'
+@@ -494,6 +509,7 @@ class LinstorSR(SR.SR):
+                     self._linstor.ensure_volume_is_not_locked(
+                         self.srcmd.params['vdi_uuid']
+                     )
++                util.SMlog(f'MIG-TIMING load: ensure_volume_is_not_locked {time.monotonic() - _t:.3f}s')
+ 
+                 try:
+                     # If the command is a SR scan command on the master,
+@@ -510,7 +526,10 @@ class LinstorSR(SR.SR):
+                         'vdi_update', 'vdi_destroy',
+                         'nop' # Deal with `SR.from_uuid` that emits a fake `nop` command.
+                     ]:
++                        _t = time.monotonic()
+                         journaler = self._get_journaler()
++                        util.SMlog(f'SCAN-TIMING load: _get_journaler {time.monotonic() - _t:.3f}s')
++                        _t = time.monotonic()
+                         load_vdis = (
+                             self.cmd == 'sr_scan' or
+                             self.cmd == 'sr_attach'
+@@ -520,12 +539,20 @@ class LinstorSR(SR.SR):
+                             journaler.get_all(LinstorJournaler.CLONE)
+                         )
+ 
++                        util.SMlog(f'SCAN-TIMING load: journaler.get_all {time.monotonic() - _t:.3f}s')
++
+                         if load_vdis:
++                            _t = time.monotonic()
+                             self._load_vdis()
++                            util.SMlog(f'SCAN-TIMING load: _load_vdis total {time.monotonic() - _t:.3f}s')
+ 
++                        _t = time.monotonic()
+                         self._linstor.remove_resourceless_volumes()
++                        util.SMlog(f'SCAN-TIMING load: remove_resourceless_volumes {time.monotonic() - _t:.3f}s')
+ 
++                    _t = time.monotonic()
+                     self._synchronize_metadata()
++                    util.SMlog(f'SCAN-TIMING load: _synchronize_metadata {time.monotonic() - _t:.3f}s')
+                 except Exception as e:
+                     if self.cmd == 'sr_scan' or self.cmd == 'sr_attach':
+                         # Always raise, we don't want to remove VDIs
+@@ -786,8 +813,10 @@ class LinstorSR(SR.SR):
+ 
+         # Note: `scan` can be called outside this module, so ensure the VDIs
+         # are loaded.
++        _t = time.monotonic()
+         self._load_vdis()
+         self._update_physical_size()
++        util.SMlog(f'SCAN-TIMING scan: _update_physical_size {time.monotonic() - _t:.3f}s')
+ 
+         for vdi_uuid in list(self.vdis.keys()):
+             if self.vdis[vdi_uuid].deleted:
+@@ -810,8 +839,12 @@ class LinstorSR(SR.SR):
+ 
+         # Update the database before the restart of the GC to avoid
+         # bad sync in the process if new VDIs have been introduced.
++        _t = time.monotonic()
+         super(LinstorSR, self).scan(self.uuid)
++        util.SMlog(f'SCAN-TIMING scan: SR.scan (XAPI sync) {time.monotonic() - _t:.3f}s')
++        _t = time.monotonic()
+         self._kick_gc()
++        util.SMlog(f'SCAN-TIMING scan: _kick_gc {time.monotonic() - _t:.3f}s')
+ 
+     def is_master(self):
+         if not hasattr(self, '_is_master'):
+@@ -881,7 +914,9 @@ class LinstorSR(SR.SR):
+                 )
+                 return
+ 
++        _t = time.monotonic()
+         self._exec_manager_command(master, command, args, 'VDIUnavailable')
++        util.SMlog(f'MIG-TIMING lockVdi plugin call (locked={locked}) {time.monotonic() - _t:.3f}s')
+ 
+     # --------------------------------------------------------------------------
+     # Network.
+@@ -1080,23 +1115,32 @@ class LinstorSR(SR.SR):
+         # We use a cache to avoid repeated JSON parsing.
+         # The performance gain is not big but we can still
+         # enjoy it with a few lines.
++        _t = time.monotonic()
+         self._create_linstor_cache()
++        util.SMlog(f'SCAN-TIMING _load_vdis: _create_linstor_cache {time.monotonic() - _t:.3f}s')
++        _t = time.monotonic()
+         self._load_vdis_ex()
++        util.SMlog(f'SCAN-TIMING _load_vdis: _load_vdis_ex {time.monotonic() - _t:.3f}s')
+         self._destroy_linstor_cache()
+ 
+         # We must mark VDIs as loaded only if the load is a success.
+         self._vdis_loaded = True
+ 
++        _t = time.monotonic()
+         self._undo_all_journal_transactions()
++        util.SMlog(f'SCAN-TIMING _load_vdis: _undo_all_journal_transactions {time.monotonic() - _t:.3f}s')
+ 
+     def _load_vdis_ex(self):
+         # 1. Get existing VDIs in XAPI.
+         xenapi = self.session.xenapi
++        _t = time.monotonic()
+         xapi_vdi_uuids = {
+             record['uuid'] for record in xenapi.VDI.get_all_records_where(
+                 f'field "SR" = "{self.sr_ref}"'
+             ).values()
+         }
++        util.SMlog(f'SCAN-TIMING _load_vdis_ex: XAPI VDI uuids ({len(xapi_vdi_uuids)} VDIs) {time.monotonic() - _t:.3f}s')
++        _t_loop = time.monotonic()
+ 
+         # 2. Get volumes info.
+         all_volume_info = self._all_volume_info_cache
+@@ -1236,14 +1280,18 @@ class LinstorSR(SR.SR):
+             # 4.b. Add the VDI in the list.
+             vdi_uuids.append(vdi_uuid)
+ 
++        util.SMlog(f'SCAN-TIMING _load_vdis_ex: steps 2-4 (volume loop, {len(vdi_uuids)} VDIs) {time.monotonic() - _t_loop:.3f}s')
++
+         # 5. Create VDIs.
+         # Count the COW images whose info is missing or invalid in the KV
+         # store: only these ones must be read.
++        _t_count = time.monotonic()
+         misses = sum(
+             1 for vdi_uuid in vdi_uuids
+             if VdiType.isCowImage(volumes_metadata.get(vdi_uuid, {}).get(VDI_TYPE_TAG)) and
+             not self._linstor.get_volume_image_info(vdi_uuid)
+         )
++        util.SMlog(f'SCAN-TIMING _load_vdis_ex: misses count ({misses}) {time.monotonic() - _t_count:.3f}s')
+ 
+         def load_vdi(vdi_uuid, multi_cowutil):
+             vdi = self.vdi(vdi_uuid)
+@@ -1257,6 +1305,7 @@ class LinstorSR(SR.SR):
+ 
+             return vdi
+ 
++        _t = time.monotonic()
+         if misses <= MAX_MISSES_WITHOUT_POOL:
+             util.SMlog(f'Loading VDIs in the main thread ({misses} image info misses)')
+             self.vdis = {vdi_uuid: load_vdi(vdi_uuid, None) for vdi_uuid in vdi_uuids}
+@@ -1273,6 +1322,8 @@ class LinstorSR(SR.SR):
+                 multi_cowutil = self._multi_cowutil
+                 self._multi_cowutil = None
+                 del multi_cowutil
++        util.SMlog(f'SCAN-TIMING _load_vdis_ex: step 5 (VDI loading, incl. worker init if any) {time.monotonic() - _t:.3f}s')
++        _t_end = time.monotonic()
+ 
+         # 6. Update CBT status of disks either just added
+         # or already in XAPI.
+@@ -1341,6 +1392,7 @@ class LinstorSR(SR.SR):
+                     'Scan found hidden leaf ({}), ignoring'.format(vdi_uuid)
+                 )
+                 del self.vdis[vdi_uuid]
++        util.SMlog(f'SCAN-TIMING _load_vdis_ex: steps 6-11 (CBT, snapshots, geneology) {time.monotonic() - _t_end:.3f}s')
+ 
+     # --------------------------------------------------------------------------
+     # Journals.
+@@ -1574,13 +1626,17 @@ class LinstorSR(SR.SR):
+                 reconnect = True
+                 raise e
+ 
++        _t = time.monotonic()
+         self._all_volume_metadata_cache = \
+             self._linstor.get_volumes_with_metadata()
++        util.SMlog(f'SCAN-TIMING cache: get_volumes_with_metadata {time.monotonic() - _t:.3f}s')
++        _t = time.monotonic()
+         self._all_volume_info_cache = util.retry(
+             create_cache,
+             maxretry=10,
+             period=3
+         )
++        util.SMlog(f'SCAN-TIMING cache: get_volumes_with_info {time.monotonic() - _t:.3f}s')
+ 
+     def _destroy_linstor_cache(self):
+         self._all_volume_info_cache = None
+@@ -1591,7 +1647,9 @@ class LinstorSR(SR.SR):
+     # --------------------------------------------------------------------------
+ 
+     def _reconnect(self):
++        _t = time.monotonic()
+         controller_uri = get_controller_uri()
++        util.SMlog(f'MIG-TIMING _reconnect: get_controller_uri {time.monotonic() - _t:.3f}s')
+ 
+         # Try to open SR if exists.
+         # We can repair only if we are on the master AND if
+@@ -1678,7 +1736,9 @@ class LinstorVDI(VDI.VDI):
+                 self._set_type(VdiType.RAW)
+                 self.path = self.sr.srcmd.params['vdi_path']
+             else:
++                _t = time.monotonic()
+                 self._determine_type_and_path()
++                util.SMlog(f'MIG-TIMING VDI load: _determine_type_and_path {time.monotonic() - _t:.3f}s')
+                 self._load_this()
+ 
+             util.SMlog('VDI {} loaded! (path={}, hidden={})'.format(
+@@ -1879,6 +1939,7 @@ class LinstorVDI(VDI.VDI):
+     def attach(self, sr_uuid, vdi_uuid) -> str:
+         util.SMlog('LinstorVDI.attach for {}'.format(self.uuid))
+         attach_from_config = self.sr.srcmd.cmd == 'vdi_attach_from_config'
++        _t = time.monotonic()
+         if (
+             not attach_from_config or
+             self.sr.srcmd.params['vdi_uuid'] != self.uuid
+@@ -1889,6 +1950,7 @@ class LinstorVDI(VDI.VDI):
+                 'scan SR first to trigger auto-repair'
+             )
+ 
++        util.SMlog(f'MIG-TIMING VDI attach: journal check {time.monotonic() - _t:.3f}s')
+         writable = 'args' not in self.sr.srcmd.params or \
+             self.sr.srcmd.params['args'][0] == 'true'
+ 
+@@ -1906,7 +1968,9 @@ class LinstorVDI(VDI.VDI):
+ 
+             if need_inflate:
+                 try:
++                    _t = time.monotonic()
+                     self._prepare_thin(True)
++                    util.SMlog(f'MIG-TIMING VDI attach: _prepare_thin (inflate) {time.monotonic() - _t:.3f}s')
+                 except Exception as e:
+                     raise xs_errors.XenError(
+                         'VDIUnavailable',
+@@ -1926,12 +1990,14 @@ class LinstorVDI(VDI.VDI):
+             return self._attach_using_http_nbd()
+ 
+         # Ensure we have a path...
++        _t = time.monotonic()
+         chain = self.linstorcowutil.create_chain_paths(
+             self.uuid,
+             readonly=not writable,
+             cb_openers=cleanup.LinstorSR.abort_gc_from_openers_vdi
+         )
+         chain.close()
++        util.SMlog(f'MIG-TIMING VDI attach: create_chain_paths {time.monotonic() - _t:.3f}s')
+ 
+         self.attached = True
+         return VDI.VDI.attach(self, self.sr.uuid, self.uuid)
+@@ -2193,14 +2259,18 @@ class LinstorVDI(VDI.VDI):
+             volume_metadata = self.sr._all_volume_metadata_cache.get(self.uuid)
+             assert volume_metadata
+         else:
++            _t = time.monotonic()
+             volume_metadata = self._linstor.get_volume_metadata(self.uuid)
++            util.SMlog(f'MIG-TIMING VDI load: get_volume_metadata {time.monotonic() - _t:.3f}s')
+ 
+         volume_info = None
+         if self.sr._all_volume_info_cache:
+             volume_info = self.sr._all_volume_info_cache.get(self.uuid)
+             assert volume_info
+         else:
++            _t = time.monotonic()
+             volume_info = self._linstor.get_volume_info(self.uuid)
++            util.SMlog(f'MIG-TIMING VDI load: get_volume_info {time.monotonic() - _t:.3f}s')
+ 
+         # Contains the max physical size used on a disk.
+         # When LINSTOR LVM driver is used, the size should be similar to
+@@ -2221,9 +2291,11 @@ class LinstorVDI(VDI.VDI):
+             else:
+                 cowutil_instance = self.linstorcowutil
+ 
++            _t = time.monotonic()
+             image_info = cowutil_instance.get_info(
+                 self.uuid, store_info=self.sr.cmd == 'sr_scan' and self.sr.is_master()
+             )
++            util.SMlog(f'MIG-TIMING VDI load: get_info {time.monotonic() - _t:.3f}s')
+             self.hidden = image_info.hidden
+             self.size = image_info.sizeVirt
+             self.parent = image_info.parentUuid
+diff --git a/drivers/SR.py b/drivers/SR.py
+index 6888c36d..4b094bf4 100755
+--- a/drivers/SR.py
++++ b/drivers/SR.py
+@@ -170,7 +170,9 @@ class SR(object):
+     @staticmethod
+     def from_uuid(session, sr_uuid):
+         import importlib.util
++        import time
+ 
++        _t = time.monotonic()
+         _SR = session.xenapi.SR
+         sr_ref = _SR.get_by_uuid(sr_uuid)
+         sm_type = _SR.get_type(sr_ref)
+@@ -185,9 +187,13 @@ class SR(object):
+         driver_real = os.path.realpath(driver_path)
+         module_name = os.path.basename(driver_path)
+ 
++        util.SMlog(f'MIG-TIMING SR.from_uuid: XAPI SR + SM records {time.monotonic() - _t:.3f}s')
++        _t = time.monotonic()
+         spec = importlib.util.spec_from_file_location(module_name, driver_real)
+         module = importlib.util.module_from_spec(spec)
+         spec.loader.exec_module(module)
++        util.SMlog(f'MIG-TIMING SR.from_uuid: exec_module {module_name} {time.monotonic() - _t:.3f}s')
++        _t = time.monotonic()
+ 
+         target = driver(sm_type)
+         # NB. get the host pbd's device_config
+@@ -213,8 +219,12 @@ class SR(object):
+                       'sr_ref': sr_ref,
+                       'sr_uuid': sr_uuid,
+                       'command': 'nop'}
++        util.SMlog(f'MIG-TIMING SR.from_uuid: XAPI host + PBD {time.monotonic() - _t:.3f}s')
+ 
+-        return target(cmd, sr_uuid)
++        _t = time.monotonic()
++        sr = target(cmd, sr_uuid)
++        util.SMlog(f'MIG-TIMING SR.from_uuid: SR init + load {time.monotonic() - _t:.3f}s')
++        return sr
+ 
+     def block_setscheduler(self, dev):
+         try:
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index 79521805..ed5e8343 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -101,12 +101,20 @@ class VDI(object):
+ 
+     @staticmethod
+     def from_uuid(session, vdi_uuid):
++        import time
++        _t = time.monotonic()
+         vdi_ref = session.xenapi.VDI.get_by_uuid(vdi_uuid)
+         sr_uuid = util.get_sr_uuid_from_vdi_ref(session, vdi_ref)
++        util.SMlog(f'MIG-TIMING VDI.from_uuid: XAPI vdi_ref + sr_uuid {time.monotonic() - _t:.3f}s')
++        _t = time.monotonic()
+         sr = SR.SR.from_uuid(session, sr_uuid)
++        util.SMlog(f'MIG-TIMING VDI.from_uuid: SR.from_uuid total {time.monotonic() - _t:.3f}s')
+ 
+         sr.srcmd.params['vdi_ref'] = vdi_ref
+-        return sr.vdi(vdi_uuid)
++        _t = time.monotonic()
++        vdi = sr.vdi(vdi_uuid)
++        util.SMlog(f'MIG-TIMING VDI.from_uuid: sr.vdi (VDI load) {time.monotonic() - _t:.3f}s')
++        return vdi
+ 
+     def create(self, sr_uuid, vdi_uuid, size) -> str:
+         """Create a VDI of size <Size> MB on the given SR. 
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 949d6dc1..cce7d815 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -1853,12 +1853,15 @@ class VDI(object):
+ 
+         #util.SMlog("VDI.activate %s" % vdi_uuid)
+         refresh = False
++        _t0 = _t = time.monotonic()
+         if self.tap_wanted():
+             if not self._add_tag(vdi_uuid, not options["rdonly"]):
+                 return False
+             refresh = True
++        util.SMlog(f'MIG-TIMING activate: _add_tag {time.monotonic() - _t:.3f}s')
+ 
+         try:
++            _t = time.monotonic()
+             if refresh:
+                 # it is possible that while the VDI was paused some of its
+                 # attributes have changed (e.g. its size if it was inflated; or its
+@@ -1869,19 +1872,24 @@ class VDI(object):
+                 target.sr.srcmd.params = params
+                 driver_info = target.sr.srcmd.driver_info
+                 self.target = self.TargetDriver(target, driver_info)
++            util.SMlog(f'MIG-TIMING activate: refresh (VDI.from_uuid) {time.monotonic() - _t:.3f}s')
+ 
+             util.fistpoint.activate_custom_fn(
+                     "blktap_activate_inject_failure",
+                     lambda: util.inject_failure())
+ 
+             # Attach the physical node
++            _t = time.monotonic()
+             if self.target.has_cap("ATOMIC_PAUSE"):
+                 self._attach(sr_uuid, vdi_uuid)
++            util.SMlog(f'MIG-TIMING activate: _attach {time.monotonic() - _t:.3f}s')
+ 
+             vdi_type = self.target.get_vdi_type()
+ 
++            _t = time.monotonic()
+             if not self._check_journal_coalesce_chain(sr_uuid, vdi_uuid):
+                 return False
++            util.SMlog(f'MIG-TIMING activate: _check_journal_coalesce_chain {time.monotonic() - _t:.3f}s')
+ 
+             # Take lvchange-p Lock before running
+             # tap-ctl open
+@@ -1896,6 +1904,7 @@ class VDI(object):
+ 
+             # When we attach a static VDI for HA, we cannot communicate with
+             # xapi, because has not started yet. These VDIs are raw.
++            _t = time.monotonic()
+             if VdiType.isCowImage(vdi_type):
+                 session = self.target.vdi.session
+                 vdi_ref = session.xenapi.VDI.get_by_uuid(vdi_uuid)
+@@ -1906,8 +1915,11 @@ class VDI(object):
+                     options['key_hash'] = key_hash
+                     options['vdi_uuid'] = vdi_uuid
+                     util.SMlog('Using key with hash {} for VDI {}'.format(key_hash, vdi_uuid))
++            util.SMlog(f'MIG-TIMING activate: key_hash sm_config {time.monotonic() - _t:.3f}s')
+             # Activate the physical node
++            _t = time.monotonic()
+             dev_path = self._activate(sr_uuid, vdi_uuid, options)
++            util.SMlog(f'MIG-TIMING activate: _activate total {time.monotonic() - _t:.3f}s')
+ 
+             if hasattr(self.target.vdi.sr, 'DRIVER_TYPE') and \
+                self.target.vdi.sr.DRIVER_TYPE == 'lvhd' and \
+@@ -1922,18 +1934,25 @@ class VDI(object):
+                 self._remove_tag(vdi_uuid)
+             raise
+         finally:
++            _t = time.monotonic()
+             vdi_ref = self._session.xenapi.VDI.get_by_uuid(vdi_uuid)
+             self._session.xenapi.VDI.remove_from_sm_config(
+                 vdi_ref, 'activating')
+             util.SMlog("Removed activating flag from %s" % vdi_uuid)
++            util.SMlog(f'MIG-TIMING activate: remove activating flag {time.monotonic() - _t:.3f}s')
+ 
+         # Link result to backend/
++        _t = time.monotonic()
+         self.BackendLink.from_uuid(sr_uuid, vdi_uuid).mklink(dev_path)
+         self.linkNBD(sr_uuid, vdi_uuid)
++        util.SMlog(f'MIG-TIMING activate: links {time.monotonic() - _t:.3f}s')
++        util.SMlog(f'MIG-TIMING activate: _activate_locked total {time.monotonic() - _t0:.3f}s')
+         return True
+ 
+     def _activate(self, sr_uuid, vdi_uuid, options):
++        _t = time.monotonic()
+         vdi_options = self.target.activate(sr_uuid, vdi_uuid)
++        util.SMlog(f'MIG-TIMING activate: target.activate {time.monotonic() - _t:.3f}s')
+ 
+         dev_path = self.setup_cache(sr_uuid, vdi_uuid, options)
+         if not dev_path:
+@@ -1944,9 +1963,13 @@ class VDI(object):
+                 options["o_direct"] = self.get_o_direct_capability(options)[0]
+                 if vdi_options:
+                     options.update(vdi_options)
++                _t = time.monotonic()
++                mem_pool_size = self._get_pool_config(sr_uuid).get("mem-pool-size")
++                util.SMlog(f'MIG-TIMING activate: _get_pool_config {time.monotonic() - _t:.3f}s')
++                _t = time.monotonic()
+                 dev_path, self.tap = self._tap_activate(phy_path, vdi_type,
+-                        sr_uuid, options,
+-                        self._get_pool_config(sr_uuid).get("mem-pool-size"))
++                        sr_uuid, options, mem_pool_size)
++                util.SMlog(f'MIG-TIMING activate: _tap_activate {time.monotonic() - _t:.3f}s')
+             else:
+                 dev_path = phy_path  # Just reuse phy
+ 
+@@ -1977,14 +2000,23 @@ class VDI(object):
+         """Wraps target.deactivate and removes a tapdisk"""
+ 
+         #util.SMlog("VDI.deactivate %s" % vdi_uuid)
++        _t0 = _t = time.monotonic()
+         if self.tap_wanted() and not self._check_tag(vdi_uuid):
+             return False
++        util.SMlog(f'MIG-TIMING deactivate: _check_tag {time.monotonic() - _t:.3f}s')
+ 
++        _t = time.monotonic()
+         self._deactivate(sr_uuid, vdi_uuid, caching_params)
++        util.SMlog(f'MIG-TIMING deactivate: _deactivate total {time.monotonic() - _t:.3f}s')
++        _t = time.monotonic()
+         if self.target.has_cap("ATOMIC_PAUSE"):
+             self._detach(sr_uuid, vdi_uuid)
++        util.SMlog(f'MIG-TIMING deactivate: _detach {time.monotonic() - _t:.3f}s')
++        _t = time.monotonic()
+         if self.tap_wanted():
+             self._remove_tag(vdi_uuid)
++        util.SMlog(f'MIG-TIMING deactivate: _remove_tag {time.monotonic() - _t:.3f}s')
++        util.SMlog(f'MIG-TIMING deactivate: _deactivate_locked total {time.monotonic() - _t0:.3f}s')
+ 
+         return True
+ 
+@@ -2019,7 +2051,9 @@ class VDI(object):
+             pass
+         else:
+             if major == Tapdisk.major():
++                _t = time.monotonic()
+                 self._tap_deactivate(minor)
++                util.SMlog(f'MIG-TIMING deactivate: _tap_deactivate {time.monotonic() - _t:.3f}s')
+                 self.remove_cache(caching_params)
+ 
+         # Remove the backend link
+@@ -2032,11 +2066,15 @@ class VDI(object):
+             # attributes have changed (e.g. its size if it was inflated; or its
+             # path if it was leaf-coalesced onto a raw LV), so refresh the
+             # object completely
++            _t = time.monotonic()
+             target = sm.VDI.from_uuid(self.target.vdi.session, vdi_uuid)
+             driver_info = target.sr.srcmd.driver_info
+             self.target = self.TargetDriver(target, driver_info)
++            util.SMlog(f'MIG-TIMING deactivate: refresh (VDI.from_uuid) {time.monotonic() - _t:.3f}s')
+ 
++        _t = time.monotonic()
+         self.target.deactivate(sr_uuid, vdi_uuid)
++        util.SMlog(f'MIG-TIMING deactivate: target.deactivate {time.monotonic() - _t:.3f}s')
+ 
+     def _detach(self, sr_uuid, vdi_uuid):
+         self.target.detach(sr_uuid, vdi_uuid)
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 19d143f4..64852247 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -858,14 +858,18 @@ class MultiLinstorCowUtil:
+         return instance
+ 
+     def _init_executor_thread(self):
++        _t = time.monotonic()
+         api_session = util.ApiSession("SM-linstor-multi-cow-util")
++        util.SMlog(f'SCAN-TIMING worker init: ApiSession {time.monotonic() - _t:.3f}s')
+         try:
++            _t = time.monotonic()
+             linstor = LinstorVolumeManager(
+                 self._uri,
+                 self._group_name,
+                 repair=False,
+                 logger=util.SMlog
+             )
++            util.SMlog(f'SCAN-TIMING worker init: LinstorVolumeManager {time.monotonic() - _t:.3f}s')
+             self._executor_data.linstor = linstor
+             self._executor_data.session = api_session.session
+         except:
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index a47a20ac..a87a211d 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -393,14 +393,17 @@ class LinstorVolumeManager(object):
+         """
+ 
+         self._uri = uri
++        _t = time.monotonic()
+         self._linstor = self._create_linstor_instance(
+             uri, attempt_count=attempt_count
+         )
++        util.SMlog(f'SCAN-TIMING LVM init: _create_linstor_instance {time.monotonic() - _t:.3f}s')
+ 
+-
++        _t = time.monotonic()
+         mismatched_nodes = [
+             node for node in self._linstor.node_list().pop().nodes if node.connection_status == "VERSION_MISMATCH"
+         ]
++        util.SMlog(f'SCAN-TIMING LVM init: node_list {time.monotonic() - _t:.3f}s')
+ 
+         if mismatched_nodes:
+             raise LinstorVolumeManagerError(
+@@ -412,7 +415,9 @@ class LinstorVolumeManager(object):
+ 
+         # Ensure group exists.
+         group_name = self.build_group_name(group_name)
++        _t = time.monotonic()
+         groups = self._linstor.resource_group_list_raise([group_name]).resource_groups
++        util.SMlog(f'SCAN-TIMING LVM init: resource_group_list {time.monotonic() - _t:.3f}s')
+         if not groups:
+             raise LinstorVolumeManagerError(
+                 'Unable to find `{}` Linstor SR'.format(group_name)
+@@ -428,13 +433,17 @@ class LinstorVolumeManager(object):
+ 
+         # To increase performance and limit request count to LINSTOR services,
+         # we use caches.
++        _t = time.monotonic()
+         self._kv_cache = self._create_kv_cache()
++        util.SMlog(f'SCAN-TIMING LVM init: _create_kv_cache {time.monotonic() - _t:.3f}s')
+         self._resource_cache = None
+         self._resource_cache_dirty = True
+         self._volume_info_cache = None
+         self._volume_info_cache_dirty = True
+         self._resources_info_cache = None
++        _t = time.monotonic()
+         self._build_volumes(repair=repair)
++        util.SMlog(f'SCAN-TIMING LVM init: _build_volumes (repair={repair}) {time.monotonic() - _t:.3f}s')
+ 
+     @property
+     def uri(self) -> str:

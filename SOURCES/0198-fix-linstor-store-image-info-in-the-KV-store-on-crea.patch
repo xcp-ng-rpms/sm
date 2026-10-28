@@ -1,0 +1,94 @@
+From f374c748c8b445cfbd1422323d717c287a9bf683 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 13 Oct 2026 19:54:12 +0200
+Subject: [PATCH] fix(linstor): store image info in the KV store on create
+
+`LinstorCowUtil.create` only invalidated the cached image info, so a new
+VDI stayed with `invalid` keys until the next scan on the master read
+its image.
+
+The info of a new image is known: no parent, not hidden, and `size`
+already rounded by `validateAndRoundImageSize` is its virtual size.
+Write it after a successful create. Nothing is invalidated before: the
+volume is new, its keys don't exist yet and a missing key is handled
+like an invalid one.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorcowutil.py    | 19 ++++++++++++-------
+ tests/test_linstorcowutil.py | 17 ++++++++++++++++-
+ 2 files changed, 28 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 5f8f49a7..d7e8445e 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -403,7 +403,11 @@ class LinstorCowUtil:
+ 
+     @linstormodifier()
+     def create(self, path, size, static, msize=0):
+-        with self._updating_image_info(path):
++        # A new image has no parent and is not hidden. `size` is already
++        # rounded by `validateAndRoundImageSize`, it's the virtual size.
++        # Nothing to invalidate: the volume is new, its keys don't exist yet
++        # and a missing key is handled like an invalid one.
++        with self._updating_image_info(path, (), hidden=False, size_virt=size, parent_uuid=''):
+             return self._call_local_method_or_fail(self._cowutil.create, path, size, static, msize)
+ 
+     @linstormodifier()
+@@ -553,12 +557,13 @@ class LinstorCowUtil:
+         """
+ 
+         vdi_uuid = self._extract_uuid(path)
+-        self._linstor.invalidate_volume_image_info(
+-            vdi_uuid,
+-            hidden='hidden' in props,
+-            size_virt='size_virt' in props,
+-            parent_uuid='parent_uuid' in props
+-        )
++        if props:  # Empty for a new volume (see `create`): nothing to invalidate.
++            self._linstor.invalidate_volume_image_info(
++                vdi_uuid,
++                hidden='hidden' in props,
++                size_virt='size_virt' in props,
++                parent_uuid='parent_uuid' in props
++            )
+ 
+         yield
+ 
+diff --git a/tests/test_linstorcowutil.py b/tests/test_linstorcowutil.py
+index bcb79223..ce85b325 100644
+--- a/tests/test_linstorcowutil.py
++++ b/tests/test_linstorcowutil.py
+@@ -400,7 +400,6 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+     def test_invalidate_all_modifiers(self):
+         all_props = LinstorVolumeManager.IMAGE_INFO_PROPS
+         cases = (
+-            ('create', 'create', (self.path, 1024, False)),
+             ('kill_data', 'killData', (self.path,)),
+             ('snapshot', 'snapshot', (self.path, self.parent_path, False)),
+             ('force_coalesce', 'coalesce', (self.path,)),
+@@ -415,6 +414,22 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+                 getattr(self.linstorcowutil, method)(*args)
+             self.assert_all_invalid()
+ 
++    def test_create(self):
++        with mock.patch.object(self.cowutil, 'create'), \
++                mock.patch.object(LinstorVolumeManager, 'invalidate_volume_image_info') as invalidate:
++            self.linstorcowutil.create(self.path, 2048, False)
++
++        invalidate.assert_not_called()
++        self.assert_image_info(False, 2048, '')
++
++    def test_create_failure_not_stored(self):
++        with mock.patch.object(self.cowutil, 'create', side_effect=Exception('create error')):
++            with self.assertRaises(Exception):
++                self.linstorcowutil.create(self.path, 1024, False)
++
++        for prop in LinstorVolumeManager.IMAGE_INFO_PROPS:
++            self.assertIsNone(get_prop(self.manager, VDI_UUID, prop))
++
+     def test_unrelated_setter_keeps_info(self):
+         self.store()
+ 

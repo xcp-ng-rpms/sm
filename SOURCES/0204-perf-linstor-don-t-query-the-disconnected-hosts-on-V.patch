@@ -1,0 +1,56 @@
+From 54cbb8cc3bf74485fadfc3d33c1005fb558f7c13 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 19 Oct 2026 15:24:53 +0200
+Subject: [PATCH] perf(linstor): don't query the disconnected hosts on VDI
+ commands
+
+`LinstorSR.load` reads the storage pools (`disconnected_hosts`) on every
+SM command, only to log the hosts that failed to join. When no such
+query ran in the pool in the last ~10 s, it takes ~1.8 s on the
+controller side, otherwise a few ms.
+
+During a live migration on a LINSTOR SR, `vdi_deactivate` on the source
+and `vdi_attach` / `vdi_activate` on the destination are all inside the
+VM outage, and `vdi_activate` / `vdi_deactivate` load the SR a second
+time (`nop` load of `SR.from_uuid`, VDI refresh in `blktap2`). Measured
+on a 3-host pool, the slow query added 1.8 to 3.8 s to each outage of
+~16 s. The other queries of these commands don't get slower without it.
+
+Skip it for VDI commands and the `nop` load. SR commands keep it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LinstorSR.py | 19 ++++++++++++-------
+ 1 file changed, 12 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index b0db33fa..e57f9200 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -473,13 +473,18 @@ class LinstorSR(SR.SR):
+                     raise xs_errors.XenError('SRUnavailable', opterr=str(e))
+ 
+             if self._linstor:
+-                try:
+-                    hosts = self._linstor.disconnected_hosts
+-                except Exception as e:
+-                    raise xs_errors.XenError('SRUnavailable', opterr=str(e))
+-
+-                if hosts:
+-                    util.SMlog('Failed to join node(s): {}'.format(hosts))
++                # The disconnected hosts are only logged. Skip them for VDI
++                # commands and the `nop` load of `SR.from_uuid` (VDI refresh in
++                # blktap2): the storage pool query can take ~2 s and these
++                # commands are on the critical path of a live migration.
++                if not self.cmd.startswith('vdi_') and self.cmd != 'nop':
++                    try:
++                        hosts = self._linstor.disconnected_hosts
++                    except Exception as e:
++                        raise xs_errors.XenError('SRUnavailable', opterr=str(e))
++
++                    if hosts:
++                        util.SMlog('Failed to join node(s): {}'.format(hosts))
+ 
+                 # Ensure we use a non-locked volume when cowutil is called.
+                 if (

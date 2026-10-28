@@ -1,0 +1,250 @@
+From d8a21b96594f7145abb2c27446ee08d18874b279 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 21 Oct 2026 16:59:43 +0200
+Subject: [PATCH] fix(linstor): check the cached image info against the image
+ on a miss
+
+When `get_info` has to read the image (a cached field is missing or
+invalid, or the cached parent no longer exists), the fields that were
+valid in the KV store must match what the image says: every writer
+updates them. A difference means a writer skipped the cache (a bug, or
+an SM version without it).
+
+Read the cached fields once, field by field
+(`get_volume_image_info_fields`), use them for the hit check as before,
+and after an image read compare the valid ones with the image. Log a
+difference as an error, with the field and both values; the image
+values are used, and stored again by the master scans. No extra KV
+lookup and no extra image read. An image read with a scan error is not
+compared.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorcowutil.py       | 32 +++++++++++--
+ drivers/linstorvolumemanager.py | 33 +++++++++-----
+ tests/test_linstorcowutil.py    | 79 ++++++++++++++++++++++++++++++++-
+ 3 files changed, 128 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index c3701784..19c68206 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -263,7 +263,8 @@ class LinstorCowUtil:
+         # Note: `store_info` must only be used by callers on the master (the
+         # SR and GC scans, the GC repair). The image modifiers write the image
+         # info themselves, through `_updating_image_info`.
+-        image_info = self._get_cached_info(vdi_uuid, include_parent)
++        cached_fields = self._linstor.get_volume_image_info_fields(vdi_uuid)
++        image_info = self._get_cached_info(vdi_uuid, include_parent, cached_fields)
+         if image_info:
+             return image_info
+ 
+@@ -280,14 +281,15 @@ class LinstorCowUtil:
+                 raise
+             image_info = self._get_vhd_info(vdi_uuid, self._extract_uuid, **kwargs)
+ 
++        self._check_cached_fields(vdi_uuid, cached_fields, image_info, include_parent)
++
+         # Without parent we can't store a complete info.
+         if store_info and include_parent:
+             self._store_info(vdi_uuid, image_info)
+         return image_info
+ 
+-    def _get_cached_info(self, vdi_uuid, include_parent):
+-        cached_info = self._linstor.get_volume_image_info(vdi_uuid)
+-        if not cached_info:
++    def _get_cached_info(self, vdi_uuid, include_parent, cached_info):
++        if len(cached_info) != len(LinstorVolumeManager.IMAGE_INFO_PROPS):
+             return None
+ 
+         image_info = CowImageInfo(vdi_uuid)
+@@ -312,6 +314,28 @@ class LinstorCowUtil:
+ 
+         return image_info
+ 
++    @staticmethod
++    def _check_cached_fields(vdi_uuid, cached_fields, image_info, include_parent):
++        # The image was read because a field is missing or invalid, or the
++        # cached parent no longer exists: the other cached fields must match
++        # it. A difference means a writer didn't update the KV store (bug, or
++        # an SM version without the cache): log it, the image values are used.
++        if image_info.error:
++            return
++        image_fields = {
++            'hidden': bool(image_info.hidden),
++            'size_virt': image_info.sizeVirt
++        }
++        if include_parent:
++            image_fields['parent_uuid'] = image_info.parentUuid or ''
++        for field, image_value in image_fields.items():
++            if field in cached_fields and cached_fields[field] != image_value:
++                util.SMlog(
++                    f'Stale image info of {vdi_uuid} in the KV store: {field} is '
++                    f'{cached_fields[field]!r} in the cache, {image_value!r} in the image',
++                    priority=util.LOG_ERR
++                )
++
+     def _store_info(self, vdi_uuid, image_info):
+         if image_info.sizeVirt < 0:
+             return
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index eefe3b5c..51aa4e00 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1366,21 +1366,34 @@ class LinstorVolumeManager(object):
+         :rtype: dict or None
+         """
+ 
++        fields = self.get_volume_image_info_fields(volume_uuid)
++        if len(fields) != len(self.IMAGE_INFO_PROPS):
++            return None
++        return fields
++
++    def get_volume_image_info_fields(self, volume_uuid):
++        """
++        Get the valid fields of the COW image info cached in the KV store.
++        :param str volume_uuid: The volume to read.
++        :return: A dict with the valid fields among `hidden` (bool),
++        `size_virt` (int) and `parent_uuid` (str, empty if no parent).
++        Missing or invalid fields are absent.
++        :rtype: dict
++        """
++
+         volume_properties = self._get_volume_properties(volume_uuid)
+         hidden = volume_properties.get(self.PROP_HIDDEN)
+         size_virt = volume_properties.get(self.PROP_SIZE_VIRT)
+         parent_uuid = volume_properties.get(self.PROP_PARENT_UUID)
+ 
+-        if hidden not in ('0', '1') or not size_virt or not size_virt.isdigit():
+-            return None
+-        if parent_uuid is None or parent_uuid == self.IMAGE_INFO_INVALID:
+-            return None
+-
+-        return {
+-            'hidden': hidden == '1',
+-            'size_virt': int(size_virt),
+-            'parent_uuid': parent_uuid
+-        }
++        fields = {}
++        if hidden in ('0', '1'):
++            fields['hidden'] = hidden == '1'
++        if size_virt and size_virt.isdigit():
++            fields['size_virt'] = int(size_virt)
++        if parent_uuid is not None and parent_uuid != self.IMAGE_INFO_INVALID:
++            fields['parent_uuid'] = parent_uuid
++        return fields
+ 
+     def set_volume_image_info(
+         self, volume_uuid, hidden=None, size_virt=None, parent_uuid=None
+diff --git a/tests/test_linstorcowutil.py b/tests/test_linstorcowutil.py
+index 257d9302..4d91396f 100644
+--- a/tests/test_linstorcowutil.py
++++ b/tests/test_linstorcowutil.py
+@@ -3,6 +3,7 @@ from sm_typing import override
+ import unittest
+ import unittest.mock as mock
+ 
++import util
+ from cowutil import CowImageInfo
+ from linstorcowutil import LinstorCowUtil
+ from linstorvolumemanager import LinstorVolumeManager
+@@ -123,6 +124,20 @@ class TestLinstorVolumeManagerImageInfo(unittest.TestCase):
+         self.assertEqual(get_prop(self.manager, VDI_UUID, SIZE_VIRT), INVALID)
+         self.assertEqual(get_prop(self.manager, VDI_UUID, PARENT), '')
+         self.assertIsNone(self.manager.get_volume_image_info(VDI_UUID))
++        self.assertEqual(
++            self.manager.get_volume_image_info_fields(VDI_UUID),
++            {'hidden': True, 'parent_uuid': ''}
++        )
++
++    def test_fields(self):
++        self.assertEqual(self.manager.get_volume_image_info_fields(VDI_UUID), {})
++        self.manager.set_volume_image_info(VDI_UUID, size_virt=1024)
++        self.assertEqual(self.manager.get_volume_image_info_fields(VDI_UUID), {'size_virt': 1024})
++        self.manager.set_volume_image_info(VDI_UUID, hidden=False, parent_uuid=PARENT_UUID)
++        self.assertEqual(
++            self.manager.get_volume_image_info_fields(VDI_UUID),
++            {'hidden': False, 'size_virt': 1024, 'parent_uuid': PARENT_UUID}
++        )
+ 
+     def test_invalidate_all(self):
+         self.manager.set_volume_image_info(VDI_UUID, hidden=True, size_virt=1024, parent_uuid=PARENT_UUID)
+@@ -285,15 +300,75 @@ class TestLinstorCowUtilImageInfo(unittest.TestCase):
+         self.assertEqual(info.sizeVirt, 4096)
+         self.assertIsNone(self.manager.get_volume_image_info(VDI_UUID))
+ 
++    def stale_logs(self):
++        # `call.args` / `call.kwargs` don't exist before Python 3.8: unpack.
++        return [
++            args[0] for args, kwargs in self.mock_log.call_args_list
++            if kwargs.get('priority') == util.LOG_ERR
++        ]
++
+     def test_get_info_hit_stale_parent_reads_image(self):
+-        self.store(parent_uuid=NEW_UUID)
++        # Only the parent is stale: it no longer exists.
++        self.store(hidden=True, size_virt=4096, parent_uuid=NEW_UUID)
+ 
+         with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()) as get_info:
+             info = self.linstorcowutil.get_info(VDI_UUID)
+ 
+         get_info.assert_called_once()
+         self.assertEqual(info.parentUuid, PARENT_UUID)
+-        self.mock_log.assert_called_once()
++        self.assertEqual(self.mock_log.call_count, 2)
++        stale = self.stale_logs()
++        self.assertEqual(len(stale), 1)
++        self.assertIn('parent_uuid', stale[0])
++
++    def test_get_info_partial_miss_matching_fields(self):
++        self.store(hidden=True, size_virt=1024)
++        self.manager.invalidate_volume_image_info(VDI_UUID, hidden=False, parent_uuid=False)
++
++        with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()) as get_info:
++            info = self.linstorcowutil.get_info(VDI_UUID)
++
++        get_info.assert_called_once()
++        self.assertEqual(info.sizeVirt, 4096)  # The invalid field isn't compared.
++        self.assertEqual(self.stale_logs(), [])
++
++    def test_get_info_partial_miss_stale_field_is_logged(self):
++        self.store(hidden=False, size_virt=4096)
++        self.manager.invalidate_volume_image_info(VDI_UUID, hidden=False, parent_uuid=False, size_virt=True)
++
++        with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info(hidden=True)):
++            info = self.linstorcowutil.get_info(VDI_UUID)
++
++        self.assertTrue(info.hidden)  # The image value is used.
++        stale = self.stale_logs()
++        self.assertEqual(len(stale), 1)
++        self.assertIn('hidden is False in the cache, True in the image', stale[0])
++
++    def test_get_info_without_parent_doesnt_compare_parent(self):
++        self.store(hidden=True, parent_uuid=NEW_UUID)
++        self.manager.invalidate_volume_image_info(VDI_UUID, hidden=False, parent_uuid=False)
++
++        with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info(parent=False)):
++            self.linstorcowutil.get_info(VDI_UUID, include_parent=False)
++
++        self.assertEqual(self.stale_logs(), [])
++
++    def test_get_info_nothing_cached_nothing_compared(self):
++        with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info()):
++            self.linstorcowutil.get_info(VDI_UUID)
++
++        self.assertEqual(self.stale_logs(), [])
++
++    def test_get_info_scan_error_not_compared(self):
++        self.store(hidden=False)
++        self.manager.invalidate_volume_image_info(VDI_UUID, hidden=False, parent_uuid=False)
++        info = self.image_info(hidden=True)
++        info.error = 'scan-error=1'
++
++        with mock.patch.object(self.cowutil, 'getInfo', return_value=info):
++            self.linstorcowutil.get_info(VDI_UUID)
++
++        self.assertEqual(self.stale_logs(), [])
+ 
+     def test_get_info_miss_without_include_parent_not_stored(self):
+         with mock.patch.object(self.cowutil, 'getInfo', return_value=self.image_info(parent=False)):

@@ -1,0 +1,148 @@
+From 7bfbe54c95036bdd4a9e8e82743f4f578b0a1099 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 15 Oct 2026 20:53:44 +0000
+Subject: [PATCH] perf(linstor): load the image info in the GC thread with a
+ warm cache
+
+Same change as for the SR scan: the GC scan (`_load_vdi_info`) started 4
+`MultiLinstorCowUtil` workers on every run, each with its own XAPI
+session and `LinstorVolumeManager`, even when every image info came from
+the KV store.
+
+Count the COW images without valid info in the KV store, from the KV
+store loaded by the GC scan. Up to `MAX_MISSES_WITHOUT_POOL`, load the
+image info in the GC thread with the GC's session and
+`LinstorVolumeManager`. Above it, use a pool of `min(MAX_WORKERS,
+misses)` workers.
+
+`MAX_MISSES_WITHOUT_POOL` moves from `LinstorSR` to `linstorcowutil` to
+be shared by both scans (`cleanup` can't import `LinstorSR`).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LinstorSR.py      | 10 ++--------
+ drivers/cleanup.py        | 38 +++++++++++++++++++++++++++++++-------
+ drivers/linstorcowutil.py |  8 ++++++++
+ 3 files changed, 41 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index a6c2831f..b0db33fa 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -19,7 +19,7 @@ from sm_typing import Any, Optional, override, Literal
+ from constants import CBTLOG_TAG, LINSTOR_AUTO_BACKUP_DELAY
+ 
+ try:
+-    from linstorcowutil import LinstorCowUtil, MultiLinstorCowUtil
++    from linstorcowutil import LinstorCowUtil, MultiLinstorCowUtil, MAX_MISSES_WITHOUT_POOL
+     from linstorjournaler import LinstorJournaler
+     from linstorvolumemanager import get_controller_uri
+     from linstorvolumemanager import get_controller_node_name
+@@ -83,12 +83,6 @@ TRACE_PERFS = False
+ # Enable/Disable COW key hash support.
+ USE_KEY_HASH = False
+ 
+-# Max number of COW images without valid info in the KV store (i.e. images to
+-# read) for which a scan loads the VDIs in the main thread. Above it, a thread
+-# pool is used: each worker opens its own XAPI session and builds its own
+-# `LinstorVolumeManager`, which costs more than a few image reads.
+-SCAN_MAX_MISSES_WITHOUT_POOL = 3
+-
+ # Special volumes.
+ HA_VOLUME_NAME = PERSISTENT_PREFIX + 'ha-statefile'
+ REDO_LOG_VOLUME_NAME = PERSISTENT_PREFIX + 'redo-log'
+@@ -1258,7 +1252,7 @@ class LinstorSR(SR.SR):
+ 
+             return vdi
+ 
+-        if misses <= SCAN_MAX_MISSES_WITHOUT_POOL:
++        if misses <= MAX_MISSES_WITHOUT_POOL:
+             util.SMlog(f'Loading VDIs in the main thread ({misses} image info misses)')
+             self.vdis = {vdi_uuid: load_vdi(vdi_uuid, None) for vdi_uuid in vdi_uuids}
+         else:
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index d0c526c2..26500609 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -57,7 +57,7 @@ from lvmcowutil import LV_PREFIX, LvmCowUtil
+ from vditype import VdiType, VdiTypeExtension, VDI_COW_TYPES, VDI_TYPE_TO_EXTENSION
+ 
+ try:
+-    from linstorcowutil import LinstorCowUtil, MultiLinstorCowUtil
++    from linstorcowutil import LinstorCowUtil, MultiLinstorCowUtil, MAX_MISSES_WITHOUT_POOL
+     from linstorjournaler import LinstorJournaler
+     from linstorvolumemanager import get_controller_uri
+     from linstorvolumemanager import LinstorVolumeManager, LinstorVolumeManagerError, LinstorVolumeOpeners
+@@ -3782,22 +3782,46 @@ class LinstorSR(SR):
+             except Exception as e:
+                 all_vdi_info[vdi_uuid] = handle_fail(vdi_uuid, e)
+ 
+-        multi_cowutil = MultiLinstorCowUtil(self._linstor.uri, self._linstor.group_name)
++        # Count the COW images whose info is missing or invalid in the KV
++        # store: only these ones must be read.
++        misses = sum(
++            1 for vdi_uuid, _ in pending_vdis
++            if not self._linstor.get_volume_image_info(vdi_uuid)
++        )
++
++        local_cowutils = {}
+ 
+         def load_info(vdi, multi_cowutil):
+             vdi_uuid, vdi_type = vdi
+             try:
+-                vdiInfo = multi_cowutil.get_local_cowutil(vdi_type).get_info(vdi_uuid, store_info=True)
++                if multi_cowutil:
++                    cowutil_instance = multi_cowutil.get_local_cowutil(vdi_type)
++                else:
++                    cowutil_instance = local_cowutils.get(vdi_type)
++                    if not cowutil_instance:
++                        cowutil_instance = LinstorCowUtil(self.xapi.session, self._linstor, vdi_type)
++                        local_cowutils[vdi_type] = cowutil_instance
++                vdiInfo = cowutil_instance.get_info(vdi_uuid, store_info=True)
+             except Exception as e:
+                 vdiInfo = handle_fail(vdi_uuid, e)
+             vdiInfo.vdiType = vdi_type
+             return vdiInfo
+ 
+-        try:
+-            for vdiInfo in multi_cowutil.run(load_info, pending_vdis):
++        if misses <= MAX_MISSES_WITHOUT_POOL:
++            Util.log(f'Loading image info in the main thread ({misses} image info misses)')
++            for vdi in pending_vdis:
++                vdiInfo = load_info(vdi, None)
+                 all_vdi_info[vdiInfo.uuid] = vdiInfo
+-        finally:
+-            del multi_cowutil
++        else:
++            Util.log(f'Loading image info with a thread pool ({misses} image info misses)')
++            multi_cowutil = MultiLinstorCowUtil(self._linstor.uri, self._linstor.group_name)
++            try:
++                for vdiInfo in multi_cowutil.run(
++                    load_info, pending_vdis, max_workers=max(1, min(MultiLinstorCowUtil.MAX_WORKERS, misses))
++                ):
++                    all_vdi_info[vdiInfo.uuid] = vdiInfo
++            finally:
++                del multi_cowutil
+ 
+         return all_vdi_info
+ 
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 04c17e77..d3af7f25 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -776,6 +776,14 @@ class LinstorCowUtil:
+                 opterr='Failed to zero out COW image footer {}'.format(path)
+             )
+ 
++# Max number of COW images without valid info in the KV store (i.e. images to
++# read) for which a scan (SR or GC) loads them in the caller's thread. Above it,
++# a `MultiLinstorCowUtil` thread pool is used: each worker opens its own XAPI
++# session and builds its own `LinstorVolumeManager`, which costs more than a
++# few image reads.
++MAX_MISSES_WITHOUT_POOL = 3
++
++
+ class MultiLinstorCowUtil:
+     class ExecutorData(threading.local):
+         def __init__(self):

@@ -1,0 +1,63 @@
+From 75c19dfb548cea2685f893fc0821f6f90f2eb911 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 27 Oct 2026 13:52:46 +0100
+Subject: [PATCH] fix(linstor): invalidate the cached image info on clone undo
+ and DELETED_ renames
+
+`_undo_clone` reads the hidden flag of the base to un-hide it, then
+renames it back to the VDI uuid: invalidate its cached info first, so
+the flag is read in the image and the rename doesn't carry values a
+stale cache could have.
+
+A volume renamed with the `DELETED_` prefix (VDI that can't be destroyed
+during a clone undo, bad volume that can't be removed when the manager
+is built with repair) is garbage: invalidate its cached info before the
+rename too.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LinstorSR.py            | 9 ++++++++-
+ drivers/linstorvolumemanager.py | 2 ++
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index e57f9200..a665f48e 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1488,6 +1488,11 @@ class LinstorSR(SR.SR):
+ 
+         linstorcowutil = LinstorCowUtil(self.session, self._linstor, base_type)
+ 
++        # The base is renamed back below, the rename carries its cached image
++        # info: invalidate it, so the hidden flag is read in the image and the
++        # next scan reads the rest.
++        self._linstor.invalidate_volume_image_info(base_uuid)
++
+         # Un-hide the parent.
+         self._linstor.update_volume_metadata(base_uuid, {READ_ONLY_TAG: False})
+         if VdiType.isCowImage(base_type):
+@@ -1524,7 +1529,9 @@ class LinstorSR(SR.SR):
+                 # "Shutdown of the DRBD resource 'XXX failed", so the
+                 # volume info remains... The problem is we can't rename
+                 # properly the base VDI below this line, so we must change the
+-                # UUID of this bad VDI before.
++                # UUID of this bad VDI before. Its cached image info is
++                # invalidated, it is garbage now.
++                self._linstor.invalidate_volume_image_info(vdi_uuid)
+                 self._linstor.update_volume_uuid(
+                     vdi_uuid, 'DELETED_' + vdi_uuid, force=True
+                 )
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index f95fe2fb..e5635d93 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -2761,6 +2761,8 @@ class LinstorVolumeManager(object):
+                 # rollback because the original VDI UUID can try to be renamed
+                 # with the UUID we are trying to delete...
+                 if not volume_uuid.startswith('DELETED_'):
++                    # Its cached image info is invalidated, it is garbage now.
++                    self.invalidate_volume_image_info(volume_uuid)
+                     self.update_volume_uuid(
+                         volume_uuid, 'DELETED_' + volume_uuid, force=True
+                     )

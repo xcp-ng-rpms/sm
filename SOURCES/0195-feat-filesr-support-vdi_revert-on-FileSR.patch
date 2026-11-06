@@ -1,0 +1,1173 @@
+From dd6a93e0946e5656274c4a97b3e2773da3614c52 Mon Sep 17 00:00:00 2001
+From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+Date: Mon, 21 Sep 2026 09:59:49 +0200
+Subject: [PATCH] feat(filesr): support vdi_revert on FileSR
+
+* Support vdi_revert from xapi
+* Enable VDI_REVERT capability on FileSR
+* Implement vdi revert on File based SRs
+* Support CBT on vdi revert
+* Support vdi_revert rollback with journal in case of catastrophic failure
+* Fix ZFSSR tests
+* Add `tap_pause` context manager to base `VDI` object
+* add generic journaling capabilities
+* Fix permission on nfs-on-slave plugin
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+---
+ Makefile                |   1 +
+ drivers/CephFSSR.py     |   3 +-
+ drivers/EXTSR.py        |   4 +-
+ drivers/FileSR.py       | 473 ++++++++++++++++++++++++++++++++++++++--
+ drivers/GlusterFSSR.py  |   3 +-
+ drivers/LargeBlockSR.py |   3 +-
+ drivers/MooseFSSR.py    |   3 +-
+ drivers/NFSSR.py        |   4 +-
+ drivers/SMBSR.py        |   3 +-
+ drivers/SRCommand.py    |  16 +-
+ drivers/VDI.py          | 102 ++++++++-
+ drivers/XFSSR.py        |   4 +-
+ drivers/ZFSSR.py        |   3 +-
+ drivers/jutils.py       |  73 +++++++
+ drivers/nfs-on-slave    |   0
+ drivers/util.py         |   3 +
+ tests/test_NFSSR.py     |   1 +
+ tests/test_SMBSR.py     |   1 +
+ tests/test_ZFSSR.py     |  17 +-
+ 19 files changed, 671 insertions(+), 46 deletions(-)
+ create mode 100644 drivers/jutils.py
+ mode change 100644 => 100755 drivers/nfs-on-slave
+
+diff --git a/Makefile b/Makefile
+index d0961ef3..38aec658 100755
+--- a/Makefile
++++ b/Makefile
+@@ -56,6 +56,7 @@ SM_LIBS += mpathcount
+ SM_LIBS += refcounter
+ SM_LIBS += journaler
+ SM_LIBS += fjournaler
++SM_LIBS += jutils
+ SM_LIBS += lock
+ SM_LIBS += flock
+ SM_LIBS += lock_queue
+diff --git a/drivers/CephFSSR.py b/drivers/CephFSSR.py
+index a6634091..0e7329f2 100644
+--- a/drivers/CephFSSR.py
++++ b/drivers/CephFSSR.py
+@@ -45,7 +45,7 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+                 "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
+                 "VDI_GENERATE_CONFIG",
+-                "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE"]
++                "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_REVERT"]
+ 
+ CONFIGURATION = [
+     ['server', 'Ceph server(s) (required, ex: "192.168.0.12" or "10.10.10.10,10.10.10.26")'],
+@@ -120,6 +120,7 @@ class CephFSSR(FileSR.FileSR):
+         self.linkpath = os.path.join(self.mountpoint, sr_uuid or "")
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+         self._check_o_direct()
++        self._undo_all_journals()
+ 
+     def checkmount(self):
+         return util.ioretry(lambda: ((util.pathexists(self.mountpoint) and
+diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
+index 15957455..6ca853df 100755
+--- a/drivers/EXTSR.py
++++ b/drivers/EXTSR.py
+@@ -38,7 +38,8 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING",
+                 "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
+                 "VDI_GENERATE_CONFIG",
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+-                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING"]
++                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING",
++                "VDI_REVERT"]
+ 
+ CONFIGURATION = [['device', 'local device path (required) (e.g. /dev/sda3)']]
+ 
+@@ -75,6 +76,7 @@ class EXTSR(FileSR.FileSR):
+         self.remotepath = os.path.join("/dev", self.vgname, sr_uuid)
+         self.attached = self._checkmount()
+         self.driver_config = DRIVER_CONFIG
++        self._undo_all_journals()
+ 
+     @override
+     def delete(self, sr_uuid) -> None:
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index c0a68777..0404e307 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -16,11 +16,14 @@
+ # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ #
+ # FileSR: local-file storage repository
++from pathlib import Path
++import contextlib
+ 
+-from sm_typing import Dict, Optional, List, override
++from sm_typing import Dict, Optional, List, override, Tuple, Collection, Union, Any
+ 
+ import SR
+ import VDI
++import cbtutil
+ import SRCommand
+ import contextlib
+ import util
+@@ -33,19 +36,26 @@ import cleanup
+ import blktap2
+ import time
+ import glob
++import fjournaler
++from jutils import BaseLogEntry
+ from uuid import uuid4
+-from cowutil import getCowUtil, getImageStringFromVdiType, getVdiTypeFromImageFormat
++from cowutil import (
++    getCowUtil,
++    getImageStringFromVdiType,
++    getVdiTypeFromImageFormat,
++)
+ from vditype import VdiType, VdiTypeExtension, VDI_COW_TYPES, VDI_TYPE_TO_EXTENSION
+ import xmlrpc.client
+ import XenAPI # pylint: disable=import-error
+ from constants import CBTLOG_TAG
+ 
+ geneology: Dict[str, List[str]] = {}
+-CAPABILITIES = ["SR_PROBE", "SR_UPDATE", \
+-                "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", \
++CAPABILITIES = ["SR_PROBE", "SR_UPDATE",
++                "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+                 "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
+                 "VDI_GENERATE_CONFIG", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+-                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING"]
++                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING",
++                "VDI_REVERT"]
+ 
+ CONFIGURATION = [
+     ['location', 'local directory path (required)'],
+@@ -68,15 +78,129 @@ JOURNAL_FILE_PREFIX = ".journal-"
+ OPS_EXCLUSIVE = [
+         "sr_create", "sr_delete", "sr_probe", "sr_attach", "sr_detach",
+         "sr_scan", "vdi_init", "vdi_create", "vdi_delete", "vdi_attach",
+-        "vdi_detach", "vdi_resize_online", "vdi_snapshot", "vdi_clone"]
++        "vdi_detach", "vdi_resize_online", "vdi_snapshot", "vdi_clone",
++        "vdi_revert"]
+ 
+ DRIVER_CONFIG = {"ATTACH_FROM_CONFIG_WITH_TAPDISK": True}
+ 
++class RevertLogDestinationVDI:
++    def __init__(
++        self,
++        uuid: str,
++        path: str,
++        backup_path: str,
++        is_cbt_enabled: bool,
++    ):
++        self.uuid = uuid
++        self.path = path
++        self.backup_path = backup_path
++        self.is_cbt_enabled = is_cbt_enabled
++
++    def to_dict(self) -> Dict[str, Union[str, bool]]:
++        return {
++            "uuid": self.uuid,
++            "path": self.path,
++            "backup_path": self.backup_path,
++            "is_cbt_enabled": self.is_cbt_enabled,
++        }
++
++    @classmethod
++    def from_dict(cls, data: Dict[str, Union[str, bool]]) -> "RevertLogDestinationVDI":
++        return cls(
++            uuid=str(data["uuid"]),
++            path=str(data["path"]),
++            backup_path=str(data["backup_path"]),
++            is_cbt_enabled=bool(data["is_cbt_enabled"]),
++        )
++
++
++class RevertLogSourceVDI:
++    def __init__(
++        self,
++        uuid: str,
++        path: str,
++        vdi_type: str,
++        is_cbt_enabled: bool,
++    ):
++        self.uuid = uuid
++        self.path = path
++        self.vdi_type = vdi_type
++        self.is_cbt_enabled = is_cbt_enabled
++
++    def to_dict(self) -> Dict[str, Union[str, bool]]:
++        return {
++            "uuid": self.uuid,
++            "path": self.path,
++            "vdi_type": self.vdi_type,
++            "is_cbt_enabled": self.is_cbt_enabled,
++        }
++
++    @classmethod
++    def from_dict(cls, data: Dict[str, Union[str, bool]]) -> "RevertLogSourceVDI":
++        return cls(
++            uuid=str(data["uuid"]),
++            path=str(data["path"]),
++            vdi_type=str(data["vdi_type"]),
++            is_cbt_enabled=bool(data["is_cbt_enabled"]),
++        )
++
++class RevertLogInsertedVDI:
++    def __init__(self, uuid: str, path: str):
++        self.uuid = uuid
++        self.path = path
++
++    def to_dict(self) -> Dict[str, Collection[str]]:
++        return {
++            "uuid": self.uuid,
++            "path": self.path,
++        }
++
++    @classmethod
++    def from_dict(cls, data: Dict[str, str]) -> "RevertLogInsertedVDI":
++        return cls(
++            uuid=data["uuid"],
++            path=data["path"],
++        )
++
++class RevertLogEntry(BaseLogEntry):
++    """Journal entry used to rollback failed revert operations"""
++
++    CURRENT_VERSION = "1.0"
++    JRN_KEY = "revert"
++
++    def __init__(
++        self,
++        dest: RevertLogDestinationVDI,
++        src: RevertLogSourceVDI,
++        inserted: RevertLogInsertedVDI,
++    ):
++        self.dest = dest
++        self.src = src
++        self.inserted = inserted
++
++    @override
++    def to_dict(self) -> Dict[str, Collection[str]]:
++        return {
++            "dest": self.dest.to_dict(),
++            "src": self.src.to_dict(),
++            "inserted": self.inserted.to_dict(),
++        }
++
++    @override
++    @classmethod
++    def from_dict(cls, data: Dict[str, Union[Dict[str, str], str]]) -> "RevertLogEntry":
++        return cls(
++            dest=RevertLogDestinationVDI.from_dict(data["dest"]),  # type: ignore # Version checked
++            src=RevertLogSourceVDI.from_dict(data["src"]),  # type: ignore # Version checked
++            inserted=RevertLogInsertedVDI.from_dict(data["inserted"]) #type: ignore # Version checked
++        )
++
+ 
+ class FileSR(SR.SR):
+     """Local file storage repository"""
+ 
+     SR_TYPE = "file"
++    JRN_KEYS = (RevertLogEntry.JRN_KEY,)
+ 
+     @override
+     @staticmethod
+@@ -112,6 +236,45 @@ class FileSR(SR.SR):
+         self.mountpoint = self.path
+         self.attached = False
+         self.driver_config = DRIVER_CONFIG
++        self._undo_all_journals()
++
++    @property
++    def _has_journals(self) -> bool:
++        for key in self.JRN_KEYS:
++            try:
++                if any(self.journaler.getAll(key)):
++                    return True
++            except OSError:
++                # If we can't read the SR, this means there isn't any journal
++                # and/or didn't finish it's creation steps
++                return False
++        return False
++
++    def _undo_all_journals(self):
++        """Undo all interrupted journaled operations."""
++        self.journaler = fjournaler.Journaler(self.path)
++
++        if not self._has_journals:
++            return
++
++        is_master = False
++        if 'SRmaster' in self.dconf and self.dconf['SRmaster'] == 'true':
++            is_master = True
++
++        if not is_master:
++            raise xs_errors.XenError(
++                "SRUnavailable", opterr="Critical journals are pending. A scan is required."
++            )
++
++        self._check_o_direct()
++        self._loadvdis()
++
++        self.lock.acquire()
++        try:
++            self._handle_revert_journals()
++        finally:
++            self.lock.release()
++            self.cleanup()
+ 
+     @override
+     def create(self, sr_uuid, size) -> None:
+@@ -360,6 +523,87 @@ class FileSR(SR.SR):
+                 util.SMlog("Scan found hidden leaf (%s), ignoring" % uuid)
+                 del self.vdis[uuid]
+ 
++    def _rollback_revert_vdi(self, entry: RevertLogEntry):
++        util.SMlog(f"Reverting vdi {entry.dest.uuid} from backup {entry.dest.backup_path}")
++        if not util.ioretry(lambda: util.pathexists(entry.dest.backup_path)):
++            util.SMlog(f"Tried reverting {entry.dest.uuid} but backup {entry.dest.backup_path} not found, skpping")
++            return
++
++        src_cowutil = getCowUtil(entry.src.vdi_type)
++        util.SMlog(f"Restoring src vdi {entry.src.uuid}")
++        if not util.ioretry(lambda: util.pathexists(entry.src.path)):
++            util.SMlog(f"Restoring src vdi {entry.src.uuid} from {entry.inserted.uuid}")
++            util.ioretry(lambda: os.rename(entry.inserted.path, entry.src.path))
++
++        src_cowutil.setHidden(entry.src.path, False)
++
++        src: "FileVDI" = self.vdi(entry.src.uuid) # type: ignore[assignment]
++        src_ref = src.session.xenapi.VDI.get_by_uuid(src.uuid)
++        src.sm_config = src.session.xenapi.VDI.get_sm_config(src_ref)
++        src.load_from_file(str(src.path))
++        src._db_update()
++        src.disable_leaf_on_secondary(src.uuid)
++
++        self.added_vdi(src)
++
++        # CBT cannot be added by accident on src, we can skip checking if it exists
++        util.SMlog(f"CBT rollback: restoring cbtlog for src {entry.src.uuid}")
++        if entry.src.is_cbt_enabled:
++            src._reset_cbt_log()
++            src.session.xenapi.VDI.set_cbt_enabled(src_ref, True)
++
++        # Remove any existing vdi to allow renaming the backup with this name 
++        self._unlink_paths(entry.dest.path)
++
++        # Ensure that inserted node is hidden so that it doesn't leak
++        if util.ioretry(lambda: util.pathexists(entry.inserted.path)):
++            inserted: "FileVDI" = self.vdi(entry.inserted.uuid) # type: ignore[assignment]
++            inserted._mark_hidden(entry.inserted.path)
++            inserted_ref = inserted._db_update_or_introduce()
++            inserted.session.xenapi.VDI.set_managed(inserted_ref, False)
++            inserted.disable_leaf_on_secondary(inserted.uuid)
++
++        # Once we move the backup to it's old name, the journal can't be run again
++        # If something fails from now, we might lose some info, most of them
++        # will be back from a simple scan
++        # Worst case scenario, CBT is disabled or incoherent (which will be solved by tapdisk)
++        util.ioretry(lambda: os.rename(entry.dest.backup_path, entry.dest.path),
++                     errlist=[errno.EIO, errno.EACCES])
++
++        dest: "FileVDI" = self.vdi(entry.dest.uuid) # type: ignore[assignment]
++        dest_ref = dest.session.xenapi.VDI.get_by_uuid(dest.uuid)
++        dest.sm_config = dest.session.xenapi.VDI.get_sm_config(dest_ref)
++
++        dest.load_from_file(dest.path)
++        dest._db_update()
++        self.added_vdi(dest)
++
++        # CBT might have been added when not needed or removed when needed
++        util.SMlog(f"CBT rollback: restoring cbtlog for dest {entry.dest.uuid}")
++        if entry.dest.is_cbt_enabled:
++            dest._reset_cbt_log()
++            dest.session.xenapi.VDI.set_cbt_enabled(dest_ref, True)
++        else:
++            dest._delete_cbt_log()
++            dest.session.xenapi.VDI.set_cbt_enabled(dest_ref, False)
++
++
++
++    def _unlink_paths(self, *files: Union[Path, str]):
++        for path in files:
++            if util.ioretry(lambda: util.pathexists(str(path))):
++                os.unlink(str(path))
++
++    def _handle_revert_journals(self):
++        for uuid, value in self.journaler.getAll(RevertLogEntry.JRN_KEY).items():
++            entry = RevertLogEntry.from_journal(uuid, value)
++            util.SMlog(f"Reverting journal {entry}")
++
++            self._rollback_revert_vdi(entry)
++
++            self.journaler.remove(RevertLogEntry.JRN_KEY, uuid)
++
++
+     def _getsize(self):
+         path = self.path
+         if self.handles("smb"):
+@@ -438,7 +682,11 @@ class FileSR(SR.SR):
+         return True
+ 
+ class FileVDI(VDI.VDI):
+-    def _resolve_vdi_context_from_path(self, vdi_uuid, maxretry=5, period=2.0):
++    PARAM_RAW = "raw"
++    PARAM_VHD = "vhd"
++    PARAM_QCOW2 = "qcow2"
++
++    def _get_path_and_type(self, vdi_uuid, maxretry=5, period=2.0) -> Tuple[Optional[str], Optional[str]]:
+         vdi_formats = (
+             (VdiTypeExtension.VHD, VdiType.VHD),
+             (VdiTypeExtension.QCOW2, VdiType.QCOW2),
+@@ -452,21 +700,29 @@ class FileVDI(VDI.VDI):
+                 vdi_path = os.path.join(self.sr.path, vdi_uuid_str + vdi_extension)
+ 
+                 if util.pathexists(vdi_path):
+-                    self.vdi_type = vdi_type
+-                    if vdi_type in (VdiType.RAW, VdiType.CBTLOG):
+-                        self.hidden = False
+-                    self.path = vdi_path
+-
+-                    with contextlib.suppress(Exception):
+-                        self.cowutil = getCowUtil(self.vdi_type)
++                    return vdi_path, vdi_type
+ 
+-                    return True
+-
+-            util.SMlog("VDI %s not found, try %s of %s" % (vdi_uuid_str, try_index + 1, maxretry))
++            util.SMlog(f"VDI {vdi_uuid_str} not found, try {try_index + 1} of {maxretry}")
+             if try_index + 1 < maxretry:
+                 time.sleep(period)
+ 
+-        return False
++        return None, None
++
++    def _resolve_vdi_context_from_path(self, vdi_uuid, maxretry=5, period=2.0) -> bool:
++        path, vdi_type = self._get_path_and_type(vdi_uuid, maxretry, period)
++        if not path or not vdi_type:
++            return False
++
++        self.path = path
++        self.vdi_type = vdi_type
++
++        if vdi_type in [VdiType.RAW, VdiType.CBTLOG]:
++            self.hidden = False
++
++        with contextlib.suppress(Exception):
++            self.cowutil = getCowUtil(self.vdi_type)
++
++        return True
+ 
+     @override
+     def load(self, vdi_uuid) -> None:
+@@ -721,6 +977,169 @@ class FileVDI(VDI.VDI):
+     def clone(self, sr_uuid, vdi_uuid) -> str:
+         return self._do_snapshot(sr_uuid, vdi_uuid, VDI.SNAPSHOT_DOUBLE)
+ 
++    @override
++    def _do_revert(
++        self,
++        dest: "FileVDI",  # type: ignore # self and dest are the same type
++        src_cbtlog: Optional[str],
++        dest_cbtlog: Optional[str],
++    ):
++        # Sanity checks
++        if not self._checkpath(self.path):
++            raise xs_errors.XenError(f"Could not find {self.path}")
++
++        if not dest._checkpath(dest.path):
++            raise xs_errors.XenError(f"Could not find {dest.path}")
++
++        with self.tap_pause(), dest.tap_pause():
++            self._revert(
++                dest,
++                dest_cbtlog,
++                src_cbtlog,
++            )
++
++
++    def _revert(
++        self,
++        dest: "FileVDI",
++        dest_cbtlog: Optional[str],
++        src_cbtlog: Optional[str],
++    ):
++        """This assumes that self and dest VDIs has been paused"""
++
++        self._ensure_not_max_depth()
++
++        # We create a valid backup VDI so that it properly protect
++        # it's parent chain in case of a coalesce
++        dest_backup_path = os.path.join(
++            dest.sr.path,
++            f"{util.gen_uuid()}{VDI_TYPE_TO_EXTENSION[dest.vdi_type]}",
++        )
++
++        inserted_uuid = util.gen_uuid()
++        inserted_path = os.path.join(
++            dest.sr.path, f"{inserted_uuid}{VDI_TYPE_TO_EXTENSION[dest.vdi_type]}"
++        )
++
++        log_entry = RevertLogEntry(
++            dest=RevertLogDestinationVDI(
++                dest.uuid,
++                dest.path,
++                dest_backup_path,
++                bool(dest_cbtlog),
++            ),
++            src=RevertLogSourceVDI(
++                self.uuid,
++                self.path,
++                self.vdi_type,
++                bool(src_cbtlog),
++            ),
++            inserted=RevertLogInsertedVDI(inserted_uuid, inserted_path),
++        )
++        journal_id, journal_content = log_entry.to_journal()
++        self.sr.journaler.create(log_entry.JRN_KEY, journal_id, journal_content)
++
++        ## First move the old vdi to a backup location to allow rolling back
++        ## This has to be done first because it's used as a signal to the rollback
++        ## algorithm to know if there is cleanup work to do
++        util.ioretry(
++            lambda: self._rename(dest.path, dest_backup_path),
++            errlist=[errno.EIO, errno.EACCES],
++        )
++
++        # Protect src against coalesce
++        self.disable_leaf_on_secondary(self.uuid, True)
++
++        # Transform src into inserted
++        self._rename(self.path, inserted_path)
++
++        util.fistpoint.activate("FileSR_revert_create_insert", self.sr.uuid)
++
++        inserted = FileVDI(self.sr, inserted_uuid)
++
++        inserted.label = "base copy"
++        inserted.read_only = True
++        inserted.location = inserted_uuid
++        inserted.sm_config = {}
++        inserted.sm_config["image-format"] = getImageStringFromVdiType(self.vdi_type)
++        if "key_hash" in self.sm_config:
++            inserted.sm_config["key_hash"] = self.sm_config["key_hash"]
++        inserted.cbt_enabled = False # Base copies don't have cbt
++
++        inserted_ref = inserted._db_introduce()
++
++        util.fistpoint.activate("FileSR_revert_create_src", self.sr.uuid)
++
++        # Protect inserted against coalesce
++        inserted.disable_leaf_on_secondary(inserted.uuid, True)
++
++        # Create src again
++        util.ioretry(
++            lambda: self._snap(
++                self.path,
++                inserted_path,
++                False,
++            )
++        )
++
++        # Update src
++        self.load_from_file(self.path)
++        self._db_update()
++
++        # Create new destination
++        util.ioretry(
++            lambda: self._snap(
++                dest.path,
++                inserted.path,
++                False,
++            )
++        )
++        self.cowutil.setHidden(dest.path, False)
++
++        util.fistpoint.activate("FileSR_revert_create_dest", self.sr.uuid)
++
++        dest.load_from_file(dest.path)
++        dest._db_update()
++
++        ## The new parent can now be set hidden and don't need to be protected by the GC
++        inserted.cowutil.setHidden(inserted.path, True)
++        inserted._mark_hidden(inserted.path)
++        self.session.xenapi.VDI.set_managed(inserted_ref, False)
++        inserted.load_from_file(inserted.path)
++
++        ## Unprotect src
++        self.disable_leaf_on_secondary(self.uuid, None)
++
++        inserted._db_update()
++        inserted.disable_leaf_on_secondary(inserted.uuid, None)
++
++        if src_cbtlog:
++            self._revert_cbt(dest)
++        elif dest_cbtlog:
++            util.SMlog(
++                f"Reverting {dest.uuid} to non-CBT snapshot, disabling CBT on dest"
++            )
++            self._disable_cbt_on_vdi(
++                dest,
++                "VDI_CBT_REVERT_DISABLE",
++                f"CBT disabled on {dest.uuid}: reverted to non-CBT snapshot",
++            )
++
++        # Cleanup
++        self.sr._unlink_paths(dest_backup_path)
++        self.sr.journaler.remove(log_entry.JRN_KEY, journal_id)
++
++    def load_from_file(self, path: Union[str, Path]):
++        """Change path to provided disk and updated properties based on it's content"""
++        self.path = str(path)
++        image_info = self.cowutil.getInfo(self.path, FileVDI.extractUuid)
++        self.utilisation = image_info.sizePhys
++        self.size = image_info.sizeVirt
++        self.parent = image_info.parentUuid
++        self.hidden = image_info.hidden
++        if self.parent:
++            self.sm_config['vhd-parent'] = self.parent
++
+     @override
+     def compose(self, sr_uuid, vdi1, vdi2) -> None:
+         if not VdiType.isCowImage(self.vdi_type):
+@@ -794,6 +1213,14 @@ class FileVDI(VDI.VDI):
+     def __fist_enospace(self):
+         raise util.CommandException(28, "cowutil snapshot", reason="No space")
+ 
++    def _ensure_not_max_depth(self):
++        depth = self.cowutil.getDepth(self.path)
++        if depth == -1:
++            raise xs_errors.XenError('VDIUnavailable', \
++                  opterr='failed to get image depth')
++        elif depth >= self.cowutil.getMaxChainLength():
++            raise xs_errors.XenError('SnapshotChainTooLong')
++
+     def _snapshot(self, snap_type, cbtlog=None, cbt_consistency=None, is_mirror_destination=False):
+         util.SMlog("FileVDI._snapshot for %s (type %s)" % (self.uuid, snap_type))
+ 
+@@ -813,12 +1240,7 @@ class FileVDI(VDI.VDI):
+         if self.hidden:
+             raise xs_errors.XenError('VDIClone', opterr='hidden VDI')
+ 
+-        depth = self.cowutil.getDepth(self.path)
+-        if depth == -1:
+-            raise xs_errors.XenError('VDIUnavailable', \
+-                  opterr='failed to get image depth')
+-        elif depth >= self.cowutil.getMaxChainLength():
+-            raise xs_errors.XenError('SnapshotChainTooLong')
++        self._ensure_not_max_depth()
+ 
+         newuuid = util.gen_uuid()
+         src = self.path
+@@ -1069,6 +1491,9 @@ class FileVDI(VDI.VDI):
+     @override
+     def _delete_cbt_log(self) -> None:
+         logPath = self._get_cbt_logpath(self.uuid)
++        if not self._cbt_log_exists(logPath):
++            util.SMlog(f"CBT delete: {logPath} not found, skipping")
++            return
+         try:
+             os.remove(logPath)
+         except OSError as e:
+diff --git a/drivers/GlusterFSSR.py b/drivers/GlusterFSSR.py
+index fef95e3f..cc5a0a90 100644
+--- a/drivers/GlusterFSSR.py
++++ b/drivers/GlusterFSSR.py
+@@ -40,7 +40,7 @@ import xs_errors
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+                 "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
+-                "VDI_GENERATE_CONFIG",
++                "VDI_GENERATE_CONFIG", "VDI_REVERT",
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE"]
+ 
+ CONFIGURATION = [['server', 'Full path to share on gluster server (required, ex: "192.168.0.12:/gv0")'],
+@@ -109,6 +109,7 @@ class GlusterFSSR(FileSR.FileSR):
+         self.linkpath = os.path.join(self.mountpoint, sr_uuid or "")
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+         self._check_o_direct()
++        self._undo_all_journals()
+ 
+     def checkmount(self):
+         return util.ioretry(lambda: ((util.pathexists(self.mountpoint) and
+diff --git a/drivers/LargeBlockSR.py b/drivers/LargeBlockSR.py
+index a7f741ec..9b5c7eff 100644
+--- a/drivers/LargeBlockSR.py
++++ b/drivers/LargeBlockSR.py
+@@ -31,7 +31,8 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING",
+                 "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
+                 "VDI_GENERATE_CONFIG",
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+-                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING"]
++                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING",
++                "VDI_REVERT"]
+ 
+ CONFIGURATION = [['device', 'local device path (required) (e.g. /dev/sda3)']]
+ 
+diff --git a/drivers/MooseFSSR.py b/drivers/MooseFSSR.py
+index 7201e52e..d811ba0f 100755
+--- a/drivers/MooseFSSR.py
++++ b/drivers/MooseFSSR.py
+@@ -43,7 +43,7 @@ import xs_errors
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+                 "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
+-                "VDI_GENERATE_CONFIG",
++                "VDI_GENERATE_CONFIG", "VDI_REVERT",
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE"]
+ 
+ CONFIGURATION = [
+@@ -124,6 +124,7 @@ class MooseFSSR(FileSR.FileSR):
+         self.mountpoint = self.path
+         self.linkpath = self.path
+         self._check_o_direct()
++        self._undo_all_journals()
+ 
+     def checkmount(self):
+         return util.ioretry(lambda: ((util.pathexists(self.mountpoint) and
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index d5f5446e..299309f9 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -40,7 +40,8 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_CACHING",
+                 "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE",
+                 "VDI_GENERATE_CONFIG", "VDI_MIRROR",
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+-                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING"]
++                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING",
++                "VDI_REVERT"]
+ 
+ CONFIGURATION = [['server', 'hostname or IP address of NFS server (required)'],
+                  ['serverpath', 'path on remote server (required)'],
+@@ -107,6 +108,7 @@ class NFSSR(FileSR.SharedFileSR):
+             self.options = self.dconf['options']
+         else:
+             self.options = ''
++        self._undo_all_journals()
+ 
+     def validate_remotepath(self, scan):
+         serverpath = self.dconf.get('serverpath')
+diff --git a/drivers/SMBSR.py b/drivers/SMBSR.py
+index c7973863..23f69e39 100755
+--- a/drivers/SMBSR.py
++++ b/drivers/SMBSR.py
+@@ -35,7 +35,7 @@ import cifutils
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_CACHING",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+                 "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
+-                "VDI_GENERATE_CONFIG",
++                "VDI_GENERATE_CONFIG", "VDI_REVERT",
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+                 "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING"]
+ 
+@@ -99,6 +99,7 @@ class SMBSR(FileSR.SharedFileSR):
+         self.remotepath = ''
+         self.path = os.path.join(SR.MOUNT_BASE, sr_uuid)
+         self._check_o_direct()
++        self._undo_all_journals()
+ 
+     def checkmount(self):
+         return util.ioretry(lambda: ((util.pathexists(self.mountpoint) and \
+diff --git a/drivers/SRCommand.py b/drivers/SRCommand.py
+index 72694c09..71536cf9 100755
+--- a/drivers/SRCommand.py
++++ b/drivers/SRCommand.py
+@@ -36,7 +36,7 @@ NEEDS_VDI_OBJECT = [
+         "vdi_activate", "vdi_deactivate", "vdi_attach_from_config", "vdi_detach_from_config",
+         "vdi_generate_config", "vdi_compose", "vdi_epoch_begin",
+         "vdi_epoch_end", "vdi_enable_cbt", "vdi_disable_cbt", "vdi_data_destroy",
+-        "vdi_list_changed_blocks"]
++        "vdi_list_changed_blocks", "vdi_revert"]
+ 
+ # don't log the commands that spam the log file too much
+ NO_LOGGING = {
+@@ -56,7 +56,8 @@ EXCEPTION_TYPE = {
+         "vdi_resize": "VDIResize",
+         "vdi_resize_online": "VDIResize",
+         "vdi_snapshot": "VDISnapshot",
+-        "vdi_clone": "VDIClone"
++        "vdi_clone": "VDIClone",
++        "vdi_revert": "VDIRevert",
+ }
+ 
+ 
+@@ -269,6 +270,17 @@ class SRCommand:
+         elif self.cmd == 'vdi_clone':
+             return target.clone(self.params['sr_uuid'], self.vdi_uuid)
+ 
++        elif self.cmd == 'vdi_revert':
++            dest_uuid = self.params['args'][0]
++            if dest_uuid.startswith("OpaqueRef:"):
++                # TODO(XCPNG-3486): remove once xapi sends an uuid instead of an OpaqueRef
++                dest_uuid = sr.session.xenapi.VDI.get_record(dest_uuid)["uuid"]
++            return target.revert(
++                self.params['sr_uuid'],
++                self.vdi_uuid,
++                dest_uuid,
++            )
++
+         elif self.cmd == 'vdi_resize':
+             return target.resize(self.params['sr_uuid'], self.vdi_uuid, int(self.params['args'][0]))
+ 
+diff --git a/drivers/VDI.py b/drivers/VDI.py
+index 79521805..7eed0e97 100755
+--- a/drivers/VDI.py
++++ b/drivers/VDI.py
+@@ -15,9 +15,13 @@
+ #
+ # VDI: Base class for virtual disk instances
+ #
++import XenAPI # pylint: disable=import-error
++import time
++from contextlib import contextmanager
+ 
+ from sm_typing import Dict, Optional
+ 
++import blktap2
+ import cleanup
+ import SR
+ import xmlrpc.client
+@@ -37,6 +41,7 @@ SM_CONFIG_PASS_THROUGH_FIELDS = ["base_mirror", "key_hash"]
+ SNAPSHOT_SINGLE = 1  # true snapshot: 1 leaf, 1 read-only parent
+ SNAPSHOT_DOUBLE = 2  # regular snapshot/clone that creates 2 leaves
+ SNAPSHOT_INTERNAL = 3  # SNAPSHOT_SINGLE but don't update SR's virtual allocation
++LONG_PAUSE_TIME = 60
+ 
+ 
+ class VDI(object):
+@@ -210,6 +215,9 @@ class VDI(object):
+                      cloneOp=False, secondary=None, cbtlog=None, is_mirror_destination=False) -> str:
+         raise xs_errors.XenError('Unimplemented')
+ 
++    def _do_revert(self, dest: "VDI", src_cbtlog: Optional[str], dest_cbtlog: Optional[str]) -> None:
++        raise xs_errors.XenError('Unimplemented')
++
+     def _delete_cbt_log(self) -> None:
+         raise xs_errors.XenError('Unimplemented')
+ 
+@@ -242,6 +250,39 @@ class VDI(object):
+         """
+         raise xs_errors.XenError('Unimplemented')
+ 
++    def revert(self, _sr_uuid: str, _vdi_uuid: str, target_uuid: str) -> None:
++        """Replaces the contents of the target_uuid VDI with the contents of the vdi_uuid
++        without changing the identitity of the target (i.e. name-label, uuid and location
++        are guaranteed to remain the same)..
++
++        This operation IS idempotent and the vdi pointed by vdi_uuid is preserved.
++        """
++        if not self.managed:
++            raise util.SMException(f"Source {self.uuid} is a base copy.")
++
++        dest = self.sr.vdi(target_uuid)
++
++        if not dest.managed:
++            raise util.SMException(f"Destination {self.uuid} is a base copy.")
++
++        if self.vdi_type != dest.vdi_type:
++            raise util.SMException(f"{self.uuid} and {dest.uuid} has incompatible types {self.vdi_type} != {dest.vdi_type}")
++
++        for vdi in [self, dest]:
++            if not VdiType.isCowImage(vdi.vdi_type):
++                raise xs_errors.XenError(
++                    "Unimplemented", opterr=f"VDI {vdi.uuid} is not a COW image"
++                )
++
++        src_cbtlog = self._get_cbt_logpath(self.uuid) if self._get_blocktracking_status() else None
++        dest_cbtlog = dest._get_cbt_logpath(dest.uuid) if dest._get_blocktracking_status() else None
++
++        dest.sm_config = dest.session.xenapi.VDI.get_sm_config(dest.session.xenapi.VDI.get_by_uuid(dest.uuid))
++        self.sm_config = dest.session.xenapi.VDI.get_sm_config(dest.session.xenapi.VDI.get_by_uuid(dest.uuid))
++
++        self._do_revert(dest, src_cbtlog=src_cbtlog, dest_cbtlog=dest_cbtlog)
++
++
+     def resize_cbt(self, sr_uuid, vdi_uuid, size):
+         """Resize the given VDI to size <size> MB. Size can
+                 be any valid disk size greater than [or smaller than]
+@@ -279,7 +320,6 @@ class VDI(object):
+         prior to deletion, otherwise the delete() will fail if the
+         disk is still attached.
+         """
+-        import blktap2
+         from lock import Lock
+ 
+         if data_only == False and self._get_blocktracking_status():
+@@ -436,6 +476,19 @@ class VDI(object):
+             finally:
+                 lock.release()
+ 
++    @contextmanager
++    def tap_pause(self, secondary=None):
++        start = time.monotonic()
++        if not blktap2.VDI.tap_pause(self.session, self.sr.uuid, self.uuid):
++            raise util.SMException(f"Could not pause disk {self.uuid} on sr {self.sr.uuid}")
++        try:
++            yield
++        finally:
++            blktap2.VDI.tap_unpause(self.session, self.sr.uuid, self.uuid, secondary)
++            pause_time = time.monotonic() - start
++            if pause_time > LONG_PAUSE_TIME:
++                util.SMlog(f"WARNING: vdi {self.uuid} was paused for {pause_time} seconds")
++
+     def get_params(self) -> str:
+         """
+         Returns:
+@@ -467,6 +520,14 @@ class VDI(object):
+         vdi = self.sr.session.xenapi.VDI.db_introduce(uuid, self.label, self.description, self.sr.sr_ref, ty, self.shareable, self.read_only, {}, self.location, {}, sm_config, self.managed, str(self.size), str(self.utilisation), metadata_of_pool, is_a_snapshot, xmlrpc.client.DateTime(snapshot_time), snapshot_of, cbt_enabled)
+         return vdi
+ 
++    def _db_update_or_introduce(self):
++        try:
++            vdi_ref = self.sr.session.xenapi.VDI.get_by_uuid(self.uuid)
++        except XenAPI.Failure:
++            return self._db_introduce()
++        self._db_update()
++        return vdi_ref
++
+     def _db_forget(self):
+         self.sr.forget_vdi(self.uuid)
+ 
+@@ -557,7 +618,6 @@ class VDI(object):
+ 
+     def configure_blocktracking(self, sr_uuid, vdi_uuid, enable):
+         """Function for configuring blocktracking"""
+-        import blktap2
+         vdi_ref = self.sr.srcmd.params['vdi_ref']
+ 
+         # Check if raw VDI or snapshot
+@@ -892,6 +952,44 @@ class VDI(object):
+                                               alert_obj, alert_uuid,
+                                               alert_str)
+ 
++    def _disable_cbt_on_vdi(self, vdi: "VDI", alert_name: str, alert_str: str) -> None:
++        """Disable CBT on an explicit VDI and send an alert"""
++        util.SMlog(alert_str)
++        vdi._delete_cbt_log()
++        vdi_ref = vdi.session.xenapi.VDI.get_by_uuid(vdi.uuid)
++        vdi.session.xenapi.VDI.set_cbt_enabled(vdi_ref, False)
++        alert_uuid = str(vdi.uuid)
++        vdi.session.xenapi.message.create(
++            alert_name, "3", "VDI", alert_uuid, alert_str
++        )
++
++    def _create_cbt_log_with_size(self, size: int) -> str:
++        """ Create a CBT log using an explicit size, without relying on srcmd """
++        log_path = self._get_cbt_logpath(self.uuid)
++        self._cbt_op(self.uuid, cbtutil.create_cbt_log, log_path, size)
++        self._cbt_op(self.uuid, cbtutil.set_cbt_consistency, log_path, True)
++        return log_path
++
++    def _reset_cbt_log(self) -> None:
++        """Delete and recreate a fresh CBT log for this VDI"""
++        self._delete_cbt_log()
++        self._ensure_cbt_space()
++        self._create_cbt_log_with_size(self.size)
++
++    def _revert_cbt(self, dest: "VDI") -> None:
++        """Update the CBT log chain after a vdi_revert"""
++        util.SMlog(f"CBT revert: wiring chain for src={self.uuid} dest={dest.uuid}")
++        
++        self._reset_cbt_log()
++        dest._reset_cbt_log()
++
++        for vdi in [self, dest]:
++            vdi.session.xenapi.VDI.set_cbt_enabled(
++                vdi.session.xenapi.VDI.get_by_uuid(vdi.uuid), True
++            )
++
++        util.SMlog("CBT revert: chain wired successfully")
++
+     def disable_leaf_on_secondary(self, vdi_uuid, secondary=None):
+         vdi_ref = self.session.xenapi.VDI.get_by_uuid(vdi_uuid)
+         self.session.xenapi.VDI.remove_from_other_config(
+diff --git a/drivers/XFSSR.py b/drivers/XFSSR.py
+index fb58edde..c90680c9 100755
+--- a/drivers/XFSSR.py
++++ b/drivers/XFSSR.py
+@@ -39,7 +39,8 @@ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING", \
+                 "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR", \
+                 "VDI_GENERATE_CONFIG", \
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+-                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING"]
++                "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING",
++                "VDI_REVERT"]
+ 
+ CONFIGURATION = [['device', 'local device path (required) (e.g. /dev/sda3)']]
+ 
+@@ -84,6 +85,7 @@ class XFSSR(FileSR.FileSR):
+         self.remotepath = os.path.join("/dev", self.vgname, sr_uuid)
+         self.attached = self._checkmount()
+         self.driver_config = DRIVER_CONFIG
++        self._undo_all_journals()
+ 
+     @override
+     def delete(self, sr_uuid) -> None:
+diff --git a/drivers/ZFSSR.py b/drivers/ZFSSR.py
+index 9f211671..6c758b61 100644
+--- a/drivers/ZFSSR.py
++++ b/drivers/ZFSSR.py
+@@ -42,7 +42,8 @@ CAPABILITIES = [
+     'VDI_DEACTIVATE',
+     'THIN_PROVISIONING',
+     'VDI_RESET_ON_BOOT/2',
+-    'VDI_UPDATE'
++    'VDI_UPDATE',
++    'VDI_REVERT',
+ ]
+ 
+ CONFIGURATION = [
+diff --git a/drivers/jutils.py b/drivers/jutils.py
+new file mode 100644
+index 00000000..1e602674
+--- /dev/null
++++ b/drivers/jutils.py
+@@ -0,0 +1,73 @@
++#!/usr/bin/python3
++#
++# Copyright (C) 2026  Vates SAS - antoine.bartuccio@vates.tech
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++#
++# Utilities for journal based operations
++
++import json
++import util
++from sm_typing import Dict, override, Tuple, Collection, Any, TypeVar, Type
++import xs_errors
++
++import abc
++
++LogEntry = TypeVar("LogEntry", bound="BaseLogEntry")
++
++
++class BaseLogEntry(abc.ABC):
++    """Base class for serializing journal based entries intended to rollback failed operations"""
++
++    @property  # type: ignore # Only way to simulate an abstract class variable
++    @classmethod
++    @abc.abstractmethod
++    def CURRENT_VERSION(cls) -> str: ...
++
++    @property  # type: ignore # Only way to simulate an abstract class variable
++    @classmethod
++    @abc.abstractmethod
++    def JRN_KEY(cls) -> str: ...
++
++    @classmethod
++    @abc.abstractmethod
++    def from_dict(cls: Type[LogEntry], data: Dict[str, Any]) -> LogEntry: ...
++
++    @abc.abstractmethod
++    def to_dict(self) -> Dict[str, Collection[Any]]: ...
++
++    @staticmethod
++    def _get_version_from_journal_id(journal_id: str) -> str:
++        _, version = journal_id.split("+")
++        return version.replace("-", ".")
++
++    @classmethod
++    def from_journal(cls: Type[LogEntry], journal_id: str, value: str) -> LogEntry:
++        """Convert a compatilbe journal to a log entry
++        Ensure that the type and version of the journal are compatible"""
++        version = cls._get_version_from_journal_id(journal_id)
++        if version != cls.CURRENT_VERSION:
++            raise xs_errors.SRException(
++                f"Could not revert operation {journal_id} with mismatched log versions {version} != {cls.CURRENT_VERSION}"
++            )
++        return cls.from_dict(json.loads(value))
++
++    def to_journal(self) -> Tuple[str, str]:
++        # We use + as a version delimiter to not clash with journaler file name parsing
++        journal_id = f"{util.gen_uuid()}+{self.CURRENT_VERSION.replace('.', '-')}"
++        value = json.dumps(self.to_dict())
++        return journal_id, value
++
++    @override
++    def __str__(self) -> str:
++        return str(self.to_dict())
+diff --git a/drivers/nfs-on-slave b/drivers/nfs-on-slave
+old mode 100644
+new mode 100755
+diff --git a/drivers/util.py b/drivers/util.py
+index 4e939e18..96827a78 100755
+--- a/drivers/util.py
++++ b/drivers/util.py
+@@ -1580,6 +1580,9 @@ fistpoint = FistPoint(["LVHDRT_finding_a_suitable_pair",
+                         "FileSR_fail_hardlink",
+                         "FileSR_fail_snap1",
+                         "FileSR_fail_snap2",
++                        "FileSR_revert_create_insert",
++                        "FileSR_revert_create_src",
++                        "FileSR_revert_create_dest",
+                         "LVM_journaler_exists",
+                         "LVM_journaler_none",
+                         "LVM_journaler_badname",
+diff --git a/tests/test_NFSSR.py b/tests/test_NFSSR.py
+index 16b785ec..831e5f5a 100644
+--- a/tests/test_NFSSR.py
++++ b/tests/test_NFSSR.py
+@@ -20,6 +20,7 @@ class FakeNFSSR(NFSSR.NFSSR):
+     def __init__(self, srcmd, none):
+         self.dconf = srcmd.dconf
+         self.srcmd = srcmd
++        self.cmd = srcmd.params["command"]
+ 
+ 
+ class TestNFSSR(unittest.TestCase):
+diff --git a/tests/test_SMBSR.py b/tests/test_SMBSR.py
+index 3ac3f31a..7e807008 100644
+--- a/tests/test_SMBSR.py
++++ b/tests/test_SMBSR.py
+@@ -24,6 +24,7 @@ class FakeSMBSR(SMBSR.SMBSR):
+         self.linkpath = 'aLinkpath'
+         self.path = 'aPath'
+         self.remoteserver = 'aRemoteserver'
++        self.cmd = srcmd.params["command"]
+ 
+ 
+ class Test_SMBSR(unittest.TestCase):
+diff --git a/tests/test_ZFSSR.py b/tests/test_ZFSSR.py
+index da614a2f..45c7d0b4 100644
+--- a/tests/test_ZFSSR.py
++++ b/tests/test_ZFSSR.py
+@@ -14,18 +14,17 @@ XML_DEFS = os.path.dirname(os.path.abspath(__file__)) + \
+ 
+ 
+ class FakeZFSSR(ZFSSR.ZFSSR):
+-    uuid = None
+-    sr_ref = None
+-    session = None
+-    srcmd = None
+-    other_config = {}
+-    vdis = {}
+-    passthrough = True
+-
+-    def __init__(self, srcmd, none):
++
++    def __init__(self, srcmd, _):
+         self.dconf = srcmd.dconf
+         self.srcmd = srcmd
+         self.uuid = str(uuid.uuid4())
++        self.sr_ref = None
++        self.session = None
++        self.other_config = {}
++        self.vdis = {}
++        self.passthrough = True
++        self.cmd = srcmd.params['command']
+ 
+ 
+ class TestZFSSR(unittest.TestCase):

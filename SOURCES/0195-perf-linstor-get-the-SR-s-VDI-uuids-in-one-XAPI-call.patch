@@ -1,0 +1,34 @@
+From 15ecea9dce99071737abe50826463b539f59476e Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 15 Oct 2026 20:11:48 +0000
+Subject: [PATCH] perf(linstor): get the SR's VDI uuids in one XAPI call
+
+`_load_vdis_ex` called `VDI.get_uuid` for each VDI of the SR to build
+the set of uuids known by XAPI: one XAPI round trip per VDI, about
+0.6 s for ~950 VDIs on a warm-cache scan. Get them with a single
+`VDI.get_all_records_where` call filtered on the SR.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LinstorSR.py | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/LinstorSR.py b/drivers/LinstorSR.py
+index 2e4d3f06..7d984048 100755
+--- a/drivers/LinstorSR.py
++++ b/drivers/LinstorSR.py
+@@ -1087,9 +1087,11 @@ class LinstorSR(SR.SR):
+     def _load_vdis_ex(self):
+         # 1. Get existing VDIs in XAPI.
+         xenapi = self.session.xenapi
+-        xapi_vdi_uuids = set()
+-        for vdi in xenapi.SR.get_VDIs(self.sr_ref):
+-            xapi_vdi_uuids.add(xenapi.VDI.get_uuid(vdi))
++        xapi_vdi_uuids = {
++            record['uuid'] for record in xenapi.VDI.get_all_records_where(
++                f'field "SR" = "{self.sr_ref}"'
++            ).values()
++        }
+ 
+         # 2. Get volumes info.
+         all_volume_info = self._all_volume_info_cache

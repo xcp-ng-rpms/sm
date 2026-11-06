@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.2.0.scan.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -288,10 +288,18 @@ Patch1186: 0186-fix-cleanup-handle-interrupted-QCOW2-leaf-coalesce-1.patch
 Patch1187: 0187-fix-qcow2util-handle-abort-in-online-coalesce-167.patch
 Patch1188: 0188-feat-linstor-handle-ENODATA-errors-with-linstor-VDIs.patch
 Patch1189: 0189-LVMSR-convert-refvdi-returned-by-get_snapshot_of-to-.patch
-Patch0190: 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch
-Patch0191: 0191-fix-linstor-wrong-handling-of-timeout-on-LINSTOR-HA-.patch
-Patch0192: 0192-fix-linstor-health-check-helper-broken-due-to-API-ch.patch
-Patch0193: 0193-fix-ZFSSR-add-missing-capabilities-in-ZFS-SR-driver-.patch
+Patch1190: 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch
+Patch1191: 0191-fix-linstor-wrong-handling-of-timeout-on-LINSTOR-HA-.patch
+Patch1192: 0192-fix-linstor-health-check-helper-broken-due-to-API-ch.patch
+Patch1193: 0193-fix-ZFSSR-add-missing-capabilities-in-ZFS-SR-driver-.patch
+Patch1194: 0194-fix-linstor-improve-ss-command-speed-184.patch
+Patch1195: 0195-perf-linstor-get-the-SR-s-VDI-uuids-in-one-XAPI-call.patch
+Patch1196: 0196-perf-linstor-don-t-query-the-disconnected-hosts-on-V.patch
+Patch1197: 0197-to-drop-perf-linstor-limit-the-scan-thread-pool-to-4.patch
+Patch1198: 0198-feat-linstor-cache-COW-image-info-in-the-LINSTOR-KV-.patch
+Patch1199: 0199-perf-linstor-load-the-image-info-without-a-thread-po.patch
+Patch1200: 0200-fix-linstor-allow-marking-the-KV-cache-as-dirty.patch
+Patch1201: 0201-fix-linstor-check-the-image-parent-of-each-child-bef.patch
 
 %description
 This package contains storage backends used in XCP
@@ -616,6 +624,17 @@ then
 fi
 
 %changelog
+* Fri Nov 06 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.2.0.scan.1
+- Add new patches:
+  - 0194-fix-linstor-improve-ss-command-speed-184.patch
+  - 0195-perf-linstor-get-the-SR-s-VDI-uuids-in-one-XAPI-call.patch
+  - 0196-perf-linstor-don-t-query-the-disconnected-hosts-on-V.patch
+  - 0197-to-drop-perf-linstor-limit-the-scan-thread-pool-to-4.patch
+  - 0198-feat-linstor-cache-COW-image-info-in-the-LINSTOR-KV-.patch
+  - 0199-perf-linstor-load-the-image-info-without-a-thread-po.patch
+  - 0200-fix-linstor-allow-marking-the-KV-cache-as-dirty.patch
+  - 0201-fix-linstor-check-the-image-parent-of-each-child-bef.patch
+
 * Fri Oct 16 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.2
 - Add new patches:
   - 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch

@@ -1,0 +1,71 @@
+From 191aee575522019a4ff69fffe1cac54a3eb6abdc Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Wed, 4 Nov 2026 15:43:52 +0100
+Subject: [PATCH] fix(linstor): check the image parent of each child before a
+ GC relink
+
+After an up-chain coalesce, the GC relinks the children of the coalesced
+VDI in the tree to its parent. With the tree built from the image info
+cached in the KV store, a stale cached parent could make the GC relink a
+VDI whose real parent is another volume, which would drop that parent's
+data from its chain.
+
+Before relinking each child, read its parent from the image and cancel
+if it isn't the coalesced VDI, like the checks done before the
+coalesces. The docstring of the hook now covers both uses.
+---
+ drivers/cleanup.py            | 11 +++++++----
+ tests/test_cleanup_linstor.py | 11 +++++++++++
+ 2 files changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index 6ede33d5..8a7bf9ec 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -1061,10 +1061,10 @@ class VDI(object):
+                           None, self.sr.uuid, abortTest, VDI.POLL_INTERVAL, 0, prefSig=signal.SIGTERM)
+ 
+     def _checkCachedParentMatchesImage(self) -> None:
+-        """Called before the first write of a coalesce of this VDI onto its
+-        parent: check that its parent in the tree, which can come from cached
+-        image info, is the parent in its image. Raise an SMException to
+-        cancel the coalesce. Nothing to check by default."""
++        """Called before a write that relies on the parent of this VDI in the
++        tree (coalesce onto it, relink of this VDI): check that this parent,
++        which can come from cached image info, is the parent in its image.
++        Raise an SMException to cancel. Nothing to check by default."""
+         pass
+ 
+     def _relinkSkip(self) -> None:
+@@ -1868,6 +1868,9 @@ class LinstorVDI(VDI):
+             session = child.sr.xapi.session
+             sr_uuid = child.sr.uuid
+             vdi_uuid = child.uuid
++            # We check that the child has the expected parent from the cache
++            # before relinking.
++            child._checkCachedParentMatchesImage()
+             try:
+                 self.sr._linstor.ensure_volume_is_not_locked(
+                     vdi_uuid, timeout=self.VOLUME_LOCK_TIMEOUT
+diff --git a/tests/test_cleanup_linstor.py b/tests/test_cleanup_linstor.py
+index b0581f13..3b8ebb2c 100644
+--- a/tests/test_cleanup_linstor.py
++++ b/tests/test_cleanup_linstor.py
+@@ -98,6 +98,17 @@ class TestParentCheckedBeforeAnyWrite(unittest.TestCase):
+         self.sr.journaler.create.assert_not_called()
+         self.vdi.parent._setHidden.assert_not_called()
+ 
++    def test_relink(self):
++        vdi = mock.Mock()
++        vdi.sr = self.sr
++        vdi.children = [self.vdi]
++        with mock.patch('cleanup.IPCFlag') as ipc_flag, mock.patch('cleanup.blktap2') as blktap:
++            ipc_flag.return_value.test.return_value = False
++            with self.assertRaises(util.SMException):
++                cleanup.LinstorVDI._relinkSkip(vdi)
++        self.check.assert_called_once_with()
++        blktap.VDI.tap_pause.assert_not_called()
++        self.vdi._setParent.assert_not_called()
+ 
+ 
+ class TestUndoInterruptedCoalesceLeaf(unittest.TestCase):

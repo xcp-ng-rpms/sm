@@ -1,0 +1,31 @@
+From c48bf7f6c4fbb49fc1dd9563fe1b604d8ce60261 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 22 Oct 2026 14:49:11 +0200
+Subject: [PATCH] fix(linstor): allow marking the KV cache as dirty
+
+`_get_kv_cache` reloads the KV snapshot when `_kv_cache_dirty` is set,
+but nothing could set it: the flag is only reset (by `_create_kv_cache`),
+so a manager always kept the copy it was built with. Add
+`_mark_kv_cache_as_dirty` to request a reload on the next access, and
+reset the flag in `_get_kv_cache` too.
+---
+ drivers/linstorvolumemanager.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index f44c42cb..56e82b70 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -2262,8 +2262,12 @@ class LinstorVolumeManager(object):
+     def _get_kv_cache(self):
+         if self._kv_cache_dirty:
+             self._kv_cache = self._create_kv_cache()
++            self._kv_cache_dirty = False
+         return self._kv_cache
+ 
++    def _mark_kv_cache_as_dirty(self):
++        self._kv_cache_dirty = True
++
+     def _create_resource_cache(self):
+         self._resource_cache = self._linstor.resource_list_raise()
+         self._resource_cache_dirty = False

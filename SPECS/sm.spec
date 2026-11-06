@@ -292,6 +292,19 @@ Patch0190: 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch
 Patch0191: 0191-fix-linstor-wrong-handling-of-timeout-on-LINSTOR-HA-.patch
 Patch0192: 0192-fix-linstor-health-check-helper-broken-due-to-API-ch.patch
 Patch0193: 0193-fix-ZFSSR-add-missing-capabilities-in-ZFS-SR-driver-.patch
+Patch0194: 0194-feat-filesr-support-vdi_revert-on-FileSR.patch
+Patch0195: 0195-fix-remove-vdi_revert-command-uuid-workaround.patch
+Patch0196: 0196-fix-apply-review-comments-for-vdi_revert.patch
+Patch0197: 0197-fix-filesr-keep-CBT-chain-usable-after-vdi_revert.patch
+Patch0198: 0198-fix-cleanup-untag-relinking-on-leaves-moved-during-c.patch
+Patch0199: 0199-feat-lvmsr-support-vdi_revert-on-lvm.patch
+Patch0200: 0200-fix-adapt-snapshotof-test-with-_determineType-fix.patch
+Patch0201: 0201-fix-remove-tap_pause-usage.patch
+Patch0202: 0202-fix-lvmsr-keep-CBT-chain-usable-after-vdi_revert.patch
+Patch0203: 0203-refactor-share-vdi_revert-CBT-rollback-and-cbtlog-LV.patch
+Patch0204: 0204-refactor-create-a-context-manager-for-Lock-objects.patch
+Patch0205: 0205-feat-linstor-implement-vdi_revert.patch
+Patch0206: 0206-fix-remove-usage-of-tap_pause-context-manager.patch
 
 %description
 This package contains storage backends used in XCP
@@ -473,6 +486,7 @@ cp -r htmlcov %{buildroot}/htmlcov
 /opt/xensource/sm/iscsilib.py
 /opt/xensource/sm/fcoelib.py
 /opt/xensource/sm/journaler.py
+/opt/xensource/sm/jutils.py
 /opt/xensource/sm/lcache.py
 /opt/xensource/sm/lock.py
 /opt/xensource/sm/lock_queue.py
@@ -616,6 +630,22 @@ then
 fi
 
 %changelog
+* Fri Nov 06 2026 Antoine Bartuccio <antoine.bartuccio@vates.tech> - 3.2.12-25.2-vdi-revert
+- Add new patches:
+  - 0194-feat-filesr-support-vdi_revert-on-FileSR.patch
+  - 0195-fix-remove-vdi_revert-command-uuid-workaround.patch
+  - 0196-fix-apply-review-comments-for-vdi_revert.patch
+  - 0197-fix-filesr-keep-CBT-chain-usable-after-vdi_revert.patch
+  - 0198-fix-cleanup-untag-relinking-on-leaves-moved-during-c.patch
+  - 0199-feat-lvmsr-support-vdi_revert-on-lvm.patch
+  - 0200-fix-adapt-snapshotof-test-with-_determineType-fix.patch
+  - 0201-fix-remove-tap_pause-usage.patch
+  - 0202-fix-lvmsr-keep-CBT-chain-usable-after-vdi_revert.patch
+  - 0203-refactor-share-vdi_revert-CBT-rollback-and-cbtlog-LV.patch
+  - 0204-refactor-create-a-context-manager-for-Lock-objects.patch
+  - 0205-feat-linstor-implement-vdi_revert.patch
+  - 0206-fix-remove-usage-of-tap_pause-context-manager.patch
+
 * Fri Oct 16 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.2
 - Add new patches:
   - 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch

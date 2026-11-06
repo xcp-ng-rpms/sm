@@ -1,0 +1,33 @@
+From b2e9252d489d668b74f47b48bb76cd99a8526977 Mon Sep 17 00:00:00 2001
+From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+Date: Tue, 21 Jul 2026 10:59:31 +0200
+Subject: [PATCH] fix: remove `vdi_revert` command uuid workaround
+
+Remove workaround used to convert OpaqueRef received on `vdi_revert` commands
+as receiving this ref is now the expected behavior https://github.com/xapi-project/xen-api/pull/7170
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+---
+ drivers/SRCommand.py | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/drivers/SRCommand.py b/drivers/SRCommand.py
+index 71536cf9..1313c96c 100755
+--- a/drivers/SRCommand.py
++++ b/drivers/SRCommand.py
+@@ -271,14 +271,10 @@ class SRCommand:
+             return target.clone(self.params['sr_uuid'], self.vdi_uuid)
+ 
+         elif self.cmd == 'vdi_revert':
+-            dest_uuid = self.params['args'][0]
+-            if dest_uuid.startswith("OpaqueRef:"):
+-                # TODO(XCPNG-3486): remove once xapi sends an uuid instead of an OpaqueRef
+-                dest_uuid = sr.session.xenapi.VDI.get_record(dest_uuid)["uuid"]
+             return target.revert(
+                 self.params['sr_uuid'],
+                 self.vdi_uuid,
+-                dest_uuid,
++                sr.session.xenapi.VDI.get_record(self.params['args'][0])["uuid"],
+             )
+ 
+         elif self.cmd == 'vdi_resize':

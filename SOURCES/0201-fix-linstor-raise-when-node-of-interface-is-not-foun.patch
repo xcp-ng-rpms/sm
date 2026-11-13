@@ -1,0 +1,30 @@
+From eba9e0ecd4a6ddb076f57829609d7bea2bc5b980 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 27 Oct 2026 17:20:01 +0100
+Subject: [PATCH] fix(linstor): raise when node of interface is not found
+ (#190)
+
+`getNodePreferredInterface` returned the empty node list of
+`get_node_preferred_interface` when the node doesn't exist, which XAPI rejected
+with an `INTERNAL_ERROR ("unbox: Element=array should contain 'string'")`. We
+now raise a `LinstorVolumeManagerError` instead: the plugin turns it into a
+`-1` failure with the message.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 0cadf302..3b9013dc 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -1649,7 +1649,7 @@ class LinstorVolumeManager(object):
+             if nodes:
+                 properties = nodes[0].props
+                 return properties.get('PrefNic', 'default')
+-            return nodes
++            raise LinstorVolumeManagerError('Node `{}` not found'.format(node_name))
+         except Exception as e:
+             raise LinstorVolumeManagerError(
+                 'Failed to get preferred interface: `{}`'.format(e)

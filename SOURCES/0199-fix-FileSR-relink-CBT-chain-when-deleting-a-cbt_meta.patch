@@ -1,0 +1,30 @@
+From 657af8c65c6197ba76872a14fcac89668fa7db0f Mon Sep 17 00:00:00 2001
+From: Goulven Riou <goulven.riou@vates.tech>
+Date: Mon, 9 Nov 2026 15:26:33 +0100
+Subject: [PATCH] fix(FileSR): relink CBT chain when deleting a cbt_metadata
+ VDI (#187)
+
+Unlinking the .cbtlog before VDI.delete() made it skip the CBT chain
+relink, so list_changed_blocks across the deleted snapshot failed with
+SR_BACKEND_FAILURE_460. Hand it straight to VDI.delete(), as LVMVDI does.
+
+Signed-off-by: Goulven Riou <goulven.riou@vates.tech>
+---
+ drivers/FileSR.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index c0a68777..f1fe3a2f 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -631,6 +631,10 @@ class FileVDI(VDI.VDI):
+         if self.attached:
+             raise xs_errors.XenError('VDIInUse')
+ 
++        # cbt_metadata: keep the `.cbtlog` for `VDI.delete()` to relink the CBT chain instead of being deleted below.
++        if self.vdi_type == VdiType.CBTLOG and not data_only:
++            return super(FileVDI, self).delete(sr_uuid, vdi_uuid, data_only)
++
+         try:
+             util.force_unlink(self.path)
+         except Exception as e:

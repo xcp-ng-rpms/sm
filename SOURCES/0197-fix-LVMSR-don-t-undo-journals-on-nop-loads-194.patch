@@ -1,0 +1,26 @@
+From 7ae4311b640dc6570432661de8e366f1a4dd8f15 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 9 Nov 2026 11:26:28 +0100
+Subject: [PATCH] fix(LVMSR): don't undo journals on nop loads (#194)
+
+Skip applying journals for the `nop` command since we don't want to apply the
+journal in a fake call.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LVMSR.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index c985a23c..784083b6 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -216,7 +216,7 @@ class LVMSR(SR.SR):
+ 
+         if lvutil._checkVG(self.vgname):
+             if self.isMaster and not self.cmd in ["vdi_attach", "vdi_detach",
+-                    "vdi_activate", "vdi_deactivate"]:
++                    "vdi_activate", "vdi_deactivate", "nop"]:
+                 self._undoAllJournals()
+             if not self.cmd in ["sr_attach", "sr_probe"]:
+                 self._checkMetadataVolume()

@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.2%{?dist}
+Release: %{?xsrel}.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -288,10 +288,23 @@ Patch1186: 0186-fix-cleanup-handle-interrupted-QCOW2-leaf-coalesce-1.patch
 Patch1187: 0187-fix-qcow2util-handle-abort-in-online-coalesce-167.patch
 Patch1188: 0188-feat-linstor-handle-ENODATA-errors-with-linstor-VDIs.patch
 Patch1189: 0189-LVMSR-convert-refvdi-returned-by-get_snapshot_of-to-.patch
-Patch0190: 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch
-Patch0191: 0191-fix-linstor-wrong-handling-of-timeout-on-LINSTOR-HA-.patch
-Patch0192: 0192-fix-linstor-health-check-helper-broken-due-to-API-ch.patch
-Patch0193: 0193-fix-ZFSSR-add-missing-capabilities-in-ZFS-SR-driver-.patch
+Patch1190: 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch
+Patch1191: 0191-fix-linstor-wrong-handling-of-timeout-on-LINSTOR-HA-.patch
+Patch1192: 0192-fix-linstor-health-check-helper-broken-due-to-API-ch.patch
+Patch1193: 0193-fix-ZFSSR-add-missing-capabilities-in-ZFS-SR-driver-.patch
+Patch1194: 0194-fix-linstor-improve-ss-command-speed-184.patch
+Patch1195: 0195-fix-LVMSR-isMaster-wasn-t-always-set-173.patch
+Patch1196: 0196-fix-linstor-don-t-remove-diskless-resource-if-it-s-s.patch
+Patch1197: 0197-fix-LVMSR-don-t-undo-journals-on-nop-loads-194.patch
+Patch1198: 0198-fix-cleanup-catch-exception-to-clean-up-the-running-.patch
+Patch1199: 0199-fix-FileSR-relink-CBT-chain-when-deleting-a-cbt_meta.patch
+Patch1200: 0200-fix-linstor-check-and-getParent-from-linstor-manager.patch
+Patch1201: 0201-fix-linstor-raise-when-node-of-interface-is-not-foun.patch
+Patch1202: 0202-resetvdis.py-get-static-list-of-sm_config-items-188.patch
+Patch1203: 0203-feat-linstor-set-a-max_workers-for-linstor-scan-185.patch
+Patch1204: 0204-fix-qcow2util-handle-undefined-before-job-started-17.patch
+Patch1205: 0205-feat-qcow2util-Support-Qcow2-subclusters-170.patch
+Patch1206: 0206-fix-linstor-retry-build-volumes-on-manager-instantia.patch
 
 %description
 This package contains storage backends used in XCP
@@ -616,6 +629,22 @@ then
 fi
 
 %changelog
+* Fri Nov 13 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.3
+- Add new patches:
+  - 0194-fix-linstor-improve-ss-command-speed-184.patch
+  - 0195-fix-LVMSR-isMaster-wasn-t-always-set-173.patch
+  - 0196-fix-linstor-don-t-remove-diskless-resource-if-it-s-s.patch
+  - 0197-fix-LVMSR-don-t-undo-journals-on-nop-loads-194.patch
+  - 0198-fix-cleanup-catch-exception-to-clean-up-the-running-.patch
+  - 0199-fix-FileSR-relink-CBT-chain-when-deleting-a-cbt_meta.patch
+  - 0200-fix-linstor-check-and-getParent-from-linstor-manager.patch
+  - 0201-fix-linstor-raise-when-node-of-interface-is-not-foun.patch
+  - 0202-resetvdis.py-get-static-list-of-sm_config-items-188.patch
+  - 0203-feat-linstor-set-a-max_workers-for-linstor-scan-185.patch
+  - 0204-fix-qcow2util-handle-undefined-before-job-started-17.patch
+  - 0205-feat-qcow2util-Support-Qcow2-subclusters-170.patch
+  - 0206-fix-linstor-retry-build-volumes-on-manager-instantia.patch
+
 * Fri Oct 16 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.2
 - Add new patches:
   - 0190-doc-linstor-fix-wrong-comments-on-_call_local_method.patch

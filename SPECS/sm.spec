@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.3.0.scan.1%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -305,6 +305,12 @@ Patch1203: 0203-feat-linstor-set-a-max_workers-for-linstor-scan-185.patch
 Patch1204: 0204-fix-qcow2util-handle-undefined-before-job-started-17.patch
 Patch1205: 0205-feat-qcow2util-Support-Qcow2-subclusters-170.patch
 Patch1206: 0206-fix-linstor-retry-build-volumes-on-manager-instantia.patch
+Patch1207: 0207-perf-linstor-get-the-SR-s-VDI-uuids-in-one-XAPI-call.patch
+Patch1208: 0208-perf-linstor-don-t-query-the-disconnected-hosts-on-V.patch
+Patch1209: 0209-feat-linstor-cache-COW-image-info-in-the-LINSTOR-KV-.patch
+Patch1210: 0210-perf-linstor-load-the-image-info-without-a-thread-po.patch
+Patch1211: 0211-fix-linstor-allow-marking-the-KV-cache-as-dirty.patch
+Patch1212: 0212-fix-linstor-check-the-image-parent-of-each-child-bef.patch
 
 %description
 This package contains storage backends used in XCP
@@ -629,6 +635,15 @@ then
 fi
 
 %changelog
+* Mon Nov 16 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.3.0.scan.1
+- Add new patches:
+  - 0207-perf-linstor-get-the-SR-s-VDI-uuids-in-one-XAPI-call.patch
+  - 0208-perf-linstor-don-t-query-the-disconnected-hosts-on-V.patch
+  - 0209-feat-linstor-cache-COW-image-info-in-the-LINSTOR-KV-.patch
+  - 0210-perf-linstor-load-the-image-info-without-a-thread-po.patch
+  - 0211-fix-linstor-allow-marking-the-KV-cache-as-dirty.patch
+  - 0212-fix-linstor-check-the-image-parent-of-each-child-bef.patch
+
 * Fri Nov 13 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.3
 - Add new patches:
   - 0194-fix-linstor-improve-ss-command-speed-184.patch

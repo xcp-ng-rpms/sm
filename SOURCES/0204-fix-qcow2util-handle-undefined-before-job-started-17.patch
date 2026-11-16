@@ -1,0 +1,56 @@
+From 538c3e8b5e3130076bbf4e1cb1b19c287d53b11d Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Mon, 9 Nov 2026 16:13:45 +0100
+Subject: [PATCH] fix(qcow2util): handle undefined before job started (#177)
+
+In case the tapdisk commit has not run, it could send `undefined` state for the
+query and it would return 0 immediatly.
+The returned zero would be considered a success when the coalesce hasn't
+actually happened.
+This add a check for undefined that still stop when encountering an undefined
+by will raise instead. Before raising, we wait for 10 seconds to see if a
+proper commit task has been launched.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/qcow2util.py | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/qcow2util.py b/drivers/qcow2util.py
+index 4e90f8e1..3196b3d6 100755
+--- a/drivers/qcow2util.py
++++ b/drivers/qcow2util.py
+@@ -36,6 +36,7 @@ from constants import NS_PREFIX_LVM, VG_PREFIX
+ # ------------------------------------------------------------------------------
+ 
+ MAX_QCOW_CHAIN_LENGTH: Final = 30
++MAX_UNDEFINED_QUERY_ATTEMPTS: Final = 10 # Max number of undefined accepted during an onlineCoalesce before raising an error
+ 
+ QCOW2_DEFAULT_CLUSTER_SIZE: Final = 64 * 1024 # 64 KiB
+ 
+@@ -576,6 +577,7 @@ class QCowUtil(CowUtil):
+     def coalesceOnline(self, path: str) -> int:
+         pid, minor = self._getTapdisk(path)
+         logger = util.LoggerCounter(10)
++        undefined_count = 0
+ 
+         try:
+             TapCtl.commit(pid, minor, QCOW2_TYPE, path)
+@@ -588,11 +590,13 @@ class QCowUtil(CowUtil):
+ 
+         try:
+             status, nb, total = TapCtl.query(pid, minor)
+-            if status == "undefined":
+-                util.SMlog("Tapdisk {} (m: {}) coalesce status undefined for {}".format(pid, minor, path))
+-                return 0
+-
+             while status != "concluded":
++                if status == "undefined":
++                    util.SMlog("Tapdisk {} (m: {}) coalesce status undefined for {}".format(pid, minor, path))
++                    undefined_count += 1
++                    if undefined_count >= MAX_UNDEFINED_QUERY_ATTEMPTS:
++                        raise xs_errors.XenError("TapdiskFailed", f"We had {undefined_count} undefined while waiting for online coalesce of {path} on tapdisk {pid} (m: {minor})")
++
+                 time.sleep(1)
+                 status, nb, total = TapCtl.query(pid, minor, quiet=True)
+                 logger.log("Got status {} for tapdisk {} (m: {})".format(status, pid, minor))

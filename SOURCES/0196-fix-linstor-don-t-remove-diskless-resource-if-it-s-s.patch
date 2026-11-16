@@ -1,0 +1,84 @@
+From 2c802135aa0c6cb80c603c0fb92cd46a5ee44be9 Mon Sep 17 00:00:00 2001
+From: Alexandre Sollier <github@kuruyia.net>
+Date: Fri, 6 Nov 2026 14:30:11 +0100
+Subject: [PATCH] fix(linstor): don't remove diskless resource if it's still
+ opened (#191)
+
+During the deactivation of a LINSTOR VDI, the whole VDI chain is
+checked, and any LINSTOR resource that is diskless and non-TieBreaker is
+deleted as a cleanup operation.
+
+The current implementation doesn't check whether a LINSTOR resource is
+currently being used by other processes, which can happen if a parent
+VDI is open by a tapdisk process that serves a VDI that has a common
+chain with the VDI being deactivated.
+
+This leaves the LINSTOR resource to be stuck in the DELETING state,
+since the `drbdsetup down` the LINSTOR satellite tries to issue will not
+succeed if there is a process that uses the resource. This ends up
+generating a lot of noise in the form of error report files, and may end
+up causing other failures down the line.
+
+This fixes this issue by checking whether the resource that we're trying
+to delete is open elsewhere, and skipping deletion if so.
+
+Signed-off-by: Alexandre Sollier <alexandre.sollier@vates.tech>
+---
+ drivers/linstorvolumemanager.py | 26 +++++++++++++++++++++++---
+ 1 file changed, 23 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/linstorvolumemanager.py b/drivers/linstorvolumemanager.py
+index 0ddef9b2..0cadf302 100755
+--- a/drivers/linstorvolumemanager.py
++++ b/drivers/linstorvolumemanager.py
+@@ -57,6 +57,7 @@ REG_DRBDADM_PRIMARY = re.compile("([^\\s]+)\\s+role:Primary")
+ REG_DRBDSETUP_IP = re.compile('[^\\s]+\\s+(.*):.*$')
+ 
+ DRBD_BY_RES_PATH = '/dev/drbd/by-res/'
++DRBD_OPENERS_PATH_FORMAT = '/sys/kernel/debug/drbd/resources/{}/volumes/{}/openers'
+ 
+ PLUGIN = 'linstor-manager'
+ 
+@@ -65,13 +66,29 @@ LinstorVolumeOpeners = Dict[str, LinstorLocalVolumeOpeners]
+ 
+ # ==============================================================================
+ 
++def has_local_volume_openers(resource_name, volume) -> bool:
++    if not resource_name or volume is None:
++        raise Exception('Cannot check for DRBD openers without resource name and/or volume.')
++
++    path = DRBD_OPENERS_PATH_FORMAT.format(resource_name, volume)
++    openers_char = ''
++
++    try:
++        with open(path, 'r') as openers:
++            # Read a single character to check if there is any opener listed.
++            # If we get nothing back, then the file is empty meaning there are
++            # no openers.
++            openers_char = openers.read(1)
++    except FileNotFoundError:
++        return False
++
++    return openers_char != ''
++
+ def get_local_volume_openers(resource_name, volume) -> LinstorLocalVolumeOpeners:
+     if not resource_name or volume is None:
+         raise Exception('Cannot get DRBD openers without resource name and/or volume.')
+ 
+-    path = '/sys/kernel/debug/drbd/resources/{}/volumes/{}/openers'.format(
+-        resource_name, volume
+-    )
++    path = DRBD_OPENERS_PATH_FORMAT.format(resource_name, volume)
+ 
+     with open(path, 'r') as openers:
+         # Not a big cost, so read all lines directly.
+@@ -824,6 +841,9 @@ class LinstorVolumeManager(object):
+                     return
+                 break
+ 
++        if has_local_volume_openers(volume_name, 0):
++            return
++
+         result = self._linstor.resource_delete_if_diskless(
+             node_name=node_name, rsc_name=volume_name
+         )

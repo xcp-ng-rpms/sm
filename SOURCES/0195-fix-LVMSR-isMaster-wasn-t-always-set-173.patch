@@ -1,0 +1,52 @@
+From c3b24fdccf92ee4b35000f57fdc044ca5d780e36 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 5 Nov 2026 11:09:46 +0100
+Subject: [PATCH] fix(LVMSR): isMaster wasn't always set (#173)
+
+In case of construction of the SR with `SR.from_uuid()`, the SRMaster key is
+not given in the device-config.  As such, the `self.sr.isMaster` used by
+`deflate` and `make_chain_rw` will always be False.  In case `SRMaster` is not
+given by the dconf, we check if we are a shared SR or not to decide who is the
+correct master.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/LVMSR.py    | 9 +++++++--
+ tests/test_LVMSR.py | 4 ++++
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 9c8fbf87..c985a23c 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -159,8 +159,13 @@ class LVMSR(SR.SR):
+         self.ops_exclusive = OPS_EXCLUSIVE
+ 
+         self.isMaster = False
+-        if 'SRmaster' in self.dconf and self.dconf['SRmaster'] == 'true':
+-            self.isMaster = True
++        if 'SRmaster' in self.dconf:
++            self.isMaster = self.dconf['SRmaster'] == 'true'
++        elif self.sr_ref and self.session:
++            # SR.from_uuid() builds dconf straight from the PBD's stored
++            # device-config, which never carries the synthetic SRmaster key;
++            # XAPI only injects that key into the params of a live SM call.
++            self.isMaster = not self.is_shared() or util.is_master(self.session)
+ 
+         self.lock = lock.Lock(lock.LOCK_TYPE_SR, self.uuid)
+         self.sr_vditype = SR.DEFAULT_TAP
+diff --git a/tests/test_LVMSR.py b/tests/test_LVMSR.py
+index 76e21b69..8c9698a6 100644
+--- a/tests/test_LVMSR.py
++++ b/tests/test_LVMSR.py
+@@ -61,6 +61,10 @@ class TestLVMSR(unittest.TestCase, Stubs):
+         srcmd.params.update(extra_params)
+         if sr_uuid is None:
+             sr_uuid = str(uuid.uuid4())
++
++        self.stubout('SR.SR.is_shared', return_value=False)
++        self.stubout('LVMSR.util.is_master', return_value=master)
++
+         return LVMSR.LVMSR(srcmd, sr_uuid)
+ 
+     @mock.patch('lvutil.Fairlock', autospec=True)

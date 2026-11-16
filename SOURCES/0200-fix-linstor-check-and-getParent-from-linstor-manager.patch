@@ -1,0 +1,70 @@
+From dbbbdc8ff42aff6cc853391de1cf7504178e41b7 Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Tue, 27 Oct 2026 17:19:30 +0100
+Subject: [PATCH] fix(linstor): check and getParent from linstor-manager (#190)
+
+Fixes two errors from the `linstor-manager` plugin:
+- `check` returned a `CowUtil.CheckResult` (`IntEnum`) making an error
+`TypeError:  cannot marshal <enum 'CheckResult'> objects`. Every remote check
+would fail, the linstorhostcall system would retry on the master and succeed
+there so the error was hidden. We know explicetely cast in int and cast in
+CheckResult on the receiving side.
+- `getParent` returned None for an image without parent, it would make error
+`TypeError: cannot marshal None unless allow_none is enabled`. In case of None
+for getParent, we return an empty string instead and convert it back to None on
+the receiving side.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ drivers/linstor-manager   | 6 ++++--
+ drivers/linstorcowutil.py | 6 ++++--
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/linstor-manager b/drivers/linstor-manager
+index ab738a4e..00648b92 100755
+--- a/drivers/linstor-manager
++++ b/drivers/linstor-manager
+@@ -431,7 +431,7 @@ def check(session, args):
+             args['ignoreMissingFooter']
+         )
+         fast = util.strtobool(args['fast'])
+-        return cowutil.check(device_path, ignore_missing_footer, fast)
++        return str(cowutil.check(device_path, ignore_missing_footer, fast))
+     except Exception as e:
+         util.SMlog('linstor-manager:check error: {}'.format(e))
+         raise
+@@ -481,7 +481,9 @@ def get_parent(session, args):
+             logger=util.SMlog
+         )
+ 
+-        return cowutil.getParent(device_path, partial(extract_uuid, linstor))
++        # We transform a `None` result to an empty string since we need to return a str through the plugin,
++        # it will be transformed to `None` on the caller side.
++        return cowutil.getParent(device_path, partial(extract_uuid, linstor)) or ''
+     except Exception as e:
+         util.SMlog('linstor-manager:get_parent error: {}'.format(e))
+         raise
+diff --git a/drivers/linstorcowutil.py b/drivers/linstorcowutil.py
+index 805d6311..d5006efb 100644
+--- a/drivers/linstorcowutil.py
++++ b/drivers/linstorcowutil.py
+@@ -255,7 +255,7 @@ class LinstorCowUtil:
+ 
+     @linstorhostcall('check')
+     def _check(self, vdi_uuid, response):
+-        return CowUtil.CheckResult(response)
++        return CowUtil.CheckResult(int(response))
+ 
+     def get_info(self, vdi_uuid, include_parent=True):
+         kwargs = {
+@@ -303,7 +303,9 @@ class LinstorCowUtil:
+ 
+     @linstorhostcall('getParent')
+     def _get_parent(self, vdi_uuid, response):
+-        return response
++        # response will be an empty string for a remote call, it would be `None` for a local
++        # call so we transform it back to `None` here.
++        return response or None
+ 
+     @linstorhostcall('getSizeVirt')
+     def get_size_virt(self, vdi_uuid, response):

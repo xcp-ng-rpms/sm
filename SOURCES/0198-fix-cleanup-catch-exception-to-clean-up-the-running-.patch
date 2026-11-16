@@ -1,0 +1,41 @@
+From 7e8fe904860c3ec8949dbfb2bb16bab55ee8d262 Mon Sep 17 00:00:00 2001
+From: Anthoine <anthoine.bourgeois@vates.tech>
+Date: Mon, 9 Nov 2026 14:57:31 +0100
+Subject: [PATCH] fix(cleanup): catch exception to clean up the running file
+ (#183)
+
+If the running file is not cleaned up, it prevents activation of the VDI
+later on because the next vdi_activate on that chain calls on-slave
+cancel_coalesce_master, which loops infinitely on the file's existence.
+
+Signed-off-by: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+---
+ drivers/cleanup.py | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index e0d376d4..743e02d6 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2566,14 +2566,14 @@ class SR(object):
+ 
+             self.journaler.create(vdi.JRN_COALESCE, vdi.uuid, "1")
+             host_refs = self.hasLeavesAttachedOn(vdi)
+-            # This check of multiple host_refs was done earlier in `isCoalesceable` but
+-            # we recheck here to be sure another leaf wasn't activated in the meantime.
+-            if vdi.cowutil.isCoalesceableOnRemote() and len(host_refs) > 1:
+-                Util.log("Not coalesceable, chain activated more than once")
+-                Util.log(f"VDI '{vdi.uuid}' has leaves attached on {host_refs}")
+-                raise Exception("Not coalesceable, chain activated more than once")
+-
+             try:
++                # This check of multiple host_refs was done earlier in `isCoalesceable` but
++                # we recheck here to be sure another leaf wasn't activated in the meantime.
++                if vdi.cowutil.isCoalesceableOnRemote() and len(host_refs) > 1:
++                    Util.log("Not coalesceable, chain activated more than once")
++                    Util.log(f"VDI '{vdi.uuid}' has leaves attached on {host_refs}")
++                    raise Exception("Not coalesceable, chain activated more than once")
++
+                 if host_refs and vdi.cowutil.isCoalesceableOnRemote():
+                     #Leaf opened on another host, we need to call online coalesce
+                     Util.log("Remote coalesce for {}".format(vdi.path))

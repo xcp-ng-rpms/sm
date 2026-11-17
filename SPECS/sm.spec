@@ -1,6 +1,6 @@
-%global package_speccommit 8afb29c13696d0517ac2ff1064e5d5b040bc9aa9
+%global package_speccommit 41ccd13f900f767e8ff932ec53a7c8a67a6c8276
 %global usver 3.2.12
-%global xsver 25
+%global xsver 27
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 %global package_srccommit v3.2.12
 
@@ -52,14 +52,18 @@ Patch34: fix_pfx_sr_probe
 Patch35: CA-423293_decode_error_string
 Patch36: CP-311724_optimise_tapdisk_from_minor
 Patch37: CP-313057_improve_failure_path_speed
-Patch38: add_udev_rules_for_purestorage_-_best_practices.patch
-Patch39: update_pure_storage_udev_1.patch
-Patch40: update_pure_storage_udev_2.patch
-Patch41: CA-425972_log_sg_readcap_errors
-Patch42: CA-428978_handle_missing_fd_dir
-Patch43: CP-308587_update_netapp_multipath
-Patch44: CA-413325_log_what_lvs_shows_on_failure
-Patch45: CA-427749_Improve_SM_cleanup
+Patch38: CA-430138_fix_lvhdohbasr_super_call
+Patch39: add_udev_rules_for_purestorage_-_best_practices.patch
+Patch40: update_pure_storage_udev_1.patch
+Patch41: update_pure_storage_udev_2.patch
+Patch42: CA-425972_log_sg_readcap_errors
+Patch43: CA-428978_handle_missing_fd_dir
+Patch44: CA-431333_drop_stale_relink_journal
+Patch45: CP-308587_update_netapp_multipath
+Patch46: CA-413325_log_what_lvs_shows_on_failure
+Patch47: CA-427749_Improve_SM_cleanup
+Patch48: ca-431332_dont_fail_destroy_with_no_sysfs_delete
+Patch49: CA-432483_cover_relink_journal_and_lvhdohbasr_load
 
 %define __python python3
 
@@ -351,6 +355,14 @@ then
 fi
 
 %changelog
+* Mon Oct 19 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-27
+- Build fixes
+
+* Wed Oct 14 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-26
+- CA-430138: fix LVHDoHBASR.load() TypeError under dynamic module loading
+- CA-431333: drop the relink journal when the relink is abandoned
+- CA-431332: dont fail destroy when there is no sysfs delete
+
 * Wed Jun 24 2026 Mark Syms <mark.syms@citrix.com> - 3.2.12-25
 - CA-428978: handle missing fd dir in proc
 

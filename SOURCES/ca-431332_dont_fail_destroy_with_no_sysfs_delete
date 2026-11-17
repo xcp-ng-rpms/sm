@@ -1,0 +1,64 @@
+From bef199009f5ce4f62f6c2e049b7dff7bdcb3dd7a Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@citrix.com>
+Date: Wed, 23 Sep 2026 17:01:16 +0100
+Subject: [PATCH] CA-431332: dont fail destroy when there is no sysfs delete
+
+If the device's `sysfs` node doesn't contain a delete file, skip that
+node rather than failing the destroy.
+
+Signed-off-by: Mark Syms <mark.syms@citrix.com>
+diff --git a/drivers/LVHDoHBASR.py b/drivers/LVHDoHBASR.py
+index 7525686..6de7dee 100755
+--- a/drivers/LVHDoHBASR.py
++++ b/drivers/LVHDoHBASR.py
+@@ -201,8 +201,11 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+         nodes = glob.glob('/dev/disk/by-scsid/%s/*' % self.SCSIid)
+         util.SMlog('Remove_nodes, nodes are %s' % nodes)
+         for node in nodes:
+-            with open('/sys/block/%s/device/delete' %
+-                      (os.path.basename(node)), 'w') as f:
++            delete_path = '/sys/block/%s/device/delete' % (os.path.basename(node))
++            if not os.path.exists(delete_path):
++                continue
++
++            with open(delete_path, 'w') as f:
+                 f.write('1\n')
+ 
+     def delete(self, sr_uuid):
+diff --git a/tests/test_LVHDoHBASR.py b/tests/test_LVHDoHBASR.py
+index 3bc7196..c542880 100644
+--- a/tests/test_LVHDoHBASR.py
++++ b/tests/test_LVHDoHBASR.py
+@@ -90,6 +90,9 @@ class TestLVHDoHBASR(unittest.TestCase):
+         self.mock_lc = lc_patcher.start()
+         xenapi_patcher = mock.patch('SR.XenAPI')
+         self.mock_xapi = xenapi_patcher.start()
++        exists_patcher = mock.patch('LVHDoHBASR.os.path.exists', autospec=True)
++        self.mock_exists = exists_patcher.start()
++        self.mock_exists.return_value = True
+ 
+         self.addCleanup(mock.patch.stopall)
+ 
+@@ -144,3 +147,22 @@ class TestLVHDoHBASR(unittest.TestCase):
+             mock.call('/sys/block/sdi/device/delete', 'w'),
+             mock.call('/sys/block/sdh/device/delete', 'w')],
+             any_order=True)
++
++    @mock.patch("builtins.open", new_callable=mock.mock_open())
++    @mock.patch('LVHDoHBASR.glob.glob', autospec=True)
++    def test_sr_delete_skips_nodes_with_no_sysfs_delete(
++            self, mock_glob, mock_open):
++        # Arrange
++        srcmd = self.create_sr_cmd("sr_delete")
++
++        sr = LVHDoHBASR.LVHDoHBASR(srcmd, self.sr_uuid)
++
++        mock_glob.return_value = ['/dev/scinia', '/dev/sdd', '/dev/scinib']
++        self.mock_exists.side_effect = (
++            lambda path: path == '/sys/block/sdd/device/delete')
++
++        # Act
++        srcmd.run(sr)
++
++        # Assert
++        mock_open.assert_called_once_with('/sys/block/sdd/device/delete', 'w')

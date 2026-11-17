@@ -1,0 +1,13 @@
+diff --git a/drivers/LVHDoHBASR.py b/drivers/LVHDoHBASR.py
+index 1eb8fb6..2761555 100755
+--- a/drivers/LVHDoHBASR.py
++++ b/drivers/LVHDoHBASR.py
+@@ -106,7 +106,7 @@ class LVHDoHBASR(LVHDSR.LVHDSR):
+                 raise xs_errors.XenError('ConfigSCSIid')
+ 
+         self.SCSIid = self.dconf['SCSIid']
+-        super(LVHDoHBASR, self).load(sr_uuid)
++        LVHDSR.LVHDSR.load(self, sr_uuid)
+ 
+     def create(self, sr_uuid, size):
+         self.hbasr.attach(sr_uuid)

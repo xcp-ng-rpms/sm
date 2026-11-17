@@ -1,0 +1,113 @@
+diff --git a/tests/test_LVHDoHBASR.py b/tests/test_LVHDoHBASR.py
+index c542880..e1a39de 100644
+--- a/tests/test_LVHDoHBASR.py
++++ b/tests/test_LVHDoHBASR.py
+@@ -148,6 +148,22 @@ class TestLVHDoHBASR(unittest.TestCase):
+             mock.call('/sys/block/sdh/device/delete', 'w')],
+             any_order=True)
+ 
++    def test_load_calls_parent_load_unbound(self):
++        """
++        CA-411988: load() must invoke the parent unbound rather than through
++        super(), which raises TypeError when SR.from_uuid() loads this module
++        dynamically
++        """
++        # Arrange
++        srcmd = self.create_sr_cmd("sr_attach")
++
++        # Act
++        sr = LVHDoHBASR.LVHDoHBASR(srcmd, self.sr_uuid)
++
++        # Assert
++        self.assertEqual(self.scsi_id, sr.SCSIid)
++        self.mock_lvhdsr.LVHDSR.load.assert_called_once_with(sr, self.sr_uuid)
++
+     @mock.patch("builtins.open", new_callable=mock.mock_open())
+     @mock.patch('LVHDoHBASR.glob.glob', autospec=True)
+     def test_sr_delete_skips_nodes_with_no_sysfs_delete(
+diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
+index 93f1907..05a2ace 100644
+--- a/tests/test_cleanup.py
++++ b/tests/test_cleanup.py
+@@ -1635,6 +1635,81 @@ class TestSR(unittest.TestCase):
+         self.assertIn(vdis['vdi'], sr._failedCoalesceTargets)
+         self.assertEqual(0, mock_vhdutil.repair.call_count)
+ 
++    @mock.patch('cleanup.journaler.Journaler', autospec=True)
++    def test_coalesce_relink_abort_keeps_journal(self, mock_journaler):
++        """
++        CA-431333: an abort is resumable, so the relink journal must survive
++        """
++        sr = create_cleanup_sr(self.xapi_mock, uuid=str(uuid4()))
++        sr.journaler = mock_journaler
++        sr.deleteVDI = mock.Mock()
++
++        vdis = self.add_vdis_for_coalesce(sr)
++        vdi = vdis['vdi']
++
++        # the coalesce itself is already journalled as done
++        mock_journaler.get.return_value = "1"
++        vdis['parent']._tagChildrenForRelink = mock.Mock(
++            side_effect=cleanup.AbortException("Aborting due to signal"))
++
++        with self.assertRaises(cleanup.AbortException):
++            sr._coalesce(vdi)
++
++        mock_journaler.remove.assert_not_called()
++        sr.deleteVDI.assert_not_called()
++
++    @mock.patch('cleanup.journaler.Journaler', autospec=True)
++    def test_coalesce_relink_failure_drops_journal(self, mock_journaler):
++        """
++        CA-431333: a failed relink must not leave a journal behind, otherwise
++        the next pass takes it as proof the coalesce is done and deletes the VDI
++        """
++        sr = create_cleanup_sr(self.xapi_mock, uuid=str(uuid4()))
++        sr.journaler = mock_journaler
++        sr.deleteVDI = mock.Mock()
++
++        vdis = self.add_vdis_for_coalesce(sr)
++        vdi = vdis['vdi']
++
++        mock_journaler.get.return_value = "1"
++        vdis['parent']._tagChildrenForRelink = mock.Mock(
++            side_effect=FakeException("relink failed"))
++
++        with self.assertRaises(FakeException):
++            sr._coalesce(vdi)
++
++        mock_journaler.remove.assert_called_once_with(
++            vdi.JRN_RELINK, vdi.uuid)
++        sr.deleteVDI.assert_not_called()
++
++    @mock.patch('cleanup.Util.log')
++    @mock.patch('cleanup.journaler.Journaler', autospec=True)
++    def test_coalesce_relink_failure_journal_remove_fails(
++            self, mock_journaler, mock_log):
++        """
++        CA-431333: if dropping the journal also fails, log it and still report
++        the original relink failure
++        """
++        sr = create_cleanup_sr(self.xapi_mock, uuid=str(uuid4()))
++        sr.journaler = mock_journaler
++        sr.deleteVDI = mock.Mock()
++
++        vdis = self.add_vdis_for_coalesce(sr)
++        vdi = vdis['vdi']
++
++        mock_journaler.get.return_value = "1"
++        mock_journaler.remove.side_effect = FakeException("journal unwritable")
++        vdis['parent']._tagChildrenForRelink = mock.Mock(
++            side_effect=FakeException("relink failed"))
++
++        with self.assertRaises(FakeException) as cm:
++            sr._coalesce(vdi)
++
++        self.assertEqual("relink failed", str(cm.exception))
++        logged = " ".join(str(call) for call in mock_log.call_args_list)
++        self.assertIn("Failed to remove relink journal", logged)
++        sr.deleteVDI.assert_not_called()
++
+     def test_tag_children_for_relink_activation(self):
+         """
+         Cleanup: tag for relink, activation races

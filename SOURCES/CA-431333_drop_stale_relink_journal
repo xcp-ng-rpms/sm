@@ -1,0 +1,22 @@
+diff --git a/drivers/cleanup.py b/drivers/cleanup.py
+index d95dddd..ec170b7 100755
+--- a/drivers/cleanup.py
++++ b/drivers/cleanup.py
+@@ -2034,6 +2034,17 @@ class SR:
+             vdi.parent._tagChildrenForRelink()
+             self.scan()
+             vdi._relinkSkip()
++        except AbortException:
++            # resumable: the journal must survive
++            raise
++        except Exception:
++            # CA-431333: relink never happened, don't leave a stale journal
++            try:
++                self.journaler.remove(vdi.JRN_RELINK, vdi.uuid)
++            except Exception as e:
++                Util.log("Failed to remove relink journal for %s: %s" %
++                         (vdi.uuid, e))
++            raise
+         finally:
+             self.unlock()
+             # Reload the children to leave things consistent

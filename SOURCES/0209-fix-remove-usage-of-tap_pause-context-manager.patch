@@ -1,4 +1,4 @@
-From 06049c571658c4acc94a87779a5ac2c9ce50c25a Mon Sep 17 00:00:00 2001
+From 26675a02210bc87525104f6d9692ed31ad9118a4 Mon Sep 17 00:00:00 2001
 From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
 Date: Thu, 15 Oct 2026 16:18:56 +0200
 Subject: [PATCH] fix: remove usage of `tap_pause` context manager

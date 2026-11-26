@@ -10,10 +10,10 @@ and background GC processes go through the same error log process.
 
 Signed-off-by: Mark Syms <mark.syms@citrix.com>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 469b20e..4db3f3f 100755
+index 538c2c6..d95dddd 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -3256,6 +3256,19 @@ def abort(srUuid, soft=False):
+@@ -3286,6 +3286,19 @@ def abort(srUuid, soft=False):
          return False
  
  
@@ -33,7 +33,7 @@ index 469b20e..4db3f3f 100755
  def gc(session, srUuid, inBackground, dryRun=False):
      """Garbage collect all deleted VDIs in SR "srUuid". Fork & return 
      immediately if inBackground=True. 
-@@ -3281,16 +3294,10 @@ def gc(session, srUuid, inBackground, dryRun=False):
+@@ -3311,16 +3324,10 @@ def gc(session, srUuid, inBackground, dryRun=False):
              # because there is no other way to propagate them back at this
              # point
  
@@ -53,7 +53,7 @@ index 469b20e..4db3f3f 100755
  
  def start_gc(session, sr_uuid):
 diff --git a/drivers/coalesce-leaf b/drivers/coalesce-leaf
-index f45e248..96d17ba 100755
+index 206a2d5..c01eb5d 100755
 --- a/drivers/coalesce-leaf
 +++ b/drivers/coalesce-leaf
 @@ -113,7 +113,7 @@ def leaf_coalesce(session, coalesceable_vdis):
@@ -72,9 +72,9 @@ index f45e248..96d17ba 100755
 -        cleanup.gc(session, sr_uuid, False)
 +        cleanup.run_gc(session, sr_uuid, False, immediate=True)
  
-     suspended = False
-     if vm_rec["power_state"] == "Running":
-@@ -202,7 +202,7 @@ def vm_leaf_coalesce(session, vm_uuid):
+     for sr_uuid in coalesceable_vdis:
+         # wait for the GC process for this SR to complete
+@@ -206,7 +206,7 @@ def vm_leaf_coalesce(session, vm_uuid):
              session.xenapi.VM.resume(vm_ref, False, False)
          for sr_uuid in list(coalesceable_vdis.keys()):
              # cleans up any potential failures
@@ -84,10 +84,10 @@ index f45e248..96d17ba 100755
  
  
 diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
-index dfe9c9d..463319a 100644
+index f796ed7..93f1907 100644
 --- a/tests/test_cleanup.py
 +++ b/tests/test_cleanup.py
-@@ -187,9 +187,10 @@ class TestSR(unittest.TestCase):
+@@ -188,9 +188,10 @@ class TestSR(unittest.TestCase):
  
          self.assertTrue(cleanup.SIGTERM)
  
@@ -99,7 +99,7 @@ index dfe9c9d..463319a 100644
          # Set the term signel
          cleanup.receiveSignal(signal.SIGTERM, None)
          mock_session = mock.MagicMock(name='MockSession')
-@@ -1757,9 +1758,10 @@ class TestSR(unittest.TestCase):
+@@ -1780,9 +1781,10 @@ class TestSR(unittest.TestCase):
          mock_sr.coalesce.assert_called_with(vdis['vdi'], False)
          mock_sr.coalesceLeaf.assert_called_with(vdis['vdi'], False)
  
@@ -111,7 +111,7 @@ index dfe9c9d..463319a 100644
          """
          GC called in foreground will run immediate
          """
-@@ -1774,6 +1776,42 @@ class TestSR(unittest.TestCase):
+@@ -1797,6 +1799,42 @@ class TestSR(unittest.TestCase):
          mock_gc.assert_called_with(mock_session, sr_uuid,
                                     False, immediate=True)
  
@@ -154,7 +154,7 @@ index dfe9c9d..463319a 100644
      @mock.patch('cleanup.os._exit', autospec=True)
      @mock.patch('cleanup.daemonize', autospec=True)
      @mock.patch('cleanup.Util')
-@@ -1792,7 +1830,7 @@ class TestSR(unittest.TestCase):
+@@ -1815,7 +1853,7 @@ class TestSR(unittest.TestCase):
          cleanup.gc(mock_session, sr_uuid, inBackground=True)
  
          ## Assert

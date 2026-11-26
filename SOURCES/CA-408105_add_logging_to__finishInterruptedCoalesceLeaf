@@ -8,10 +8,10 @@ difficult/impossible.
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 2b0ca5a..13da555 100755
+index 4299e11..469b20e 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
-@@ -2637,10 +2637,12 @@ class FileSR(SR):
+@@ -2640,10 +2640,12 @@ class FileSR(SR):
          Util.log("*** FINISH LEAF-COALESCE")
          vdi = self.getVDI(childUuid)
          if not vdi:
@@ -25,19 +25,19 @@ index 2b0ca5a..13da555 100755
          self._updateSlavesOnResize(vdi)
          util.fistpoint.activate("LVHDRT_coaleaf_finish_end", self.uuid)
 diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
-index a2b14d6..00b3e2a 100644
+index fe9e660..dfe9c9d 100644
 --- a/tests/test_cleanup.py
 +++ b/tests/test_cleanup.py
-@@ -15,6 +15,8 @@ import vhdutil
+@@ -16,6 +16,8 @@ import vhdutil
  import ipc
  
  import XenAPI
 +from XenAPI import Failure
 +from util import SMException
  
+ MEGA = 1024 * 1024
  
- class FakeFile(object):
-@@ -1985,3 +1987,46 @@ class TestLockGCActive(unittest.TestCase):
+@@ -1962,3 +1964,46 @@ class TestLockGCActive(unittest.TestCase):
          # When
          with self.assertRaises(BlockingIOError):
              gcLock.acquireNoblock()

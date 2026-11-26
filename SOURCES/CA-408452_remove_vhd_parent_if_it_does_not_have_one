@@ -14,7 +14,7 @@ subsequent SR scan removes it. To satisfy both use cases remove the
 
 Signed-off-by: Mark Syms <mark.syms@cloud.com>
 diff --git a/drivers/cleanup.py b/drivers/cleanup.py
-index 13da555..a62d5f1 100755
+index 78ffc56..4299e11 100755
 --- a/drivers/cleanup.py
 +++ b/drivers/cleanup.py
 @@ -2335,6 +2335,9 @@ class SR:
@@ -28,7 +28,7 @@ index 13da555..a62d5f1 100755
          freeSpace = self.getFreeSpace()
          if freeSpace < extraSpace:
 diff --git a/tests/test_cleanup.py b/tests/test_cleanup.py
-index 679b93b..eef170f 100644
+index d286852..fe9e660 100644
 --- a/tests/test_cleanup.py
 +++ b/tests/test_cleanup.py
 @@ -7,6 +7,7 @@ import uuid
@@ -39,16 +39,16 @@ index 679b93b..eef170f 100644
  import lock
  
  import util
-@@ -18,6 +19,8 @@ import XenAPI
- from XenAPI import Failure
- from util import SMException
+@@ -16,6 +17,8 @@ import ipc
+ 
+ import XenAPI
  
 +MEGA = 1024 * 1024
 +
  
  class FakeFile(object):
      pass
-@@ -1883,6 +1886,46 @@ class TestSR(unittest.TestCase):
+@@ -1815,6 +1818,46 @@ class TestSR(unittest.TestCase):
          # Assert
          self.assertIsNotNone(sr)
  

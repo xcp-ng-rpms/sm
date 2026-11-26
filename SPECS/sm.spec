@@ -629,6 +629,10 @@ then
 fi
 
 %changelog
+* Thu Nov 26 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.3
+- Refresh XS patches CA-408452, CA-408105 and CA-420515 so that they
+  apply without fuzz, which rpmbuild on AlmaLinux 10 rejects
+
 * Fri Nov 13 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.3
 - Add new patches:
   - 0194-fix-linstor-improve-ss-command-speed-184.patch

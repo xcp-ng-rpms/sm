@@ -1,0 +1,320 @@
+From: Erwan Croze <erwan.croze@vates.tech>
+Date: Thu, 26 Nov 2026 12:00:00 +0100
+Subject: [PATCH] feat: live (online) VDI resize on File/EXT/NFS/LVM SRs
+
+Allow growing a VDI while it is attached to a running VM.
+
+- FileSR/EXTSR/NFSSR and LVMSR: vdi_resize no longer refuses attached
+  VDIs. When the VDI is attached, the tapdisk is paused, the VHD/QCOW2
+  image (and the LV for LVMSR) is resized, then the tapdisk is unpaused
+  with resize=True. On LVMSR, a thin-provisioned attached VDI stays
+  inflated and the resized LV is refreshed on the slaves it is attached
+  on.
+- blktap2.VDI.tap_unpause / call_pluginhandler: new resize argument,
+  forwarded to the tapdisk-pause plugin.
+- tapdisk-pause: on unpause with resize=true, write "resize-device" in
+  the xenstore backend/vbd3 node(s) whose params match the VDI path, so
+  that tapback notifies the guest of the new size.
+- VDI_RESIZE_ONLINE is advertised in the capabilities of the File, EXT,
+  NFS and LVM SR drivers.
+- vdi_resize is added to FileSR.OPS_EXCLUSIVE so it is serialised with
+  the other exclusive SR operations.
+
+Requires blktap >= 3.55.5-12.4.0.resizeonline.1 (tapdisk accepting a size
+change on unpause).
+
+Signed-off-by: Erwan Croze <erwan.croze@vates.tech>
+---
+ drivers/EXTSR.py      |  2 +-
+ drivers/FileSR.py     | 45 ++++++++++++++++----------
+ drivers/LVMSR.py      | 74 +++++++++++++++++++++++++++++--------------
+ drivers/NFSSR.py      |  2 +-
+ drivers/blktap2.py    |  9 ++++--
+ drivers/tapdisk-pause | 13 ++++++++
+ 6 files changed, 100 insertions(+), 45 deletions(-)
+
+diff --git a/drivers/EXTSR.py b/drivers/EXTSR.py
+index 1595745..a5f67f9 100755
+--- a/drivers/EXTSR.py
++++ b/drivers/EXTSR.py
+@@ -35,7 +35,7 @@ from constants import EXT_PREFIX
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_SUPPORTS_LOCAL_CACHING",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+-                "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
++                "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_RESIZE_ONLINE", "VDI_MIRROR",
+                 "VDI_GENERATE_CONFIG",
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+                 "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING"]
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index f1fe3a2..92f0ff3 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -43,7 +43,7 @@ from constants import CBTLOG_TAG
+ geneology: Dict[str, List[str]] = {}
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", \
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", \
+-                "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_MIRROR",
++                "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_RESIZE_ONLINE", "VDI_MIRROR",
+                 "VDI_GENERATE_CONFIG", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+                 "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING"]
+ 
+@@ -68,7 +68,8 @@ JOURNAL_FILE_PREFIX = ".journal-"
+ OPS_EXCLUSIVE = [
+         "sr_create", "sr_delete", "sr_probe", "sr_attach", "sr_detach",
+         "sr_scan", "vdi_init", "vdi_create", "vdi_delete", "vdi_attach",
+-        "vdi_detach", "vdi_resize_online", "vdi_snapshot", "vdi_clone"]
++        "vdi_detach", "vdi_resize", "vdi_resize_online", "vdi_snapshot",
++        "vdi_clone"]
+ 
+ DRIVER_CONFIG = {"ATTACH_FROM_CONFIG_WITH_TAPDISK": True}
+ 
+@@ -703,22 +704,32 @@ class FileVDI(VDI.VDI):
+         # We already checked it is a cow image.
+         size = self.cowutil.validateAndRoundImageSize(int(size))
+ 
+-        jFile = JOURNAL_FILE_PREFIX + self.uuid
++        # A VDI attached to a running VM is resized online: its tapdisks are
++        # paused and reopen the image with the new size when unpaused.
++        attached = util.get_hosts_attached_on(self.session, [vdi_uuid])
++        if attached and not blktap2.VDI.tap_pause(self.session, sr_uuid, vdi_uuid):
++            raise util.SMException("failed to pause VDI %s" % vdi_uuid)
+         try:
+-            self.cowutil.setSizeVirt(self.path, size, jFile)
+-        except:
+-            # Revert the operation
+-            self.cowutil.revert(self.path, jFile)
+-            raise xs_errors.XenError('VDISize', opterr='resize operation failed')
+-
+-        old_size = self.size
+-        self.size = self.cowutil.getSizeVirt(self.path)
+-        st = util.ioretry(lambda: os.stat(self.path))
+-        self.utilisation = int(st.st_size)
+-
+-        self._db_update()
+-        self.sr._update(self.sr.uuid, self.size - old_size)
+-        super(FileVDI, self).resize_cbt(self.sr.uuid, self.uuid, self.size)
++            jFile = JOURNAL_FILE_PREFIX + self.uuid
++            try:
++                self.cowutil.setSizeVirt(self.path, size, jFile)
++            except:
++                # Revert the operation
++                self.cowutil.revert(self.path, jFile)
++                raise xs_errors.XenError('VDISize', opterr='resize operation failed')
++
++            old_size = self.size
++            self.size = self.cowutil.getSizeVirt(self.path)
++            st = util.ioretry(lambda: os.stat(self.path))
++            self.utilisation = int(st.st_size)
++
++            self._db_update()
++            self.sr._update(self.sr.uuid, self.size - old_size)
++            super(FileVDI, self).resize_cbt(self.sr.uuid, self.uuid, self.size)
++        finally:
++            if attached and not blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid,
++                                                        resize=True):
++                raise util.SMException("failed to unpause VDI %s" % vdi_uuid)
+         return VDI.VDI.get_params(self)
+ 
+     @override
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index 784083b..7b8dcd8 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -61,7 +61,7 @@ DEV_MAPPER_ROOT = os.path.join('/dev/mapper', VG_PREFIX)
+ geneology: Dict[str, List[str]] = {}
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_TRIM",
+         "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH", "VDI_MIRROR",
+-        "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "ATOMIC_PAUSE",
++        "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_RESIZE_ONLINE", "ATOMIC_PAUSE",
+         "VDI_RESET_ON_BOOT/2", "VDI_UPDATE", "VDI_CONFIG_CBT",
+         "VDI_ACTIVATE", "VDI_DEACTIVATE"]
+ 
+@@ -1582,7 +1582,6 @@ class LVMVDI(VDI.VDI):
+             if not self.sr.lvActivator.deactivateAll():
+                 raise xs_errors.XenError("SMGeneral", opterr="deactivation")
+ 
+-    # We only support offline resize
+     @override
+     def resize(self, sr_uuid, vdi_uuid, size) -> str:
+         util.SMlog("LVMVDI.resize for %s" % self.uuid)
+@@ -1603,41 +1602,70 @@ class LVMVDI(VDI.VDI):
+         if size == self.size:
+             return VDI.VDI.get_params(self)
+ 
++        # A VDI attached to a running VM is resized online: its tapdisks are
++        # paused and reopen the image with the new size when unpaused.
++        attachedHosts = util.get_hosts_attached_on(self.session, [self.uuid])
++
+         if not VdiType.isCowImage(self.vdi_type):
+             lvSizeOld = self.size
+             lvSizeNew = util.roundup(lvutil.LVM_SIZE_INCREMENT, size)
+         else:
+             lvSizeOld = self.utilisation
+             lvSizeNew = self.lvmcowutil.calcVolumeSize(size)
+-            if self.sr.provision == "thin":
+-                # VDI is currently deflated, so keep it deflated
++            if self.sr.provision == "thin" and not attachedHosts:
++                # VDI is currently deflated, so keep it deflated.
++                # An attached VDI is fully inflated, so it must stay that
++                # way to allow writes in the new area.
+                 lvSizeNew = lvSizeOld
+         assert(lvSizeNew >= lvSizeOld)
+         spaceNeeded = lvSizeNew - lvSizeOld
+         self.sr._ensureSpaceAvailable(spaceNeeded)
+ 
+         oldSize = self.size
+-        if not VdiType.isCowImage(self.vdi_type):
+-            self.sr.lvmCache.setSize(self.lvname, lvSizeNew)
+-            self.size = self.sr.lvmCache.getSize(self.lvname)
+-            self.utilisation = self.size
+-        else:
++        chainActivated = False
++        if attachedHosts and not blktap2.VDI.tap_pause(self.session, sr_uuid, vdi_uuid):
++            raise util.SMException("failed to pause VDI %s" % vdi_uuid)
++        try:
++            if not VdiType.isCowImage(self.vdi_type):
++                self.sr.lvmCache.setSize(self.lvname, lvSizeNew)
++                self.size = self.sr.lvmCache.getSize(self.lvname)
++                self.utilisation = self.size
++            else:
++                if lvSizeNew != lvSizeOld:
++                    self.lvmcowutil.inflate(self.sr.journaler, self.sr.uuid, self.uuid, self.vdi_type, lvSizeNew)
++                if self.vdi_type == VdiType.QCOW2:
++                    # We only do this for QCOW2 since qemu-img need to read the chain to resize.
++                    # If the VDI is attached on this host, the chain is already active: in this
++                    # case we must not deactivate it at the end.
++                    (_, bcount) = RefCounter.checkLocked(self.uuid, NS_PREFIX_LVM + self.sr.uuid)
++                    chainActivated = bcount == 0
++                    if chainActivated:
++                        self._chainSetActive(True, True)
++                self.cowutil.setSizeVirtFast(self.path, size)
++                self.size = self.cowutil.getSizeVirt(self.path)
++                self.utilisation = self.sr.lvmCache.getSize(self.lvname)
++
+             if lvSizeNew != lvSizeOld:
+-                self.lvmcowutil.inflate(self.sr.journaler, self.sr.uuid, self.uuid, self.vdi_type, lvSizeNew)
+-            if self.vdi_type == VdiType.QCOW2:
+-                # We only do this for QCOW2 since qemu-img need to read the chain to resize
+-                self._chainSetActive(True, True)
+-            self.cowutil.setSizeVirtFast(self.path, size)
+-            self.size = self.cowutil.getSizeVirt(self.path)
+-            self.utilisation = self.sr.lvmCache.getSize(self.lvname)
++                # The LV size is changed on the master only, the slaves where the VDI is
++                # attached must reload it before tapdisk reopens the image.
++                masterRef = util.get_this_host_ref(self.session)
++                slaves = [x for x in attachedHosts if x != masterRef]
++                if slaves:
++                    LvmCowUtil.refreshVolumeOnSlaves(
++                        self.session, self.sr.uuid, self.sr.vgname, self.lvname, self.uuid, slaves
++                    )
+ 
+-        vdi_ref = self.sr.srcmd.params['vdi_ref']
+-        self.session.xenapi.VDI.set_virtual_size(vdi_ref, str(self.size))
+-        self.session.xenapi.VDI.set_physical_utilisation(vdi_ref,
+-                str(self.utilisation))
+-        self.sr._updateStats(self.sr.uuid, self.size - oldSize)
+-        super(LVMVDI, self).resize_cbt(self.sr.uuid, self.uuid, self.size)
+-        if self.vdi_type == VdiType.QCOW2:
++            vdi_ref = self.sr.srcmd.params['vdi_ref']
++            self.session.xenapi.VDI.set_virtual_size(vdi_ref, str(self.size))
++            self.session.xenapi.VDI.set_physical_utilisation(vdi_ref,
++                    str(self.utilisation))
++            self.sr._updateStats(self.sr.uuid, self.size - oldSize)
++            super(LVMVDI, self).resize_cbt(self.sr.uuid, self.uuid, self.size)
++        finally:
++            if attachedHosts and not blktap2.VDI.tap_unpause(self.session, sr_uuid, vdi_uuid,
++                                                             resize=True):
++                raise util.SMException("failed to unpause VDI %s" % vdi_uuid)
++        if chainActivated:
+             self._chainSetActive(False, True)
+         return VDI.VDI.get_params(self)
+ 
+diff --git a/drivers/NFSSR.py b/drivers/NFSSR.py
+index d5f5446..fb8c9b0 100755
+--- a/drivers/NFSSR.py
++++ b/drivers/NFSSR.py
+@@ -37,7 +37,7 @@ import cleanup
+ 
+ CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_CACHING",
+                 "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
+-                "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE",
++                "VDI_UPDATE", "VDI_CLONE", "VDI_SNAPSHOT", "VDI_RESIZE", "VDI_RESIZE_ONLINE",
+                 "VDI_GENERATE_CONFIG", "VDI_MIRROR",
+                 "VDI_RESET_ON_BOOT/2", "ATOMIC_PAUSE", "VDI_CONFIG_CBT",
+                 "VDI_ACTIVATE", "VDI_DEACTIVATE", "THIN_PROVISIONING", "VDI_READ_CACHING"]
+diff --git a/drivers/blktap2.py b/drivers/blktap2.py
+index 949d6dc..b7339c7 100755
+--- a/drivers/blktap2.py
++++ b/drivers/blktap2.py
+@@ -1536,7 +1536,7 @@ class VDI(object):
+ 
+     @classmethod
+     def tap_unpause(cls, session, sr_uuid, vdi_uuid, secondary=None,
+-                    activate_parents=False):
++                    activate_parents=False, resize=False):
+         util.SMlog("Unpause request for %s secondary=%s" % (vdi_uuid, secondary))
+         vdi_ref = session.xenapi.VDI.get_by_uuid(vdi_uuid)
+         sm_config = session.xenapi.VDI.get_sm_config(vdi_ref)
+@@ -1544,7 +1544,8 @@ class VDI(object):
+             host_ref = key[len('host_'):]
+             util.SMlog("Calling tap-unpause on host %s" % host_ref)
+             if not cls.call_pluginhandler(session, host_ref,
+-                    sr_uuid, vdi_uuid, "unpause", secondary, activate_parents):
++                    sr_uuid, vdi_uuid, "unpause", secondary, activate_parents,
++                    resize=resize):
+                 # Failed to unpause node
+                 return False
+         session.xenapi.VDI.remove_from_sm_config(vdi_ref, 'paused')
+@@ -1577,7 +1578,7 @@ class VDI(object):
+ 
+     @classmethod
+     def call_pluginhandler(cls, session, host_ref, sr_uuid, vdi_uuid, action,
+-            secondary=None, activate_parents=False, failfast=False):
++            secondary=None, activate_parents=False, failfast=False, resize=False):
+         """Optionally, activate the parent LV before unpausing"""
+         try:
+             args = {"sr_uuid": sr_uuid, "vdi_uuid": vdi_uuid,
+@@ -1586,6 +1587,8 @@ class VDI(object):
+                 args["secondary"] = secondary
+             if activate_parents:
+                 args["activate_parents"] = "true"
++            if resize:
++                args["resize"] = "true"
+             ret = session.xenapi.host.call_plugin(
+                     host_ref, PLUGIN_TAP_PAUSE, action,
+                     args)
+diff --git a/drivers/tapdisk-pause b/drivers/tapdisk-pause
+index fd5b60a..4b9897e 100755
+--- a/drivers/tapdisk-pause
++++ b/drivers/tapdisk-pause
+@@ -120,6 +120,7 @@ class Tapdisk:
+         self.activate_parents = False
+         if args.get("activate_parents") == "true":
+             self.activate_parents = True
++        self.resize = args.get("resize") == "true"
+ 
+     def _pathRefresh(self):
+         # LVM rename check
+@@ -257,6 +258,18 @@ class Tapdisk:
+         util.SMlog("Calling tap unpause with minor %d" % self.minor)
+         tapdisk = blktap2.Tapdisk.from_minor(self.minor)
+         tapdisk.unpause(self.vdi_type, self.realpath, self.secondary, self.cbtlog)
++
++        if self.resize:
++            # Ask tapback to notify the guests of the new size of the VDI.
++            import xen.lowlevel.xs  # pylint: disable=import-error
++            xs = xen.lowlevel.xs.xs()
++            for domid in xs.ls("", "backend/vbd3") or []:
++                for devid in xs.ls("", "backend/vbd3/%s" % domid) or []:
++                    path = "backend/vbd3/%s/%s" % (domid, devid)
++                    # xs.read() returns bytes
++                    if xs.read("", path + "/params") == self.path.encode():
++                        util.SMlog("Notifying resize of %s" % path)
++                        xs.write("", path + "/resize-device", "1")
+         return str(True)
+ 
+ 
+-- 
+2.47.0
+

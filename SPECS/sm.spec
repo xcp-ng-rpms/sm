@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.3%{?dist}
+Release: %{?xsrel}.3.0.resizeonline.4%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -69,6 +69,8 @@ BuildRequires: python36-pylint
 BuildRequires: python3-coverage
 BuildRequires: python36-bitarray
 BuildRequires: python3-typing-extensions
+# XCP-ng: live VDI resize needs a tapdisk accepting a size change on unpause
+Requires: blktap >= 3.55.5-12.4.0.resizeonline.1
 
 # XCP-ng: python36-mock for %%check
 BuildRequires: python36-mock
@@ -305,6 +307,7 @@ Patch1203: 0203-feat-linstor-set-a-max_workers-for-linstor-scan-185.patch
 Patch1204: 0204-fix-qcow2util-handle-undefined-before-job-started-17.patch
 Patch1205: 0205-feat-qcow2util-Support-Qcow2-subclusters-170.patch
 Patch1206: 0206-fix-linstor-retry-build-volumes-on-manager-instantia.patch
+Patch1207: 0207-feat-live-vdi-resize-online.patch
 
 %description
 This package contains storage backends used in XCP
@@ -629,6 +632,10 @@ then
 fi
 
 %changelog
+* Thu Nov 26 2026 Erwan Croze <erwan.croze@vates.tech> - 3.2.12-25.3.0.resizeonline.4
+- Add new patch:
+  - 0207-feat-live-vdi-resize-online.patch
+
 * Fri Nov 13 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.3
 - Add new patches:
   - 0194-fix-linstor-improve-ss-command-speed-184.patch

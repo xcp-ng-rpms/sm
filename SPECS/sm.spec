@@ -65,13 +65,12 @@ Patch45: CA-427749_Improve_SM_cleanup
 
 BuildRequires: python3
 BuildRequires: python3-devel
-BuildRequires: python36-pylint
+BuildRequires: python3-pylint
 BuildRequires: python3-coverage
-BuildRequires: python36-bitarray
+BuildRequires: python3-bitarray
 BuildRequires: python3-typing-extensions
-
-# XCP-ng: python36-mock for %%check
-BuildRequires: python36-mock
+# XCP-ng: used by unit tests calling systemctl (e.g. via _kickGC)
+BuildRequires: /usr/bin/systemctl
 
 # XCP-ng: gcc must be explicitly required in our build system
 BuildRequires: gcc
@@ -80,11 +79,18 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 Requires: sm-fairlock = %{version}-%{release}
+%if 0%{?xcpng}
+# XCP-ng: use upstream packages, see later if it is useful to follow XS forks
+Requires: device-mapper-multipath
+Requires(post): device-mapper-multipath
+Requires: lvm2
+%else
 Requires: xenserver-multipath
 Requires(post): xenserver-multipath
 Requires: xenserver-lvm2 >= 2.02.180-11.xs+2.0.2
+%endif
 Obsoletes: lvm2-sm-config <= 7:2.02.180-15.xs8
-Requires: python36-bitarray
+Requires: python3-bitarray
 Requires(post): xs-presets >= 1.3
 Requires(preun): xs-presets >= 1.3
 Requires(postun): xs-presets >= 1.3
@@ -630,8 +636,14 @@ fi
 
 %changelog
 * Thu Nov 26 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.3
+- Build the 8.3 sm (3.2.12) for XCP-ng 9.0
+- Adjust deps for AlmaLinux 10: python36-* -> python3-*
+- Drop BuildRequires: python-mock, tests use unittest.mock
 - Refresh XS patches CA-408452, CA-408105 and CA-420515 so that they
   apply without fuzz, which rpmbuild on AlmaLinux 10 rejects
+- HACK: BuildRequires /usr/bin/systemctl, some unit tests call it
+- TEMP HACK: depend on device-mapper-multipath and lvm2
+  instead of the xenserver-multipath and xenserver-lvm2 forks
 
 * Fri Nov 13 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.3
 - Add new patches:

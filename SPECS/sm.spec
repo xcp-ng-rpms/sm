@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.3.0.resizeonline.4%{?dist}
+Release: %{?xsrel}.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -632,7 +632,7 @@ then
 fi
 
 %changelog
-* Thu Nov 26 2026 Erwan Croze <erwan.croze@vates.tech> - 3.2.12-25.3.0.resizeonline.4
+* Thu Nov 26 2026 Erwan Croze <erwan.croze@vates.tech> - 3.2.12-25.3.0.resizeonline.1
 - Add new patch:
   - 0207-feat-live-vdi-resize-online.patch
 

@@ -1,0 +1,32 @@
+From 39ef3d6b08bb5ed157bc37eb7f8965474a59bcdb Mon Sep 17 00:00:00 2001
+From: Mark Syms <mark.syms@cloud.com>
+Date: Mon, 3 Mar 2025 09:49:14 +0000
+Subject: [PATCH] CA-407566: adjust systemd dependencies
+
+The previous set of dependencies actually result in an ordering loop
+and aren't actually required.
+
+Signed-off-by: Mark Syms <mark.syms@cloud.com>
+---
+ systemd/sm-mpath-root.service | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/systemd/sm-mpath-root.service b/systemd/sm-mpath-root.service
+index 2a75ef52..143780b2 100644
+--- a/systemd/sm-mpath-root.service
++++ b/systemd/sm-mpath-root.service
+@@ -1,8 +1,5 @@
+ [Unit]
+ Description=Ensure symlinks for multipathed rootdev
+-Wants=basic.target multipathd.service
+-After=basic.target
+-Before=multipathd.service
+ 
+ [Service]
+ Type=oneshot
+@@ -10,4 +7,4 @@ RemainAfterExit=yes
+ ExecStart=/opt/xensource/sm/multipath-root-setup
+ 
+ [Install]
+-WantedBy=multi-user.target
++WantedBy=sysinit.target

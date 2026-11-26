@@ -1,0 +1,44 @@
+From a758af924abf6acb27eb41488d4d7210e6f6809b Mon Sep 17 00:00:00 2001
+From: Damien Thenot <damien.thenot@vates.tech>
+Date: Thu, 26 Nov 2026 18:09:00 +0100
+Subject: [PATCH] fix(Makefile): install relative symlinks in
+ /opt/xensource/bin
+
+rpmbuild warns about absolute symlinks for /opt/xensource/bin/blktap2
+and /opt/xensource/bin/tapdisk-cache-stats, use `ln --relative` for them.
+
+/sbin/mpathutil stays absolute: /sbin is a symlink to usr/sbin on the
+host, so a link relative to /sbin in the buildroot would be broken.
+The /dev/null link masking 69-dm-lvm-metad.rules also stays absolute.
+
+Inspired by https://github.com/xapi-project/sm/pull/802 which does the
+same on master's install layout.
+
+Signed-off-by: Damien Thenot <damien.thenot@vates.tech>
+---
+ Makefile | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index d0961ef3..f82bbfcf 100755
+--- a/Makefile
++++ b/Makefile
+@@ -211,6 +211,7 @@ install: build
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f LVMoISCSISR && ln -sf LVMoISCSISR.py LVMoISCSISR
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f LVMoHBASR && ln -sf LVMoHBASR.py LVMoHBASR
+ 	cd $(SM_STAGING)$(SM_DEST) && rm -f LVMoFCoESR && ln -sf LVMoFCoESR.py LVMoFCoESR
++	# Kept absolute: /sbin is a symlink to usr/sbin on the host, a relative link would break.
+ 	ln -sf $(SM_DEST)mpathutil.py $(SM_STAGING)/sbin/mpathutil
+ 	install -m 755 drivers/02-vhdcleanup $(SM_STAGING)$(MASTER_SCRIPT_DEST)
+ 	install -m 755 drivers/linstor-manager $(SM_STAGING)$(PLUGIN_SCRIPT_DEST)
+@@ -240,8 +241,8 @@ install: build
+ 	$(MAKE) -C qcow2 install DESTDIR=$(SM_STAGING)
+ 	$(MAKE) -C linstor install DESTDIR=$(SM_STAGING)
+ 	$(MAKE) -C sm_typing install DESTDIR=$(SM_STAGING)
+-	ln -sf $(SM_DEST)blktap2.py $(SM_STAGING)$(BIN_DEST)/blktap2
+-	ln -sf $(SM_DEST)lcache.py $(SM_STAGING)$(BIN_DEST)tapdisk-cache-stats
++	ln -sf --relative $(SM_STAGING)$(SM_DEST)blktap2.py $(SM_STAGING)$(BIN_DEST)/blktap2
++	ln -sf --relative $(SM_STAGING)$(SM_DEST)lcache.py $(SM_STAGING)$(BIN_DEST)tapdisk-cache-stats
+ 	ln -sf /dev/null $(SM_STAGING)$(UDEV_RULES_DIR)/69-dm-lvm-metad.rules
+ 	install -m 755 scripts/xs-mpath-scsidev.sh $(SM_STAGING)$(UDEV_SCRIPTS_DIR)
+ 	install -m 755 scripts/make-dummy-sr $(SM_STAGING)$(LIBEXEC)

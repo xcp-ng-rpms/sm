@@ -1,0 +1,22 @@
+From bc3cbea7e4c0c0636de2e0d4a74c0a907cc806d9 Mon Sep 17 00:00:00 2001
+From: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+Date: Tue, 16 Dec 2025 17:27:57 +0100
+Subject: [PATCH] srmetadata: remove unused variable
+
+Signed-off-by: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+---
+ drivers/srmetadata.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
+index 97bd1a1b..48df4f5d 100755
+--- a/drivers/srmetadata.py
++++ b/drivers/srmetadata.py
+@@ -640,7 +640,6 @@ class MetadataHandler:
+         util.SMlog("Entering getMetadataToWrite")
+         try:
+             value = b""
+-            vdi_map = {}
+ 
+             # if lower is less than SR info
+             if lower < SECTOR_SIZE * SR_INFO_SIZE_IN_SECTORS:

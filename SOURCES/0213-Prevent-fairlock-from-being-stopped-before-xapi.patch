@@ -1,0 +1,28 @@
+From da59eb669f532de36418bb9b28854a4e65b32433 Mon Sep 17 00:00:00 2001
+From: Tim Smith <tim.smith@cloud.com>
+Date: Fri, 28 Mar 2025 13:16:52 +0000
+Subject: [PATCH] Prevent fairlock from being stopped before xapi
+
+When shutting down or rebooting, Xapi will call things in SM which want
+to use the fairlock service, but newer systemd will refuse to start it
+because it already has it stopping as part of the current transaction.
+
+Ensure systemd does not stop fairlock until after Xapi, to prevent this
+from being a problem.
+
+Signed-off-by: Tim Smith <tim.smith@cloud.com>
+---
+ misc/fairlock/fairlock@.service | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/misc/fairlock/fairlock@.service b/misc/fairlock/fairlock@.service
+index eab7222c..06fc2d1a 100644
+--- a/misc/fairlock/fairlock@.service
++++ b/misc/fairlock/fairlock@.service
+@@ -1,5 +1,6 @@
+ [Unit]
+ Description=Co-operative lock manager for resource %I
++Before=xapi.service
+ DefaultDependencies=no
+ 
+ [Service]

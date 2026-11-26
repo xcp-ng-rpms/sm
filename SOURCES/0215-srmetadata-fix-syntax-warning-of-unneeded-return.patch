@@ -1,0 +1,22 @@
+From 77dbe390e1c38385be3f996506550c8d33b40cb8 Mon Sep 17 00:00:00 2001
+From: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+Date: Thu, 13 Nov 2025 12:59:03 +0100
+Subject: [PATCH] srmetadata: fix syntax warning of unneeded return
+
+Signed-off-by: Anthoine Bourgeois <anthoine.bourgeois@vates.tech>
+---
+ drivers/srmetadata.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/srmetadata.py b/drivers/srmetadata.py
+index 57a4f801..97bd1a1b 100755
+--- a/drivers/srmetadata.py
++++ b/drivers/srmetadata.py
+@@ -706,7 +706,6 @@ class LVMMetadataHandler(MetadataHandler):
+             if created:
+                 # Now delete the dummy VDI created above
+                 self.deleteVdi(uuid)
+-                return
+ 
+     # This function generates VDI info based on the passed in information
+     # it also takes in a parameter to determine whether both the sector

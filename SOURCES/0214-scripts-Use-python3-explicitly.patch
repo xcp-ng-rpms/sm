@@ -1,0 +1,25 @@
+From 17359de1b275492eecf426bd9d6d2334dbdadc50 Mon Sep 17 00:00:00 2001
+From: Ross Lagerwall <ross.lagerwall@citrix.com>
+Date: Mon, 1 Dec 2025 15:01:47 +0000
+Subject: [PATCH] scripts: Use python3 explicitly
+
+In some cases, the unversioned python command may not exist.
+
+Signed-off-by: Ross Lagerwall <ross.lagerwall@citrix.com>
+---
+ drivers/02-vhdcleanup | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/02-vhdcleanup b/drivers/02-vhdcleanup
+index aa273d30..749fd9db 100644
+--- a/drivers/02-vhdcleanup
++++ b/drivers/02-vhdcleanup
+@@ -31,7 +31,7 @@ start() {
+         srUuids=`xe sr-list type=$type params=uuid --minimal | sed "s/,/ /g"`
+         for uuid in $srUuids; do
+             echo -n "Fixing $type"
+-            python $LVM_COW_UTIL_SCRIPT fixrefcounts $uuid
++            python3 $LVM_COW_UTIL_SCRIPT fixrefcounts $uuid
+         done
+     done
+ 	echo -n $"OK"

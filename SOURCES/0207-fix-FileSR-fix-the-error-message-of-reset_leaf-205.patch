@@ -1,0 +1,70 @@
+From a0241c8e00fd470a14e6aaff52a2777720ba888b Mon Sep 17 00:00:00 2001
+From: Seb Hinderer <sebastien.hinderer@vates.tech>
+Date: Fri, 20 Nov 2026 13:30:10 +0100
+Subject: [PATCH] fix(FileSR): fix the error message of reset_leaf (#205)
+
+When a VDI has no parent, reset_leaf() is meant to raise an
+SMException saying so. But the message was built as
+
+    "ERROR: VDI %s has no parent, " + "will not reset contents" % uuid
+
+and % binds tighter than +, so it was applied to the second string,
+which has no %s: the call raised "TypeError: not all arguments
+converted during string formatting" instead, and the intended message
+was lost.
+
+Build the message with an f-string instead, and add a unit test for
+this case.
+
+Tracking-reference: XCPNG-4121
+Signed-off-by: Seb Hinderer <sebastien.hinderer@vates.tech>
+---
+ drivers/FileSR.py    |  3 +--
+ tests/test_FileSR.py | 20 ++++++++++++++++++++
+ 2 files changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/FileSR.py b/drivers/FileSR.py
+index f1fe3a2f..d8ac0426 100755
+--- a/drivers/FileSR.py
++++ b/drivers/FileSR.py
+@@ -746,8 +746,7 @@ class FileVDI(VDI.VDI):
+ 
+         # safety check
+         if not self.cowutil.hasParent(self.path):
+-            raise util.SMException("ERROR: VDI %s has no parent, " + \
+-                    "will not reset contents" % self.uuid)
++            raise util.SMException(f"ERROR: VDI {self.uuid} has no parent, will not reset contents")
+ 
+         self.cowutil.killData(self.path)
+ 
+diff --git a/tests/test_FileSR.py b/tests/test_FileSR.py
+index cfbfe1c4..b3e8cf36 100644
+--- a/tests/test_FileSR.py
++++ b/tests/test_FileSR.py
+@@ -338,6 +338,26 @@ class TestFileVDI(unittest.TestCase):
+                mock.call('sr_path/%s.vhd' % new_vdi_uuid,
+                          'sr_path/%s.vhd' % vdi_uuid)])
+ 
++    def test_reset_leaf_no_parent(self):
++        # Arrange
++        sr_uuid = str(uuid.uuid4())
++        vdi_uuid = str(uuid.uuid4())
++        sr = mock.MagicMock()
++        sr.path = "sr_path"
++        vdi = createFakeFileVDI(sr, vdi_uuid, VdiType.VHD)
++        vdi.cowutil = mock.MagicMock()
++        vdi.cowutil.hasParent.return_value = False
++
++        # Act
++        with self.assertRaises(util.SMException) as context:
++            vdi.reset_leaf(sr_uuid, vdi_uuid)
++
++        # Assert
++        self.assertEqual(
++            str(context.exception),
++            f"ERROR: VDI {vdi_uuid} has no parent, will not reset contents")
++        vdi.cowutil.killData.assert_not_called()
++
+     def test_create_vdi_vhd(self):
+         # Arrange
+         sr_uuid = str(uuid.uuid4())

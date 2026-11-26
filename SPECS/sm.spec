@@ -104,7 +104,7 @@ Obsoletes: sm-additional-drivers
 
 # XCP-ng patches
 # Generated from our sm repository
-# git format-patch v3.2.12-25-xcpng..HEAD --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
+# git format-patch v3.2.12-25-xcpng..3.2.12-9.0-devel --no-signature --no-numbered --grep='^chore(ci):' --invert-grep
 Patch1001: 0001-Update-xs-sm.service-s-description-for-XCP-ng.patch
 Patch1002: 0002-feat-drivers-add-CephFS-and-GlusterFS-drivers.patch
 Patch1003: 0003-feat-drivers-add-XFS-driver.patch
@@ -311,6 +311,17 @@ Patch1203: 0203-feat-linstor-set-a-max_workers-for-linstor-scan-185.patch
 Patch1204: 0204-fix-qcow2util-handle-undefined-before-job-started-17.patch
 Patch1205: 0205-feat-qcow2util-Support-Qcow2-subclusters-170.patch
 Patch1206: 0206-fix-linstor-retry-build-volumes-on-manager-instantia.patch
+Patch1207: 0207-fix-FileSR-fix-the-error-message-of-reset_leaf-205.patch
+Patch1208: 0208-CP-35551-Remove-params-from-attach-respopnse-leaving.patch
+Patch1209: 0209-CP-35551-Handle-new-return-from-tap-ctl-allocate.patch
+Patch1210: 0210-CP-35551-tapdisk-pause-check-for-nbd-socket-path.patch
+Patch1211: 0211-CA-376860-remove-kernel-driver-memory-pools.patch
+Patch1212: 0212-CA-407566-adjust-systemd-dependencies.patch
+Patch1213: 0213-Prevent-fairlock-from-being-stopped-before-xapi.patch
+Patch1214: 0214-scripts-Use-python3-explicitly.patch
+Patch1215: 0215-srmetadata-fix-syntax-warning-of-unneeded-return.patch
+Patch1216: 0216-srmetadata-remove-unused-variable.patch
+Patch1217: 0217-fix-Makefile-install-relative-symlinks-in-opt-xensou.patch
 
 %description
 This package contains storage backends used in XCP
@@ -635,15 +646,22 @@ then
 fi
 
 %changelog
-* Thu Nov 26 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.3
-- Build the 8.3 sm (3.2.12) for XCP-ng 9.0
-- Adjust deps for AlmaLinux 10: python36-* -> python3-*
-- Drop BuildRequires: python-mock, tests use unittest.mock
-- Refresh XS patches CA-408452, CA-408105 and CA-420515 so that they
-  apply without fuzz, which rpmbuild on AlmaLinux 10 rejects
-- HACK: BuildRequires /usr/bin/systemctl, some unit tests call it
-- TEMP HACK: depend on device-mapper-multipath and lvm2
-  instead of the xenserver-multipath and xenserver-lvm2 forks
+* Fri Nov 27 2026 Damien Thenot <damien.thenot@vates.tech> - 3.2.12-25.3
+- Adapt SPEC to build on XCP-ng 9.0
+- Refresh XS patches CA-408452, CA-408105 and CA-420515 so that they apply
+  without fuzz, which rpmbuild on AlmaLinux 10 rejects
+- Add patches:
+  -  0207-fix-FileSR-fix-the-error-message-of-reset_leaf-205.patch
+  -  0208-CP-35551-Remove-params-from-attach-respopnse-leaving.patch
+  -  0209-CP-35551-Handle-new-return-from-tap-ctl-allocate.patch
+  -  0210-CP-35551-tapdisk-pause-check-for-nbd-socket-path.patch
+  -  0211-CA-376860-remove-kernel-driver-memory-pools.patch
+  -  0212-CA-407566-adjust-systemd-dependencies.patch
+  -  0213-Prevent-fairlock-from-being-stopped-before-xapi.patch
+  -  0214-scripts-Use-python3-explicitly.patch
+  -  0215-srmetadata-fix-syntax-warning-of-unneeded-return.patch
+  -  0216-srmetadata-remove-unused-variable.patch
+  -  0217-fix-Makefile-install-relative-symlinks-in-opt-xensou.patch
 
 * Fri Nov 13 2026 Ronan Abhamon <ronan.abhamon@vates.tech> - 3.2.12-25.3
 - Add new patches:

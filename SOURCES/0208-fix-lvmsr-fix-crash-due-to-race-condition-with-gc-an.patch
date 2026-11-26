@@ -1,0 +1,27 @@
+From 6994e5cc06aee7bf159e48b878b40eda88e4681e Mon Sep 17 00:00:00 2001
+From: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+Date: Thu, 26 Nov 2026 10:44:16 +0100
+Subject: [PATCH] fix(lvmsr): fix crash due to race condition with gc and LVM
+ cache
+
+Due to GC running in background, we could crash trying to resolve
+journals that don't exist anymore on LVM backends. We need to refresh
+LVM cache once we locked the SR before undoing journals.
+
+Signed-off-by: Antoine Bartuccio <antoine.bartuccio@vates.tech>
+---
+ drivers/LVMSR.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/LVMSR.py b/drivers/LVMSR.py
+index e21e7774..71dcd066 100755
+--- a/drivers/LVMSR.py
++++ b/drivers/LVMSR.py
+@@ -1319,6 +1319,7 @@ class LVMSR(SR.SR):
+         # undoing interrupted inflates must be done first, since undoing COW images
+         # ops might require inflations
+         self.lock.acquire()
++        self.lvmCache.refresh() # Journals might have been removed due to a concurrent GC pass
+         try:
+             self._undoAllInflateJournals()
+             self._undoAllCowJournals()

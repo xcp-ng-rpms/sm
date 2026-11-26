@@ -9,7 +9,7 @@
 Summary: sm - XCP storage managers
 Name:    sm
 Version: 3.2.12
-Release: %{?xsrel}.4%{?dist}
+Release: %{?xsrel}.5%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
@@ -306,8 +306,9 @@ Patch0204: 0204-fix-lvmsr-keep-CBT-chain-usable-after-vdi_revert.patch
 Patch0205: 0205-refactor-share-vdi_revert-CBT-rollback-and-cbtlog-LV.patch
 Patch0206: 0206-refactor-create-a-context-manager-for-Lock-objects.patch
 Patch0207: 0207-fix-lvmsr-Can-t-determine-VDI-type-with-uninitialize.patch
-Patch0208: 0208-feat-linstor-implement-vdi_revert.patch
-Patch0209: 0209-fix-remove-usage-of-tap_pause-context-manager.patch
+Patch0208: 0208-fix-lvmsr-fix-crash-due-to-race-condition-with-gc-an.patch
+Patch0209: 0209-feat-linstor-implement-vdi_revert.patch
+Patch0210: 0210-fix-remove-usage-of-tap_pause-context-manager.patch
 
 %description
 This package contains storage backends used in XCP

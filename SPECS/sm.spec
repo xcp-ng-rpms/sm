@@ -13,7 +13,6 @@ Release: %{?xsrel}.3%{?dist}
 License: LGPL
 URL:  https://github.com/xapi-project/sm
 Source0: sm-3.2.12.tar.gz
-Source1: update-cgrules.patch
 Patch0: ca-403593__dont_log_the_session_ref.patch
 Patch1: ca-405381_mpathcount_info_does_not_automatically_refresh_in_xencenter_after_disabling_and_enabling_multipath.patch
 Patch2: cp-50026_ensure_mpathcount_runs_after_multipath_deactivate.patch
@@ -336,20 +335,6 @@ make -C misc/fairlock
 %install
 make -C misc/fairlock install DESTDIR=%{buildroot}
 make install DESTDIR=%{buildroot}
-mkdir -p %{buildroot}%{_datadir}/%{name}/
-install -m 400 %SOURCE1 %{buildroot}%{_datadir}/%{name}/
-
-# Mark processes that should be moved to the data path
-%triggerin -- libcgroup-tools
-# Do not apply patch if it was already applied
-if ! patch --dry-run -RsN -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch >/dev/null; then
-    # Apply patch. Output NOT redirected to /dev/null so that error messages are displayed
-    if ! patch -tsN -r - -d / -p1 < %{_datadir}/%{name}/update-cgrules.patch; then
-        echo "Error: failed to apply patch:"
-        cat %{_datadir}/%{name}/update-cgrules.patch
-        false
-    fi
-fi
 
 %pre
 # Remove sm-multipath on install or upgrade, to ensure it goes
@@ -565,7 +550,6 @@ cp -r htmlcov %{buildroot}/htmlcov
 %config /etc/udev/rules.d/57-usb.rules
 %config /etc/udev/rules.d/99-purestorage.rules
 %doc CONTRIB LICENSE MAINTAINERS README.md
-%{_datadir}/%{name}/update-cgrules.patch
 # XCP-ng
 /etc/systemd/system/drbd-reactor.service.d/override.conf
 /etc/systemd/system/linstor-satellite.service.d/override.conf
